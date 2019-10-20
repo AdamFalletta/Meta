@@ -1,0 +1,1447 @@
+<html>
+    <head>
+        <title></title>    
+         <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   
+ 
+   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="swiper.min.css">
+<script src='https://api.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.js'></script>
+<link href='https://api.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css' rel='stylesheet' />
+<link href='http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css' rel='stylesheet' />
+  <script src= "http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.8.0/fullcalendar.min.js'></script>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.8.0/fullcalendar.min.css' rel='stylesheet' />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.8.0/fullcalendar.print.css' rel='stylesheet' />
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+   <link href="http://adamfalletta.com/metaos1/meta_news/lib/ionic/css/devices.min.css" rel="stylesheet">
+  <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.bundle.min.js"></script>
+<style>
+    .main-style{
+        margin-top: 51;
+        }
+    .dark{ background:#222222; color:#dddddd!important;}
+    .dark3{background:#222222;}
+ .dark2{ background:#222222;}
+    .dark-blue {background:#111111; color:#fefefe; font-size:28px;}
+    .main-bg{ background:#000000;}
+    .col-sm-3, .col-sm-9{
+        border:1px solid #000000;
+        padding-right:0px !important;
+        padding-left:0px !important;
+        padding-top:0px !important;
+        padding-bottom:0px !important;
+    }
+    .nav-link{color:#cccccc !important;}
+    .main-row{min-height:720px;}
+    .middle-row{min-height:244px;}
+    .bottom-row{min-height:60px;vertical-align:middle;}
+    .fixed-top{max-height:50px;}
+    
+    .nav-pills .nav-link.active, .nav-pills .show>.nav-link{
+        background:#333333 !important;
+        border-radius:0px;
+    }
+    
+    .mt12{
+         margin-top:12px;
+    }
+    
+    .h5{
+        font-size:1.35em !important;
+    }
+    
+    .fs-29{
+        font-size:29px!important;
+    }
+    
+    .form-inline .form-control{
+        height:30px;
+        margin-top:12px;
+        border-radius:50px;
+        background:#222222;
+        color:#dddddd;
+        width:200px;
+        border-width:0px;
+    }
+    
+    .navbar-expand-md .navbar-nav .nav-link{
+        padding-right:1.2rem!important;
+        letter-spacing:-0.5px;
+    }
+    
+    .pt4{
+        padding-top:4px;
+    }
+    
+    .mb-3, .my-3{
+        margin-bottom: 0rem!important;
+    }
+    /* Make it a marquee */
+.marquee {
+width:900px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-top:3px;
+     font-weight:500;
+    height:52px;
+    border-radius: 3px;
+    color:#eeeeee;
+   vertical-align:middle;
+    box-sizing: border-box;
+word-spacing: 3px;
+    animation: marquee 105s linear infinite;
+
+    padding-top:4px;
+
+}
+
+.news-container{
+    width:100%;
+    height:52px;
+    display:inline-block;
+}
+
+.breaking-news{
+width:250px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-top:3px;
+  
+     font-weight:700;
+    height:52px;
+    border-radius: 3px;
+
+text-align:center;
+   vertical-align:middle;
+    box-sizing: border-box;
+
+
+
+    padding-top:4px;
+
+
+background: linear-gradient(270deg, #660000, #db1313);
+background-size: 400% 400%;
+-webkit-animation: AnimationName 5s ease infinite;
+-moz-animation: AnimationName 5s ease infinite;
+-o-animation: AnimationName 5s ease infinite;
+animation: AnimationName 5s ease infinite;
+
+}
+
+@-webkit-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@-o-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+
+
+
+
+.fs2x{
+    font-size:29px;
+}
+
+.mb-sm-0, .my-sm-0{
+    margin-top:16px!important;
+    height:30px;
+    border-radius:50px;
+    padding:0px;
+    width:30px;
+}
+
+.btn-primary{
+    background-color:#61acd8 !important;
+    border-color: #177bb4 !important;
+}
+
+.mapboxgl-ctrl-group > button {
+    width:44px;
+    height:44px;
+    color:#dddddd !important;
+        border-bottom: 0px !important;
+}
+
+.mapboxgl-ctrl.mapboxgl-ctrl-attrib {
+  
+    background-color: rgba(255, 255, 255, 0);
+
+}
+
+.mapboxgl-ctrl-group{
+        background-color: rgba(255,255,255,.2);
+}
+
+.mtbb{
+    margin-top:-4px!important;
+    border-color:#999999!important;
+    font-size:10px!important;
+    color:#dddddd!important;
+    width:28px!important;
+    height:28px!important;
+}
+.marquee:hover {
+    animation-play-state: paused
+}
+
+/* Make it move */
+@keyframes marquee {
+    0%   { text-indent: 27.5em }
+    100% { text-indent: -355em }
+}
+
+.news-title{
+        margin-top:3px;
+        margin-left:20px;
+        margin-right:10px;
+    display:inline-block;
+    vertical-align:middle;
+    height:52px;
+    padding-top:4px;
+    font-weight:600;
+    color:#dddddd
+}
+
+.mt-4{
+    margin-top:4px;
+    
+}
+
+.bg-gradient{
+    /* IE10+ */ 
+background-image: -ms-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+/* Mozilla Firefox */ 
+background-image: -moz-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+/* Opera */ 
+background-image: -o-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+/* Webkit (Safari/Chrome 10) */ 
+background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #2E4053), color-stop(100, #0E1419));
+
+/* Webkit (Chrome 11+) */ 
+background-image: -webkit-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+    
+}
+
+.tower{
+    width:36px;
+    height:36px;
+    margin-right:10px;
+}
+
+.list-group-item{
+    color:#fefefe;
+    font-weight:bold;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link{
+
+}
+
+
+
+.list-group-item:first-child{
+    border-top-left-radius: 0rem !important;
+    border-top-right-radius: 0rem !important;
+}
+
+.list-group-item:last-child{
+      border-bottom-left-radius: 0rem !important;
+    border-bottom-right-radius: 0rem !important;
+}
+
+.list-group-item:nth-child(odd){
+   background:#333333 !important;
+}
+
+.list-group-item:nth-child(even){
+  background:#444444 !important;
+}
+.top-bar-text{
+    color:#fefefe;
+    margin-left:15px;
+    font-size:16px;
+}
+
+.mt5i{
+    margin-top:5px !important;
+}
+
+.wifi-icon{
+    -ms-transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg);
+    position: absolute;
+    margin-left: 11px;
+    margin-top: -4px;
+    fill: #ffffff;
+}
+
+.card{
+    background-color: #222222 !important;
+
+   
+    
+    border-radius:0px !important;
+}
+
+.metaphone-icon{
+        vertical-align: middle;
+    margin-left: 4px;
+    margin-right: 4px;
+
+    fill: #ffffff;
+}
+
+.navbar-brand{
+    margin-left:10px;
+    color:#dddddd !important;
+}
+
+.marvel-device.iphone5s, .marvel-device.iphone5c{
+    width:370px!important;
+        padding: 50px 12px !important;
+        margin-top:10px;
+        height:550px !important;
+        margin-left:50px;
+}
+
+.marvel-device .screen{
+    background:#222222!important;
+    border-radius:18px;
+}
+
+.marvel-device.iphone5s:before, .marvel-device.iphone5c:before{
+  
+}
+
+.list-avatar{
+    width:34px;
+    height:34px;
+    border-radius:500px;
+    margin-right:9px;
+}
+.list-avatar2{
+    width:42px;
+    height:42px;
+    border-radius:500px;
+    margin-right:9px;
+}
+
+
+.f-right{
+    float:right;
+    text-align:right;
+}
+
+.main-top-bar{
+    width:100%;
+    height:47px;
+    background:#222222;
+    padding-left:10px;
+  
+}
+
+.main-content{
+    width:100%;
+    height:575px;
+    background:#999999;
+  
+}
+
+.browser-icons{
+    color:#cccccc;
+    font-size:22px;
+    margin-top:11px;
+    margin-left:14px;
+    
+}
+
+.browser-icons2{
+    color:#cccccc;
+    font-size:16px;
+    margin-top:14px;
+    margin-left:10px;
+    
+}
+
+.btn-link{
+    color: #dddddd !important;
+}
+
+.din{
+    display:inline-block;
+}
+
+.w300{
+    width:600px!important;
+    display:inline-block;
+    height:28px;
+    color:#dddddd;
+    background:#333333;
+    border-radius:50px;
+    margin-left:15px;
+    font-size:18px;
+    border-width: 0px;
+
+}
+.w300:focus{
+    width:600px!important;
+    display:inline-block;
+    height:28px;
+    color:#dddddd;
+    background:#333333;
+    border-radius:50px;
+    margin-left:15px;
+    font-size:18px;
+    border-width: 0px;
+
+}
+
+.col-sm-4{
+      padding-right: 0px;
+    padding-left: 0px;
+}
+
+.nav-link{
+    font-size:18px !important;
+}
+
+.mb-3{
+    text-align:center !important;
+}
+
+.flright{
+    float:right;
+    margin-right:10px;
+}
+
+.metaphone-icon{
+    height:30px
+    width:30px
+    border-r
+}
+
+.meta-live-btn{
+    margin-top: -8px!important;
+    margin-right:10px !important;
+        margin-left:124px !important;
+            -moz-box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+		box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+     
+}
+
+.blue-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+    	box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+}
+
+.green-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(40,167,69, .8);
+    	box-shadow: 0px 0px 20px 5px rgba(40,167,69, .8);
+}
+
+.pink-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(199,21,133, .8);
+        box-shadow: 0px 0px 20px 5px rgba(199,21,133, .8);
+}
+
+.regular-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(127,107,0, .8);
+        box-shadow: 0px 0px 20px 5px rgba(127,107,0, .8);
+}
+
+.purple-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(108,13,116, .8);
+        box-shadow: 0px 0px 20px 5px rgba(108,13,116, .8);
+}
+
+
+.nav-btns{
+    width:14px !important;
+    height:14px !important;
+    border-radius:50px;
+   padding:0px !important;
+    display:inline-block;
+    margin-right:6px;
+    margin-top:15px;
+}
+
+.ml15{
+    margin-left:25px !important;
+}
+
+.card{
+
+
+}
+
+.keypad-button{
+    width:72px;
+    height:72px;
+    border-radius:500px;
+    padding:10px;
+    display:inline-block;
+    margin-right:9px;
+    margin-left:9px;
+    margin-bottom:12px;
+    border:1px solid #555555 !important;
+    background:#222222 !important;
+    color:#bbbbbb!important;
+    font-size:28px;
+    font-weight:100;
+}
+
+.keypad-button2{
+    width:72px;
+    height:72px;
+    border-radius:500px;
+    padding:8px;
+    display:inline-block;
+    margin-right:10px;
+  
+    margin-left:10px;
+    margin-bottom:12px;
+ color:#bbbbbb!important;
+    font-size:28px;
+    background-color: #333333 !important;
+    border-color: #222222 !important;
+}
+
+.keypad-display{
+    width:300px;
+    display:block;
+    height:58px;
+    color:#dddddd;
+    font-weight:100;
+    background:#333333;
+    border-radius:50px;
+    margin-left:15px;
+    margin-bottom:20px;
+    font-size:26px;
+    padding:10px;
+    border-width: 0px;
+
+}
+
+
+.keypad-container{
+ width:320px;
+ margin-left:auto;
+ margin-right:auto;
+ margin-top:20px;
+}
+
+.keypad-pane{
+width:100%!important;
+ margin-left:auto!important;
+ margin-right:auto!important; 
+ text-align:center!important;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link{
+    border-bottom:2px solid #2eb9ce;
+}
+
+.hide{
+    visibility:hidden;
+}
+
+.call-btn{
+    font-size:34px!important;
+    margin-top:12px!important;
+}
+
+.table{
+    margin-bottom:0px!important;
+}
+
+.ap-text{
+   font-size:12px; 
+   display:inline-block;
+   margin-left:6px;
+}
+
+.ap-title{
+       font-size:14px; 
+   display:inline-block;
+   font-weight:600;
+   margin-left:6px;
+}
+
+.mt-2{
+    margin-top:2px !important;
+}
+
+.album-photo{
+    width:58px;
+    height:58px;
+    display:inline-block;
+    margin-right:10px;
+    float:left;
+}
+
+.audio-controls{
+    display:block;
+}
+
+.audio-title{
+    color:#bbbbbb;
+font-weight:100;
+}
+
+.table{
+    font-weight:100;
+}
+.fa-star{
+    color:#F0E68C!important;
+}
+
+.audio-container-l{
+    display:inline-block;
+}
+.audio-container-r{
+    display:inline-block;
+    
+}
+
+.mt-zero{
+    margin-top:0px!important;
+}
+
+.swiper-container{
+    height:675px!important;
+
+    background-size:100%;
+}
+
+img.app-icons{
+height:60px;
+width:60px;
+display:block;
+border-radius: 10px;
+margin-left:37px;
+margin-right:37px;
+margin-top:14px;
+margin-bottom:4px;
+ -webkit-filter: grayscale(20%); /* Safari 6.0 - 9.0 */
+    filter: grayscale(20%);
+}
+.list-app-icons{
+display:inline-block;
+text-align: center;
+font-size:12px;
+color:#ffffff;
+font-weight: 400;
+margin-bottom: 24px;
+
+
+}
+
+.card-row{
+        margin-right: 0px;
+    margin-left: 0px;
+}
+
+.card-title{
+        border-left: 3px solid;
+    padding-left: 10px;
+}
+
+.bc-purple{
+    border-color: #563d7c;
+}
+
+.bc-blue{
+    border-color: #3498DB;
+}
+
+.bc-green{
+    border-color: #28B463;
+}
+
+.bc-grey{
+    border-color: #AAB7B8;
+}
+
+.bc-pink{
+    border-color: #A569BD;
+}
+
+.bc-gold{
+    border-color: #F4D03F;
+}
+
+.mr10{
+    margin-right:7px;
+}
+
+.swiper-slide{
+    overflow-y: scroll;
+}
+
+::-webkit-scrollbar
+{
+  display: none;
+}
+
+
+.outer-wrapper{
+    width:100%;
+    height:675px;
+}
+
+.left-bar-container{
+    width:120px;
+    height:675px;
+    display:inline-block;
+    background:#222222;
+    float: left;
+    text-align:center;
+    color:#cccccc;
+    font-size:13px;
+  
+}
+
+.main-content-wrapper{
+        height:675px;
+
+}
+
+
+.fs4x-top{
+    font-size:36px;
+    display:block;
+ 
+   
+}
+
+.fs4x{
+    font-size:36px;
+    display:block;
+
+}
+
+.left-side-icons{
+    width:120px;
+ border-left: 2px solid #222222;
+padding-top:18px;
+padding-bottom:18px;
+    
+}
+
+.icon-active{
+    width:120px;
+ border-left: 2px solid #2eb9ce;
+   background:#333333;
+}
+
+.left-side-icons:hover{
+    width:120px;
+     border-left: 2px solid #2eb9ce;
+     background:#333333;
+
+}
+
+.side-icon-badge-blue{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#61acd8;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+    padding-top:2px;
+}
+
+.side-icon-badge-green{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#28a745;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.side-icon-badge-pink{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#C71585;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.side-icon-badge-purple{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#6c0d74;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.side-icon-badge-gold{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#7f6b00;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.right-icon-badge-blue{
+    min-width:18px;
+    height:18px;
+    font-size:10;
+    font-weight:bold;
+    text-align:center;
+    background:#61acd8;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-40px;
+     margin-left:40px;
+    z-index:5;
+    padding-top:2px;
+}
+
+.news-style{
+    display: inline-block;
+    margin-right:500px;
+    list-style-type: none;
+    width:100%;
+    max-width:1500px;
+  
+}
+
+.news-image{
+    width:120px;
+    height:60px;
+    display:inline-block;
+    margin-right:10px;
+    border-radius:0px;
+    margin-top: -10px;
+}
+
+
+.pulse-element {
+        animation: pulsate 3s ease-out;
+        animation-iteration-count: infinite;
+        opacity: 1; 
+    }
+
+@-webkit-keyframes pulsate {
+    0% {-webkit-transform: scale(0.1, 0.1); opacity: 0.0;}
+    50% {opacity: 1.0;}
+    100% {-webkit-transform: scale(1.2, 1.2); opacity: 0.0;}
+}
+
+
+
+.live-text{
+    font-size:12px;
+    margin-left:10px;
+
+}
+
+.fs30{
+    font-size:30px !important;
+    padding-top:3px;
+}
+
+
+.ct-label{
+    color:#cccccc !important;
+}
+
+.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut{
+    stroke:#61acd8 !important;
+    opacity:.6;
+}
+
+.ct-series-b .ct-bar, .ct-series-b .ct-line, .ct-series-b .ct-point, .ct-series-b .ct-slice-donut{
+        stroke: #c71585 !important;
+          opacity:.6;
+}
+.ct-series-c .ct-bar, .ct-series-c .ct-line, .ct-series-c .ct-point, .ct-series-c .ct-slice-donut{
+      
+          opacity:.6;
+}
+
+.ct-series-d .ct-bar, .ct-series-d .ct-line, .ct-series-d .ct-point, .ct-series-d .ct-slice-donut{
+        stroke: #28a745 !important;
+          opacity:.6;
+}
+
+.ct-label .ct-horizontal .ct-end{
+    margin-left: -17px !important;
+}
+
+.widget-title{
+    font-size:16px;
+   text-align:center;
+    display:block;
+
+    color:#dddddd;
+  
+    width:100%;
+    height:22px;
+    padding:2px;
+    margin-bottom:9px;
+    font-weight:700;
+}
+
+.widget-glow{
+    height:8px !important;
+    width:8px !important;
+    margin-top:-4px !important;
+    margin-right: 12px;
+}
+
+.widget-move{
+   float:left;
+       margin-left:12px;
+     margin-top:0px!important;
+}
+
+.widget-more{
+   float:right;
+   margin-right: 12px;
+        margin-top:0px!important;
+        
+}
+
+
+.ct-chart{
+
+}
+
+.dark-gradient{
+background: rgba(18,18,18,1);
+background: -moz-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(18,18,18,1)), color-stop(62%, rgba(34,34,34,1)), color-stop(91%, rgba(34,34,34,1)), color-stop(91%, rgba(34,34,34,1)));
+background: -webkit-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: -o-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: -ms-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: linear-gradient(135deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#121212', endColorstr='#222222', GradientType=1 );
+}
+
+
+</style>
+
+
+<script>
+angular.module('my-sweet-app', [])
+
+    .controller('metaioController',['$scope','$http', function($scope, $http){
+        $scope.sortType     = 'venue.location.distance'; 
+        $scope.sortReverse  = false;
+        
+        $scope.$emit('LOAD');
+        
+       
+        navigator.geolocation.getCurrentPosition(function (position){
+        lat = position.coords.latitude;
+        long = position.coords.longitude;   
+     
+         
+        
+  $http.get("https://newsapi.org/v2/top-headlines?country=us&apiKey=ba37cc57e7a64049b0cc8ccffbdf0ec4")
+  .success(function(response) {$scope.metaio = response.articles; 
+  
+  $scope.$emit('UNLOAD');
+  
+
+ 
+  });
+         });
+}]).controller('appController',['$scope',function($scope){
+    	$scope.$on('LOAD',function(){$scope.loading=true});
+		$scope.$on('UNLOAD',function(){$scope.loading=false});
+   
+	}]);
+    
+   // metaio controller
+</script>
+
+    </head>
+    <body class="main-style main-bg">
+  
+   <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+ <a class="navbar-brand" href="#">&lt;/ <b>Meta</b>OS ></a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#">File <span class="sr-only">(current)</span></a>
+          </li>
+               <li class="nav-item">
+            <a class="nav-link" href="#">Edit</a>
+          </li>
+            <li class="nav-item">
+            <a class="nav-link" href="#">View</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Apps</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Bots</a> 
+          </li>
+           
+              <li class="nav-item">
+            <a class="nav-link" href="#">Widgets</a>
+          </li>
+          
+       
+             <li class="dropdown">
+        <a class="dropdown-toggle nav-link" data-toggle="dropdown" href="#">Settings
+      </a>
+        <ul class="dropdown-menu">
+          <li><a class="nav-link" href="#">Page 1-1</a></li>
+          <li><a class="nav-link" href="#">Page 1-2</a></li>
+          <li><a class="nav-link" href="#">Page 1-3</a></li>
+        </ul>
+      </li>
+      
+            
+     
+             
+        </ul>
+        <form class="form-inline mt-2 mt-md-0">
+          <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+          <button style="margin-right:20px;" class="btn btn-outline-success my-2 my-sm-0" type="submit"><i class="fa fa-search" aria-hidden="true"></i></button>
+       
+        </form>
+             <i class="ion-radio-waves browser-icons mt-zero fs30" aria-hidden="true"></i>
+ 
+        <i class="fa fa-bluetooth-b browser-icons mt-zero" aria-hidden="true"></i>
+        
+                <i class="fa fa-wifi browser-icons mt-zero" aria-hidden="true"></i>
+        <i class="fa fa-battery-full browser-icons mt-zero" aria-hidden="true"></i>
+        <div class="top-bar-text"><img class="list-avatar" src="girl.jpg"> 2:38AM</div>
+
+      </div>
+    </nav>
+    <div class="container-fluid">
+     <div class="row main-row">
+  <div class="col-sm-9 dark">
+      <div class="main-top-bar">
+       
+      <div class="nav-btns btn btn-primary meta-live-btn"></div>
+          <i class="fa fa-arrow-circle-left browser-icons" aria-hidden="true"></i>
+        <i class="fa fa-arrow-circle-right browser-icons" aria-hidden="true"></i>
+        <i class="fa fa-refresh browser-icons dim" aria-hidden="true"></i>
+           
+         <input class="form-control mr-sm-2 w300" type="text" placeholder="meta://" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0 mtbb" type="submit">GO</button>
+        
+          <i class="fa fa-star-o browser-icons" aria-hidden="true"></i>
+       
+          <i class="ion-navicon browser-icons" aria-hidden="true"></i>
+          
+       <i style="margin-left:40px;" class="fa fa-television browser-icons" aria-hidden="true"></i> TV Mode
+    
+   
+
+       <div class="flright">
+       <div class="nav-btns btn btn-success"></div>
+       <div class="nav-btns btn btn-secondary"></div>
+       <div class="nav-btns btn btn-danger"></div>
+   
+      
+       </div>
+      </div>
+      
+   <div class="outer-wrapper">
+   <div class="left-bar-container">
+   
+   <div class="left-side-icons"><i class="ion-ios-cloud fs4x-top" aria-hidden="true"></i>MetaDrive<div class="side-icon-badge-blue blue-glow">4</div></div>
+   <div class="left-side-icons"><i class="ion-clipboard fs4x" aria-hidden="true"></i>Projects<div class="side-icon-badge-green green-glow">12</div></div>
+   <div class="left-side-icons"><i class="ion-ios-world fs4x" aria-hidden="true"></i> Browser</div>
+   <div class="left-side-icons icon-active"><i class="ion-location fs4x" aria-hidden="true"></i> MetaMaps</div>
+   <div class="left-side-icons"><i class="ion-calendar fs4x" aria-hidden="true"></i>Calendar<div class="side-icon-badge-pink pink-glow">5</div></div>
+   <div class="left-side-icons"><i class="ion-calculator fs4x" aria-hidden="true"></i>Calculator</div>
+   <div class="left-side-icons"><i class="ion-compose fs4x" aria-hidden="true"></i>MetaNotes<div class="side-icon-badge-gold regular-glow">8</div></div>
+
+       
+   </div>
+
+   
+      <div class="main-content-wrapper">
+      
+           
+       <div id='map' style='height: 675px;'></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiYWRhbWZhbGxldHRhIiwiYSI6ImNpZXFldmc1azAwbHZ3Z2ttcGNkOGNtMGkifQ.kvWtVUjh4UG87ZtreXrv1Q';
+var map = new mapboxgl.Map({
+container: 'map',
+style: 'mapbox://styles/mapbox/dark-v9',
+center: [-73.97, 40.60], // starting position
+    zoom: 9 // starting zoom
+});
+
+map.addControl(new mapboxgl.NavigationControl());
+</script>
+       
+    </div>
+    
+    </div>
+    
+    
+  </div>
+  <div class="col-sm-3 dark2">
+  <ul class="nav nav-pills mb-3 dark3" id="pills-tab" role="tablist">
+    <li class="nav-item">
+    <a class="nav-link" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab" aria-controls="pills-home" aria-selected="true"><i class="fa fa-th-large fs2x" aria-hidden="true"></i></a>
+
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab" aria-controls="pills-home" aria-selected="true"><i class="fa fa-comments fs2x" aria-hidden="true"></i></a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab" aria-controls="pills-profile" aria-selected="false"><i class="fa fa-phone-square fs2x" aria-hidden="true"></i></a>
+  </li>
+   
+  <li class="nav-item">
+    <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab" aria-controls="pills-contact" aria-selected="false"><i class="fa fa-user-circle fs2x" aria-hidden="true"></i></a>
+  </li>
+  
+   <li class="nav-item">
+    <a class="nav-link" id="pills-browser-tab" data-toggle="pill" href="#pills-browser" role="tab" aria-controls="pills-browser" aria-selected="false"><i class="fa fa-globe fs2x" aria-hidden="true"></i></a>
+  </li>
+     <li class="nav-item">
+    <a class="nav-link" id="pills-more-tab" data-toggle="pill" href="#pills-more" role="tab" aria-controls="pills-more" aria-selected="false"><i class="fa fa-bullhorn fs2x" aria-hidden="true"></i></a>
+  </li>
+
+  
+       <li class="nav-item">
+    <a class="nav-link" id="pills-more-tab" data-toggle="pill" href="#pills-more" role="tab" aria-controls="pills-more" aria-selected="false"><i class="fa fa-code fs2x" aria-hidden="true"></i></a>
+  </li>
+
+    <li class="nav-item">
+    <a class="nav-link" id="pills-more-tab" data-toggle="pill" href="#pills-more" role="tab" aria-controls="pills-more" aria-selected="false"><i class="ion-navicon-round fs2x" aria-hidden="true"></i></a>
+  </li>
+ 
+</ul>
+
+<div class="tab-content" id="pills-tabContent">
+  <div class="tab-pane fade " id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab"> 
+<iframe src="http://adamfalletta.com/metaos1/meta_news/#/tab/dash" width="100%" height="675" frameborder="0"></iframe>
+ 
+
+</div>
+
+  <div class="tab-pane fade show active keypad-pane" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+    <div class="keypad-container">
+    <div class="keypad-display">1 (718) 376 0882</div>
+      <a class="keypad-button btn btn-secondary">1</a>
+      <a class="keypad-button btn btn-secondary">2</a>
+      <a class="keypad-button btn btn-secondary">3</a>
+       <a class="keypad-button btn btn-secondary">4</a>
+      <a class="keypad-button btn btn-secondary">5</a>
+      <a class="keypad-button btn btn-secondary">6</a>
+       <a class="keypad-button btn btn-secondary">7</a>
+      <a class="keypad-button btn btn-secondary">8</a>
+      <a class="keypad-button btn btn-secondary">9</a>
+            <a class="keypad-button btn btn-secondary">*</a>
+      <a class="keypad-button btn btn-secondary">0</a>
+      <a class="keypad-button btn btn-secondary">#</a>
+            <a class="keypad-button btn btn-secondary hide"></a>
+      <a class="keypad-button2 btn btn-success"><i class="fa fa-phone call-btn" aria-hidden="true"></i></a>
+      <a class="keypad-button btn btn-secondary hide"></a>
+    </div>
+ 
+
+     
+          
+ </div>
+  <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+  
+  
+  
+   <ul class="list-group">
+  <li class="list-group-item d-flex justify-content-between align-items-center">
+ Amy Smith
+    <span class="badge badge-success badge-pill">14</span>
+  </li>
+  <li class="list-group-item d-flex justify-content-between align-items-center">
+Britney Johnson
+    <span class="badge badge-primary badge-pill">2</span>
+  </li>
+  <li class="list-group-item d-flex justify-content-between align-items-center">
+   Carroll Anne
+   <span class="badge badge-primary badge-pill">1</span>
+  </li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+   Danielle White
+    <span class="badge badge-primary badge-pill">1</span>
+  </li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+   Emily Brown
+    <span class="badge badge-primary badge-pill">1</span>
+  </li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+  Felicia Black
+    <span class="badge badge-primary badge-pill">1</span>
+  </li>
+</ul>
+
+
+  </div>
+</div>
+   
+  </div>
+    </div>
+<div class="row middle-row">
+  <div class="col-sm-3 dark dark-gradient">
+  <div class="widget-title"><i class="ion-navicon browser-icons widget-move" aria-hidden="true"></i> Weekly Sales Report <i class="ion-more browser-icons widget-more" aria-hidden="true"></i></div>
+   <div class="ct-chart" id="myChart1" style="width:100%; height:212px"></div>
+<script>
+var chart = new Chartist.Line('#myChart1', {
+  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  series: [
+    [1, 5, 2, 5, 4, 3],
+    [2, 3, 4, 8, 1, 2],
+    [5, 4, 3, 2, 1, 0.5]
+  ]
+}, {
+  low: 0,
+  showArea: true,
+  showPoint: true,
+  fullWidth: true
+});
+
+</script>
+  </div>
+  <div class="col-sm-3 dark dark-gradient">
+   <div class="widget-title"><i class="ion-navicon browser-icons widget-move" aria-hidden="true"></i> Quarterly Reports <i class="ion-more browser-icons widget-more" aria-hidden="true"></i></div>
+   <div class="ct-chart" id="myChart2" style="width:100%; height:212px"></div>
+<script>
+new Chartist.Bar('#myChart2', {
+  labels: ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'],
+  series: [
+    [5, 4, 3, 7],
+    [3, 2, 9, 5],
+    [1, 5, 8, 4],
+    [2, 3, 4, 6],
+    [4, 1, 2, 1]
+  ]
+}, {
+  // Default mobile configuration
+  stackBars: true,
+  axisX: {
+    labelInterpolationFnc: function(value) {
+      return value.split(/\s+/).map(function(word) {
+        return word[0];
+      }).join('');
+    }
+  },
+  axisY: {
+    offset: 20
+  }
+}, [
+  // Options override for media > 400px
+  ['screen and (min-width: 400px)', {
+    reverseData: true,
+    horizontalBars: true,
+    axisX: {
+      labelInterpolationFnc: Chartist.noop
+    },
+    axisY: {
+      offset: 60
+    }
+  }],
+  // Options override for media > 800px
+  ['screen and (min-width: 800px)', {
+    stackBars: false,
+    seriesBarDistance: 10
+  }],
+  // Options override for media > 1000px
+  ['screen and (min-width: 1000px)', {
+    reverseData: false,
+    horizontalBars: false,
+    seriesBarDistance: 15
+  }]
+]);
+
+
+</script>
+    
+  </div>
+  <div class="col-sm-3 dark dark-gradient">
+   <div class="widget-title"><i class="ion-navicon browser-icons widget-move" aria-hidden="true"></i> 5 Week Overview <i class="ion-more browser-icons widget-more" aria-hidden="true"></i></div>
+   <div class="ct-chart" id="myChart3" style="width:100%; height:212px"></div>
+<script>
+new Chartist.Line(
+    '#myChart3',
+    {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'], 
+		series: [
+			{name: 'one', data: [560, 600, 840, 900, 400]},
+			{name: 'two', data: [500, 510, 740, 300, 300]}
+		]
+	}, 
+	{		
+		width: 500, 
+		height: 200,          		
+        axisY: {
+            type: Chartist.FixedScaleAxis,                       
+            low: 0,
+            high: 1000,
+            ticks: [0, 250, 500, 750, 1000]
+         },
+		lineSmooth: Chartist.Interpolation.simple({
+			divisor: 10
+		})
+	}
+);
+
+</script>
+  </div>
+  
+    <div class="col-sm-3 dark dark-gradient">
+     <div class="widget-title"><i class="ion-navicon browser-icons widget-move" aria-hidden="true"></i> Yearly Review <i class="ion-more browser-icons widget-more" aria-hidden="true"></i></div>
+   <div class="ct-chart" id="myChart4" style="width:100%; height:212px"></div>
+<script>
+var data = {
+  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  series: [
+    [5, 4, 3, 7, 5, 10, 3, 4, 8, 10, 6, 8],
+    [3, 2, 9, 5, 4, 6, 4, 6, 7, 8, 7, 4]
+  ]
+};
+
+var options = {
+  seriesBarDistance: 10
+};
+
+var responsiveOptions = [
+  ['screen and (max-width: 640px)', {
+    seriesBarDistance: 5,
+    axisX: {
+      labelInterpolationFnc: function (value) {
+        return value[0];
+      }
+    }
+  }]
+];
+
+new Chartist.Bar('#myChart4', data, options, responsiveOptions);
+
+</script>
+        
+    </div>
+</div>
+<div class="row bottom-row">
+  <div class="col-sm-9 dark-blue"><div class="breaking-news">BREAKING NEWS</div> 
+  
+  
+  <div class="marquee">
+    
+             <div ng-app="my-sweet-app" ng-controller="metaioController"> 
+            <li class="news-style" ng-repeat="x in metaio">
+              <img class="news-image" src="{{ x.urlToImage }}"> <b> {{ x.title }}</b>
+            </li>
+            </div>
+          
+
+  </div>
+  
+  <div class="news-title"> META <i class="ion-radio-waves" aria-hidden="true"></i> NEWS </div>    <div class="nav-btns btn btn-primary blue-glow mt5i"></div>
+  </div>
+    <div class="col-sm-3 dark dark-gradient">
+    <img class="album-photo" src="spit-logo-LP-web.png">
+     <div class="ap-title"><b>The Sky is Gold</b> <span class="audio-title"> by: Spit Imagery</span></div>
+ <div class="audio-controls">    
+ <div class="ap-text">
+     <i class="fa fa-star" aria-hidden="true"></i> 
+     <i class="fa fa-star" aria-hidden="true"></i> 
+     <i class="fa fa-star" aria-hidden="true"></i> 
+     <i class="fa fa-star" aria-hidden="true"></i> 
+     <i class="fa fa-star" aria-hidden="true"></i>
+    <br>0:07 / 3:43</div>  
+ <i class="fa fa-backward browser-icons mt-2" aria-hidden="true"></i>
+    <i class="fa fa-play-circle browser-icons fs-29 mt-2" aria-hidden="true"></i>
+    <i class="fa fa-forward browser-icons mt-2" aria-hidden="true"></i> 
+   
+   <i class="fa fa-volume-up browser-icons mt-2" aria-hidden="true"></i>
+  
+ <i class="fa fa-chevron-circle-down browser-icons mt-2" aria-hidden="true"></i>
+
+</div>   
+        
+    </div>
+</div>
+    </div>
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+<script src="swiper.min.js"></script>
+  <script>
+    var swiper = new Swiper('.swiper-container', {
+      pagination: {
+        el: '.swiper-pagination',
+      },
+    });
+  </script>
+ 
+
+</body>
+</html>
