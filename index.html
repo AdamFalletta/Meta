@@ -1001,7 +1001,7 @@ angular.module('my-sweet-app', [])
      
          
         
-  $http.get("https://newsapi.org/v2/top-headlines?country=us&category=sports&apiKey=ba37cc57e7a64049b0cc8ccffbdf0ec4")
+  $http.get("https://newsapi.org/v2/top-headlines?country=us&category=yankees&apiKey=ba37cc57e7a64049b0cc8ccffbdf0ec4")
   .success(function(response) {$scope.metaio = response.articles; 
   
   $scope.$emit('UNLOAD');
