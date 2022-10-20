@@ -1,0 +1,103 @@
+<!DOCTYPE html> 
+<html> 
+<head>
+<script>
+var midi, data;
+// start talking to MIDI controller
+if (navigator.requestMIDIAccess) {
+  navigator.requestMIDIAccess({
+    sysex: false
+  }).then(onMIDISuccess, onMIDIFailure);
+} else {
+  console.warn("No MIDI support in your browser")
+}
+
+// on success
+function onMIDISuccess(midiData) {
+  // this is all our MIDI data
+  midi = midiData;
+  var allInputs = midi.inputs.values();
+  // loop over all available inputs and listen for any MIDI input
+  for (var input = allInputs.next(); input && !input.done; input = allInputs.next()) {
+    // when a MIDI value is received call the onMIDIMessage function
+    input.value.onmidimessage = gotMIDImessage;
+  }
+}
+var dataList = document.querySelector('#midi-data ul')
+
+function gotMIDImessage(messageData) {
+  var newItem = document.createElement('li');
+newItem.appendChild(document.createTextNode(messageData.data));
+dataList.appendChild(newItem);
+}
+
+// on failure
+function onMIDIFailure() {
+  console.warn("Not recognising MIDI controller")
+}
+</script>
+<style>
+$cream: hsla(33,50%,90%,1);
+$brown: hsla(340,30%,30%,1);
+$purple: hsla(310,30%,40%,1);
+$green: hsla(52,75%,45%,1);
+
+body {
+  width:90%; max-width:640px;
+  margin:0px auto; padding:2em;
+  box-sizing:border-box;
+  background: $cream;
+  font-family: 'Varela Round', sans-serif;
+  color: $brown;
+  line-height:1.3;
+  &>div {
+    padding:2em;
+    background:transparentize(white,0.3);
+    border: 10px solid white;
+  }
+}
+h2, p, ul {padding-bottom:1em;}
+h2 {text-align:center; font-size:2em;}
+p {font-size:1.2em;}
+
+#midi-data {
+  position:relative; overflow:hidden;
+  height: 300px;
+  background:transparentize(white,0.1);
+    border:10px solid transparentize($purple,0.3);
+  ul {
+    position:absolute; left:0px; bottom:0px;
+    padding:1em;
+    li {
+      padding:0.2em 0.2em 0.2em 1em;
+      font-size:1.6em;
+      font-family: monospace;
+      &:last-child {
+        font-weight:bold;
+        color:$purple;
+        animation:flash 0.5s;
+        &:before {content:"> "; margin-left:-1em;}
+      }
+    }
+  }  
+}
+
+@keyframes flash {
+  0% {color:$green;}
+  100% {color:$purple;}
+}
+</style>
+</head>
+<body>
+
+<div>
+  <h2>Simple MIDI API Example</h2>
+
+  <p>Plug in your MIDI controller and see the data logged here</p>
+
+  <section id="midi-data">  
+    <ul></ul>
+  </section>
+</div>
+</body> 
+</html>
