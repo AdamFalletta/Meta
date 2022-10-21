@@ -94,7 +94,7 @@ function gotMIDImessage(messageData) {
 newItem.appendChild(document.createTextNode(messageData.data));
 dataList.appendChild(newItem);
 }
-
+console.log(newItem);
 // on failure
 function onMIDIFailure() {
   console.warn("Not recognising MIDI controller")
