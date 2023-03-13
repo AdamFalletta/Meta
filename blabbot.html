@@ -13,14 +13,15 @@
     function everySecond(){
 const currentTime = new Date();
     console.log(currentTime);
-
+    }
+    
 var blab = document.getElementById("audio");
     
 if (currentTime.getHours() === 14 && currentTime.getMinutes() === 34) {
   blab.play();
 }
-    }
-     setInterval(everySecond(), 1000);
+    
+     setInterval(everySecond, 1000);
     </script>
 
   </body>
