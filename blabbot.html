@@ -10,14 +10,17 @@
        <div style="display:none" <audio id="audio" src="mp3/2pm.mp3"></audio></div>
   <script>
 
+    function everySecond(){
 const currentTime = new Date();
     console.log(currentTime);
 
 var blab = document.getElementById("audio");
     
-if (currentTime.getHours() === 14 && currentTime.getMinutes() === 28) {
+if (currentTime.getHours() === 14 && currentTime.getMinutes() === 34) {
   blab.play();
 }
+    }
+     setInterval(everySecond(), 1000);
     </script>
 
   </body>
