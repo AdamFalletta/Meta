@@ -3,67 +3,19 @@
   <head>
     <meta charset="UTF-8">
     <title>Play MP3 Files at Specified Times</title>
+ 
   </head>
-  <body>
-    <h1>Play MP3 Files at Specified Times</h1>
-    <p>This page will play the following MP3 files at the specified times:</p>
-    <ul>
-      <li>9:00am play 9am.mp3</li>
-      <li>10:00am play 10am.mp3</li>
-      <li>11:00am play 11am.mp3</li>
-      <li>12:00pm play 12pm.mp3</li>
-      <li>1:00pm play 1pm.mp3</li>
-      <li>2:00pm play 2pm.mp3</li>
-      <li>3:00pm play 3pm.mp3</li>
-      <li>4:00pm play 4pm.mp3</li>
-      <li>5:00pm play 5pm.mp3</li>
-      <li>6:00pm play 6pm.mp3</li>
-      <li>7:00pm play 7pm.mp3</li>
-      <li>8:00pm play 8pm.mp3</li>
-      <li>9:00pm play 9pm.mp3</li>
-      <li>10:00pm play 10pm.mp3</li>
-      <li>11:00pm play 11pm.mp3</li>
-      <li>12:00am play 12am.mp3</li>
-    </ul>
-    <script>
-      // Array of MP3 files to play
-const mp3Files = {
-  '9:00am': 'mp3/9am.mp3',
-  '10:00am': 'mp3/10am.mp3',
-  '11:00am': 'mp3/11am.mp3',
-  '12:00pm': 'mp3/12pm.mp3',
-  '1:00pm': 'mp3/1pm.mp3',
-  '2:00pm': 'mp3/2pm.mp3',
-  '3:00pm': 'mp3/3pm.mp3',
-  '4:00pm': 'mp3/4pm.mp3',
-  '5:00pm': 'mp3/5pm.mp3',
-  '6:00pm': 'mp3/6pm.mp3',
-  '7:00pm': 'mp3/7pm.mp3',
-  '8:00pm': 'mp3/8pm.mp3',
-  '9:00pm': 'mp3/9pm.mp3',
-  '10:00pm': 'mp3/10pm.mp3',
-  '11:00pm': 'mp3/11pm.mp3',
-  '12:00am': 'mp3/12am.mp3'
-};
 
-// Function to play the MP3 file at the specified time
-function playMp3AtTime(mp3File, time) {
-  const currentTime = new Date();
-  const targetTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), time.split(':')[0], time.split(':')[1], 0);
-  const timeUntilTarget = targetTime - currentTime;
-  if (timeUntilTarget > 0) {
-    setTimeout(function() {
-      const audio = new Audio(mp3File);
-      audio.play();
-    }, timeUntilTarget);
-  }
-}
+ <body>
+       <div style="display:none" <audio id="audio" src="mp3/2pm.mp3"></audio></div>
+  <script>
+    const audio = new Audio('mp3/2pm.mp3');
+const currentTime = new Date();
 
-// Schedule the MP3 files to play at the specified times
-for (let time in mp3Files) {
-  playMp3AtTime(mp3Files[time], time);
+if (currentTime.getHours() === 14 && currentTime.getMinutes() === 20) {
+  audio.play();
 }
     </script>
-    
+
   </body>
 </html>
