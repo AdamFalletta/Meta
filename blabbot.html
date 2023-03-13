@@ -9,11 +9,14 @@
  <body>
        <div style="display:none" <audio id="audio" src="mp3/2pm.mp3"></audio></div>
   <script>
-    const audio = new Audio('mp3/2pm.mp3');
-const currentTime = new Date();
 
-if (currentTime.getHours() === 14 && currentTime.getMinutes() === 20) {
-  audio.play();
+const currentTime = new Date();
+    console.log(currentTime);
+
+var blab = document.getElementById("audio");
+    
+if (currentTime.getHours() === 14 && currentTime.getMinutes() === 28) {
+  blab.play();
 }
     </script>
 
