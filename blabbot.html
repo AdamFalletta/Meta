@@ -11,15 +11,11 @@
   <script>
 
     function everySecond(){
-const currentTime = new Date();
-    console.log(currentTime);
-    }
+      const currentTime = new Date();
+      console.log(currentTime);
+      var blab = document.getElementById("audio");
     
-var blab = document.getElementById("audio");
-    
-if (currentTime.getHours() === 14 && currentTime.getMinutes() === 40) {
-  blab.play();
-}
+      if (currentTime.getHours() === 14 && currentTime.getMinutes() === 40) {blab.play();}}
     
      setInterval(everySecond, 1000);
     </script>
