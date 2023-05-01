@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Prompt Generator</title>
+  </head>
+  <body>
+    <h1>Prompt Generator</h1>
+    <form id="prompt-form">
+      <div>
+        <label for="prompt-type">What would you like to generate?</label><br />
+        <input type="radio" id="prompt-type-question" name="prompt-type" value="question" checked />
+        <label for="prompt-type-question">Question</label><br />
+        <input type="radio" id="prompt-type-sentence" name="prompt-type" value="sentence" />
+        <label for="prompt-type-sentence">Sentence</label><br />
+        <input type="radio" id="prompt-type-paragraph" name="prompt-type" value="paragraph" />
+        <label for="prompt-type-paragraph">Paragraph</label><br />
+      </div>
+      <div>
+        <label for="prompt-topic">What is the topic about?</label><br />
+        <input type="text" id="prompt-topic" name="prompt-topic" required />
+      </div>
+      <div>
+        <label for="prompt-format">What output format would you like?</label><br />
+        <input type="radio" id="prompt-format-text" name="prompt-format" value="text" checked />
+        <label for="prompt-format-text">Text</label><br />
+        <input type="radio" id="prompt-format-html" name="prompt-format" value="html" />
+        <label for="prompt-format-html">HTML</label><br />
+        <input type="radio" id="prompt-format-markdown" name="prompt-format" value="markdown" />
+        <label for="prompt-format-markdown">Markdown</label><br />
+      </div>
+      <div>
+        <label for="prompt-filter">Is there anything you want to filter out?</label><br />
+        <input type="checkbox" id="prompt-filter-names" name="prompt-filter" value="names" />
+        <label for="prompt-filter-names">Names</label><br />
+        <input type="checkbox" id="prompt-filter-places" name="prompt-filter" value="places" />
+        <label for="prompt-filter-places">Places</label><br />
+        <input type="checkbox" id="prompt-filter-words" name="prompt-filter" value="words" />
+        <label for="prompt-filter-words">Words</label><br />
+      </div>
+      <div>
+        <button type="submit">Generate Prompt</button>
+      </div>
+    </form>
+    <div id="generated-prompt"></div>
+    <script>
+      const promptForm = document.getElementById('prompt-form');
+      const generatedPrompt = document.getElementById('generated-prompt');
+
+      promptForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const promptType = document.querySelector('input[name="prompt-type"]:checked').value;
+        const promptTopic = document.getElementById('prompt-topic').value;
+        const promptFormat = document.querySelector('input[name="prompt-format"]:checked').value;
+        const promptFilters = [...document.querySelectorAll('input[name="prompt-filter"]:checked')].map(filter => filter.value);
+
+        let prompt = '';
+
+        // generate prompt based on selected options
+        switch(promptType) {
+          case 'question':
+            prompt = `What is ${promptTopic}?`;
+            break;
+          case 'sentence':
+            prompt = `Write a sentence about ${promptTopic}.`;
+            break;
+          case 'paragraph':
+            prompt = `Write a paragraph about ${promptTopic}.`;
+break;
+}
+
+javascript
+Copy code
+    // apply filters if any selected
+    if (promptFilters.length > 0) {
+      promptFilters.forEach((filter) => {
+        switch(filter) {
+          case 'names':
+            prompt = prompt.replace(/\b[A-Z][a-z]+\b/g, '______');
+            break;
+          case 'places':
+            prompt = prompt.replace(/\b[A-Z][a-z]+(?: [A-Z][a-z]+)*\b/g, '______');
+            break;
+          case 'words':
+            prompt = prompt.replace(/\b\w+\b/g, '______');
+            break;
+        }
+      });
+    }
+
+    // apply formatting based on selected option
+    switch(promptFormat) {
+      case 'html':
+        prompt = prompt.replace(/\n/g, '<br>');
+        prompt = `<p>${prompt}</p>`;
+        break;
+      case 'markdown':
+        prompt = prompt.replace(/\n/g, '  \n');
+        prompt = `> ${prompt}`;
+        break;
+    }
+
+    // display generated prompt
+    generatedPrompt.innerHTML = `
+      <h2>Generated Prompt:</h2>
+      <textarea rows="5" cols="50">${prompt}</textarea>
+      <p>Copy and paste the generated prompt into ChatGPT.</p>
+    `;
+  });
+</script>
+  </body>
+</html>
