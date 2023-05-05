@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .bar-graph {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .bar-label {
+      width: 100px;
+      text-align: right;
+      padding-right: 10px;
+      font-weight: bold;
+    }
+
+    .bar {
+      height: 20px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <form id="performance-form">
+    <label for="input1">Label 1:</label>
+    <input type="number" id="input1" min="0" max="125"><br>
+
+    <label for="input2">Label 2:</label>
+    <input type="number" id="input2" min="0" max="125"><br>
+
+    <!-- Add more labels and inputs here -->
+
+    <input type="submit" value="Save">
+  </form>
+
+  <div id="bar-graph-container"></div>
+
+  <script>
+    // Retrieve saved data from localStorage
+    const savedData = JSON.parse(localStorage.getItem('performanceData')) || {};
+
+    // Get the form and bar graph container elements
+    const form = document.getElementById('performance-form');
+    const barGraphContainer = document.getElementById('bar-graph-container');
+
+    // Initialize the form inputs with saved data
+    Object.keys(savedData).forEach(label => {
+      const input = document.getElementById(label);
+      if (input) {
+        input.value = savedData[label];
+      }
+    });
+
+    // Function to update the bar graph
+    function updateBarGraph() {
+      // Clear the bar graph container
+      barGraphContainer.innerHTML = '';
+
+      // Get all the form inputs
+      const inputs = Array.from(form.elements).filter(element => element.tagName === 'INPUT' && element.type === 'number');
+
+      // Iterate through the inputs and create a bar for each
+      inputs.forEach(input => {
+        const label = document.createElement('span');
+        label.className = 'bar-label';
+        label.textContent = input.previousElementSibling.textContent;
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.width = input.value + '%';
+        bar.style.backgroundColor = getRandomColor();
+
+        const barContainer = document.createElement('div');
+        barContainer.className = 'bar-graph';
+        barContainer.appendChild(label);
+        barContainer.appendChild(bar);
+
+        barGraphContainer.appendChild(barContainer);
+      });
+
+      // Save the data to localStorage
+      const formData = {};
+      inputs.forEach(input => {
+        formData[input.id] = input.value;
+      });
+      localStorage.setItem('performanceData', JSON.stringify(formData));
+    }
+
+    // Generate a random color
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    // Update the bar graph when the form is submitted
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      updateBarGraph();
+    });
+  </script>
+</body>
+</html>
