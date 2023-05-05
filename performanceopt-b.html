@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .bar-graph {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .bar-label {
+      width: 0px;
+      text-align: right;
+      padding-right: 10px;
+      font-weight: bold;
+      position:absolute;
+    }
+
+    .bar {
+      height: 20px;
+      margin-right: 0px;
+          background-image: linear-gradient(to right, #f3c648 , #efb660);
+      border-radius:10px;
+    }
+  </style>
+</head>
+<body>
+  <form id="performance-form">
+    <label for="input1">RHC</label>
+    <input type="number" id="input1" min="0" max="100"><br>
+
+    <label for="input2">LHC</label>
+    <input type="number" id="input2" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+ <label for="input3">RHP</label>
+    <input type="number" id="input3" min="0" max="100"><br>
+
+    <label for="input4">LHP</label>
+    <input type="number" id="input4" min="0" max="100"><br>
+    
+        <label for="input5">VIS</label>
+    <input type="number" id="input5" min="0" max="100"><br>
+
+    <label for="input6">DIS</label>
+    <input type="number" id="input6" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+ <label for="input7">CLU</label>
+    <input type="number" id="input7" min="0" max="100"><br>
+
+    <label for="input8">DUR</label>
+    <input type="number" id="input8" min="0" max="100"><br>
+
+        <label for="input9">DRG</label>
+    <input type="number" id="input9" min="0" max="100"><br>
+
+    <label for="input10">BUN</label>
+    <input type="number" id="input10" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+ <label for="input11">SPD</label>
+    <input type="number" id="input11" min="0" max="100"><br>
+
+    <label for="input12">REA</label>
+    <input type="number" id="input12" min="0" max="100"><br>
+
+        <label for="input13">FLD</label>
+    <input type="number" id="input13" min="0" max="100"><br>
+
+    <label for="input14">ARM</label>
+    <input type="number" id="input14" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+ <label for="input15">ACC</label>
+    <input type="number" id="input15" min="0" max="100"><br>
+
+    <label for="input16">BAS</label>
+    <input type="number" id="input16" min="0" max="100"><br>
+
+        <label for="input17">AGG</label>
+    <input type="number" id="input17" min="0" max="100"><br>
+
+
+
+    
+    <input type="submit" value="Save">
+  </form>
+
+  <div id="bar-graph-container"></div>
+
+  <script>
+    // Retrieve saved data from localStorage
+    const savedData = JSON.parse(localStorage.getItem('performanceData')) || {};
+
+    // Get the form and bar graph container elements
+    const form = document.getElementById('performance-form');
+    const barGraphContainer = document.getElementById('bar-graph-container');
+
+    // Initialize the form inputs with saved data
+    Object.keys(savedData).forEach(label => {
+      const input = document.getElementById(label);
+      if (input) {
+        input.value = savedData[label];
+      }
+    });
+
+    // Function to update the bar graph
+    function updateBarGraph() {
+      // Clear the bar graph container
+      barGraphContainer.innerHTML = '';
+
+      // Get all the form inputs
+      const inputs = Array.from(form.elements).filter(element => element.tagName === 'INPUT' && element.type === 'number');
+
+      // Iterate through the inputs and create a bar for each
+      inputs.forEach(input => {
+        const label = document.createElement('span');
+        label.className = 'bar-label';
+        label.textContent = input.previousElementSibling.textContent;
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.width = input.value + '%';
+        bar.style.backgroundColor = "#000033";
+
+        const barContainer = document.createElement('div');
+        barContainer.className = 'bar-graph';
+        barContainer.appendChild(label);
+        barContainer.appendChild(bar);
+
+        barGraphContainer.appendChild(barContainer);
+      });
+
+      // Save the data to localStorage
+      const formData = {};
+      inputs.forEach(input => {
+        formData[input.id] = input.value;
+      });
+      localStorage.setItem('performanceData', JSON.stringify(formData));
+    }
+
+    // Generate a random color
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    // Update the bar graph when the form is submitted
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      updateBarGraph();
+    });
+  </script>
+</body>
+</html>
