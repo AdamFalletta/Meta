@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Text-to-Speech Demo</title>
+<style>
+.container {
+  width: 300px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 20px;
+}
+
+textarea {
+  width: 100%;
+  height: 150px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}  
+</style>
+</head>
+<body>
+  <div class="container">
+    <textarea id="myTextarea" placeholder="Enter text here"></textarea>
+    <button id="readButton">Read Text</button>
+  </div>
+
+<script>
+  // HTML elements
+const textarea = document.getElementById('myTextarea');
+const button = document.getElementById('readButton');
+
+// Function to read the text using the Web Speech API
+function readText() {
+  const text = textarea.value;
+  const utterance = new SpeechSynthesisUtterance(text);
+  
+  // Specify the voice
+  const voices = window.speechSynthesis.getVoices();
+  const maleVoices = voices.filter(voice => voice.name.includes('Male'));
+  utterance.voice = maleVoices[0];
+  
+  // Speak the text
+  speechSynthesis.speak(utterance);
+}
+
+// Event listener for the button click
+button.addEventListener('click', readText);
+  </script>
+</body>
+</html>
