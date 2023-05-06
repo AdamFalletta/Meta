@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Save to Local Storage</title>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: "Courier New", Courier, monospace;
+    }
+    
+    textarea {
+      background-color: charcoal;
+      color: white;
+      font-family: "Courier New", Courier, monospace;
+      width: 300px;
+      height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Save to Local Storage</h1>
+  <textarea id="myTextarea"></textarea>
+
+  <script>
+    // Retrieve saved data from local storage
+    window.onload = function() {
+      var savedData = localStorage.getItem("savedText");
+      if (savedData) {
+        document.getElementById("myTextarea").value = savedData;
+      }
+    };
+
+    // Save data to local storage on input change
+    document.getElementById("myTextarea").addEventListener("input", function() {
+      var text = document.getElementById("myTextarea").value;
+      localStorage.setItem("savedText", text);
+    });
+  </script>
+</body>
+</html>
