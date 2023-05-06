@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Life Stream Animation</title>
+  <style>
+    #lifestream-container {
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+
+    #lifestream-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="lifestream-container">
+    <canvas id="lifestream-canvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('lifestream-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    const particles = [];
+
+    class Particle {
+      constructor(x, y, size, color) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.color = color;
+        this.speedX = Math.random() * 4 - 2; // Random horizontal speed
+        this.speedY = Math.random() * 4 - 2; // Random vertical speed
+        this.opacity = 1;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.opacity -= 0.01;
+
+        if (this.opacity <= 0) {
+          particles.splice(particles.indexOf(this), 1);
+        }
+      }
+
+      draw() {
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+      }
+    }
+
+    function generateParticles(x, y) {
+      const particleCount = 50;
+
+      for (let i = 0; i < particleCount; i++) {
+        const size = Math.random() * 8 + 4;
+        const color = `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`;
+        particles.push(new Particle(x, y, size, color));
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+    }
+
+    canvas.addEventListener('click', event => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      generateParticles(x, y);
+    });
+
+    animate();
+  </script>
+</body>
+</html>
