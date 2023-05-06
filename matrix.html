@@ -1,65 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Matrix Chart</title>
-  <style>
-    #graphContainer {
-    width: 1000px;
-    height: 1000px;
-    margin: 20px auto;
-    border: 1px solid #ccc;
-    position: relative;
-}
-
-#chartCanvas {
-    width: 100%;
-    height: 100%;
-}
-
-.dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: red;
-    position: absolute;
-}
-  </style>
+  <title>Chart Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>Matrix Chart</h1>
-    <div id="graphContainer">
-        <canvas id="chartCanvas"></canvas>
-    </div>
-    <form id="inputForm">
-        <label for="fleshInput">Flesh:</label>
-        <input type="number" id="fleshInput" min="0" max="10" required>
-        <label for="spiritInput">Spirit:</label>
-        <input type="number" id="spiritInput" min="0" max="10" required>
-        <input type="submit" value="Submit">
-    </form>
-  <script>
-  document.getElementById("inputForm").addEventListener("submit", function(event) {
-    event.preventDefault();
+  <form id="inputForm">
+    X-axis (0-10): <input type="number" id="xInput" min="0" max="10">
+    Y-axis (0-10): <input type="number" id="yInput" min="0" max="10">
+    <input type="submit" value="Submit">
+  </form>
   
-    var flesh = parseInt(document.getElementById("fleshInput").value);
-    var spirit = parseInt(document.getElementById("spiritInput").value);
+  <canvas id="chart"></canvas>
 
-    if (isNaN(flesh) || isNaN(spirit) || flesh < 0 || flesh > 10 || spirit < 0 || spirit > 10) {
-        alert("Please enter valid values between 0 and 10.");
+  <script>
+    document.getElementById("inputForm").addEventListener("submit", function(event) {
+      event.preventDefault(); // Prevent form submission
+
+      // Get input values
+      var xValue = parseInt(document.getElementById("xInput").value);
+      var yValue = parseInt(document.getElementById("yInput").value);
+
+      // Validate input values
+      if (isNaN(xValue) || isNaN(yValue)) {
+        alert("Please enter valid numeric values for X and Y.");
         return;
-    }
-  
-    var graphContainer = document.getElementById("graphContainer");
-    var chartCanvas = document.getElementById("chartCanvas");
-  
-    var dot = document.createElement("div");
-    dot.className = "dot";
-    dot.style.left = (flesh / 10) * graphContainer.offsetWidth + "px";
-    dot.style.top = (spirit / 10) * graphContainer.offsetHeight + "px";
-  
-    chartCanvas.appendChild(dot);
-  
-    document.getElementById("inputForm").reset();
-  });</script>
+      }
+
+      // Create chart
+      var ctx = document.getElementById("chart").getContext("2d");
+      var chart = new Chart(ctx, {
+        type: "scatter",
+        data: {
+          datasets: [
+            {
+              label: "Data",
+              data: [{ x: xValue, y: yValue }],
+              backgroundColor: "rgba(255, 0, 0, 1)",
+              pointRadius: 10
+            }
+          ]
+        },
+        options: {
+          scales: {
+            x: {
+              min: 0,
+              max: 10
+            },
+            y: {
+              min: 0,
+              max: 10
+            }
+          }
+        }
+      });
+    });
+  </script>
 </body>
 </html>
