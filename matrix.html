@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Matrix Chart</title>
+  <style>
+    #graphContainer {
+    width: 1000px;
+    height: 1000px;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+    position: relative;
+}
+
+#chartCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
+    position: absolute;
+}
+  </style>
+</head>
+<body>
+    <h1>Matrix Chart</h1>
+    <div id="graphContainer">
+        <canvas id="chartCanvas"></canvas>
+    </div>
+    <form id="inputForm">
+        <label for="fleshInput">Flesh:</label>
+        <input type="number" id="fleshInput" min="0" max="10" required>
+        <label for="spiritInput">Spirit:</label>
+        <input type="number" id="spiritInput" min="0" max="10" required>
+        <input type="submit" value="Submit">
+    </form>
+  <script>
+  document.getElementById("inputForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+  
+    var flesh = parseInt(document.getElementById("fleshInput").value);
+    var spirit = parseInt(document.getElementById("spiritInput").value);
+
+    if (isNaN(flesh) || isNaN(spirit) || flesh < 0 || flesh > 10 || spirit < 0 || spirit > 10) {
+        alert("Please enter valid values between 0 and 10.");
+        return;
+    }
+  
+    var graphContainer = document.getElementById("graphContainer");
+    var chartCanvas = document.getElementById("chartCanvas");
+  
+    var dot = document.createElement("div");
+    dot.className = "dot";
+    dot.style.left = (flesh / 10) * graphContainer.offsetWidth + "px";
+    dot.style.top = (spirit / 10) * graphContainer.offsetHeight + "px";
+  
+    chartCanvas.appendChild(dot);
+  
+    document.getElementById("inputForm").reset();
+  });</script>
+</body>
+</html>
