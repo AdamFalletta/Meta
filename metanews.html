@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dynamic News Feed</title>
+  <style>
+    /* CSS for card-style UI */
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .card img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Top Stories</h1>
+  <ul id="newsList"></ul>
+
+  <script>
+    const apiKey = "bb2d1642a93d45668e9a7d3ed6256c40";
+    const apiUrl = `https://newsapi.org/v2/top-headlines?apiKey=${apiKey}`;
+
+    // Fetch top stories from NewsAPI
+    fetch(apiUrl)
+      .then(response => response.json())
+      .then(data => {
+        const newsList = document.getElementById("newsList");
+
+        // Iterate over each article and create a card for it
+        data.articles.forEach(article => {
+          const { title, urlToImage, source, publishedAt } = article;
+
+          // Create card container
+          const card = document.createElement("div");
+          card.classList.add("card");
+
+          // Create image element
+          if (urlToImage) {
+            const image = document.createElement("img");
+            image.src = urlToImage;
+            card.appendChild(image);
+          }
+
+          // Create title element
+          const titleElement = document.createElement("h2");
+          titleElement.textContent = title;
+          card.appendChild(titleElement);
+
+          // Create source element
+          const sourceElement = document.createElement("p");
+          sourceElement.textContent = `Source: ${source.name}`;
+          card.appendChild(sourceElement);
+
+          // Create timestamp element
+          const timestampElement = document.createElement("p");
+          timestampElement.textContent = `Published At: ${publishedAt}`;
+          card.appendChild(timestampElement);
+
+          // Append card to the news list
+          newsList.appendChild(card);
+        });
+      })
+      .catch(error => {
+        console.error("Error:", error);
+      });
+  </script>
+</body>
+</html>
