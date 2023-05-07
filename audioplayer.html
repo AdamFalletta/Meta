@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audio Playlist</title>
+  <style>
+    .thumbnail {
+      width: 125px;
+      height: 125px;
+      cursor: pointer;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="playlist"></div>
+  <audio id="audioPlayer" controls></audio>
+
+  <script>
+    const playlist = [
+      {
+        title: "Song 1",
+        url: "path/to/song1.mp3",
+        thumbnail: "path/to/thumbnail1.jpg"
+      },
+      {
+        title: "Song 2",
+        url: "path/to/song2.mp3",
+        thumbnail: "path/to/thumbnail2.jpg"
+      },
+      // Add the rest of the songs here...
+    ];
+
+    function playSong(url) {
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.src = url;
+      audioPlayer.play();
+    }
+
+    function stopSong() {
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+    }
+
+    function createThumbnailElement(song) {
+      const thumbnail = document.createElement('img');
+      thumbnail.src = song.thumbnail;
+      thumbnail.alt = song.title;
+      thumbnail.className = 'thumbnail';
+      thumbnail.addEventListener('click', function() {
+        stopSong();
+        playSong(song.url);
+      });
+
+      return thumbnail;
+    }
+
+    function createPlaylist() {
+      const playlistContainer = document.getElementById('playlist');
+
+      for (let i = 0; i < playlist.length; i++) {
+        const song = playlist[i];
+        const thumbnail = createThumbnailElement(song);
+        playlistContainer.appendChild(thumbnail);
+      }
+    }
+
+    createPlaylist();
+  </script>
+</body>
+</html>
