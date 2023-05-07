@@ -18,11 +18,10 @@
 </head>
 <body>
   <h1>Top Stories</h1>
-  <ul id="newsList"></ul>
+  <div id="newsList"></div>
 
   <script>
-    const apiKey = "bb2d1642a93d45668e9a7d3ed6256c40";
-    const apiUrl = `https://cors-anywhere.herokuapp.com/https://newsapi.org/v2/top-headlines?country=us&apiKey=${apiKey}`;
+    const apiUrl = "https://newsapi.org/v2/top-headlines?country=us&apiKey=bb2d1642a93d45668e9a7d3ed6256c40";
 
     // Fetch top stories from NewsAPI
     fetch(apiUrl)
