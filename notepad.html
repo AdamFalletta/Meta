@@ -41,6 +41,16 @@
     vertical-align:top;
     margin-left: 20px;
     }
+    
+     .thumbnail {
+      width: 75px;
+      height: 75px;
+      cursor: pointer;
+      margin: 2px;
+    }
+    .pl{
+    width:300px;
+    }
   </style>
 </head>
 <body>
@@ -67,40 +77,210 @@
   </div>
   <div class="sidebar">
     <img src="img/revvlogo.jpg" class="revvlogo">
-      <h1>The RevV - Songlist</h1>
-  <ul>
-    <li>Take 2</li>
-    <li>Wild</li>
-    <li>RevV Anthem</li>
-    <li>ACE</li>
-    <li>Crunch Song</li>
-    <li>The Sky is Gold</li>
-    <li>Only Little Stars</li>
-    <li>Amber Like</li>
-    <li>BlueBirds</li>
-    <li>Take me Back</li>
-    <li>RHCP 7th's Song</li>
-    <li>Going away</li>
-    <li>Behave</li>
-    <li>Hendrix 1</li>
-    <li>Hendrix 2</li>
-    <li>Hendrix 3</li>
-    <li>Hendrix 4 (Whooaaa... YEAHHH)</li>
-    <li>7A 7E 5A 5E 7E</li>
-    <li>Image Issues</li>
-    <li>The Clap Song</li>
-    <li>Adams Rock Song</li>
-    <li>Julias Song</li>
-    <li>That Metal Song</li>
-    <li>Surf Song</li>
-    <li>Surf Punk</li>
-    <li>Acoustic Ballad: Gb</li>
-    <li>Acoustic: Eddie's Coming Home</li>
-    <li>Piano Ballad: Johnny</li>
-    <li>Piano Ballad: Gb Ballad</li>
-    <li>Piano Ballad: Imagine Like</li>
-    <li>Piano Ballad: Tears of Love</li>
-  </ul>
+      <div class="pl" id="playlist"></div>
+  <audio id="audioPlayer" controls></audio>
+
+  <script>
+    const playlist = [
+      {
+        title: "Song 1",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 2",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 3",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 4",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 5",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 6",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 7",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 8",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 9",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 10",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 11",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 12",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 13",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 14",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 15",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 16",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 17",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 18",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 19",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 20",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 21",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 22",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 23",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 24",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 25",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 26",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      // Add the rest of the songs here...
+            {
+        title: "Song 27",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+                 {
+        title: "Song 28",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+            {
+        title: "Song 29",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+      {
+        title: "Song 30",
+        url: "mp3/2pm.mp3",
+        thumbnail: "img/revvlogo.jpg"
+      },
+    ];
+
+    function playSong(url) {
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.src = url;
+      audioPlayer.play();
+    }
+
+    function stopSong() {
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+    }
+
+    function createThumbnailElement(song) {
+      const thumbnail = document.createElement('img');
+      thumbnail.src = song.thumbnail;
+      thumbnail.alt = song.title;
+      thumbnail.className = 'thumbnail';
+      thumbnail.addEventListener('click', function() {
+        stopSong();
+        playSong(song.url);
+      });
+
+      return thumbnail;
+    }
+
+    function createPlaylist() {
+      const playlistContainer = document.getElementById('playlist');
+
+      for (let i = 0; i < playlist.length; i++) {
+        const song = playlist[i];
+        const thumbnail = createThumbnailElement(song);
+        playlistContainer.appendChild(thumbnail);
+      }
+    }
+
+    createPlaylist();
+  </script>
+     
   </div>
 </body>
 </html>
