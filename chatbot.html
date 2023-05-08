@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chatbot Example</title>
+  </head>
+  <body>
+    <div id="chatContainer"></div>
+    <input type="text" id="userInput" placeholder="Enter your message">
+    <button id="sendButton">Send</button>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+  const chatContainer = document.getElementById('chatContainer');
+  const userInput = document.getElementById('userInput');
+  const sendButton = document.getElementById('sendButton');
+
+  sendButton.addEventListener('click', sendMessage);
+
+  function sendMessage() {
+    const userMessage = userInput.value.trim();
+
+    if (userMessage !== '') {
+      const message = {
+        sender: 'user',
+        text: userMessage,
+      };
+
+      // Save the user message to localStorage
+      saveMessage(message);
+
+      // Generate a bot response (replace with your own logic)
+      const botResponse = generateBotResponse(userMessage);
+
+      // Save the bot response to localStorage
+      const botMessage = {
+        sender: 'bot',
+        text: botResponse,
+      };
+      saveMessage(botMessage);
+
+      // Speak the bot response
+      speakText(botResponse);
+
+      // Render the messages in the chat container
+      renderMessage(message);
+      renderMessage(botMessage);
+
+      // Clear the user input
+      userInput.value = '';
+    }
+  }
+
+  // Helper function to save the message to localStorage
+  function saveMessage(message) {
+    const conversation = getConversation();
+    conversation.push(message);
+    localStorage.setItem('conversation', JSON.stringify(conversation));
+  }
+
+  // Helper function to retrieve the conversation from localStorage
+  function getConversation() {
+    const conversationData = localStorage.getItem('conversation');
+    return conversationData ? JSON.parse(conversationData) : [];
+  }
+
+  // Helper function to generate a bot response (replace with your own logic)
+  function generateBotResponse(userMessage) {
+    // Your logic for generating a bot response based on user input
+    return 'This is a sample bot response.';
+  }
+
+  // Helper function to speak the text using the Web Speech API
+  function speakText(text) {
+    const speechSynthesis = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(utterance);
+  }
+
+  // Helper function to render a message in the chat container
+  function renderMessage(message) {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `${message.sender}: ${message.text}`;
+    chatContainer.appendChild(messageElement);
+  }
+
+  // On page load, render existing conversation from localStorage
+  const existingConversation = getConversation();
+  existingConversation.forEach(renderMessage);
+});
+    </script>
+  </body>
+</html>
