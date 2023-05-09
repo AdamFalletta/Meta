@@ -39,7 +39,7 @@
   <button id="restart">Restart</button>
 
   <script>
-  const timer = document.getElementById('timer');
+const timer = document.getElementById('timer');
 const roundsDisplay = document.getElementById('rounds');
 const startButton = document.getElementById('start');
 const pauseButton = document.getElementById('pause');
@@ -55,8 +55,37 @@ function updateTimer() {
   timer.textContent = `${minutes}:${seconds}`;
 }
 
+function getWorkoutName(round) {
+  if (round <= 3) {
+    return 'Medicine Ball';
+  } else if (round <= 6) {
+    return 'Lower Back Deadlifts';
+  } else if (round <= 9) {
+    return 'Bent Over Lateral Raise';
+  } else if (round <= 12) {
+    return 'Lateral Raises';
+  } else if (round <= 15) {
+    return 'Forward Raises';
+  } else if (round <= 18) {
+    return 'Shrugs';
+  } else if (round <= 21) {
+    return 'Biceps Curls';
+  } else if (round <= 24) {
+    return 'Knee Raises';
+  } else if (round <= 27) {
+    return 'Hamstring Deadlifts';
+  } else if (round <= 30) {
+    return 'Push Ups';
+  } else if (round <= 33) {
+    return 'Pull Ups (Wide)';
+  } else {
+    return 'Dips';
+  }
+}
+
 function updateRounds() {
-  roundsDisplay.textContent = `Round ${currentRound} of ${totalRounds}`;
+  const workoutName = getWorkoutName(currentRound);
+  roundsDisplay.textContent = `Round ${currentRound} of ${totalRounds} - ${workoutName}`;
 }
 
 function updateProgress() {
@@ -68,7 +97,7 @@ function startTimer() {
   updateTimer();
   updateRounds();
   updateProgress();
-  startButton.disabled = true;
+  startButton.disabled = false;
   pauseButton.disabled = false;
   restartButton.disabled = false;
 
@@ -81,8 +110,8 @@ function startTimer() {
       if (currentRound > totalRounds) {
         clearInterval(interval);
         timer.textContent = 'Finished!';
-        pauseButton.disabled = true;
-        restartButton.disabled = true;
+        pauseButton.disabled = false;
+        restartButton.disabled = false;
       } else {
         secondsRemaining = 100;
         updateRounds();
@@ -95,7 +124,7 @@ function startTimer() {
 function pauseTimer() {
   clearInterval(interval);
   startButton.disabled = false;
-  pauseButton.disabled = true;
+  pauseButton.disabled = false;
 }
 
 function restartTimer() {
@@ -105,7 +134,7 @@ function restartTimer() {
   updateTimer();
   updateRounds();
   updateProgress();
-  startButton.disabled = true;
+  startButton.disabled = false;
   pauseButton.disabled = false;
 }
 
