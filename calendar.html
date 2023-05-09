@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JavaScript Calendar</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.4.0/css/bootstrap.min.css">
+  <style>
+    .calendar {
+      margin-top: 20px;
+    }
+    .view {
+      margin-bottom: 20px;
+    }
+    .view-title {
+      font-weight: bold;
+      text-align: center;
+    }
+    .day {
+      height: 80px;
+      padding: 5px;
+      border: 1px solid lightgray;
+    }
+    .event {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">JavaScript Calendar</h1>
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="calendar">
+          <div class="view">
+            <h3 class="view-title">Yearly View</h3>
+            <div id="yearly-view"></div>
+          </div>
+          <div class="view">
+            <h3 class="view-title">Monthly View</h3>
+            <div id="monthly-view"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="calendar">
+          <div class="view">
+            <h3 class="view-title">Weekly View</h3>
+            <div id="weekly-view"></div>
+          </div>
+          <div class="view">
+            <h3 class="view-title">Daily View</h3>
+            <div id="daily-view"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+  <script>
+  $(document).ready(function() {
+  // Initialize calendar views
+  $('#yearly-view').fullCalendar({
+    defaultView: 'year'
+  });
+
+  $('#monthly-view').fullCalendar({
+    defaultView: 'month'
+  });
+
+  $('#weekly-view').fullCalendar({
+    defaultView: 'agendaWeek'
+  });
+
+  $('#daily-view').fullCalendar({
+    defaultView: 'agendaDay'
+  });
+
+  // Event management
+  const events = JSON.parse(localStorage.getItem('events')) || [];
+
+  function saveEvents() {
+    localStorage.setItem('events', JSON.stringify(events));
+  }
+
+  function addEvent(event) {
+    events.push(event);
+    saveEvents();
+  }
+
+  function deleteEvent(eventId) {
+    const index = events.findIndex(event => event.id === eventId);
+    if (index !== -1) {
+      events.splice(index, 1);
+      saveEvents();
+    }
+  }
+    
+      // ...
+
+  function updateEventsView() {
+    $('.event').remove();
+    events.forEach(event => {
+      const date = moment(event.start).format('YYYY-MM-DD');
+      const time = moment(event.start).format('HH:mm');
+      const eventHtml = `
+        <div class="event">
+          <span class="event-date">${date}</span>
+          <span class="event-time">${time}</span>
+          <span class="event-title">${event.title}</span>
+          <button class="btn btn-danger btn-sm delete-event" data-event-id="${event.id}">Delete</button>
+        </div>
+      `;
+      $('.view').append(eventHtml);
+    });
+  }
+
+  updateEventsView();
+
+  // Event handlers
+  $('#add-event-form').on('submit', function(e) {
+    e.preventDefault();
+    const title = $('#event-title').val();
+    const start = $('#event-start').val();
+    const end = $('#event-end').val();
+
+    const event = {
+      id: moment().format('x'), // Generate unique ID using milliseconds
+      title: title,
+      start: start,
+      end: end
+    };
+
+    addEvent(event);
+    updateEventsView();
+    $('#add-event-modal').modal('hide');
+    $('#add-event-form')[0].reset();
+  });
+
+  $(document).on('click', '.delete-event', function() {
+    const eventId = $(this).data('event-id');
+    deleteEvent(eventId);
+    updateEventsView();
+  });
+});
+
+  </script>
+</body>
+</html>
