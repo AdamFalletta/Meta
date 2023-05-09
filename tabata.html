@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tabata Timer</title>
+  <style>
+    #timer {
+      font-size: 48px;
+      text-align: center;
+    }
+    #rounds {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: lightgray;
+      margin-bottom: 10px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background-color: green;
+      transition: width 0.5s;
+    }
+    .current-round {
+      background-color: yellow;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tabata Timer</h1>
+  <div id="timer">00:00</div>
+  <div id="rounds"></div>
+  <div class="progress-bar">
+    <div class="progress-bar-fill"></div>
+  </div>
+  <button id="start">Start</button>
+  <button id="pause">Pause</button>
+  <button id="restart">Restart</button>
+
+  <script>
+  const timer = document.getElementById('timer');
+const roundsDisplay = document.getElementById('rounds');
+const startButton = document.getElementById('start');
+const pauseButton = document.getElementById('pause');
+const restartButton = document.getElementById('restart');
+const progressBarFill = document.querySelector('.progress-bar-fill');
+let totalRounds = 36;
+let currentRound = 1;
+let secondsRemaining = 100;
+
+function updateTimer() {
+  const minutes = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
+  const seconds = (secondsRemaining % 60).toString().padStart(2, '0');
+  timer.textContent = `${minutes}:${seconds}`;
+}
+
+function updateRounds() {
+  roundsDisplay.textContent = `Round ${currentRound} of ${totalRounds}`;
+}
+
+function updateProgress() {
+  const progressPercentage = (currentRound / totalRounds) * 100;
+  progressBarFill.style.width = `${progressPercentage}%`;
+}
+
+function startTimer() {
+  updateTimer();
+  updateRounds();
+  updateProgress();
+  startButton.disabled = true;
+  pauseButton.disabled = false;
+  restartButton.disabled = false;
+
+  const interval = setInterval(() => {
+    if (secondsRemaining > 0) {
+      secondsRemaining--;
+      updateTimer();
+    } else {
+      currentRound++;
+      if (currentRound > totalRounds) {
+        clearInterval(interval);
+        timer.textContent = 'Finished!';
+        pauseButton.disabled = true;
+        restartButton.disabled = true;
+      } else {
+        secondsRemaining = 100;
+        updateRounds();
+        updateProgress();
+      }
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  clearInterval(interval);
+  startButton.disabled = false;
+  pauseButton.disabled = true;
+}
+
+function restartTimer() {
+  clearInterval(interval);
+  currentRound = 1;
+  secondsRemaining = 100;
+  updateTimer();
+  updateRounds();
+  updateProgress();
+  startButton.disabled = true;
+  pauseButton.disabled = false;
+}
+
+startButton.addEventListener('click', startTimer);
+pauseButton.addEventListener('click', pauseTimer);
+restartButton.addEventListener('click', restartTimer);
+
+  </script>
+</body>
+</html>
