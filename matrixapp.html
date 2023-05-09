@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Textareas with Local Storage</title>
+  <script>
+    function saveText(id) {
+      var textarea = document.getElementById(id);
+      localStorage.setItem(id, textarea.value);
+    }
+
+    function loadText(id) {
+      var textarea = document.getElementById(id);
+      textarea.value = localStorage.getItem(id);
+    }
+  </script>
+</head>
+<body>
+  <textarea id="textarea1" oninput="saveText('textarea1');" onload="loadText('textarea1');"></textarea>
+  <textarea id="textarea2" oninput="saveText('textarea2');" onload="loadText('textarea2');"></textarea>
+  <textarea id="textarea3" oninput="saveText('textarea3');" onload="loadText('textarea3');"></textarea>
+  <textarea id="textarea4" oninput="saveText('textarea4');" onload="loadText('textarea4');"></textarea>
+</body>
+</html>
