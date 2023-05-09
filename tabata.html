@@ -65,29 +65,29 @@ function updateTimer() {
 
 function getWorkoutName(round) {
   if (round <= 3) {
-    return 'Medicine Ball';
+    return 'Upright Row';
   } else if (round <= 6) {
-    return 'Lower Back Deadlifts';
-  } else if (round <= 9) {
-    return 'Bent Over Lateral Raise';
-  } else if (round <= 12) {
-    return 'Lateral Raises';
-  } else if (round <= 15) {
-    return 'Forward Raises';
-  } else if (round <= 18) {
     return 'Shrugs';
+  } else if (round <= 9) {
+    return 'Wrist Curls';
+  } else if (round <= 12) {
+    return 'Reverse Wrist Curls';
+  } else if (round <= 15) {
+    return 'Bicep Curls';
+  } else if (round <= 18) {
+    return 'Hammer Curls';
   } else if (round <= 21) {
-    return 'Biceps Curls';
-  } else if (round <= 24) {
-    return 'Knee Raises';
-  } else if (round <= 27) {
-    return 'Hamstring Deadlifts';
-  } else if (round <= 30) {
-    return 'Push Ups';
-  } else if (round <= 33) {
-    return 'Pull Ups (Wide)';
-  } else {
     return 'Dips';
+  } else if (round <= 24) {
+    return 'Triceps Push Down';
+  } else if (round <= 27) {
+    return 'Closed Grip Push up';
+  } else if (round <= 30) {
+    return 'Wide Grip Push Ups';
+  } else if (round <= 33) {
+    return 'Grip';
+  } else {
+    return 'Dumbbell Rotations';
   }
 }
 
