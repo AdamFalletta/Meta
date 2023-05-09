@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cryptocurrency Price Prediction Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    #game-container {
+      text-align: center;
+      margin-top: 50px;
+    }
+    #coin-select {
+      margin-bottom: 10px;
+    }
+    #timeframe-select {
+      margin-bottom: 10px;
+    }
+    #investment-input {
+      margin-bottom: 10px;
+    }
+    #prediction-buttons {
+      margin-bottom: 10px;
+    }
+    #result {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cryptocurrency Price Prediction Game</h1>
+  <div id="game-container">
+    <label for="coin-select">Choose a coin:</label>
+    <select id="coin-select"></select><br>
+
+    <label for="timeframe-select">Choose a time frame:</label>
+    <select id="timeframe-select">
+      <option value="1">1 hour</option>
+      <option value="6">6 hours</option>
+      <option value="12">12 hours</option>
+      <option value="24">24 hours</option>
+    </select><br>
+
+    <label for="investment-input">Enter your investment (stake):</label>
+    <input type="number" id="investment-input" min="1" step="1"><br>
+
+    <div id="prediction-buttons">
+      <button id="high-button">Open Long (High) Position</button>
+      <button id="low-button">Open Short (Low) Position</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const apiUrl = 'https://api.coingecko.com/api/v3';
+    const coinSelect = document.getElementById("coin-select");
+    const timeframeSelect = document.getElementById("timeframe-select");
+    const investmentInput = document.getElementById("investment-input");
+    const highButton = document.getElementById("high-button");
+    const lowButton = document.getElementById("low-button");
+    const resultDiv = document.getElementById("result");
+
+    // Fetch available cryptocurrencies from CoinGecko API
+    async function fetchCryptocurrencies() {
+      try {
+        const response = await fetch(`${apiUrl}/coins/list`);
+        const data = await response.json();
+
+        data.forEach(crypto => {
+          const option = document.createElement("option");
+          option.value = crypto.id;
+          option.text = `${crypto.name} (${crypto.symbol})`;
+          coinSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error fetching cryptocurrencies:', error);
+      }
+    }
+
+    // Make a prediction based on the selected position (high or low)
+    function makePrediction(position) {
+      const coin = coinSelect.value;
+      const timeframe = timeframeSelect.value;
+      const investment = investmentInput.value;
+
+      // Fetch the current price of the selected cryptocurrency
+      fetch(`${apiUrl}/simple/price?ids=${coin}&vs_currencies=usd`)
+        .then(response => response.json())
+        .then(data => {
+          const price = data[coin].usd;
+
+          // Simulate prediction result (dummy logic)
+          const random = Math.random();
+          let resultMessage = "";
+          if (random > 0.5) {
+            resultMessage = `Congratulations! You predicted the price of ${coin} to go ${position}.`;
+          } else {
+                resultMessage = `Oops! The price of ${coin} went the other way.`;
+      }
+
+      // Display the result message
+      resultDiv.textContent = resultMessage;
+    })
+    .catch(error => {
+      console.error('Error fetching cryptocurrency price:', error);
+    });
+}
+
+// Event listeners
+highButton.addEventListener("click", () => makePrediction("high"));
+lowButton.addEventListener("click", () => makePrediction("low"));
+
+// Fetch available cryptocurrencies when the page loads
+fetchCryptocurrencies();
+</script>
+</body>
+</html>
