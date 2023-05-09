@@ -1,150 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>JavaScript Calendar</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.4.0/css/bootstrap.min.css">
+  <title>Full-Screen Monthly Calendar</title>
   <style>
-    .calendar {
-      margin-top: 20px;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
     }
-    .view {
-      margin-bottom: 20px;
+    
+    #calendar {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
     }
-    .view-title {
-      font-weight: bold;
-      text-align: center;
-    }
+    
     .day {
-      height: 80px;
+      width: 14.28%;
+      height: calc(100% / 6);
+      border: 1px solid #ccc;
+      box-sizing: border-box;
       padding: 5px;
-      border: 1px solid lightgray;
-    }
-    .event {
-      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="text-center">JavaScript Calendar</h1>
-    <div class="row">
-      <div class="col-sm-6">
-        <div class="calendar">
-          <div class="view">
-            <h3 class="view-title">Yearly View</h3>
-            <div id="yearly-view"></div>
-          </div>
-          <div class="view">
-            <h3 class="view-title">Monthly View</h3>
-            <div id="monthly-view"></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-6">
-        <div class="calendar">
-          <div class="view">
-            <h3 class="view-title">Weekly View</h3>
-            <div id="weekly-view"></div>
-          </div>
-          <div class="view">
-            <h3 class="view-title">Daily View</h3>
-            <div id="daily-view"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div id="calendar"></div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
   <script>
-  $(document).ready(function() {
-  // Initialize calendar views
-  $('#yearly-view').fullCalendar({
-    defaultView: 'year'
-  });
+    function createCalendar(year, month) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDay = new Date(year, month, 1).getDay();
+      
+      const calendarElement = document.getElementById("calendar");
+      calendarElement.innerHTML = "";
 
-  $('#monthly-view').fullCalendar({
-    defaultView: 'month'
-  });
-
-  $('#weekly-view').fullCalendar({
-    defaultView: 'agendaWeek'
-  });
-
-  $('#daily-view').fullCalendar({
-    defaultView: 'agendaDay'
-  });
-
-  // Event management
-  const events = JSON.parse(localStorage.getItem('events')) || [];
-
-  function saveEvents() {
-    localStorage.setItem('events', JSON.stringify(events));
-  }
-
-  function addEvent(event) {
-    events.push(event);
-    saveEvents();
-  }
-
-  function deleteEvent(eventId) {
-    const index = events.findIndex(event => event.id === eventId);
-    if (index !== -1) {
-      events.splice(index, 1);
-      saveEvents();
+      // Create day cells for the entire month
+      for (let i = 0; i < daysInMonth; i++) {
+        const dayCell = document.createElement("div");
+        dayCell.className = "day";
+        dayCell.textContent = i + 1;
+        calendarElement.appendChild(dayCell);
+      }
+      
+      // Add empty cells for the days before the first day of the month
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "day";
+        calendarElement.appendChild(emptyCell);
+      }
     }
-  }
-    
-      // ...
 
-  function updateEventsView() {
-    $('.event').remove();
-    events.forEach(event => {
-      const date = moment(event.start).format('YYYY-MM-DD');
-      const time = moment(event.start).format('HH:mm');
-      const eventHtml = `
-        <div class="event">
-          <span class="event-date">${date}</span>
-          <span class="event-time">${time}</span>
-          <span class="event-title">${event.title}</span>
-          <button class="btn btn-danger btn-sm delete-event" data-event-id="${event.id}">Delete</button>
-        </div>
-      `;
-      $('.view').append(eventHtml);
-    });
-  }
+    // Get the current date
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
 
-  updateEventsView();
-
-  // Event handlers
-  $('#add-event-form').on('submit', function(e) {
-    e.preventDefault();
-    const title = $('#event-title').val();
-    const start = $('#event-start').val();
-    const end = $('#event-end').val();
-
-    const event = {
-      id: moment().format('x'), // Generate unique ID using milliseconds
-      title: title,
-      start: start,
-      end: end
-    };
-
-    addEvent(event);
-    updateEventsView();
-    $('#add-event-modal').modal('hide');
-    $('#add-event-form')[0].reset();
-  });
-
-  $(document).on('click', '.delete-event', function() {
-    const eventId = $(this).data('event-id');
-    deleteEvent(eventId);
-    updateEventsView();
-  });
-});
-
+    // Create the calendar for the current month
+    createCalendar(currentYear, currentMonth);
   </script>
 </body>
 </html>
