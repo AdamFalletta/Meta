@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Baseball Stadium</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // Set up the scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Add a ground plane
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2; // Rotate the ground to be horizontal
+    scene.add(ground);
+
+    // Create home plate
+    const homePlateGeometry = new THREE.BoxGeometry(1.5, 0.1, 1.5);
+    const homePlateMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const homePlate = new THREE.Mesh(homePlateGeometry, homePlateMaterial);
+    homePlate.position.y = 0.05;
+    scene.add(homePlate);
+
+    // Create bases
+    const baseGeometry = new THREE.BoxGeometry(0.3, 0.1, 0.3);
+    const baseMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    const firstBase = new THREE.Mesh(baseGeometry, baseMaterial);
+    firstBase.position.x = 5;
+    firstBase.position.y = 0.05;
+    scene.add(firstBase);
+
+    const secondBase = new THREE.Mesh(baseGeometry, baseMaterial);
+    secondBase.position.z = 5;
+    secondBase.position.y = 0.05;
+    scene.add(secondBase);
+
+    const thirdBase = new THREE.Mesh(baseGeometry, baseMaterial);
+    thirdBase.position.x = -5;
+    thirdBase.position.y = 0.05;
+    scene.add(thirdBase);
+
+    // Set camera position and look at the scene
+    camera.position.set(0, 10, 10);
+    camera.lookAt(scene.position);
+
+    // Add lights to the scene
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(0, 10, 10);
+    scene.add(directionalLight);
+
+    // Function for rendering the scene
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+
+    // Start the animation
+    animate();
+  </script>
+</body>
+</html>
