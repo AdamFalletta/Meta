@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>NYC DJ Venues Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWRhbWZhbGxldHRhIiwiYSI6ImNpZXFldmc1azAwbHZ3Z2ttcGNkOGNtMGkifQ.kvWtVUjh4UG87ZtreXrv1Q';
+
+    // Create a map object
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [-74.0060, 40.7128], // NYC coordinates
+      zoom: 11
+    });
+
+    // An array of venue locations
+ var venues = [
+  {
+    name: "Marquee",
+    coordinates: [-74.0057, 40.7429]
+  },
+  {
+    name: "Cielo",
+    coordinates: [-74.0091, 40.7408]
+  },
+  {
+    name: "Schimanski",
+    coordinates: [-73.9631, 40.7191]
+  },
+  {
+    name: "Elsewhere",
+    coordinates: [-73.9241, 40.7086]
+  },
+  {
+    name: "Good Room",
+    coordinates: [-73.9519, 40.7237]
+  },
+  {
+    name: "Brooklyn Mirage",
+    coordinates: [-73.9364, 40.7062]
+  },
+  {
+    name: "TBA Brooklyn",
+    coordinates: [-73.9595, 40.7165]
+  },
+  {
+    name: "House of Yes",
+    coordinates: [-73.9285, 40.7066]
+  },
+  {
+    name: "Webster Hall",
+    coordinates: [-73.9907, 40.7316]
+  },
+  {
+    name: "Avant Gardner",
+    coordinates: [-73.9601, 40.6994]
+  },
+  {
+    name: "Le Bain at The Standard High Line",
+    coordinates: [-74.0090, 40.7400]
+  },
+  {
+    name: "Output at The Panther Room",
+    coordinates: [-73.9601, 40.7165]
+  },
+  {
+    name: "Nowadays",
+    coordinates: [-73.9206, 40.7062]
+  },
+  {
+    name: "Public Records",
+    coordinates: [-73.9839, 40.6862]
+  },
+  {
+    name: "Analog BKNY",
+    coordinates: [-73.9575, 40.7159]
+  },
+  {
+    name: "The Roof at Output",
+    coordinates: [-73.9601, 40.7165]
+  },
+  {
+    name: "1 Oak",
+    coordinates: [-74.0059, 40.7433]
+  },
+  {
+    name: "Brooklyn Steel",
+    coordinates: [-73.9242, 40.7215]
+  },
+  {
+    name: "Terminal 5",
+    coordinates: [-73.9954, 40.7695]
+  },
+  {
+    name: "Flash Factory",
+    coordinates: [-74.0058, 40.7400]
+  },
+  {
+    name: "Elsewhere Rooftop",
+    coordinates: [-73.9241, 40.7086]
+  },
+  {
+    name: "Brooklyn Bazaar",
+    coordinates: [-73.9236, 40.7278]
+  },
+  {
+    name: "Le Poisson Rouge",
+    coordinates: [-74.0037, 40.7312]
+  },
+  {
+    name: "Output at Halcyon",
+    coordinates: [-73.9601, 40.7165]
+  },
+  {
+    name: "Mercury Lounge",
+    coordinates: [-73.9858, 40.7224]
+  },
+  {
+    name: "The Bowery Electric",
+    coordinates: [-73.9935, 40.7248]
+  },
+  {
+    name: "The Sultan Room",
+    coordinates: [-73.9132, 40.7079]
+  {
+    name: "Le Souk",
+    coordinates: [-74.0057, 40.7282]
+  },
+  {
+    name: "The Delancey",
+    coordinates: [-73.9909, 40.7181]
+  },
+  {
+    name: "Bossa Nova Civic Club",
+    coordinates: [-73.9352, 40.7061]
+  },
+  {
+    name: "The Knitting Factory",
+    coordinates: [-73.9564, 40.7193]
+  },
+  {
+    name: "Pacha NYC",
+    coordinates: [-74.0091, 40.7483]
+  }
+];
+
+
+    // Add markers to the map
+    venues.forEach(function(venue) {
+      var marker = new mapboxgl.Marker()
+        .setLngLat(venue.coordinates)
+        .setPopup(new mapboxgl.Popup().setHTML('<h3>' + venue.name + '</h3>'))
+        .addTo(map);
+    });
+  </script>
+</body>
+</html>
