@@ -1502,11 +1502,11 @@ text-shadow: 3px 6px #2a2a2a;
      <video style="position: absolute;z-index: 100;width: 1920px;height: 1080;margin-top:-30px;mix-blend-mode: soft-light;filter: grayscale(1);" controls autoplay loop muted><source src="lights-bg-vid.mp4" type="video/mp4"></video>
    <div style="display:none;">
      <video class="video-main-screen" id="" style="mix-blend-mode:overlay; z-index:90;" controls autoplay muted loop><source id="" src="" type="video/mp4"></video>
-    <video class="video-main-screen" id="myVideo" controls autoplay muted onended="myFunction()"><source id="mp4_src" src="video-bg-baseball2.mp4" type="video/mp4"></video>
+    <video class="video-main-screen" id="myVideo88" controls autoplay muted onended="myFunction()"><source id="" src="video-bg-baseball2.mp4" type="video/mp4"></video>
   <video class="video-second-screen" id="second" controls autoplay loop muted><source src="http://adamfalletta.com/nsn/baseball-vid-7.mp4" type="video/mp4"></video>
   <video class="video-second-screen" id="second" controls="" autoplay="" loop="" muted="" style="margin-top: -16px;margin-left: -40;transform: scale(.93);height: 160px;width: 1590px;border-radius: 0px; border:20px solid black;"><source src="http://adamfalletta.com/nsn/baseball-vid-3.mp4" type="video/mp4"></video>
 </div>
-  <video loop autoplay class="video-background-screen" id="bgVideo"><source id="mp4bg" src="https://previews.customer.envatousercontent.com/h264-video-previews/624aca04-69fe-4014-b213-8530c94a5556/21219810.mp4" type="video/mp4"></video>
+  <video loop autoplay onended="myFunction()" class="video-background-screen" id="myVideo"><source id="mp4_src" src="https://previews.customer.envatousercontent.com/h264-video-previews/624aca04-69fe-4014-b213-8530c94a5556/21219810.mp4" type="video/mp4"></video>
 
     <script>
   // This variable works outside the the add function
@@ -1520,8 +1520,8 @@ var add = (function () {
 
 function myFunction(){
   document.getElementById("demo").innerHTML = add();
- if (counter == 1){currentSrc = "video-bg-baseball2.mp4";} 
- if (counter == 2){currentSrc = "baseball-vid-1.mp4";}
+ if (counter == 1){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/bd827db8-9456-4d21-882d-a68ad8b5ee24/43989246.mp4";} 
+ if (counter == 2){currentSrc = "https://previews.customer.envatousercontent.com/h264-video-previews/624aca04-69fe-4014-b213-8530c94a5556/21219810.mp4";}
  if (counter == 3){currentSrc = "video-bg-baseball2.mp4";}
  if (counter == 4){currentSrc = "baseball-vid-1.mp4";}
  if (counter == 5){currentSrc = "video-bg-baseball2.mp4";}
