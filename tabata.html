@@ -53,9 +53,9 @@ const startButton = document.getElementById('start');
 const pauseButton = document.getElementById('pause');
 const restartButton = document.getElementById('restart');
 const progressBarFill = document.querySelector('.progress-bar-fill');
-let totalRounds = 40;
+let totalRounds = 36;
 let currentRound = 1;
-let secondsRemaining = 90;
+let secondsRemaining = 100;
 
 function updateTimer() {
   const minutes = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
@@ -64,22 +64,30 @@ function updateTimer() {
 }
 
 function getWorkoutName(round) {
-  if (round <= 5) {
-    return 'Posture / Traps';
-  } else if (round <= 10) {
-    return 'Bent Over Flies';
-  } else if (round <= 15) {
+  if (round <= 3) {
+    return 'Pushups';
+  } else if (round <= 6) {
     return 'Wide Pullups';
-  } else if (round <= 20) {
-    return 'Dead Lifts';
-  } else if (round <= 25) {
+  } else if (round <= 9) {
+    return 'Dips';
+  } else if (round <= 12) {
+    return 'Chinups';
+  } else if (round <= 15) {
+    return 'Lateral Raises';
+  } else if (round <= 18) {
+    return 'Inverted Row';
+  } else if (round <= 21) {
     return 'Knee Raises';
-  } else if (round <= 30) {
-    return 'Incline Pushups';
-  } else if (round <= 35) {
-    return 'Dips -> Curls';
-  } else {
+  } else if (round <= 24) {
+    return 'Deadlifts';
+  } else if (round <= 27) {
     return 'Squats';
+  } else if (round <= 30) {
+    return 'Lunges';
+  } else if (round <= 33) {
+    return 'Calf Raises';
+  } else {
+    return 'Posture Shrugs';
   }
 }
 
