@@ -1,0 +1,1795 @@
+<html>
+    <head><meta charset="windows-1252">
+        <title></title>    
+         
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   
+ 
+   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="swiper.min.css">
+<link href='https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css' rel='stylesheet' />
+
+
+<style>
+video::-webkit-media-controls {
+     visibility: hidden;
+}
+
+@font-face {
+  font-family: nsnlogo;
+  src: url(esp_ital.ttf);
+  format('truetype');
+}
+@font-face {
+  font-family: timefont;
+  src: url(digital-7.ttf);
+  format('truetype');
+}
+@font-face {
+  font-family: alarmclock;
+  src: url(alarm-clock.ttf);
+  format('truetype');
+}
+    .main-style{
+        
+        }
+    .dark{ background:#222222; color:#dddddd!important;}
+    .dark3{background:#222222;}
+ .dark2{ background:#222222;
+     background: linear-gradient(135deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#121212', endColorstr='#222222', GradientType=1 );}
+    .dark-blue {    color:#fefefe; font-size:56px; font-weight:700;letter-spacing: -1.5px; font-style:italic;border-top: 0px #bbe201 solid!important;}
+    .main-bg{ background:#000000;}
+    .col-sm-3, .col-sm-9{
+       transform:scale(1);
+        padding-right:0px !important;
+        padding-left:0px !important;
+        padding-top:0px !important;
+        padding-bottom:0px !important;
+    }
+    .nav-link{color:#cccccc !important;}
+    .main-row{min-height:974px;}
+    .middle-row{min-height:224px;}
+    .bottom-row{height:130px;vertical-align:middle;}
+    .fixed-top{max-height:50px;}
+    
+    .base-icon{
+        width:32px;
+        height:32px;
+        background:#101010;
+        border: 4px #bbe201 solid;
+        display:inline-block;
+        border-radius: 0px;
+        transform: rotate(45deg);
+        filter: brightness(1.1);
+    }
+       .base-container{
+        width:30px;
+        height:30px;
+        position:absolute;
+        transform: scale(.9);
+        margin-top:40px !important;
+        display:inline-block;
+ 
+    }
+ 
+    
+    .nav-pills .nav-link.active, .nav-pills .show>.nav-link{
+        background:#333333 !important;
+        border-radius:0px;
+    }
+    
+    .mt12{
+         margin-top:12px;
+    }
+    
+    .h5{
+        font-size:1.35em !important;
+    }
+    
+    .fs-29{
+        font-size:29px!important;
+    }
+    
+    .form-inline .form-control{
+        height:34px;
+        margin-top:12px;
+        border-radius:50px;
+        background:#111111;
+        color:#dddddd;
+        width:200px;
+        border-width:0px;
+    }
+    
+    .navbar-expand-md .navbar-nav .nav-link{
+        padding-right:1.2rem!important;
+        letter-spacing:-0.5px;
+    }
+    
+    .pt4{
+        padding-top:4px;
+    }
+    
+    .mb-3, .my-3{
+        margin-bottom: 0rem!important;
+    }
+    /* Make it a marquee  -  code   -     animation: marquee 105s linear infinite;*/
+.marquee {
+width:956px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-top:3px;
+     font-weight:500;
+    height:72px;
+    border-radius: 3px;
+    color:#eeeeee;
+   vertical-align:middle;
+    box-sizing: border-box;
+word-spacing: 3px;
+background:#555555;
+
+    padding-top:4px;
+animation: marquee 105s linear infinite;
+}
+
+
+
+
+.news-container{
+    width:100%;
+    height:52px;
+    display:inline-block;
+}
+
+.breaking-news{
+width:240px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-top:3px;
+     font-weight:700;
+    height:95px;
+    border-radius: 3px;
+    box-sizing: border-box;
+vertical-align:middle;
+    padding-top:0px;
+}
+
+.mia-score{
+width:205px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+     font-style:normal;
+     font-weight:900;
+     font-size:58px;
+    height:86px;
+    color:#dcdcdc;
+    margin-left:40px;
+    margin-top:6px;
+    border-radius: 3px;
+   filter:hue-rotate(210deg) contrast(1.3) brightness(1.4);
+       
+     
+            border-image: linear-gradient(0deg, rgb(82, 28, 28), rgb(239, 22, 22)) 1;
+    box-sizing: border-box;
+vertical-align:middle;
+text-align:right;
+padding-right:30px;
+background-image: url(img/glow-shine10.png), linear-gradient(-90deg, rgba(2,0,36,1) 0%, rgb(150, 21, 21) 0%, rgb(0, 0, 0) 100%);
+    padding-top:0px;
+}
+
+.tex-score{
+width:205px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+     font-style:normal;
+     font-weight:900;
+         margin-right:8px;
+           margin-top:6px;
+          
+    
+         border-image: linear-gradient(0deg, rgb(16, 56, 115), rgb(46, 168, 255)) 1;
+            filter:hue-rotate(299deg) contrast(1.3) brightness(1.4);
+    height:86px;
+      color:#dcdcdc;
+    border-radius: 3px;
+         font-size:58px;
+    box-sizing: border-box;
+vertical-align:middle;
+text-align:right;
+padding-right:30px;
+background-image:url(img/glow-shine10.png), linear-gradient(-90deg, rgba(2,0,36,1) 0%, rgb(16, 73, 158) 0%, rgb(0, 0, 0) 100%);
+    padding-top:0px;
+}
+
+@-webkit-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@-o-keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@keyframes AnimationName {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+
+.widgetbg1{
+width:220px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+     font-weight:700;
+    height:52px;
+    border-radius: 3px;
+text-align:center;
+   vertical-align:middle;
+    box-sizing: border-box;
+background: linear-gradient(270deg, #333333, #111111);
+background-size: 400% 400%;
+-webkit-animation: AnimationName 7s ease infinite;
+-moz-animation: AnimationName 7s ease infinite;
+-o-animation: AnimationName 7s ease infinite;
+animation: AnimationName 7s ease infinite;
+}
+.widgetbg2{
+width:220px;
+   display:inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+     font-weight:700;
+    height:52px;
+    border-radius: 3px;
+text-align:center;
+   vertical-align:middle;
+    box-sizing: border-box;
+background: linear-gradient(270deg, #222222, #000000);
+background-size: 400% 400%;
+-webkit-animation: AnimationName 7s ease infinite;
+-moz-animation: AnimationName 7s ease infinite;
+-o-animation: AnimationName 7s ease infinite;
+animation: AnimationName 7s ease infinite;
+}
+
+
+.fs2x{
+    font-size:29px;
+}
+
+.mb-sm-0, .my-sm-0{
+    margin-top:16px!important;
+    height:30px;
+    border-radius:50px;
+    padding:0px;
+    width:30px;
+}
+
+.btn-primary{
+    background-color:#61acd8 !important;
+    border-color: #177bb4 !important;
+}
+
+.mapboxgl-ctrl-group > button {
+    width:44px;
+    height:44px;
+    color:#dddddd !important;
+        border-bottom: 0px !important;
+}
+
+.mapboxgl-ctrl.mapboxgl-ctrl-attrib {
+  
+    background-color: rgba(255, 255, 255, 0);
+
+}
+
+.mapboxgl-ctrl-group{
+        background-color: rgba(255,255,255,.2);
+}
+
+.mtbb{
+    margin-top:-4px!important;
+    border-color:#999999!important;
+    font-size:10px!important;
+    color:#dddddd!important;
+    width:28px!important;
+    height:28px!important;
+}
+.marquee:hover {
+    animation-play-state: paused
+}
+
+/* Make it move */
+@keyframes marquee {
+    0%   { text-indent: 27.5em }
+    100% { text-indent: -355em }
+}
+
+.news-title{
+        margin-top:3px;
+        margin-left:20px;
+        margin-right:10px;
+    display:inline-block;
+    vertical-align:middle;
+    height:52px;
+    padding-top:4px;
+    font-weight:600;
+    color:#dddddd
+}
+
+.mt-4{
+    margin-top:4px;
+    
+}
+
+.bg-gradient{
+    /* IE10+ */ 
+background-image: -ms-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+/* Mozilla Firefox */ 
+background-image: -moz-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+/* Opera */ 
+background-image: -o-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+/* Webkit (Safari/Chrome 10) */ 
+background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #2E4053), color-stop(100, #0E1419));
+
+/* Webkit (Chrome 11+) */ 
+background-image: -webkit-linear-gradient(top, #2E4053 0%, #0E1419 100%);
+
+    
+}
+
+.tower{
+    width:36px;
+    height:36px;
+    margin-right:10px;
+}
+
+.list-group-item{
+    color:#fefefe;
+    font-weight:bold;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link{
+
+}
+
+
+
+.list-group-item:first-child{
+    border-top-left-radius: 0rem !important;
+    border-top-right-radius: 0rem !important;
+}
+
+.list-group-item:last-child{
+      border-bottom-left-radius: 0rem !important;
+    border-bottom-right-radius: 0rem !important;
+}
+
+.list-group-item:nth-child(odd){
+   background:#333333 !important;
+}
+
+.list-group-item:nth-child(even){
+  background:#444444 !important;
+}
+.top-bar-text{
+    color:#fefefe;
+    margin-left:15px;
+    font-size:16px;
+}
+
+.mt5i{
+    margin-top:5px !important;
+}
+
+.wifi-icon{
+    -ms-transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg);
+    position: absolute;
+    margin-left: 11px;
+    margin-top: -4px;
+    fill: #ffffff;
+}
+
+
+.ct-grid{
+        stroke: rgba(255,255,255,.3)!important;
+}
+
+.card{
+    background-color: #222222 !important;
+
+   
+    
+    border-radius:0px !important;
+}
+
+.metaphone-icon{
+        vertical-align: middle;
+    margin-left: 4px;
+    margin-right: 4px;
+
+    fill: #ffffff;
+}
+
+.navbar-brand{
+    margin-left:10px;
+    color:#dddddd !important;
+    font-size:16px;
+}
+
+.marvel-device.iphone5s, .marvel-device.iphone5c{
+    width:370px!important;
+        padding: 50px 12px !important;
+        margin-top:10px;
+        height:550px !important;
+        margin-left:50px;
+}
+
+.marvel-device .screen{
+    background:#222222!important;
+    border-radius:18px;
+}
+
+.marvel-device.iphone5s:before, .marvel-device.iphone5c:before{
+  
+}
+
+.list-avatar{
+    width:34px;
+    height:34px;
+    border-radius:500px;
+    margin-right:9px;
+}
+.list-avatar2{
+    width:42px;
+    height:42px;
+    border-radius:500px;
+    margin-right:9px;
+}
+
+
+.f-right{
+    float:right;
+    text-align:right;
+}
+
+.main-top-bar{
+    width:100%;
+    height:47px;
+    background:#222222;
+    padding-left:10px;
+  
+}
+
+.main-content{
+    width:100%;
+    height:575px;
+    background:#999999;
+  
+}
+
+.browser-icons{
+    color:#cccccc;
+    font-size:22px;
+    margin-top:11px;
+    margin-left:14px;
+    
+}
+
+.browser-icons2{
+    color:#cccccc;
+    font-size:16px;
+    margin-top:14px;
+    margin-left:10px;
+    
+}
+
+.btn-link{
+    color: #dddddd !important;
+}
+
+.din{
+    display:inline-block;
+}
+
+.w300{
+    width:760px!important;
+    display:inline-block;
+    height:34px;
+    color:#dddddd;
+    background:#111111;
+    border-radius:50px;
+    margin-left:15px;
+    font-size:18px;
+    border-width: 0px;
+
+}
+.w300:focus{
+    width:760px!important;
+    display:inline-block;
+    height:34px;
+    color:#dddddd;
+    background:#111111;
+    border-radius:50px;
+    margin-left:15px;
+    font-size:18px;
+    border-width: 0px;
+
+}
+
+.col-sm-4{
+      padding-right: 0px;
+    padding-left: 0px;
+}
+
+.nav-link{
+    font-size:16px !important;
+}
+
+.mb-3{
+    text-align:center !important;
+}
+
+.flright{
+    float:right;
+    margin-right:10px;
+}
+
+.metaphone-icon{
+    height:30px
+    width:30px
+    border-r
+}
+
+.meta-live-btn{
+    margin-top: -8px!important;
+    margin-right:10px !important;
+        margin-left:124px !important;
+            -moz-box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+		box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+
+}
+
+
+
+.blue-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+    	box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+}
+
+.red-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(0, 170, 255, .8);
+        box-shadow: 0px 0px 20px 5px rgba(255, 0, 0, .8);
+}
+.green-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(40,167,69, .8);
+    	box-shadow: 0px 0px 20px 5px rgba(40,167,69, .8);
+}
+
+.pink-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(199,21,133, .8);
+        box-shadow: 0px 0px 20px 5px rgba(199,21,133, .8);
+}
+
+.regular-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(127,107,0, .8);
+        box-shadow: 0px 0px 20px 5px rgba(127,107,0, .8);
+}
+
+.purple-glow{
+          -moz-box-shadow: 0px 0px 20px 5px rgba(108,13,116, .8);
+        box-shadow: 0px 0px 20px 5px rgba(108,13,116, .8);
+}
+
+
+.nav-btns{
+    width:20px !important;
+    height:20px !important;
+    border-radius:50px;
+   padding:0px !important;
+  
+    margin-right:6px;
+    margin-top:15px;
+}
+
+.ml15{
+    margin-left:25px !important;
+}
+
+.card{
+
+
+}
+
+.keypad-button{
+    width:72px;
+    height:72px;
+    border-radius:0px;
+    padding:10px;
+    display:inline-block;
+    margin-right:9px;
+    margin-left:9px;
+    margin-bottom:12px;
+    border-bottom:1px solid #61acd8 !important;
+    background: rgba(0,0,0,0.0);
+    color:#777777!important;
+    font-size:54px;
+    font-weight:100;
+}
+
+.keypad-button3{
+    width:72px;
+    height:72px;
+    border-radius:0px;
+    padding:10px;
+    display:inline-block;
+    margin-right:9px;
+    margin-left:9px;
+    margin-bottom:12px;
+    border-bottom:0px solid #61acd8 !important;
+    background:#222222 !important;
+    color:#bbbbbb!important;
+    font-size:34px;
+    font-weight:100;
+}
+
+.btn-secondary{
+    border:0px;
+}
+
+.keypad-button2{
+    width:72px;
+    height:72px;
+    border-radius:500px;
+    padding:8px;
+    display:inline-block;
+    margin-right:10px;
+  margin-top:10px;
+    margin-left:10px;
+    margin-bottom:12px;
+ color:#bbbbbb!important;
+    font-size:28px;
+    background-color: #333333 !important;
+    border-color: #222222 !important;
+}
+
+.keypad-display{
+    width:300px;
+    display:block;
+    height:130px;
+    color:#aaaaaa;
+    font-weight:100;
+    background:#333333;
+    border-radius:0px;
+    margin-top:26px;
+    margin-left:15px;
+    margin-bottom:14px;
+    font-size:30px;
+    padding:10px;
+  
+border-bottom:1px solid #555555 !important;
+}
+
+.glow-left6{
+margin-left:6px;    
+}
+
+.keypad-container{
+ width:320px;
+ margin-left:auto;
+ margin-right:auto;
+ margin-top:20px;
+}
+
+.keypad-pane{
+width:100%!important;
+ margin-left:auto!important;
+ margin-right:auto!important; 
+ text-align:center!important;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link{
+    border-bottom:2px solid #2eb9ce;
+}
+
+.hide{
+    visibility:hidden;
+}
+
+.call-btn{
+    font-size:34px!important;
+    margin-top:12px!important;
+}
+
+
+
+.table{
+    margin-bottom:0px!important;
+}
+
+.ap-text{
+   font-size:12px; 
+   display:inline-block;
+   margin-left:6px;
+}
+
+.ap-title{
+       font-size:14px; 
+   display:inline-block;
+   font-weight:600;
+   margin-left:6px;
+}
+
+.mt-2{
+    margin-top:2px !important;
+}
+
+.album-photo{
+    width:72px;
+    height:72px;
+    display:inline-block;
+    margin-right:10px;
+    float:left;
+}
+
+.audio-controls{
+    display:block;
+}
+
+.audio-title{
+    color:#bbbbbb;
+font-weight:100;
+}
+
+.table{
+    font-weight:100;
+}
+.fa-star{
+    color:#F0E68C!important;
+}
+
+.audio-container-l{
+    display:inline-block;
+}
+.audio-container-r{
+    display:inline-block;
+    
+}
+
+.mt-zero{
+    margin-top:0px!important;
+}
+
+
+
+img.app-icons{
+height:62px;
+width:62px;
+display:block;
+border-radius: 6px;
+margin-left:0px;
+margin-right:6px;
+margin-top:1px;
+margin-bottom:4px;
+
+    box-shadow: 0px 0px 20px 1px rgba(0, 0, 0, .1);
+    transition: box-shadow 0.5s ease;
+}
+
+img.app-icons:hover{
+
+}
+
+
+.list-app-icons{
+display:inline-block;
+text-align: center;
+font-size:12px;
+color:#ffffff;
+font-weight: 400;
+margin-bottom: 0px;
+
+}
+
+.list-app-icons:hover{
+   
+}
+
+
+.card-row{
+        margin-right: 0px;
+    margin-left: 0px;
+}
+
+.card-title{
+        border-left: 3px solid;
+    padding-left: 10px;
+}
+
+.bc-purple{
+    border-color: #563d7c;
+}
+
+.bc-blue{
+    border-color: #3498DB;
+}
+
+.bc-green{
+    border-color: #28B463;
+}
+
+.bc-grey{
+    border-color: #AAB7B8;
+}
+
+.bc-pink{
+    border-color: #A569BD;
+}
+
+.bc-gold{
+    border-color: #F4D03F;
+}
+
+.mr10{
+    margin-right:7px;
+}
+
+.swiper-slide{
+    overflow-y: scroll;
+}
+
+::-webkit-scrollbar
+{
+  display: none;
+}
+
+
+.outer-wrapper{
+    width:100%;
+    height:675px;
+}
+
+.left-bar-container{
+    width:238px;
+    height:675px;
+    display:inline-block;
+    background:#222222;
+    float: left;
+    text-align:center;
+    color:#cccccc;
+    font-size:13px;
+  border-right: 2px solid #000000;
+}
+
+.main-content-wrapper{
+        height:675px;
+
+}
+
+
+.fs4x-top{
+    font-size:56px;
+    display:block;
+ 
+   
+}
+
+.fs4x{
+    font-size:56px;
+    display:block;
+
+}
+
+.left-side-icons{
+    width:120px;
+ border-left: 2px solid #222222;
+padding-top:18px;
+padding-bottom:18px;
+    
+}
+
+.icon-active{
+    width:120px;
+ border-left: 2px solid #2eb9ce;
+   background:#333333;
+}
+
+.left-side-icons:hover{
+    width:120px;
+     border-left: 2px solid #2eb9ce;
+     background:#333333;
+
+}
+
+.side-icon-badge-blue{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#61acd8;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+    padding-top:2px;
+}
+
+.side-icon-badge-green{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#28a745;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.side-icon-badge-pink{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#C71585;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.side-icon-badge-purple{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#6c0d74;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.side-icon-badge-gold{
+    min-width:22px;
+    height:22px;
+    font-size:12;
+    font-weight:bold;
+    text-align:center;
+    background:#7f6b00;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-60px;
+     margin-left:70px;
+    z-index:5;
+        padding-top:2px;
+}
+
+.right-icon-badge-blue{
+    min-width:18px;
+    height:18px;
+    font-size:10;
+    font-weight:bold;
+    text-align:center;
+    background:#61acd8;
+    border-radius:50px;
+    position:absolute;
+    margin-top:-40px;
+     margin-left:40px;
+    z-index:5;
+    padding-top:2px;
+}
+
+.news-style{
+    display: inline-block;
+    margin-right:500px;
+    list-style-type: none;
+    width:100%;
+    max-width:1500px;
+  
+}
+
+.news-image{
+    width:120px;
+    height:60px;
+    display:inline-block;
+    margin-right:10px;
+    border-radius:0px;
+    margin-top: -10px;
+}
+
+
+.pulse-element {
+        animation: pulsate 3s ease-out;
+        animation-iteration-count: infinite;
+        opacity: 1; 
+    }
+
+@-webkit-keyframes pulsate {
+    0% {-webkit-transform: scale(0.1, 0.1); opacity: 0.0;}
+    50% {opacity: 1.0;}
+    100% {-webkit-transform: scale(1.2, 1.2); opacity: 0.0;}
+}
+
+
+
+.live-text{
+    font-size:12px;
+    margin-left:10px;
+
+}
+
+.fs30{
+    font-size:30px !important;
+    padding-top:3px;
+}
+
+
+.ct-label{
+    color:#cccccc !important;
+}
+
+.ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut{
+    stroke:#61acd8 !important;
+    opacity:.9;
+}
+
+.ct-series-b .ct-bar, .ct-series-b .ct-line, .ct-series-b .ct-point, .ct-series-b .ct-slice-donut{
+        stroke: #c71585 !important;
+          opacity:.9;
+}
+.ct-series-c .ct-bar, .ct-series-c .ct-line, .ct-series-c .ct-point, .ct-series-c .ct-slice-donut{
+      stroke: #61acd8 !important;
+          opacity:.9;
+}
+
+.ct-series-d .ct-bar, .ct-series-d .ct-line, .ct-series-d .ct-point, .ct-series-d .ct-slice-donut{
+        stroke: #28a745 !important;
+          opacity:.9;
+}
+
+.ct-label .ct-horizontal .ct-end{
+    margin-left: -17px !important;
+}
+
+.container-fluid{
+    padding-right:0px !important;
+    padding-left:0px !important;
+}
+
+.widget-title{
+    font-size:16px;
+   text-align:center;
+    display:block;
+
+    color:#dddddd;
+  
+    width:100%;
+    height:40px;
+    padding:2px;
+    padding-top:8px;
+
+
+   letter-spacing:1px;
+    font-weight:500;
+    text-shadow: 0 0 3px #000000;
+}
+
+.widget-glow{
+    height:8px !important;
+    width:8px !important;
+    margin-top:-4px !important;
+    margin-right: 12px;
+}
+
+.widget-move{
+   float:left;
+       margin-left:15px;
+     margin-top:0px!important;
+}
+
+.widget-more{
+   float:right;
+   margin-right: 15px;
+        margin-top:2px!important;
+        
+}
+
+
+.ct-chart{
+
+}
+
+.dark-gradient{
+background: rgba(18,18,18,1);
+background: -moz-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: -webkit-gradient(left top, right bottom, color-stop(0%, rgba(18,18,18,1)), color-stop(62%, rgba(34,34,34,1)), color-stop(91%, rgba(34,34,34,1)), color-stop(91%, rgba(34,34,34,1)));
+background: -webkit-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: -o-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: -ms-linear-gradient(-45deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+background: linear-gradient(135deg, rgba(18,18,18,1) 0%, rgba(34,34,34,1) 62%, rgba(34,34,34,1) 91%, rgba(34,34,34,1) 91%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#121212', endColorstr='#222222', GradientType=1 );
+}
+
+.bottom-border-blue{
+    bottom-border: #61acd8 !important;
+}
+
+.stock-title{
+    width:100%
+    height:40px;
+    background:#333333;
+    display:block;
+}
+
+.stock-details{
+    width:100%
+    height:80px;
+    display:block;
+}
+
+.stock-chart{
+    width:100%
+     background:#333333;
+    height:200px;
+    display:block;
+    
+}
+.stocks-layout{
+    width:100%
+    height:250px;
+    display:block;
+    
+}
+
+.keypad-display-title{
+    display:block;
+    letter-spacing: 2px;
+   text-shadow: 0 0 9px #61acd8;
+}
+
+.keypad-display-contact{
+    display:block;
+    font-size:18px;
+    
+}
+.keypad-display-location{
+    display:block;
+    font-size:12px;
+    
+}
+
+
+.stocks-container{
+ height:580px
+
+}
+
+    .swiper-container {
+      width: 100%;
+      height: 675px;
+    }
+    .swiper-slide {
+      text-align: center;
+      font-size: 18px;
+      background: #fff;
+      /* Center slide text vertically */
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      -webkit-align-items: center;
+      align-items: center;
+    }
+    
+    .marquee-container{
+     position:absolute;
+     width:100%;
+     height:92px;
+     background: #0c0c0c;
+     border-top: 0px solid #c4e73c;
+     color:#f3f3f3;
+     z-index:15;
+     margin-top:-86px;
+   
+     box-shadow: -1px -7px 9px -3px rgba(0,0,0,0.35);
+    }
+    
+
+    
+    .marquee-content{
+        
+       display:inline-block;
+       position:absolute;
+        height:50px;
+      
+        font-size:38px;
+        text-transform:uppercase;
+        font-weight:800;
+        padding-left:25px;
+        padding-right:25px;
+        margin-top:8px;
+        border-radius:4px;
+        letter-spacing:-1px;
+        
+    }
+    
+
+    .yellow{
+        color:#bbe200;
+        text-transform:none;
+        padding-left:10px;
+        padding-right:10px;
+    }
+    
+    .hologram-animation3 {
+
+  animation-name: example;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes example {
+  0%   {filter:brightness(1);}
+
+  50% {filter:brightness(1.3);}
+  100% {filter:brightness(1);}
+}
+
+
+    .moving-border {
+  animation-name: border-ani;
+  animation-duration: 20s;
+    animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes border-ani {
+  0%   {margin-left:-15px;}
+  50%  {margin-left:250px;}
+  100%  {margin-left:-15px;}
+}
+
+   .glowing-lens {
+  animation-name: opacity-lens;
+  animation-duration: 6s;
+    animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes opacity-lens {
+  0%   {opacity:1;}
+  30%  {opacity:.3;}
+    60%  {opacity:.4; }
+  100%  {opacity:1;}
+}
+
+.side-panel{
+    position:absolute;
+    width:500px;
+    height:890px;
+    background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100%);
+    z-index:300;
+    
+    margin-top:-974px;
+        box-shadow: -6px -7px 6px -3px rgba(0,0,0,0.35);
+}
+
+ul.news-items{padding-left:5; margin-bottom:-10px;}
+
+ul.news-items > li{
+    font-size:29px;
+    list-style-type:none;
+    width:500px;
+    color:#dcdcdc;
+    font-weight:800;
+    margin-bottom:5px;
+    transform: scale(.95);
+    letter-spacing:-1px;
+    height:140px;
+  border-left: 4px #bbe20100 solid;
+    padding-left:6px;
+     padding-right:16px;
+    margin-left:0px;
+     background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgb(11 42 66 / 53%) 0%, rgba(20,20,20,1) 50%);
+}
+
+.top-headlines{
+    font-size:44px;
+    display:block;
+    width:500px;
+text-align:center;
+    color:#cfcfcf;
+    font-weight:800;
+    font-family:nsnlogo;
+    letter-spacing:-1px;
+    height:94px;
+text-shadow: 3px 6px #2a2a2a;
+    padding-left:10px;
+   padding-top:18px;
+    margin-left:0px;
+    margin-bottom:5px;
+    background-image: url(img/dirt.png), linear-gradient(#000000, #060605);}
+    
+   ul.news-items > li:first-child{
+       height:0px;
+     background:#000000;
+    border-left: 4px #47aaf700 solid;
+    }
+    
+    
+
+    
+ .clock{
+    font-size:30px;
+    font-weight:900;
+    color:#dddddd;
+    text-transform:uppercase;
+
+    color: #bbe201;
+    position:relative;
+    z-index:300;
+ }
+ 
+ 
+ .arrow-style{color: #bbe201;position: absolute;transform: scale(.7);margin-left: 210px;margin-top: 88px;}
+ 
+ .inning-small{position: absolute;font-size:24px;margin-left: 232px;margin-top: 95px;}
+ 
+ .score-bg-gameday{position: absolute;margin-left: 147px!important;margin-top: 90px;font-size: 32;width: 50px;height: 46px;color: #101010;text-align: center;border-radius: 0px;border-bottom: 17px solid #094573;background-image: linear-gradient(324deg, rgb(3 2 27) 0%, rgb(20 97 158) 0%, rgb(115 121 125) 100%);}
+ 
+ .score-gameday{margin-left: 161px!important;margin-top: 83px;font-size: 38;position: absolute;color: #ececec;filter: drop-shadow(0px 0px 2px black);}
+ 
+ .gameday-winner{margin-left: 277px!important;}
+ 
+ .screen-stars{margin-left:18px;color: #c4da65;}
+ 
+.base-style-warhawks{ position: absolute;z-index: 9;transform: scale(1);margin-left: 170px;filter: hue-rotate(0deg);opacity: .9;}
+.base-style-vipers{ position: absolute;z-index: 9;transform: scale(1);margin-left: 170px;filter: hue-rotate(0deg);opacity: .9;}
+.base-style-buzz{ position: absolute;z-index: 9;transform: scale(1);margin-left: 170px;opacity: .9;}
+.base-style-ragingdemons{ position: absolute;z-index: 9;transform: scale(1);margin-left: 170px;filter: hue-rotate(0deg);opacity: .9;}
+.base-style-darkknights{ position: absolute;z-index: 9;transform: scale(1);margin-left: 170px;filter: grayscale(0);opacity: .9;}
+	
+ .opening-day-img{width: 200px;height: 158px;z-index:17;margin-left: -1045px;position: absolute;filter:drop-shadow(9px 11px 19px black) contrast(.9) saturate(.7);border-radius:5px;margin-top: -130px;opacity: 1;transform: scale(.75);display:none;}
+ 
+ .marquee-header{height:60px;margin-left:30px;display:inline-block;font-size:54px;margin-top:4px;padding-left:15px;padding-right:15px;font-family:nsnlogo;color:#eeeeee;border-radius:4px;}
+ .marquee-banner{height:50px;width:295px;position:absolute;margin-left:1070px;display:none;font-size:32px;padding-left:40px;padding-right:25px;margin-top:10px;border-radius:4px;font-family:nsnlogo;color:#eeeeee;background-image: url(img/glow-shine7.png), linear-gradient(180deg, rgb(125, 27, 27) 0%, rgb(5, 36, 58) 0%, rgb(2, 5, 8) 50%);}
+  .marque-img{height: 80px; width:200px; margin-top: -2px;position:relative;display:inline-block;object-fit: cover; margin-right:20px; border-radius:0px;}
+	
+ .gameday-logo-bg{ border-radius:0px; transform:scale(1);filter: drop-shadow(2px 4px 6px #000000);}
+ .home-team-logo{display:inline-block;position:absolute;width: 80px;height: 66px;margin-left: -620px;margin-top:20px;  transform: scale(1.5)}
+ .away-team-logo{display:inline-block;position:absolute;width: 92px;height: 76px;margin-left: -305px;margin-top: 16px;transform: scale(1.2);}
+ 
+ .nbl-logo1{width: 260px;height: 150px;z-index:17;margin-left: 1270px;position: absolute;border-radius:35px;margin-top: 690;opacity: 1;transform: scale(.3);filter:saturate(1);}
+ .nbl-logo2{display:none; width: 260px;height: 150px;z-index:17;margin-left: 1204px;position: absolute; border-radius:20px; margin-top: 565px;opacity: 1;filter: grayscale(0) saturate(1) drop-shadow(5px 5px 54px black);transform: scale(.35);}
+ .nbl-logo3{width: 260px;height: 150px;z-index:17;margin-left: 380px;position: absolute;border-radius: 30px;margin-top: 505px;opacity: .9;filter: grayscale(0)  invert(1) hue-rotate(167deg) brightness(1.1) contrast(1);transform: scale(.25);}
+ .nbl-hologram{width: 260px;height: 150px;z-index:17;margin-left: 1270px;position: absolute;border-radius:35px;margin-top: 690;opacity: .6;transform: scale(.3);filter:saturate(8);}
+
+ .main-screen-footer-left{z-index: 300;margin-top: 559px;margin-left: 76px;position: absolute;font-size: 26px; font-weight:900; color:#ababab;}
+ .main-screen-footer-right{z-index: 300;margin-top: 559px;margin-left: 590px;position: absolute;font-size: 26px; font-weight:900; color:#ababab;}
+
+ .video-main-screen{filter: contrast(1.1) brightness(1) saturate(1.1) sepia(0%) drop-shadow(9px 11px 19px black); transform:scale(1); display:inline-block; position:absolute; z-index:10; object-fit: cover; margin-left:0px; margin-top:147px; width:1180px; height:690px; border-radius:px;border: 20px solid #000000;    background: hsl(0, 0%, 20%);}
+ .video-second-screen{filter: contrast(1) brightness(1) saturate(1) hue-rotate(0deg)  drop-shadow(9px 11px 19px black); display:inline-block; transform:scale(.5); object-fit: cover; position:absolute; opacity:1; z-index:30; margin-left:1030px; margin-top:-70px; width:630px; height:890px;border-radius:0px; border: 30px solid #000000; background: hsl(0, 0%, 20%);}
+ .video-third-screen{filter: contrast(1) brightness(1.3) saturate(1) hue-rotate(0deg)  drop-shadow(9px 11px 19px black); display:inline-block; transform:scale(.5); object-fit: cover; position:absolute; opacity:1; z-index:30; margin-left:1030px; margin-top:540px; width:600px; height:400px;border-radius:12px; border: 30px solid #000000; background: hsl(0, 0%, 20%);}
+ .video-background-screen{filter: contrast(1.2) brightness(1) saturate(1.5) blur(0px) hue-rotate(0deg);transform:scale(1);margin-left:230px;margin-top:-40px;width:1920;height:980;position: absolute;}
+
+ .lens-flare1{width: 1170px;height: 700px;position:absolute;z-index:300;margin-top: -247px;margin-left: -420px; filter:grayscale(0) saturate(2);}
+ .lens-flare2{width: 1370px;height: 700px;position:absolute;z-index:300;margin-top: 513px;margin-left: 300px;filter:grayscale(0)saturate(2);}
+ .lens-flare3{width: 870px;height: 500px;position:absolute;z-index:300;margin-top: 352px;margin-left: 950px; filter:grayscale(0) hue-rotate(281deg)saturate(2);}
+ .lens-flare4{width: 870px;height: 500px;position:absolute;z-index:300;margin-top: 595px;margin-left: 950px;filter:grayscale(0) hue-rotate(217deg)saturate(2);}
+ .lens-flare5{width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -155;margin-left: 20; filter:grayscale(1)saturate(2);}
+ .lens-flare6{display:none; width: 270px;height: 300px;position:absolute;z-index:300;margin-top: -150;margin-left: -50;}
+ .lens-flare7{width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -150;margin-left: 20;filter: grayscale(0)saturate(2);}
+ .lens-flare8{width: 300px;height: 300px;position:absolute;z-index:300;margin-top: -17;margin-left: 0;transform:scale(1.4); filter: grayscale(0)saturate(2);}
+ .clock-style2{text-align:center; font-size:30px;}
+ 
+ .baseball-icon{display:inline-block;margin-left: -170;width: 65px;height: 65px;margin-top:8px; opacity: 1;filter:saturate(.9);}
+ .footer-ad-image{width:600px;height: 166px;margin-right: -125px;margin-top: -30px;border-radius:5px;filter:brightness(1.2) invert(-1) hue-rotate(185deg);float: right; transform:scale(.8); object-fit:cover;}
+ .mph-text{margin-left: -74px;margin-top: 62;position: absolute;font-size: 24px;color: #bbe201;}
+
+ .newyork-text{display:inline-block;width:155px;height:40px;position:absolute; font-size:26px; margin-top:-858px; margin-left:270px; opacity:0.90;background:rgba(20,20,20,.9);border-left: 5px #bbe201 solid; transform: translateZ(1px) skew(-10deg,0deg) scale(.8); font-style:normal; font-weight:800; padding-left:10px;}
+ .viewers-icon{display:inline-block;width:155px;height:40px;position:absolute;font-size:33px;margin-top: -854px;margin-left: 196px;opacity: .8;font-style:normal;font-weight:800;padding-left:0px; transform:scale(.9);}
+ .viewers-count{display:inline-block;width:155px;height:40px;position:absolute;font-size: 20px;margin-top: -852px;margin-left: 230px;color: white;opacity: .9;font-style:normal;font-weight: 600;padding-left:0px; transform:scale(.9);}
+    
+ .network-branding-container{display:inline-block;width:600px;height:100px;position:absolute; font-size:40px; margin-top:-920px; margin-left:715px; transform: scale(.8); filter:contrast(2); opacity:0.90;/* background:#dddddd; */}
+ .radio-waves-style2{color: #eeeeee; font-size:76px; display:none;}
+ .nsn-text{display:inline-block; font-family: nsnlogo; font-style:italic; margin-right:10px; color: #e6e6e6; text-shadow: 6px 4px 0px #060606;}
+ .live-text{display:inline-block; font-style:italic; color: #e6e6e6;}
+ .red-dot-live{filter:brightness(1);margin-top:-10px !important; margin-right:30px;}
+ 
+ .outs-count{float:right; position:absolute; margin-left:276px; margin-top:-6px;}
+ .outs-text{float:right;  position:absolute; margin-left:265px; margin-top:65px; font-size:20px;color: #bbe201;}
+ .inning-count{float:right; position:absolute; margin-left:365px; margin-top:8px; font-size:44px;}
+ .inning-arrow-away{float:right;position:absolute; margin-left:365px;margin-top:60px;font-size: 34px;color: #bbe201;}
+ 
+ .strikes-container{float:right;position:absolute; margin-left:1021px; width:150px; text-align:left; margin-top:-50px;}
+ .balls-container{float:right;position:absolute;margin-left:1021px; margin-top:-80px; width:150px; text-align:left; display:block;}
+ .call-indicator{margin-top: -0px !important;margin-right: 10px;}
+ 
+ .bottom-base1{margin-left:30px;}
+ .bottom-base2{margin-left:54px; margin-top:16px !important;}
+ .bottom-base3{margin-left:78px;}
+ .runner-on{background:#bbe201!important;}
+ 
+ .distressed-logo-nbl{width:190px; height:90px; margin-left:17px; margin-top:4px; border-radius:0px; opacity:1; transform:scale(1); filter:saturate(.7) contrast(1.4);}
+ .nbl-domain-name{position:absolute; display:none; z-index:15;font-family: nsnlogo; font-style:italic; color:#111111; font-weight:700; font-size:20px; margin-left:80px; margin-top:-3px;}
+ .tv-screen-frame{z-index:50; margin-left:-10px;position: absolute;width: 390px;height: 274px; pointer-events:none; filter: drop-shadow(16px 16px 8px black);}
+ .sidebar-video-1{filter:saturate(1.6) brightness(2) sepia(0%) hue-rotate(180deg); object-fit:cover; margin-top:5px; margin-left:-3px;}
+ 
+ .vipers-logo{width: 160px;height: 160px;display:inline-block;filter: contrast(1.3) saturate(1) drop-shadow(2px 10px 6px black);transform: scale(1);position: absolute;margin-top: -10px;margin-left: -6px;}
+ .robins-logo{width: 160px;height: 160px;display:inline-block;filter: contrast(1.5) drop-shadow(2px 10px 6px black);transform: scale(1) scaleX(-1);position:absolute;margin-top:-10px;margin-left:-10px;}
+ .buzz-logo{width: 160px;height: 160px;display:inline-block;filter: contrast(1.3) drop-shadow(2px 10px 6px black);transform: scale(1);position: absolute;margin-top: -10px;margin-left:-10px;}
+ .purple-eagles-logo{width: 160px;height: 160px;display:inline-block;filter: contrast(1.3) drop-shadow(2px 10px 6px black);transform: scale(1);position:absolute;margin-top:-10px;margin-left:-10px;}
+ .sharks-logo{width: 160px;height: 160px;display:inline-block;filter: contrast(1.3) drop-shadow(2px 10px 6px black);transform: scale(1);position:absolute;margin-top:-10px;margin-left:-10px;}
+ .blue-hawks-logo{width: 160px;height: 160px;display:inline-block;filter: contrast(1.3) drop-shadow(2px 10px 6px black);transform: scale(1);position:absolute;margin-top:-10px; margin-left:-6px;}
+ .time-logo{width: 90px;height: 90px; position:absolute; display:inline-block; margin-top:-4px; filter:saturate()1.2); contrast(1.2);}
+
+</style>
+</head>
+<body class="main-style main-bg">
+
+<div class="container-fluid">
+  <div class="row main-row">
+    <div class="col-sm-12 dark">
+      <div class="outer-wrapper">
+        <div class="main-content-wrapper">
+
+<p style="visibility:hidden;" id="demo">0</p>
+
+   
+
+     <video style="position: absolute;z-index: 100;width: 1920px;height: 1080;margin-top:-30px;mix-blend-mode: soft-light;filter: grayscale(1);" controls autoplay loop muted><source src="lights-bg-vid.mp4" type="video/mp4"></video>
+   <div style="display:none;">
+     <video class="video-main-screen" id="" style="mix-blend-mode:overlay; z-index:90;" controls autoplay muted loop><source id="" src="" type="video/mp4"></video>
+    <video class="video-main-screen" id="myVideo88" controls autoplay muted onended="myFunction()"><source id="" src="video-bg-baseball2.mp4" type="video/mp4"></video>
+  <video class="video-second-screen" id="second" controls autoplay loop muted><source src="http://adamfalletta.com/nsn/baseball-vid-7.mp4" type="video/mp4"></video>
+  <video class="video-second-screen" id="second" controls="" autoplay="" loop="" muted="" style="margin-top: -16px;margin-left: -40;transform: scale(.93);height: 160px;width: 1590px;border-radius: 0px; border:20px solid black;"><source src="http://adamfalletta.com/nsn/baseball-vid-3.mp4" type="video/mp4"></video>
+</div>
+  <video autoplay onended="myFunction()" class="video-background-screen" id="myVideo"><source id="mp4_src" src="https://previews.customer.envatousercontent.com/h264-video-previews/624aca04-69fe-4014-b213-8530c94a5556/21219810.mp4" type="video/mp4"></video>
+
+    <script>
+  // This variable works outside the the add function
+  var counter = 0;
+  
+var add = (function () {
+
+  return function () {counter += 1; return counter;}
+  
+})();
+
+function myFunction(){
+  document.getElementById("demo").innerHTML = add();
+ if (counter == 1){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/bd827db8-9456-4d21-882d-a68ad8b5ee24/43989246.mp4";} 
+ if (counter == 2){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/224c467b-05ab-4064-b430-ed78c07309c6/1502870.mp4";}
+ if (counter == 3){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/085c92f5-61bb-49cc-a3a2-f55ebf118345/10460000.mp4";}
+ if (counter == 4){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/b902f9c9-360b-458b-89a8-66483ea1bf03/20849125.mp4";}
+ if (counter == 5){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/fee5323a-209b-4ba6-a663-4317c4e36562/2462339.mp4";}
+ if (counter == 6){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/5358b432-97d7-4292-8948-e89a13a2fb2b/14352270.mp4";}
+ if (counter == 7){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/44f9ceb1-7a2e-46c7-a7ca-c23e74007a22/42230846.mp4";}
+ if (counter == 8){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/2d6b55bb-db12-49d6-b4cb-3c858a886165/37710398.mp4";}
+ if (counter == 9){counter = 0; currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/e720b29f-b71d-4655-99fb-4b8a7ed49495/22497721.mp4";}
+  
+  console.log(currentSrc);
+  
+  // put currentSource and bind it to a div element
+  
+ document.getElementById("mp4_src").src = currentSrc;
+ 
+ document.getElementById("myVideo").load();
+}
+</script>
+
+
+
+
+<img class="nbl-logo2" src="img/nbl-logo-bot-left.png">
+     
+    </div>
+    
+    </div>
+    
+    
+  </div>
+  
+    </div>
+<div class="side-panel">
+<div class="top-headlines">Top Headlines</div>
+<img class="glowing-lens lens-flare5" src="img/lensflare-blue.png">
+
+ <script>
+
+
+function update() {
+  $('#clock').html(moment().format('ddd, MMM Do, YYYY'));
+}
+
+setInterval(update, 1000);
+
+
+function updateTime() {
+  $('#clockTime').html(moment().format('h:mma [ET]'));
+}
+
+setInterval(updateTime, 1000);
+
+
+</script>
+  <div id="clock" class="clock clock-style2" style="z-index:100; position:relative;">Loading Day... </div>
+  <img class="moving-border lens-flare6" src="img/lensflare-blue.png">
+
+ <ul class="news-items">
+    <li style="text-shadow: 0px 0px 25px black;">
+
+    </li>
+
+<img class="lens-flare7" src="img/lensflare-blue.png">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-left:150px;">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:128px; filter:hue-rotate(45deg); margin-left:150px;">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:273px; filter:hue-rotate(82deg); margin-left:150px;">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:418px; filter:hue-rotate(0deg); margin-left:150px;">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:563px; filter:grayscale(1); margin-left:150px;">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-left:-70px;">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:128px; margin-left:-70px; filter:hue-rotate(282deg);">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:273px; margin-left:-70px;  filter:hue-rotate(217deg);">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:418px; margin-left:-70px;  filter:hue-rotate(135deg);">
+<img class="lens-flare8" src="img/lensflare-blue.png" style="margin-top:563px; margin-left:-70px;  filter:grayscale(1);">
+<li>
+
+
+<div class="base-style-warhawks">
+    <div class="base-container" style="margin-left:30px;"><span class="base-icon"></span></div> 
+     <div class="base-container" style="margin-left:54px; margin-top:16px !important;"><span class="base-icon"></span></div>
+     <div class="base-container" style="margin-left:78px;"><span class="base-icon"></span></div>
+    </div>
+    
+    <div style="position:absolute;margin-left: 195px;width: 150px;margin-top: 70px;z-index: 9;transform: scale(.6); filter:grayscale(1);">
+<div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top: -0px !important;margin-right: 10px;"></div><div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top:-0px !important; margin-right:10px;"></div>
+</div>
+
+   
+    <span class="inning-small" style="margin-left:234px!important;">F</span>
+    
+    <span class="score-bg-gameday" style="border-bottom: 17px solid #094573;background-image: linear-gradient(324deg, rgb(3 2 27) 0%, rgb(20 97 158) 0%, rgb(115 121 125) 100%);"></span>
+    <span class="score-gameday">0</span>
+    
+    <span class="score-bg-gameday gameday-winner" style="filter: brightness(0.5);"></span>
+    <span class="score-gameday" style="margin-left: 295px!important; color: #c7f42e;">4</span>
+
+    
+<div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;border-bottom: 8px solid #3fa4f3; background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(74 139 189) 0%, rgb(0, 0, 0) 100%);">
+<div style="position:absolute;font-size: 12px;margin-left: 45px;font-weight:700;margin-top: 100px;">TM</div>
+<img src="img/bluehawkslogo.png" class="blue-hawks-logo">
+</div><div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;float:right;border-bottom: 8px solid #0e446f;background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(20 72 113) 0%, rgb(0, 0, 0) 100%);">
+<div style="position:absolute;font-size: 12px;font-weight:700;margin-top: 105px;margin-left: 100px;">TM</div>
+<img src="img/sharkslogo.png" class="sharks-logo">
+</div></li>
+
+<img class="glowing-lens" src="img/lensflare-blue.png" style="width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -150;margin-left: -100;filter: grayscale(0);">
+
+<li>
+<div class="base-style-vipers">
+    <div class="base-container" style="margin-left:30px;"><span class="base-icon"></span></div> 
+     <div class="base-container" style="margin-left:54px; margin-top:16px !important;"><span class="base-icon" style="background:#bbe201!important;"></span></div>
+     <div class="base-container" style="margin-left:78px;"><span class="base-icon"></span></div>
+    </div>
+    
+    <div style="position:absolute;margin-left: 195px;width: 150px;margin-top: 70px;z-index: 9;transform: scale(.6);">
+<div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top: -0px !important;margin-right: 10px;"></div><div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top:-0px !important; margin-right:10px;"></div>
+</div>
+    
+    <i class="ion-arrow-up-b arrow-style" aria-hidden="true"></i>
+    <span class="inning-small">8</span>
+      <span class="score-bg-gameday" style="filter: hue-rotate(263deg);"></span>
+    <span class="score-gameday">3</span>
+    
+    <span class="score-bg-gameday gameday-winner" style="filter: hue-rotate(63deg);"></span>
+    <span class="score-gameday" style="margin-left: 295px!important;">4</span>
+    
+<div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;border-bottom: 8px solid #12d451;background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(27 123 53) 0%, rgb(0, 0, 0) 100%); ">
+<div style="position:absolute;font-size: 12px;font-weight:700;margin-top: 100px;margin-left: 35px;">TM</div>
+<img src="img/viperslogo.png" class="vipers-logo">
+</div><div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;float:right; border-bottom: 8px solid #7138b8;    background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(113 53 181) 0%, rgb(0, 0, 0) 100%); ">
+<div style="position:absolute;font-size: 12px;font-weight:700;margin-top: 100px;margin-left: 50px;">TM</div>
+<img src="img/purpleeagleslogo.png" class="purple-eagles-logo">
+</div>    
+</li>
+<img class="glowing-lens" src="img/lensflare-blue.png" style="width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -150;margin-left: 20; filter:grayscale(0);">
+<li>
+<div class="base-style-buzz">
+    <div class="base-container" style="margin-left:30px;"><span class="base-icon"  style="background:#bbe201!important;"></span></div> 
+     <div class="base-container" style="margin-left:54px; margin-top:16px !important;"><span class="base-icon" style="background:#bbe201!important;"></span></div>
+     <div class="base-container" style="margin-left:78px;"><span class="base-icon" style="background:#bbe201!important;"></span></div>
+    </div>
+    
+    <div style="position:absolute;margin-left: 195px;width: 150px;margin-top: 70px;z-index: 9;transform: scale(.6);">
+<div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top: -0px !important;margin-right: 10px;"></div><div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top:-0px !important; margin-right:10px;"></div>
+</div>
+
+    <i class="ion-arrow-up-b arrow-style" aria-hidden="true"></i>
+    <span class="inning-small">3</span>
+      <span class="score-bg-gameday" style="filter: hue-rotate(217deg) saturate(8);"></span>
+    <span class="score-gameday">2</span>
+    
+    <span class="score-bg-gameday gameday-winner" style="filter: hue-rotate(138deg) saturate(1.8);"></span>
+    <span class="score-gameday" style="margin-left: 295px!important;">8</span>
+    
+    <div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;border-bottom: 8px solid #ffda43;background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(220 188 56) 0%, rgb(0, 0, 0) 100%);">
+<div style="position:absolute;font-size: 12px;font-weight:700;margin-top: 100px;margin-left: 90px;">TM</div>
+<img src="img/buzzlogo.png" class="buzz-logo">
+</div><div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;float:right; filter: hue-rotate(334deg); border-bottom: 8px solid #ff163d;background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(226 79 105) 0%, rgb(0, 0, 0) 100%); ">
+<div style="position:absolute;font-size: 12px;font-weight:700;margin-left: 110px;margin-top: 100px;">TM</div>
+<img src="img/redbirdslogo.png" class="robins-logo">
+</div> 
+</li>
+<li>
+
+
+    <div class="base-style-ragingdemons">
+        <div class="base-container" style="margin-left:30px;"><span class="base-icon"></span></div> 
+         <div class="base-container" style="margin-left:54px; margin-top:16px !important;"><span class="base-icon"></span></div>
+         <div class="base-container" style="margin-left:78px;"><span class="base-icon"></span></div>
+        </div>
+        
+        <div style="position:absolute;margin-left: 195px;width: 150px;margin-top: 70px;z-index: 9;transform: scale(.6); filter:grayscale(1);">
+    <div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top: -0px !important;margin-right: 10px;"></div><div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top:-0px !important; margin-right:10px;"></div>
+    </div>
+    
+       
+        <span class="inning-small" style="margin-left:206px!important;">7:10pm</span>
+        
+        <span class="score-bg-gameday" style="border-bottom: 17px solid #094573;background-image: linear-gradient(324deg, rgb(3 2 27) 0%, rgb(20 97 158) 0%, rgb(115 121 125) 100%);"></span>
+        <span class="score-gameday">0</span>
+        
+        <span class="score-bg-gameday gameday-winner" style="filter: brightness(0.5);"></span>
+        <span class="score-gameday" style="margin-left: 295px!important;">0</span>
+    
+        
+    <div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;border-bottom: 8px solid #360404; background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(193 66 66) 0%, rgb(0, 0, 0) 100%);">
+    <div style="position:absolute;font-size: 12px;margin-left: 45px;font-weight:700;margin-top: 100px;">TM</div>
+    <img src="img/ragingdemonslogo.png" class="blue-hawks-logo" style="transform:scale(.9); filter:saturate(1) contrast(1.3) drop-shadow(2px 10px 6px black);">
+    </div><div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;float:right;border-bottom: 8px solid #0e446f;background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(2,0,36,1) 0%, rgb(20 72 113) 0%, rgb(0, 0, 0) 100%); ">
+    <div style="position:absolute;font-size: 12px;font-weight:700;margin-top: 105px;margin-left: 100px;">TM</div>
+    <img src="img/angrypandaslogo.png" class="sharks-logo">
+    </div></li>
+    <li>
+
+
+        <div class="base-style-darkknights">
+            <div class="base-container" style="margin-left:30px;"><span class="base-icon"></span></div> 
+             <div class="base-container" style="margin-left:54px; margin-top:16px !important;"><span class="base-icon"></span></div>
+             <div class="base-container" style="margin-left:78px;"><span class="base-icon"></span></div>
+            </div>
+            
+            <div style="position:absolute;margin-left: 195px;width: 150px;margin-top: 70px;z-index: 9;transform: scale(.6); filter:grayscale(1);">
+        <div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top: -0px !important;margin-right: 10px;"></div><div class="nav-btns btn btn-primary blue-glow mt5i" style="margin-top:-0px !important; margin-right:10px;"></div>
+        </div>
+        
+           
+            <span class="inning-small" style="margin-left:202px!important;">10:10pm</span>
+            
+            <span class="score-bg-gameday" style="border-bottom: 17px solid #094573;background-image: linear-gradient(324deg, rgb(3 2 27) 0%, rgb(20 97 158) 0%, rgb(115 121 125) 100%);"></span>
+            <span class="score-gameday">0</span>
+            
+            <span class="score-bg-gameday gameday-winner" style="filter: brightness(0.5);"></span>
+            <span class="score-gameday" style="margin-left: 295px!important;">0</span>
+        
+            
+        <div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;border-bottom: 8px solid #9f9f9f; background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(40,40,40,1) 0%, rgb(193 193 193) 0%, rgb(0, 0, 0) 100%);">
+        <div style="position:absolute;font-size: 12px;margin-left: 45px;font-weight:700;margin-top: 100px;">TM</div>
+        <img src="img/darkknightslogo.png" class="blue-hawks-logo">
+        </div><div class="gameday-logo-bg" style="width: 145px;height: 140px;display:inline-block;float:right;border-bottom: 8px solid #545454;background-image: url(img/background-dirt006.png), linear-gradient(324deg, rgba(0,0,0,1) 0%, rgb(54 54 54) 0%, rgb(0, 0, 0) 100%); ">
+        <div style="position:absolute;font-size: 12px;font-weight:700;margin-top: 105px;margin-left: 100px;">TM</div>
+        <img src="img/rampagelogo.png" class="sharks-logo">
+        </div></li>
+<img class="glowing-lens" src="img/lensflare-blue.png" style="width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -150;margin-left: -100;filter: grayscale(0);">
+
+
+
+    </ul>
+
+</div>
+    <div class="marquee-container">
+    <img class="glowing-lens" src="img/lensflare-blue.png" style="width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -150;margin-left: 20; filter:hue-rotate(135deg);">
+
+       <div class="marquee-header">
+        NSN<i class="ion-radio-waves" style=" margin-left:14px; margin-right:14px;color: #caf711; font-size:54px;" aria-hidden="true"></i>PULSE</div>
+        <div class="marquee-content">
+        <img src="https://images2.minutemediacdn.com/image/fetch/w_736,h_485,c_fill,g_auto,f_auto/https%3A%2F%2Ffansided.com%2Fwp-content%2Fuploads%2Fgetty-images%2F2018%2F08%2F1158280134-850x560.jpeg" class="marque-img">Brooklynite Hits Walk-off!<span class="yellow">#WinBig </span>
+	    <img src="img/testlogo2.png" class="time-logo"> <div id="clockTime" class="clock" style="font-size:50px; width:500px; display:inline-block; text-align:center; position:absolute;">Loading Time...</div>
+	    </div>
+          <div class="marquee-banner">METAPHONE</div>
+    </div>
+    
+<div class="nbl-domain-name"> ///// NEOBSEBALLLEAGUE.COM ///// NEOBASEBALLLEAGUE.COM ///// NEOBASEBALLLEAGUE.COM ///// NEOBASEBALLLEAGUE.COM /////</div>
+<div class="row bottom-row">
+  <div class="col-sm-9 dark-blue">
+    <div class="breaking-news">
+     <img class="distressed-logo-nbl" src="img/distressed-logo2.png"></div> 
+ 
+
+<img class="glowing-lens" src="img/lensflare-blue.png" style="width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -140;margin-left: -40;">
+  <span class="mia-score"><span style="display:inline-block; margin-right: 10px; padding-top: 2px; margin-top:2px!important;font-size:50px;text-shadow: 6px 4px 0px #560f10;">MIA</span></span>
+     <span class="mia-score" style="width: 100px;border: 0px;margin-left: -54px; color:black;padding-left: 14px;border-top-left-radius:0px;border-bottom-left-radius:0px; filter:invert(1); background-image: linear-gradient(353deg, rgba(2,0,36,1) 0%, rgb(255 221 199) 0%, rgb(255 255 255) 100%);">6</span><span style="display:inline-block; width:14px;"></span>
+     <span class="tex-score"><span style="display:inline-block;  padding-top: 2px;margin-top:2px!important; font-size:50px;text-shadow: 6px 4px 0px #121e65;">TEX</span></span>
+   
+    <img class="glowing-lens" src="img/lensflare-blue.png" style="width: 570px;height: 300px;position:absolute;z-index:300;margin-top: -140;margin-left: -350; filter: hue-rotate(330deg);">
+    <span class="mia-score" style="width: 100px;border: 0px;margin-left: -54px;padding-left: 14px; color:black;border-top-left-radius:0px;border-bottom-left-radius:0px; filter:invert(1); background-image: linear-gradient(353deg, rgba(2,0,36,1) 0%, rgb(255 208 208) 0%, rgb(255 255 255) 100%);">3</span>
+     
+<div class="base-container bottom-base1"><span class="base-icon"></span></div> 
+<div class="base-container bottom-base2"><span class="base-icon runner-on"></span></div>
+<div class="base-container bottom-base3"><span class="base-icon"></span></div>
+   
+<div class="balls-container">
+<div class="nav-btns btn btn-primary blue-glow mt5i call-indicator"></div><div class="nav-btns btn btn-primary blue-glow mt5i call-indicator"></div><div class="nav-btns btn btn-primary blue-glow mt5i call-indicator"></div></div>
+<div class="strikes-container">
+<div class="nav-btns btn btn-primary blue-glow mt5i call-indicator"></div><div class="nav-btns btn btn-primary blue-glow mt5i call-indicator"></div></div> 
+
+<span class="outs-count">2</span>
+<span class="outs-text">OUTS</span>
+<span class="inning-count" style="">7</span>
+<span class="inning-arrow-away"><i class="ion-arrow-up-b" style="color: #bbe201" aria-hidden="true"></i></span>
+
+<img src="img/od2021.png" class="opening-day-img">
+<img src="img/wolfpacklogo.png" class="away-team-logo">
+<img src="img/ironcoltslogo.png" class="home-team-logo">
+
+
+<div class="network-branding-container" style=""> 
+<i class="ion-radio-waves radio-waves-style2" aria-hidden="true"></i>
+     <span class="nsn-text">NSN <span style="background: #c10000;  padding-right:24px; padding-left:18px;padding-bottom:4px;">LIVE!</span> </span>
+     <div class="nav-btns btn btn-danger red-glow mt5i red-dot-live"></div></div>
+
+
+  </div>
+
+<div class="col-sm-3 dark-blue">
+<img src="img/flagopeningday.png" class="away-team-logo" style="z-index: 1000;position:absolute;margin-left: -70px;margin-top: -1px;width: 120px;height: 100px;filter: hue-rotate(0deg) saturate(0.6) drop-shadow(2px 4px 1px black);transform:scale(1);">
+<img class="baseball-icon" src="img/baseballicon.png">
+ <span class="mph-text">97 MPH</span>
+ <img class="footer-ad-image" src="img/revvad1.png">
+</div>
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+
+</body>
+</html>
