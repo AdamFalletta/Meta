@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>The Best Baseball Game</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    </head>
+
+    <body>
+        <div>IoT Baseball Engine - Coming Soon!</div>
+
+    <div style="display:none;">
+        <audio id="umpirePlayBall" controls="" autoplay="" loop=""><source src="sounds/umpirePlayBall.mp3" type="audio/mpeg"></audio>
+        <audio id="crowdNoise" controls="" autoplay="" loop=""><source src="sounds/crowdNoise.mp3" type="audio/mpeg"></audio>
+        <audio id="organSong1" controls="" autoplay="" loop=""><source src="sounds/organSong1.mp3" type="audio/mpeg"></audio>
+        <audio id="concessions1" controls="" autoplay="" loop=""><source src="sounds/concessions1.mp3" type="audio/mpeg"></audio>
+        <audio id="dugoutSupportPitcher" controls="" autoplay="" loop=""><source src="sounds/dugoutSupportPitcher.mp3" type="audio/mpeg"></audio>
+        <audio id="announceBatter" controls="" autoplay="" loop=""><source src="sounds/announceBatter.mp3" type="audio/mpeg"></audio>
+        <audio id="batterIntroMusic" controls="" autoplay="" loop=""><source src="sounds/batterIntroMusic.mp3" type="audio/mpeg"></audio>
+        <audio id="frameBGMusic" controls="" autoplay="" loop=""><source src="sounds/frameBGMusic.mp3" type="audio/mpeg"></audio>
+        <audio id="batCrackWeak" controls="" autoplay="" loop=""><source src="sounds/batCrackWeak.mp3" type="audio/mpeg"></audio>
+        <audio id="popoutBallFlight" controls="" autoplay="" loop=""><source src="sounds/popoutBallFlight.mp3" type="audio/mpeg"></audio>
+        <audio id="announcerFlyBallLF" controls="" autoplay="" loop=""><source src="sounds/announcerFlyBallLF.mp3" type="audio/mpeg"></audio>
+        <audio id="gloveCatch" controls="" autoplay="" loop=""><source src="sounds/gloveCatch.mp3" type="audio/mpeg"></audio>
+        <audio id="umpireOut" controls><source src="sounds/robo.mp3" type="audio/mpeg"></audio>
+        <audio id="crowdCheer1" controls="" autoplay="" loop=""><source src="sounds/crowdCheer1.mp3" type="audio/mpeg"></audio>
+        <audio id="batCrackBlast" controls="" autoplay="" loop=""><source src="sounds/batCrackBlast.mp3" type="audio/mpeg"></audio>
+        <audio id="doubleDeadCenterBallFlight" controls="" autoplay="" loop=""><source src="sounds/doubleDeadCenterBallFlight.mp3" type="audio/mpeg"></audio>
+        <audio id="announcerDoubleDeadCenter" controls="" autoplay="" loop=""><source src="sounds/announcerDoubleDeadCenter.mp3" type="audio/mpeg"></audio>
+        <audio id="batWiff" controls="" autoplay="" loop=""><source src="sounds/batWiff.mp3" type="audio/mpeg"></audio>
+        <audio id="catchersMittCatch" controls="" autoplay="" loop=""><source src="sounds/catchersMittCatch.mp3" type="audio/mpeg"></audio>
+        <audio id="umpireStrike3" controls="" autoplay="" loop=""><source src="sounds/umpireStrike3.mp3" type="audio/mpeg"></audio>
+        <audio id="crowdCheer2" controls="" autoplay="" loop=""><source src="sounds/crowdCheer2.mp3" type="audio/mpeg"></audio>
+        <audio id="baseHitBallFlight" controls="" autoplay="" loop=""><source src="sounds/baseHitBallFlight.mp3" type="audio/mpeg"></audio>
+        <audio id="announcerBaseHitRF" controls="" autoplay="" loop=""><source src="sounds/announcerBaseHitRF.mp3" type="audio/mpeg"></audio>
+        <audio id="announcerHomerunCall" controls="" autoplay="" loop=""><source src="sounds/announcerHomerunCall.mp3" type="audio/mpeg"></audio>
+        <audio id="crowdHomeRunBoo" controls="" autoplay="" loop=""><source src="sounds/crowdHomeRunBoo.mp3" type="audio/mpeg"></audio>
+        <audio id="homerunBallFlight" controls="" autoplay="" loop=""><source src="sounds/homerunBallFlight.mp3" type="audio/mpeg"></audio>
+        <audio id="announcerBaseHitLF" controls="" autoplay="" loop=""><source src="sounds/announcerBaseHitLF.mp3" type="audio/mpeg"></audio>
+        <audio id="announcerBaseHitUptheMiddle" controls="" autoplay="" loop=""><source src="sounds/announcerBaseHitUptheMiddle.mp3" type="audio/mpeg"></audio>
+        <audio id="umpireBallFour" controls="" autoplay="" loop=""><source src="sounds/umpireBallFour.mp3" type="audio/mpeg"></audio>
+   
+        <form action="">
+            <input id="base1" type="checkbox" name="base1" value="checkbox1">
+            <input id="base2" type="checkbox" name="base2" value="checkbox2">
+            <input id="base3" type="checkbox" name="base3" value="checkbox3">
+        </form>
+    </div>
+    <script>
+        // ATTENTION************* -> JUST MAKE AN AUDIO GAME - HIT A TARGET, PLAY A SOUND
+        
+        // WHAT IS IN THE PIPELINE... 
+        // v1 NEOStrikeZone: feat. Projection Screen (Hardware)
+        // NEOBASEBALL ARCADE * Pitcher Edition * (Software)
+        // ---------------------------------------------------------------------------------
+        // Mechanical Structure: 
+        // Bottom: Wooden / Durable StrikeZone with 
+        // Middle:  PCB: Silicon or Custom PerfBoard Blend or Electrode Contacts
+        // Top: High Quality Keycaps / Rubberized - NinjaFlex Printer Filament
+        
+        // PRE RESULT SOUNDS
+            var umpirePlayBall = document.getElementById("umpirePlayBall"); 
+            var crowdNoise = document.getElementById("crowdNoise"); 
+            var organSong1 = document.getElementById("organSong1"); 
+            var concessions1 = document.getElementById("concessions1"); 
+            var dugoutSupportPitcher = document.getElementById("dugoutSupportPitcher"); 
+            var announceBatter = document.getElementById("announceBatter"); 
+            var batterIntroMusic = document.getElementById("batterIntroMusic"); 
+        
+        // BACKGROUND MUSIC 
+            var frameBGMusic = document.getElementById("frameBGMusic"); 
+                
+        // RESULT SOUNDS (ON IMPACT) - use pause or wait html5 audio / javascript to delay the playing of sounds
+            var batCrackWeak = document.getElementById("batCrackWeak"); 
+            var popoutBallFlight = document.getElementById("popoutBallFlight");  
+            var announcerFlyBallLF = document.getElementById("announcerFlyBallLF");
+            var gloveCatch = document.getElementById("gloveCatch"); 
+            var umpireOut = document.getElementById("umpireOut"); 
+            var crowdCheer1 = document.getElementById("crowdCheer1"); 
+            var batCrackBlast = document.getElementById("batCrackBlast");  
+            var doubleDeadCenterBallFlight = document.getElementById("doubleDeadCenterBallFlight"); 
+            var announcerDoubleDeadCenter = document.getElementById("announcerDoubleDeadCenter"); 
+            var batWiff = document.getElementById("batWiff"); 
+            var catchersMittCatch = document.getElementById("catchersMittCatch"); 
+            var umpireStrike3 = document.getElementById("umpireStrike3"); 
+            var crowdCheer2 = document.getElementById("crowdCheer2"); 
+            var baseHitBallFlight = document.getElementById("baseHitBallFlight"); 
+            var announcerBaseHitRF = document.getElementById("announcerBaseHitRF"); 
+            var homerunBallFlight = document.getElementById("homerunBallFlight"); 
+            var announcerHomerunCall = document.getElementById("announcerHomerunCall"); 
+            var crowdHomeRunBoo = document.getElementById("crowdHomeRunBoo"); 
+            var announcerBaseHitLF = document.getElementById("announcerBaseHitLF"); 
+            var announcerBaseHitUptheMiddle = document.getElementById("announcerBaseHitUptheMiddle"); 
+            var umpireBallFour = document.getElementById("umpireBallFour"); 
+        
+        
+        // TIMER
+        
+        var timer // set proper time variable... countdown to 10 seconds or else its a walk
+        
+        // TEAMS
+        // AWAY TEAM
+        var awayTeamName
+        var awayTeamScore
+        
+        // HOME TEAM
+        var homeTeamName
+        var homeTeamScore
+        
+        // GAME VARIABLES
+        var currentTeamPitcher
+        var currentTeamBatting
+        
+        
+        // BASE OCCUPIED
+        var firstBaseCheckBox = 0;
+        var secondBaseCheckBox = 0;
+        var thirdBaseCheckBox = 0;
+        
+        // ---------- SCORING MATRIX-------------------
+        
+        // MODE 1 - Man on First
+        
+        // MODE 2 - Man on First and Second
+        
+        // MODE 3 - Bases Loaded
+        
+        // MODE 4 - Man on Second and Third
+        
+        // MODE 5 - Man on Third
+        
+        // MODE 6 - Man on First and Third
+        
+        // MODE 7 - Man on Second
+        
+        // MODE 8 - Bases Empty
+        
+        // DOUBLE PLAYS: ADDITIONAL CONDITIONAL CODING IS NEEDED
+        
+        // FRAMES
+        
+        // SCORE COUNTERS
+        
+        // RESULTS
+        
+        // TAKE EVERYTHING OUT OF CONSOLE LOG AND START PUTTING IN THE FUNCTIONS
+        // HTML5 PLAY / WAIT CONTROLS
+            function popout(){ 
+                console.log("Pop Out!");
+                setTimeout(function(){umpireOut.play();}, 2000);
+                setTimeout(function(){umpireOut.play();}, 6000);
+            }
+        
+            function doubleDeadCenter(){ 
+                console.log("Double to Dead Center!");}
+            
+            function strikeOutSwinging(){ 
+                console.log("Strikeout Swinging!");}
+            
+            function baseHitRF(){ 
+                console.log("Base Hit to Right Field!");}
+            
+            function homerun(){ 
+                console.log("Home Run!");}
+            
+            function baseHitLF(){ 
+                console.log("Base Hit to Left Field!");}
+            
+            function strikeoutLooking(){ 
+                console.log("Strikeout Looking!");}
+            
+            function baseHitUptheMiddle(){ 
+                console.log("Base Hit up the Middle!");}
+            
+            function strikeOutSwinging2(){ 
+                console.log("Strike 3 Swinging!");}
+
+             function ballFour(){ 
+                console.log("Ball Four!");}
+        
+            document.addEventListener('keydown', (e)=> {     
+                if (e.code == "Digit1"){ popout();}
+                if (e.code == "Digit2"){ doubleDeadCenter();}
+                if (e.code == "Digit3"){ strikeOutSwinging();}
+                if (e.code == "Digit4"){ baseHitRF();}
+                if (e.code == "Digit5"){ homerun();}
+                if (e.code == "Digit6"){ baseHitLF();}
+                if (e.code == "Digit7"){ strikeoutLooking();}
+                if (e.code == "Digit8"){ baseHitUptheMiddle();}
+                if (e.code == "Digit9"){ strikeOutSwinging2();} 
+                if (e.code == "KeyW"){ ballFour();} 
+                if (e.code == "KeyA"){ ballFour();} 
+                if (e.code == "KeyS"){ ballFour();} 
+                if (e.code == "KeyD"){ ballFour();} 
+                
+            });
+        
+            // add divs in the HTML AUDIO Section
+        
+        </script>
+        
+    </body>
+
+</html>
