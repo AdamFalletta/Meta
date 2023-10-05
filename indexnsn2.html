@@ -16,7 +16,6 @@ video::-webkit-media-controls {visibility: hidden;}
 <p style="visibility:hidden; width:0px; height:0px;" id="demo">0</p>
 <video autoplay onended="myFunction()" class="video-background-screen" id="myVideo"><source id="mp4_src" src="https://previews.customer.envatousercontent.com/h264-video-previews/624aca04-69fe-4014-b213-8530c94a5556/21219810.mp4" type="video/mp4"></video>
 <script>
-// This variable works outside the the add function
 var counter = 0;
 var add = (function () {return function () {counter += 1; return counter;}})();
 
@@ -44,8 +43,9 @@ setInterval(update, 1000);
 function updateTime() {$('#clockTime').html(moment().format('h:mma [ET]'));}
 setInterval(updateTime, 1000);
 </script>
-<div id="clock" class="clock clock-style2" style="z-index:100; position:relative;">Loading Day... </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
+<div id="clock">Loading Day... </div>
+<div id="clockTime">7:56pm ET</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
 </body>
