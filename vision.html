@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #canvas {
+            width: 1500px;
+            height: 1000px;
+            border: 2px solid #ccc;
+            margin: 10px;
+            padding: 10px;
+        }
+
+        #thumbnails {
+            margin-top: 20px;
+        }
+
+        .thumbnail {
+            display: inline-block;
+            margin: 5px;
+        }
+    </style>
+    <title>Vision Board</title>
+</head>
+<body>
+    <div id="canvas">
+        <!-- Canvas Area -->
+    </div>
+    <div id="thumbnails">
+        <!-- Thumbnail Container -->
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+    <script>
+        const canvas = document.getElementById('canvas');
+        const thumbnailsContainer = document.getElementById('thumbnails');
+        const fileInput = document.getElementById('fileInput');
+
+        // Initialize saved images from local storage (if any)
+        const savedImages = JSON.parse(localStorage.getItem('savedImages')) || [];
+
+        // Load saved images on the canvas
+        function loadSavedImages() {
+            savedImages.forEach(imageSrc => {
+                addImageToCanvas(imageSrc);
+            });
+        }
+
+        // Save images to local storage
+        function saveImagesToLocalStorage() {
+            localStorage.setItem('savedImages', JSON.stringify(savedImages));
+        }
+
+        // Add an image to the canvas
+        function addImageToCanvas(imageSrc) {
+            const img = new Image();
+            img.src = imageSrc;
+            img.draggable = true;
+            img.classList.add('thumbnail');
+
+            // Add the image to the canvas and save its location
+            canvas.appendChild(img);
+            savedImages.push(imageSrc);
+            saveImagesToLocalStorage();
+        }
+
+        // Handle file drop on the canvas
+        canvas.addEventListener('dragover', e => {
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('drop', e => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageSrc = event.target.result;
+                    addImageToCanvas(imageSrc);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle file input change
+        fileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageSrc = event.target.result;
+                    addImageToCanvas(imageSrc);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Load saved images on page load
+        loadSavedImages();
+    </script>
+</body>
+</html>
