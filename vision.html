@@ -19,6 +19,23 @@
         .thumbnail {
             display: inline-block;
             margin: 5px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .thumbnail:hover .delete-icon {
+            display: block;
+        }
+
+        .delete-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: none;
+            color: red;
+            font-size: 16px;
+            cursor: pointer;
         }
     </style>
     <title>Vision Board</title>
@@ -58,10 +75,44 @@
             img.draggable = true;
             img.classList.add('thumbnail');
 
+            // Create a delete icon
+            const deleteIcon = document.createElement('span');
+            deleteIcon.className = 'delete-icon';
+            deleteIcon.innerHTML = 'X';
+
+            // Handle delete on click
+            deleteIcon.addEventListener('click', () => {
+                removeImageFromCanvas(img, imageSrc);
+            });
+
+            img.appendChild(deleteIcon);
+
+            // Handle dragging
+            img.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', imageSrc);
+            });
+
+            img.addEventListener('dragend', () => {
+                saveImagesToLocalStorage();
+            });
+
             // Add the image to the canvas and save its location
             canvas.appendChild(img);
             savedImages.push(imageSrc);
             saveImagesToLocalStorage();
+
+            // Scale the thumbnail to 20% of its original size
+            img.style.transform = 'scale(0.2)';
+        }
+
+        // Remove an image from the canvas
+        function removeImageFromCanvas(img, imageSrc) {
+            canvas.removeChild(img);
+            const index = savedImages.indexOf(imageSrc);
+            if (index !== -1) {
+                savedImages.splice(index, 1);
+                saveImagesToLocalStorage();
+            }
         }
 
         // Handle file drop on the canvas
