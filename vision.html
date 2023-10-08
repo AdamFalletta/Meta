@@ -121,15 +121,16 @@
             img.style.transform = 'scale(0.2)';
         }
 
-        // Remove an image from the canvas
-        function removeImageFromCanvas(img, imageSrc) {
-            canvas.removeChild(img);
-            const index = savedImages.indexOf(imageSrc);
-            if (index !== -1) {
-                savedImages.splice(index, 1);
-                saveImagesToLocalStorage();
-            }
-        }
+     // Remove an image from the canvas
+function removeImageFromCanvas(img, imageSrc) {
+    const thumbnailContainer = img.parentElement;
+    canvas.removeChild(thumbnailContainer);
+    const index = savedImages.indexOf(imageSrc);
+    if (index !== -1) {
+        savedImages.splice(index, 1);
+        saveImagesToLocalStorage();
+    }
+}
 
         // Handle file drop on the canvas
         canvas.addEventListener('dragover', e => {
