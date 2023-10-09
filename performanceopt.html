@@ -5,7 +5,7 @@
 body{background: #090c25;}
     
    input[type="range"] {
-     -webkit-appearance: auto;
+     -webkit-appearance: none;
     cursor: default;
     padding: initial;
     border: initial;
@@ -13,6 +13,24 @@ body{background: #090c25;}
      width:90%;
      height:30px;
 }
+
+    input[type=range]::-webkit-slider-runnable-track {
+    width: 90%;
+    height: 25px;
+    background: #ff0000;
+    border: none;
+    border-radius: 3px;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: goldenrod;
+    margin-top: -4px;
+}
+    
     .bar-graph {
       display: flex;
       align-items: center;
