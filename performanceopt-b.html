@@ -9,85 +9,257 @@
     }
 
     .bar-label {
+      color: #234abb;
       width: 0px;
       text-align: right;
       padding-right: 10px;
       font-weight: bold;
-      position:absolute;
+      font-size: 14px;
+      font-family: arial;
+      margin-left: 10px;
+      position: absolute;
     }
 
     .bar {
       height: 20px;
       margin-right: 0px;
-          background-image: linear-gradient(to right, #f3c648 , #efb660);
-      border-radius:10px;
+      background-image: linear-gradient(to right, #f3c648, #efb660);
+      border-radius: 10px;
+    }
+
+    /* Custom styling for range sliders */
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      background: #d3d3d3;
+      border-radius: 5px;
+      outline: none;
+      margin: 5px 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #234abb;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #234abb;
+      border-radius: 50%;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <form id="performance-form">
     <label for="input1">RHC</label>
-    <input type="number" id="input1" min="0" max="100"><br>
+    <input type="range" id="input1" min="0" max="100"><br>
 
     <label for="input2">LHC</label>
-    <input type="number" id="input2" min="0" max="100"><br>
+    <input type="range" id="input2" min="0" max="100"><br>
 
     <!-- Add more labels and inputs here -->
- <label for="input3">RHP</label>
-    <input type="number" id="input3" min="0" max="100"><br>
+    <label for="input3">RHP</label>
+    <input type="range" id="input3" min="0" max="100"><br>
 
     <label for="input4">LHP</label>
-    <input type="number" id="input4" min="0" max="100"><br>
-    
-        <label for="input5">VIS</label>
-    <input type="number" id="input5" min="0" max="100"><br>
+    <input type="range" id="input4" min="0" max="100"><br>
+
+    <label for="input5">VIS</label>
+    <input type="range" id="input5" min="0" max="100"><br>
 
     <label for="input6">DIS</label>
-    <input type="number" id="input6" min="0" max="100"><br>
+    <input type="range" id="input6" min="0" max="100"><br>
 
     <!-- Add more labels and inputs here -->
- <label for="input7">CLU</label>
-    <input type="number" id="input7" min="0" max="100"><br>
+    <label for="input7">CLU</label>
+    <input type="range" id="input7" min="0" max="100"><br>
 
     <label for="input8">DUR</label>
-    <input type="number" id="input8" min="0" max="100"><br>
+    <input type="range" id="input8" min="0" max="100"><br>
 
-        <label for="input9">DRG</label>
-    <input type="number" id="input9" min="0" max="100"><br>
+    <label for="input9">DRG</label>
+    <input type="range" id="input9" min="0" max="100"><br>
 
     <label for="input10">BUN</label>
-    <input type="number" id="input10" min="0" max="100"><br>
+    <input type="range" id="input10" min="0" max="100"><br>
 
     <!-- Add more labels and inputs here -->
- <label for="input11">SPD</label>
-    <input type="number" id="input11" min="0" max="100"><br>
+    <label for="input11">SPD</label>
+    <input type="range" id="input11" min="0" max="100"><br>
 
     <label for="input12">REA</label>
-    <input type="number" id="input12" min="0" max="100"><br>
+    <input type="range" id="input12" min="0" max="100"><br>
 
-        <label for="input13">FLD</label>
-    <input type="number" id="input13" min="0" max="100"><br>
+    <label for="input13">FLD</label>
+    <input type="range" id="input13" min="0" max="100"><br>
 
     <label for="input14">ARM</label>
-    <input type="number" id="input14" min="0" max="100"><br>
+    <input type="range" id="input14" min="0" max="100"><br>
 
     <!-- Add more labels and inputs here -->
- <label for="input15">ACC</label>
-    <input type="number" id="input15" min="0" max="100"><br>
+    <label for="input15">ACC</label>
+    <input type="range" id="input15" min="0" max="100"><br>
 
     <label for="input16">BAS</label>
-    <input type="number" id="input16" min="0" max="100"><br>
+    <input type="range" id="input16" min="0" max="100"><br>
 
-        <label for="input17">AGG</label>
-    <input type="number" id="input17" min="0" max="100"><br>
+    <label for="input17">AGG</label>
+    <input type="range" id="input17" min="0" max="100"><br>
 
-
-
-    
     <input type="submit" value="Save">
   </form>
 
-  <div id="bar-graph-container" style="width:50%;"></div>
+  <div id="bar-graph-container" style="width:1000px;"></div>
+
+  <script>
+    // Rest of your JavaScript code remains the same
+    // ...
+  </script>
+</body>
+</html>
+This code replaces the <input type="number"> elements with <input type="range"> elements and applies custom CSS styles to make them look like range sliders. The rest of your JavaScript code should work as before without any changes.
+
+
+
+
+User
+can you please give me the full code
+ChatGPT
+Certainly! Here's the full modified HTML code with all the changes to make all input fields range sliders with custom CSS:
+
+html
+Copy code
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .bar-graph {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .bar-label {
+      color: #234abb;
+      width: 0px;
+      text-align: right;
+      padding-right: 10px;
+      font-weight: bold;
+      font-size: 14px;
+      font-family: arial;
+      margin-left: 10px;
+      position: absolute;
+    }
+
+    .bar {
+      height: 20px;
+      margin-right: 0px;
+      background-image: linear-gradient(to right, #f3c648, #efb660);
+      border-radius: 10px;
+    }
+
+    /* Custom styling for range sliders */
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      background: #d3d3d3;
+      border-radius: 5px;
+      outline: none;
+      margin: 5px 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #234abb;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #234abb;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <form id="performance-form">
+    <label for="input1">RHC</label>
+    <input type="range" id="input1" min="0" max="100"><br>
+
+    <label for="input2">LHC</label>
+    <input type="range" id="input2" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input3">RHP</label>
+    <input type="range" id="input3" min="0" max="100"><br>
+
+    <label for="input4">LHP</label>
+    <input type="range" id="input4" min="0" max="100"><br>
+
+    <label for="input5">VIS</label>
+    <input type="range" id="input5" min="0" max="100"><br>
+
+    <label for="input6">DIS</label>
+    <input type="range" id="input6" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input7">CLU</label>
+    <input type="range" id="input7" min="0" max="100"><br>
+
+    <label for="input8">DUR</label>
+    <input type="range" id="input8" min="0" max="100"><br>
+
+    <label for="input9">DRG</label>
+    <input type="range" id="input9" min="0" max="100"><br>
+
+    <label for="input10">BUN</label>
+    <input type="range" id="input10" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input11">SPD</label>
+    <input type="range" id="input11" min="0" max="100"><br>
+
+    <label for="input12">REA</label>
+    <input type="range" id="input12" min="0" max="100"><br>
+
+    <label for="input13">FLD</label>
+    <input type="range" id="input13" min="0" max="100"><br>
+
+    <label for="input14">ARM</label>
+    <input type="range" id="input14" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input15">ACC</label>
+    <input type="range" id="input15" min="0" max="100"><br>
+
+    <label for="input16">BAS</label>
+    <input type="range" id="input16" min="0" max="100"><br>
+
+    <label for="input17">AGG</label>
+    <input type="range" id="input17" min="0" max="100"><br>
+
+    <input type="submit" value="Save">
+  </form>
+
+  <div id="bar-graph-container" style="width:1000px;"></div>
+
 
   <script>
     // Retrieve saved data from localStorage
