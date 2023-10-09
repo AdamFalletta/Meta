@@ -115,7 +115,7 @@
       barGraphContainer.innerHTML = '';
 
       // Get all the form inputs
-      const inputs = Array.from(form.elements).filter(element => element.tagName === 'INPUT' && element.type === 'number');
+      const inputs = Array.from(form.elements).filter(element => element.tagName === 'INPUT' && element.type === 'range');
 
       // Iterate through the inputs and create a bar for each
       inputs.forEach(input => {
