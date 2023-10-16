@@ -286,7 +286,7 @@
       timeValuesDiv.innerHTML = '';
 
       const timeValuesList = document.createElement('ul');
-      timeValuesList.style.listStyleType = 'circle';
+      timeValuesList.style.listStyleType = 'none';
       Object.keys(timeValues).forEach(label => {
         const listItem = document.createElement('li');
         listItem.innerHTML = `${label}: ${timeValues[label]} minutes`;
