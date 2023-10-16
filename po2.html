@@ -203,7 +203,7 @@
   <div id="bar-graph-container" style="width: 1000px; visibility: hidden; display: none;"></div>
 
   <!-- Time values container -->
-  <div id="time-values" style="margin-left: 30px; margin-top: 20px;"></div>
+  <div id="time-values" style="margin-left: 30px; margin-top: 20px; font-size:16px; font-familt:arial;"></div>
 
   <script>
     // Retrieve saved data from localStorage
@@ -289,7 +289,7 @@
       timeValuesList.style.listStyleType = 'none';
       Object.keys(timeValues).forEach(label => {
         const listItem = document.createElement('li');
-        listItem.innerHTML = `${label}: ${timeValues[label]} minutes`;
+        listItem.innerHTML = `<b>${label}:</b> ${timeValues[label]} minutes`;
         timeValuesList.appendChild(listItem);
       });
 
