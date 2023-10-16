@@ -53,10 +53,46 @@
         <p>Experimentation: ${experimentation}</p>
         <p>Learning: ${learning}</p>
       `;
+      // Save the game progress in localStorage
+      saveGameProgress();
+    }
+
+    // Function to load the player's saved progress from localStorage
+    function loadGameProgress() {
+      if (localStorage.getItem('gameProgress')) {
+        const savedProgress = JSON.parse(localStorage.getItem('gameProgress'));
+        score = savedProgress.score;
+        consistency = savedProgress.consistency;
+        quality = savedProgress.quality;
+        engagement = savedProgress.engagement;
+        collaboration = savedProgress.collaboration;
+        promotion = savedProgress.promotion;
+        trends = savedProgress.trends;
+        experimentation = savedProgress.experimentation;
+        learning = savedProgress.learning;
+      }
+    }
+
+    // Function to save the player's progress in localStorage
+    function saveGameProgress() {
+      const gameProgress = {
+        score,
+        consistency,
+        quality,
+        engagement,
+        collaboration,
+        promotion,
+        trends,
+        experimentation,
+        learning,
+      };
+      localStorage.setItem('gameProgress', JSON.stringify(gameProgress));
     }
 
     // Function to start the game
     function startGame() {
+      loadGameProgress(); // Load saved progress from localStorage
+      showStatus();
       const gameArea = document.getElementById('game-area');
       gameArea.innerHTML = `
         <p>Welcome to the Content Creator's Journey game!</p>
