@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Music Production Checklist</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ionic@6.16.3/dist/css/ionic.min.css">
+</head>
+<body>
+    <ion-header>
+        <ion-toolbar>
+            <ion-title>Music Production Checklist</ion-title>
+        </ion-toolbar>
+    </ion-header>
+    <ion-content>
+        <ion-list id="checklist">
+        </ion-list>
+    </ion-content>
+    <script src="https://cdn.jsdelivr.net/npm/ionic@6.16.3/dist/js/ionic.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const checklistItems = [
+                "Kick Drum: 🥁 The foundational element that provides the rhythm and groove.",
+                "Snare Drum: 👏 Complements the kick and creates the basic beat's backbone.",
+                "Hi-Hats: 🎵 Add rhythm and energy with high-frequency, fast-paced hits.",
+                "Claps: 👏👏 Layered with the snare to add punch and depth to the rhythm.",
+                "Percussion: 🥁🎶 Various additional rhythmic elements for texture and groove.",
+                "Bassline: 🎸 Provides low-end energy and anchors the track.",
+                "Chords/Chord Progression: 🎶 Establish the harmonic structure of the song.",
+                "Melody: 🎵 A catchy tune that complements the chords and defines the track.",
+                "Arpeggios: 🎹 Melodic patterns played as a sequence of individual notes.",
+                "Pads/Atmospheres: ☁️ Background layers to fill out the mix and set the mood.",
+                "Synth Leads: 🎹🎵 Prominent melodic elements that grab the listener's attention.",
+                "Vocal Samples/Chops: 🎤✂️ Vocal snippets used for emotional and rhythmic effect.",
+                "Build-Up FX: 🌟 Create tension and anticipation before significant sections.",
+                "White Noise: 🌪️ Sweeps and hits used to accentuate transitions and drops.",
+                "Downlifters: ⬇️ Enhance transitions and build anticipation with descending FX.",
+                "FX and Sound Design: 🎛️ Unique and creative sound effects to make your track stand out.",
+                "Drops: 💥 The most energetic part of the track, often featuring a culmination of elements.",
+                "Breakdown: 🌅 A section that provides contrast and builds anticipation.",
+                "Build-Up Drums: 🥁 Additional drums to intensify the energy during build-ups.",
+                "Build-Up Melodies: 🎵 Melodic elements that signal the upcoming drop.",
+                "Snare Rolls/Fills: 🥁🔊 Drum rolls and fills to intensify the build-up.",
+                "Sub-Drop: 🎵🔊 A heavy bass drop just before the main drop for added impact.",
+                "Main Drop: 💥 The climax of the track, where everything comes together.",
+                "Variations: 🔀 Additional elements to keep the track engaging.",
+                "Breakdown FX: 🌌 Atmospheric effects to enhance the mood during the breakdown.",
+                "Vocal Breakdown: 🎤 A section where vocals are prominently featured.",
+                "Second Drop: 💥💥 A variation or evolution of the main drop.",
+                "Outro: 🏁 The concluding section that brings the song to a satisfying end.",
+                "Mixing and Mastering: 🎚️ The process of balancing and polishing the mix.",
+                "Final Tweaks: 🛠️ Any last-minute adjustments to the arrangement and balance.",
+                "FX Automation: 🤖 Automated effects that evolve throughout the track.",
+                "Background Vocals/Choirs: 🎶👥 Layered vocal elements for richness.",
+                "Guitar or Real Instruments: 🎸🎺 Real instruments or guitar riffs for an organic touch.",
+                "Brass or Orchestral Elements: 🎺🎻 Orchestral instruments for an epic feel.",
+                "Live Drum Samples: 🥁🎶 Real drum samples for an organic rhythm.",
+                "Counter-Melodies: 🎵🎶 Additional melodies that complement the main melody.",
+                "Sidechain Compression: 🌊 A technique that creates the 'pumping' effect.",
+                "Foley Sounds: 🎙️🚪 Real-world sounds like footsteps or door slams for texture.",
+                "Vocal Harmonies: 🎤🎶 Vocal parts that harmonize with the lead vocals.",
+                "Filtered Builds: 🔍📈 Applying filtering to create anticipation in the build-up.",
+                "Reverse FX: ↩️🔊 Sounds or melodies played in reverse to transition between sections.",
+                "Distorted/Bitcrushed Elements: 🌀🎛️ Edgy, distorted sound elements.",
+                "Sample Chops: 🎤✂️ Chopped vocal or instrumental samples for unique patterns.",
+                "Ambient Textures: 🌃🎶 Background textures for depth and mood.",
+                "Extra Percussion Layers: 🥁🎶 Additional percussion hits for groove.",
+                "Granular Synthesis: 🎛️ A technique for creating evolving and abstract textures.",
+                "Granular Effects: 🎛️✨ Applying granular effects for unique sonic textures.",
+                "Vocal Adlibs: 🎤🎶 Spontaneous vocalizations to enhance vocal sections.",
+                "Creative Stereo Effects: 🔄🔊 Effects that manipulate stereo imaging and panning.",
+                "Field Recordings: 🌄🔊 Real-world recordings for an unexpected sonic twist."
+            ];
+
+            const checklist = document.getElementById("checklist");
+
+            function loadChecklist() {
+                const savedItems = JSON.parse(localStorage.getItem("checklist")) || [];
+
+                checklistItems.forEach((item, index) => {
+                    const ionItem = createChecklistItem(item, savedItems.includes(index));
+                    checklist.appendChild(ionItem);
+                });
+            }
+
+            function createChecklistItem(text, isChecked) {
+                const ionItem = document.createElement("ion-item");
+                const ionLabel = document.createElement("ion-label");
+                ionLabel.innerText = text;
+                ionItem.appendChild(ionLabel);
+
+                const ionCheckbox = document.createElement("ion-checkbox");
+                ionCheckbox.checked = isChecked;
+                ionItem.appendChild(ionCheckbox);
+
+                ionCheckbox.addEventListener("ionChange", function (event) {
+                    const isChecked = event.detail.checked;
+                    const index = checklistItems.indexOf(text);
+                    updateChecklist(index, isChecked);
+                });
+
+                return ionItem;
+            }
+
+            function updateChecklist(index, isChecked) {
+                const savedItems = JSON.parse(localStorage.getItem("checklist")) || [];
+                if (isChecked && !savedItems.includes(index)) {
+                    savedItems.push(index);
+                } else if (!isChecked && savedItems.includes(index)) {
+                    savedItems.splice(savedItems.indexOf(index), 1);
+                }
+                localStorage.setItem("checklist", JSON.stringify(savedItems));
+            }
+
+            loadChecklist();
+        });
+    </script>
+</body>
+</html>
