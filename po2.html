@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Performance Optimization - Adam Falletta Inc. 2023</title>
+  <style>
+    body {
+      background: #090c25;
+      color: #dddddd;
+    }
+
+    form {
+      margin-left: 30px;
+      margin-top: 50px;
+    }
+
+    input[type="range"] {
+      margin: auto;
+      -webkit-appearance: none;
+      position: relative;
+      overflow: hidden;
+      height: 40px;
+      width: 1000px;
+      cursor: pointer;
+      border-radius: 0; /* iOS */
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: #ddd;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 40px;
+      background: #fff;
+      box-shadow: -1000px 0 0 1000px dodgerblue;
+      border: 2px solid #999;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 40px;
+      background: #ddd;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      background: #fff;
+      height: 40px;
+      width: 20px;
+      border: 3px solid #999;
+      border-radius: 0 !important;
+      box-shadow: -1000px 0 0 1000px dodgerblue;
+      box-sizing: border-box;
+    }
+
+    input[type="range"]::-ms-fill-lower {
+      background: dodgerblue;
+    }
+
+    input[type="range"]::-ms-thumb {
+      background: #fff;
+      border: 2px solid #999;
+      height: 40px;
+      width: 20px;
+      box-sizing: border-box;
+    }
+
+    input[type="range"]::-ms-ticks-after,
+    input[type="range"]::-ms-ticks-before,
+    input[type="range"]::-ms-track,
+    input[type="range"]::-ms-tooltip {
+      display: none;
+    }
+
+    .bar-graph {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .bar-label {
+      color: #234abb;
+      width: 0px;
+      text-align: right;
+      padding-right: 10px;
+      font-weight: bold;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+      margin-left: 10px;
+      position: absolute;
+    }
+
+    .bar {
+      height: 20px;
+      margin-right: 0px;
+      background-image: linear-gradient(to right, #f3c648, #efb660);
+      border-radius: 10px;
+    }
+
+    label {
+      position: absolute;
+      z-index: 5;
+      display: inline-block;
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      font-size: 20px;
+      margin-top: 6px;
+      margin-left: 10px;
+      filter: drop-shadow(2px 4px 0px #00000055);
+    }
+
+    .sub {
+      width: 1000px;
+      height: 100px;
+      color: #eeeeee;
+      border-radius: 18px;
+      margin-top: 20px;
+      font-size: 40px;
+      border: 4px solid dodgerblue;
+      font-weight: 900;
+      text-transform: capitalize;
+      background: #090c25;
+    }
+
+    .sub:hover {
+      width: 1000px;
+      height: 100px;
+      color: #eeeeee;
+      border-radius: 18px;
+      margin-top: 20px;
+      font-size: 40px;
+      border: 4px solid white;
+      font-weight: 900;
+      text-transform: capitalize;
+      background: #090c25;
+    }
+  </style>
+</head>
+<body>
+  <h1>Adam Falletta Inc.</h1>
+  <h3>Performance Optimization</h3>
+  <h4>Become the MVP of your life!</h4>
+
+  <form id="performance-form">
+    <label for="input1">RHC</label>
+    <input type="range" id="input1" min="0" max="100"><br>
+
+    <label for="input2">LHC</label>
+    <input type="range" id="input2" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input3">RHP</label>
+    <input type="range" id="input3" min="0" max="100"><br>
+
+    <label for="input4">LHP</label>
+    <input type="range" id="input4" min="0" max="100"><br>
+
+    <label for="input5">VIS</label>
+    <input type="range" id="input5" min="0" max="100"><br>
+
+    <label for="input6">DIS</label>
+    <input type="range" id="input6" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input7">CLU</label>
+    <input type="range" id="input7" min="0" max="100"><br>
+
+    <label for="input8">DUR</label>
+    <input type="range" id="input8" min="0" max="100"><br>
+
+    <label for="input9">DRG</label>
+    <input type="range" id="input9" min="0" max="100"><br>
+
+    <label for="input10">BUN</label>
+    <input type="range" id="input10" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input11">SPD</label>
+    <input type="range" id="input11" min="0" max="100"><br>
+
+    <label for="input12">REA</label>
+    <input type="range" id="input12" min="0" max="100"><br>
+
+    <label for="input13">FLD</label>
+    <input type="range" id="input13" min="0" max="100"><br>
+
+    <label for="input14">ARM</label>
+    <input type="range" id="input14" min="0" max="100"><br>
+
+    <!-- Add more labels and inputs here -->
+    <label for="input15">ACC</label>
+    <input type="range" id="input15" min="0" max="100"><br>
+
+    <label for="input16">BAS</label>
+    <input type="range" id="input16" min="0" max="100"><br>
+
+    <label for="input17">AGG</label>
+    <input type="range" id="input17" min="0" max="100"><br>
+
+    <input type="submit" value="SAVE" class="sub">
+  </form>
+
+  <div id="bar-graph-container" style="width: 1000px; visibility: hidden; display: none;"></div>
+
+  <!-- Time values container -->
+  <div id="time-values" style="margin-left: 30px; margin-top: 20px;"></div>
+
+  <script>
+    // Retrieve saved data from localStorage
+    const savedData = JSON.parse(localStorage.getItem('performanceData')) || {};
+
+    // Get the form and bar graph container elements
+    const form = document.getElementById('performance-form');
+    const barGraphContainer = document.getElementById('bar-graph-container');
+
+    // Initialize the form inputs with saved data
+    Object.keys(savedData).forEach(label => {
+      const input = document.getElementById(label);
+      if (input) {
+        input.value = savedData[label];
+      }
+    });
+
+    // Function to update the bar graph
+    function updateBarGraph() {
+      // Clear the bar graph container
+      barGraphContainer.innerHTML = '';
+
+      // Get all the form inputs
+      const inputs = Array.from(form.elements).filter(element => element.tagName === 'INPUT' && element.type === 'range');
+
+      // Time intervals for different slider ranges
+      const timeIntervals = [
+        { min: 0, max: 12, time: 120 },
+        { min: 13, max: 25, time: 105 },
+        { min: 26, max: 50, time: 90 },
+        { min: 51, max: 62, time: 60 },
+        { min: 63, max: 74, time: 45 },
+        { min: 75, max: 86, time: 30 },
+        { min: 87, max: 100, time: 15 },
+      ];
+
+      // Initialize variables for total and time values
+      let total = 0;
+      const timeValues = {};
+
+      // Iterate through the inputs and create a bar for each
+      inputs.forEach(input => {
+        const label = document.createElement('span');
+        label.className = 'bar-label';
+        label.textContent = input.previousElementSibling.textContent;
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.width = input.value + '%';
+        bar.style.backgroundColor = "#000033";
+
+        const barContainer = document.createElement('div');
+        barContainer.className = 'bar-graph';
+        barContainer.appendChild(label);
+        barContainer.appendChild(bar);
+
+        barGraphContainer.appendChild(barContainer);
+
+        // Calculate and update the total and time values
+        const sliderValue = parseInt(input.value);
+        timeIntervals.forEach(interval => {
+          if (sliderValue >= interval.min && sliderValue <= interval.max) {
+            total += (sliderValue * interval.time) / 100;
+            timeValues[label.textContent] = interval.time;
+          }
+        });
+      });
+
+      // Save the data to localStorage
+      const formData = {};
+      inputs.forEach(input => {
+        formData[input.id] = input.value;
+      });
+      localStorage.setItem('performanceData', JSON.stringify(formData));
+
+      // Display time values in a bulleted list
+      const timeValuesDiv = document.getElementById('time-values');
+      timeValuesDiv.innerHTML = '';
+
+      const timeValuesList = document.createElement('ul');
+      timeValuesList.style.listStyleType = 'circle';
+      Object.keys(timeValues).forEach(label => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `${label}: ${timeValues[label]} minutes`;
+        timeValuesList.appendChild(listItem);
+      });
+
+      // Calculate and display the total
+      const totalList = document.createElement('li');
+      totalList.innerHTML = `Total: ${total} minutes (DRG + BUN + BAS + AGG)`;
+      timeValuesList.appendChild(totalList);
+      timeValuesDiv.appendChild(timeValuesList);
+    }
+
+    // Update the bar graph when the form is submitted
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      updateBarGraph();
+    });
+  </script>
+</body>
+</html>
