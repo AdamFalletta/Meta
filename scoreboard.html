@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scoreboard App</title>
+</head>
+<body>
+    <h1>Scoreboard</h1>
+    <label for="homeScore">Home:</label>
+    <input type="number" id="homeScore" value="0"><br>
+    <label for="awayScore">Away:</label>
+    <input type="number" id="awayScore" value="0"><br>
+    <button id="saveScore">Save Score</button>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const homeScoreInput = document.getElementById("homeScore");
+    const awayScoreInput = document.getElementById("awayScore");
+    const saveScoreButton = document.getElementById("saveScore");
+
+    saveScoreButton.addEventListener("click", function () {
+        const homeScore = homeScoreInput.value;
+        const awayScore = awayScoreInput.value;
+        const newScoreLine = `home ${homeScore} away ${awayScore},`;
+
+        // Use the Fetch API to read the existing file and append the new score
+        fetch("https://adamfalletta.github.io/Meta/scoreboard.txt")
+            .then(response => response.text())
+            .then(data => {
+                const updatedData = data + newScoreLine;
+                return fetch("https://adamfalletta.github.io/Meta/scoreboard.txt", {
+                    method: "PUT",
+                    body: updatedData
+                });
+            })
+            .then(() => {
+                // Update the scores and reset the input fields
+                homeScoreInput.value = "0";
+                awayScoreInput.value = "0";
+            })
+            .catch(error => console.error("Error:", error));
+    });
+});
+
+      
+    </script>
+</body>
+</html>
