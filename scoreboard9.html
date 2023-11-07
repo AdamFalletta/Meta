@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scoreboard App</title>
+</head>
+<body>
+    <h1>Scoreboard</h1>
+    <p>Home: <span id="homeScore">0</span></p>
+    <p>Away: <span id="awayScore">0</span></p>
+    <button id="saveScore">Save Score</button>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+    const homeScoreElement = document.getElementById("homeScore");
+    const awayScoreElement = document.getElementById("awayScore");
+    const saveScoreButton = document.getElementById("saveScore");
+
+    saveScoreButton.addEventListener("click", function () {
+        const homeScore = parseInt(homeScoreElement.textContent);
+        const awayScore = parseInt(awayScoreElement.textContent);
+        const newScoreLine = `home ${homeScore} away ${awayScore},`;
+
+        // Use the File API to write to the scoreboard.txt file
+        writeToFile("scoreboard.txt", newScoreLine, function () {
+            // Update the scores and reset the input fields
+            homeScoreElement.textContent = "0";
+            awayScoreElement.textContent = "0";
+        });
+    });
+});
+
+function writeToFile(filename, data, callback) {
+    const blob = new Blob([data], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.style.display = "none";
+    document.body.appendChild(a);
+
+    const url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    if (typeof callback === "function") {
+        callback();
+    }
+}
+    </script>
+</body>
+</html>
