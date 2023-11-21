@@ -1,0 +1,94 @@
+Certainly! Here's the complete code consolidated into a single HTML file:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      position: relative;
+    }
+
+    .heart {
+      position: absolute;
+      width: 100px;
+      height: 90px;
+      background-color: red;
+      clip-path: polygon(50% 0%, 100% 35%, 75% 100%, 50% 70%, 25% 100%, 0% 35%);
+      animation: heartbeat 1s infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    .heart.particle {
+      animation: particleAnimation 1s linear;
+    }
+
+    @keyframes particleAnimation {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-200px) scale(0.5);
+        opacity: 0;
+      }
+    }
+  </style>
+  <title>Heart Explosion</title>
+</head>
+<body>
+  <div class="container">
+    <div class="heart" id="bigHeart"></div>
+    <button onclick="explode()">Explode!</button>
+  </div>
+  <script>
+    function explode() {
+      const container = document.querySelector('.container');
+      const bigHeart = document.getElementById('bigHeart');
+
+      // Create smaller hearts (particles)
+      for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'heart particle';
+        container.appendChild(particle);
+
+        // Set initial position
+        const rect = bigHeart.getBoundingClientRect();
+        const x = rect.left + Math.random() * rect.width;
+        const y = rect.top + Math.random() * rect.height;
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+
+        // Apply animation
+        particle.style.animation = 'particleAnimation 1s linear';
+
+        // Remove particle after animation
+        particle.addEventListener('animationend', () => {
+          container.removeChild(particle);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
+```
+
+Copy and paste this code into an HTML file, and it should display the heart animation with the "Explode!" button. Clicking the button will trigger the particle explosion effect.
