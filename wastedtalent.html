@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wasted Talent Reminder</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    #app-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #message {
+      margin: 20px 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    #generate-button {
+      background-color: #007BFF;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <h1>Sonny's Wasted Talent Reminder</h1>
+    <p id="message">Click the button to get a dose of wisdom.</p>
+    <button id="generate-button">Generate Message</button>
+  </div>
+
+  <script>
+    // Wasted talent messages
+    const wastedTalentMessages = [
+  const wastedTalentMessages = [
+  "The saddest thing in life is wasted talent. Channel yours into greatness.",
+  "Your talent is a flame. Ignite the path to your dreams.",
+  "Talent unused is a story untold. Write your narrative.",
+  "In the symphony of life, don't let your talent play a silent note.",
+  "Wasted talent is like a locked door. Open it to endless possibilities.",
+  "Your talent is a seed. Nurture it, and watch it grow into something extraordinary.",
+  "Don't be a spectator to your own talent. Step onto the stage of your ambitions.",
+  "Talent is a currency. Spend it wisely on the things that matter to you.",
+  "In the gallery of life, let your talent be the masterpiece that hangs prominently.",
+  "Wasted talent is a melody unheard. Play your tune for the world to hear.",
+  "Your talent is a beacon. Let it guide you through the darkest of times.",
+  "Don't bury your talent in the graveyard of excuses. Resurrect it with determination.",
+  "Talent is a flame within. Fan it with passion, and let it illuminate your path.",
+  "Wasted talent is a canvas untouched. Paint your journey with bold strokes.",
+  "Your talent is a puzzle piece. Find where it fits in the grand mosaic of life.",
+  "In the dance of life, let your talent be the rhythm that moves you forward.",
+  "Talent is a key. Unlock the doors to your aspirations.",
+  "Wasted talent is a garden unattended. Cultivate it, and watch it bloom.",
+  "Your talent is a story waiting to be written. Grab the pen and script your destiny.",
+  "Don't let your talent be a spectator. Let it be the star of your show."
+];
+
+    // Function to generate a random message
+    function generateMessage() {
+      const randomIndex = Math.floor(Math.random() * wastedTalentMessages.length);
+      return wastedTalentMessages[randomIndex];
+    }
+
+    // Function to update the message on the page
+    function updateMessage() {
+      const messageElement = document.getElementById('message');
+      messageElement.textContent = generateMessage();
+    }
+
+    // Event listener for the button
+    document.getElementById('generate-button').addEventListener('click', updateMessage);
+
+    // Initial message on page load
+    updateMessage();
+  </script>
+</body>
+</html>
