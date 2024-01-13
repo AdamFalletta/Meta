@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .btn-dark {
+      background-color: #343a40;
+      border-color: #343a40;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background-color: #444;
+      color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 900;
+    }
+  </style>
+  <title>Encouragement Game</title>
+</head>
+<body>
+
+<div class="container text-center">
+  <button class="btn btn-dark" onclick="showPopup()">Click Me</button>
+</div>
+
+<div class="popup" id="popup">
+  <h3 id="topic"></h3>
+  <p id="encouragement"></p>
+  <button class="btn btn-dark" onclick="closePopup()">Close</button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<script>
+  const topics = [
+    "Romance", "Finances", "Health", "Family",
+    "Career", "Friendship", "Education", "Hobbies",
+    "Personal Growth", "Adventure", "Creativity", "Spirituality"
+  ];
+
+  const encouragements = {
+    "Romance": ["Love is a journey, not a destination.", "Cherish the moments together."],
+    "Finances": ["Every penny counts, manage wisely.", "Financial freedom is a journey."],
+    "Health": ["Your health is your wealth.", "Take care of your body and mind."],
+    "Family": ["Family is not an important thing, it's everything.", "Cherish your family bonds."],
+    "Career": ["Success is not final, failure is not fatal.", "Stay focused on your career goals."],
+    "Friendship": ["True friends are like stars, always there even in the dark.", "Nurture your friendships."],
+    "Education": ["Education is the key to unlock the golden door of freedom.", "Keep learning and growing."],
+    "Hobbies": ["Do more of what makes you happy.", "Find joy in your hobbies."],
+    "Personal Growth": ["Embrace change for personal growth.", "You are evolving and that's beautiful."],
+    "Adventure": ["Life is an adventure, dare it.", "Explore new horizons."],
+    "Creativity": ["Creativity is intelligence having fun.", "Express yourself through creativity."],
+    "Spirituality": ["Connect with your inner self.", "Find peace in spirituality."]
+  };
+
+  function showPopup() {
+    const topicIndex = Math.floor(Math.random() * topics.length);
+    const topic = topics[topicIndex];
+    const encouragementIndex = Math.floor(Math.random() * encouragements[topic].length);
+    const encouragement = encouragements[topic][encouragementIndex];
+
+    document.getElementById("topic").innerText = topic;
+    document.getElementById("encouragement").innerText = encouragement;
+
+    // Increment and save tally in localStorage
+    const tally = JSON.parse(localStorage.getItem(topic)) || 0;
+    localStorage.setItem(topic, JSON.stringify(tally + 1));
+
+    // Display popup and overlay
+    document.getElementById("popup").style.display = "block";
+    document.getElementById("overlay").style.display = "block";
+  }
+
+  function closePopup() {
+    document.getElementById("popup").style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+  }
+</script>
+
+</body>
+</html>
