@@ -65,29 +65,29 @@ function updateTimer() {
 
 function getWorkoutName(round) {
   if (round <= 3) {
-    return 'Arnold Press';
+    return 'Vacuum / Abs';
   } else if (round <= 6) {
-    return 'Lateral Raises';
+    return 'Shrugs / Upright Rows';
   } else if (round <= 9) {
-    return 'Upright Row';
+    return 'Lateral Raises';
   } else if (round <= 12) {
-    return 'Shrugs';
+    return 'Bent Over Rows';
   } else if (round <= 15) {
-    return 'Skull Crushers';
+    return 'Dips';
   } else if (round <= 18) {
-    return 'Bench Dips';
-  } else if (round <= 21) {
-    return 'Diamond Pushups';
-  } else if (round <= 24) {
-    return 'Triceps Extension';
-  } else if (round <= 27) {
     return 'Hammer Curls';
-  } else if (round <= 30) {
-    return 'Arnold Curls';
-  } else if (round <= 33) {
+  } else if (round <= 21) {
+    return 'Overhead Dumbbell Chest Press';
+  } else if (round <= 24) {
     return 'Wrist Curls';
-  } else {
+  } else if (round <= 27) {
     return 'Hand Grips';
+  } else if (round <= 30) {
+    return 'Squats';
+  } else if (round <= 33) {
+    return 'Dead Lifts';
+  } else {
+    return 'Calf Raises';
   }
 }
 
