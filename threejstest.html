@@ -10,10 +10,8 @@
     </style>
   </head>
   <body>
-    <script type="module">
-      import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r127/build/three.module.js';
-      import { PointerLockControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r127/examples/jsm/controls/PointerLockControls.js';
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
       let camera, scene, renderer, controls;
 
       const objects = [];
@@ -56,7 +54,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        controls = new PointerLockControls(camera, document.body);
+        controls = new THREE.PointerLockControls(camera, document.body);
         scene.add(controls.getObject());
 
         document.addEventListener('keydown', onKeyDown);
