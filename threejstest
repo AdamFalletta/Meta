@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Three.js FPS Room</title>
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r127/build/three.module.js';
+      import { PointerLockControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r127/examples/jsm/controls/PointerLockControls.js';
+
+      let camera, scene, renderer, controls;
+
+      const objects = [];
+
+      init();
+      animate();
+
+      function init() {
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          1,
+          1000
+        );
+        camera.position.y = 10;
+
+        const geometry = new THREE.BoxGeometry(20, 20, 20);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+        const room = new THREE.Mesh(geometry, material);
+        room.position.y = 10;
+        scene.add(room);
+
+        for (let i = 0; i < 10; i++) {
+          const circleGeometry = new THREE.CircleGeometry(5, 32);
+          const circleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+          const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+          circle.position.x = Math.random() * 40 - 20;
+          circle.position.z = Math.random() * 40 - 20;
+
+          objects.push(circle);
+
+          scene.add(circle);
+        }
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        controls = new PointerLockControls(camera, document.body);
+        scene.add(controls.getObject());
+
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('mousemove', onMouseMove);
+
+        window.addEventListener('resize', onWindowResize);
+      }
+
+      function onKeyDown(event) {
+        if (event.code === 'KeyW') {
+          controls.moveForward(10);
+        }
+        if (event.code === 'KeyS') {
+          controls.moveForward(-10);
+        }
+      }
+
+      function onMouseMove(event) {
+        const mouseX = event.movementX || 0;
+        controls.rotateY(mouseX * 0.002);
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const origin = controls.getObject().position.clone();
+        const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        const raycaster = new THREE.Raycaster(origin, direction);
+
+        const intersects = raycaster.intersectObjects(objects);
+
+        if (intersects.length > 0) {
+          intersects[0].object.material.color.set(0x0000ff);
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    </script>
+  </body>
+</html>
