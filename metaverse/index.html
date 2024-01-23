@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Starter</title>
+    <!-- Include Three.js library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <script type="module">
+        // Import Three.js module
+        import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+
+        // Set the width and height of the rendering window
+        const width = window.innerWidth, height = window.innerHeight;
+
+        // Initialize the camera
+        const camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 10);
+        camera.position.z = 1; // Set the initial position of the camera along the z-axis
+
+        // Create a new scene
+        const scene = new THREE.Scene();
+
+        // Create a cube with specified geometry and material
+        const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        const material = new THREE.MeshNormalMaterial();
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // Add the cube to the scene
+        scene.add(mesh);
+
+        // Create a WebGL renderer with antialiasing
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        // Set the size of the renderer
+        renderer.setSize(width, height);
+
+        // Set up animation loop
+        renderer.setAnimationLoop(animation);
+
+        // Append the renderer's viewport to the document.body element
+        document.body.appendChild(renderer.domElement);
+
+        // Animation function - rotates the cube based on time
+        function animation(time) {
+            mesh.rotation.x = time / 2000; // Rotate around the x-axis
+            mesh.rotation.y = time / 1000; // Rotate around the y-axis
+
+            // Render the scene with the camera using the renderer
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
