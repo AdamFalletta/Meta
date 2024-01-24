@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #f0f0f0;
+    }
+
+    #wave-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 400px;
+      overflow: hidden;
+    }
+
+    #wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, #3498db, #e74c3c);
+      opacity: 0.5;
+      animation: pulse 10s infinite;
+    }
+
+    #ball {
+      position: absolute;
+      background-color: #2ecc71;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      animation: trackWave 10s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scaleY(1);
+      }
+      50% {
+        transform: scaleY(1.5);
+      }
+    }
+
+    @keyframes trackWave {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      50% {
+        transform: translateX(100%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="wave-container">
+    <div id="wave"></div>
+    <div id="ball"></div>
+  </div>
+
+  <script>
+    const wave = document.getElementById('wave');
+    const ball = document.getElementById('ball');
+    
+    // Calculate sine wave values
+    const amplitude = 100;
+    const frequency = 1 / 100; // Adjust the frequency as needed
+    const duration = 10; // 10 seconds
+
+    function calculateWaveValue(x) {
+      return amplitude * Math.sin(2 * Math.PI * frequency * x);
+    }
+
+    // Draw sine wave
+    for (let i = 0; i <= 1000; i += 1) {
+      const waveValue = calculateWaveValue(i);
+      wave.style.height = `${amplitude + waveValue}px`;
+    }
+  </script>
+</body>
+</html>
