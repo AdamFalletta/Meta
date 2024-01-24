@@ -1403,7 +1403,7 @@ text-shadow: 3px 6px #2a2a2a;
  .video-main-screen{filter: contrast(1.1) brightness(1) saturate(1.1) sepia(0%) drop-shadow(9px 11px 19px black); transform:scale(1); display:inline-block; position:absolute; z-index:10; object-fit: cover; margin-left:0px; margin-top:147px; width:1180px; height:690px; border-radius:px;border: 20px solid #000000;    background: hsl(0, 0%, 20%);}
  .video-second-screen{filter: contrast(1) brightness(1) saturate(1) hue-rotate(0deg)  drop-shadow(9px 11px 19px black); display:inline-block; transform:scale(.5); object-fit: cover; position:absolute; opacity:1; z-index:30; margin-left:1030px; margin-top:-70px; width:630px; height:890px;border-radius:0px; border: 30px solid #000000; background: hsl(0, 0%, 20%);}
  .video-third-screen{filter: contrast(1) brightness(1.3) saturate(1) hue-rotate(0deg)  drop-shadow(9px 11px 19px black); display:inline-block; transform:scale(.5); object-fit: cover; position:absolute; opacity:1; z-index:30; margin-left:1030px; margin-top:540px; width:600px; height:400px;border-radius:12px; border: 30px solid #000000; background: hsl(0, 0%, 20%);}
- .video-background-screen{filter: contrast(1.2) brightness(1) saturate(1.5) blur(0px) hue-rotate(0deg);transform:scale(1.1);margin-top:0px;margin-left:435px;width:1400px;height:900px;border:8px solid #000000;border-radius:0px;position: absolute; object-fit: cover;}
+ .video-background-screen{filter: contrast(1.2) brightness(1) saturate(1.5) blur(0px) hue-rotate(0deg);transform:scale(1.1);margin-top:0px;margin-left:435px;width:1400px;height:900px; z-index:22;border:8px solid #000000;border-radius:0px;position: absolute; object-fit: cover;}
 
  .lens-flare1{width: 1170px;height: 700px;position:absolute;z-index:300;margin-top: -247px;margin-left: -420px; filter:grayscale(0) saturate(2);}
  .lens-flare2{width: 1370px;height: 700px;position:absolute;z-index:300;margin-top: 513px;margin-left: 300px;filter:grayscale(0)saturate(2);}
@@ -1461,7 +1461,17 @@ text-shadow: 3px 6px #2a2a2a;
 
 <body class="main-style main-bg" style="transform:scale(.77); display:block; z-index:5; margin-left:-170px;">
     <img src="img/bg-nsn.jpg" style="position:absolute; margin-left: -321px;margin-top: -360px;transform: scale(1.2);;">
-	<img src="img/border-tv.jpg" style="position: absolute;display:block;transform: scale(1.1);width: 1836px;height: 1094px;margin-left: 43px; filter:contrast(1.5) brightness(1.5) drop-shadow(0px 0px 50px black);">
+	<img src="img/border-tv.jpg" style="position: absolute;display:block;transform: scale(1.1);width: 1836px;height: 1094px;margin-left: 43px; z-index:3; filter:contrast(1.5) brightness(1.5) drop-shadow(0px 0px 50px black);">
+	<img class="distressed-logo-nbl" src="img/distressed-logo2.png" style="
+    display: block;
+    position: absolute;
+    transform: scale(10);
+    z-index: 0;
+    margin-left: 2100;
+    filter: contrast(1.5);
+    margin-top: 430px;
+    mix-blend-mode: soft-light;
+">
 <div class="container-fluid">
   <div class="row main-row">
     <div class="col-sm-12 dark">
