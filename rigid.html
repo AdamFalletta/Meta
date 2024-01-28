@@ -19,44 +19,53 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Create a rotating tennis ball
-    const tennisBallGeometry = new THREE.SphereGeometry(1, 32, 32);
-    const tennisBallMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
-    const tennisBall = new THREE.Mesh(tennisBallGeometry, tennisBallMaterial);
-    tennisBall.position.x = -2;
-    scene.add(tennisBall);
+    // Create a rotating cube (tennis ball)
+    const cubeGeometry1 = new THREE.BoxGeometry(1, 1, 1);
+    const cubeMaterial1 = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
+    const cube1 = new THREE.Mesh(cubeGeometry1, cubeMaterial1);
+    cube1.position.x = -2;
+    scene.add(cube1);
 
-    // Create a rotating bowling ball
-    const bowlingBallGeometry = new THREE.SphereGeometry(2, 32, 32);
-    const bowlingBallMaterial = new THREE.MeshBasicMaterial({ color: 0x00FF00 });
-    const bowlingBall = new THREE.Mesh(bowlingBallGeometry, bowlingBallMaterial);
-    bowlingBall.position.x = 2;
-    scene.add(bowlingBall);
+    // Create a rotating cube (bowling ball)
+    const cubeGeometry2 = new THREE.BoxGeometry(2, 2, 2);
+    const cubeMaterial2 = new THREE.MeshLambertMaterial({ color: 0x00FF00 });
+    const cube2 = new THREE.Mesh(cubeGeometry2, cubeMaterial2);
+    cube2.position.x = 2;
+    scene.add(cube2);
 
     // Set up camera position
     camera.position.z = 5;
 
-    // Apply an initial rotation to the balls
+    // Apply an initial rotation to the cubes
     const initialRotationSpeed = 0.02;
-    tennisBall.rotation.x += initialRotationSpeed;
-    bowlingBall.rotation.x += initialRotationSpeed;
+    cube1.rotation.x += initialRotationSpeed;
+    cube2.rotation.x += initialRotationSpeed;
 
-    // Apply a torque to the balls
+    // Apply a torque to the cubes
     const torque = new THREE.Vector3(0.01, 0.02, 0.03);
+
+    // Add ambient light to the scene
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    // Add directional light to cast shadows
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
 
     // Animation loop
     function animate() {
       requestAnimationFrame(animate);
 
-      // Apply torque to the tennis ball
-      tennisBall.rotation.x += torque.x / 1; // Adjust mass factor (1 for tennis ball)
-      tennisBall.rotation.y += torque.y / 1;
-      tennisBall.rotation.z += torque.z / 1;
+      // Apply torque to the first cube
+      cube1.rotation.x += torque.x / 1; // Adjust mass factor (1 for the first cube)
+      cube1.rotation.y += torque.y / 1;
+      cube1.rotation.z += torque.z / 1;
 
-      // Apply torque to the bowling ball
-      bowlingBall.rotation.x += torque.x / 10; // Adjust mass factor (10 for bowling ball)
-      bowlingBall.rotation.y += torque.y / 10;
-      bowlingBall.rotation.z += torque.z / 10;
+      // Apply torque to the second cube
+      cube2.rotation.x += torque.x / 10; // Adjust mass factor (10 for the second cube)
+      cube2.rotation.y += torque.y / 10;
+      cube2.rotation.z += torque.z / 10;
 
       // Render the scene
       renderer.render(scene, camera);
