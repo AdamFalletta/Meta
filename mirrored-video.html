@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirrored Video</title>
+  <style>
+    #container {
+      position: relative;
+    }
+
+    #original, #mirrored {
+      width: 300px;
+      margin-bottom: 10px;
+    }
+
+    #mirrored {
+      position: absolute;
+      bottom: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="container">
+  <video id="original" width="300" controls>
+    <source src="your_video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <video id="mirrored" width="300" controls></video>
+</div>
+
+<script>
+  const originalVideo = document.getElementById('original');
+  const mirroredVideo = document.getElementById('mirrored');
+
+  originalVideo.addEventListener('timeupdate', function() {
+    mirroredVideo.currentTime = originalVideo.currentTime;
+  });
+
+  originalVideo.addEventListener('play', function() {
+    mirroredVideo.play();
+  });
+
+  originalVideo.addEventListener('pause', function() {
+    mirroredVideo.pause();
+  });
+
+  originalVideo.addEventListener('ended', function() {
+    mirroredVideo.pause();
+  });
+</script>
+
+</body>
+</html>
