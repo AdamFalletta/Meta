@@ -27,28 +27,37 @@
     <source src="https://video-previews.elements.envatousercontent.com/h264-video-previews/5358b432-97d7-4292-8948-e89a13a2fb2b/14352270.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
- <div> <video id="mirrored" width="300" controls></video></div>
+  <canvas id="mirrored" width="300" height="225"></canvas>
 </div>
 
 <script>
   const originalVideo = document.getElementById('original');
-  const mirroredVideo = document.getElementById('mirrored');
-
-  originalVideo.addEventListener('timeupdate', function() {
-    mirroredVideo.currentTime = originalVideo.currentTime;
-  });
+  const mirroredCanvas = document.getElementById('mirrored');
+  const mirroredContext = mirroredCanvas.getContext('2d');
 
   originalVideo.addEventListener('play', function() {
-    mirroredVideo.play();
+    mirroredCanvas.width = originalVideo.videoWidth;
+    mirroredCanvas.height = originalVideo.videoHeight;
+
+    function mirrorVideo() {
+      mirroredContext.drawImage(originalVideo, 0, 0, mirroredCanvas.width, mirroredCanvas.height);
+      requestAnimationFrame(mirrorVideo);
+    }
+
+    mirrorVideo();
   });
 
   originalVideo.addEventListener('pause', function() {
-    mirroredVideo.pause();
+    cancelAnimationFrame();
   });
 
   originalVideo.addEventListener('ended', function() {
-    mirroredVideo.pause();
+    cancelAnimationFrame();
   });
+
+  function cancelAnimationFrame() {
+    mirroredContext.clearRect(0, 0, mirroredCanvas.width, mirroredCanvas.height);
+  }
 </script>
 
 </body>
