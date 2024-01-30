@@ -12,6 +12,7 @@
     #original, #mirrored {
       width: 300px;
       margin-bottom: 10px;
+      display:block;
     }
 
     #mirrored {
@@ -27,7 +28,8 @@
     <source src="https://video-previews.elements.envatousercontent.com/h264-video-previews/5358b432-97d7-4292-8948-e89a13a2fb2b/14352270.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
-  <canvas id="mirrored" width="300" height="225"></canvas>
+  <canvas id="mirrored" width="300" height="225" style="margin-top: 30px;
+    filter: blur(10px);"></canvas>
 </div>
 
 <script>
