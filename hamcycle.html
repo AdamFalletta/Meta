@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shining Glow Effect along Hamiltonian Cycle in Three.js</title>
+    <title>Shining Glow Effect around Cube Vertices in Three.js</title>
     <style>
         body { margin: 0; }
         canvas { display: block; }
@@ -30,40 +30,36 @@
         const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
         const glow = new THREE.Mesh(glowGeometry, glowMaterial);
 
-        // Define vertices of the cube
-        cube.geometry.computeBoundingBox();
-        const vertices = cube.geometry.vertices || [];
+        // Create an array to store glow meshes for each vertex
+        const glowMeshes = [];
 
-        // Create Hamiltonian Cycle animation
-        let index = 0;
-        const animateHamiltonianCycle = () => {
-            if (index >= vertices.length) {
-                index = 0; // Reset index to loop through vertices
-            }
-
-            const vertex = vertices[index];
-            glow.position.copy(vertex);
-            scene.add(glow);
-
-            index++;
-
-            setTimeout(() => {
-                scene.remove(glow);
-                requestAnimationFrame(animateHamiltonianCycle);
-            }, 1000); // Adjust the duration of each glow
-        };
+        // Create glow meshes for each vertex of the cube
+        cube.geometry.vertices.forEach(vertex => {
+            const vertexGlow = glow.clone();
+            vertexGlow.position.copy(vertex);
+            glowMeshes.push(vertexGlow);
+            scene.add(vertexGlow);
+        });
 
         // Position camera
         camera.position.z = 5;
 
-        // Render function
+        // Animation loop
         function animate() {
             requestAnimationFrame(animate);
+
+            // Rotate the cube
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+
+            // Update glow position (optional)
+            glowMeshes.forEach(glowMesh => {
+                glowMesh.position.copy(glowMesh.position.normalize().multiplyScalar(1.1));
+            });
+
             renderer.render(scene, camera);
         }
 
-        // Start Hamiltonian Cycle animation
-        animateHamiltonianCycle();
         animate();
     </script>
 </body>
