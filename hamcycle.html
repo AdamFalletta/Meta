@@ -31,7 +31,8 @@
         const glow = new THREE.Mesh(glowGeometry, glowMaterial);
 
         // Define vertices of the cube
-        const vertices = cube.geometry.vertices.map((vertex) => new THREE.Vector3().copy(vertex));
+        cube.geometry.computeBoundingBox();
+        const vertices = cube.geometry.vertices;
 
         // Create Hamiltonian Cycle animation
         let index = 0;
