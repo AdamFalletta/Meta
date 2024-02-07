@@ -32,7 +32,7 @@
 
         // Define vertices of the cube
         cube.geometry.computeBoundingBox();
-        const vertices = cube.geometry.vertices;
+        const vertices = cube.geometry.vertices || [];
 
         // Create Hamiltonian Cycle animation
         let index = 0;
