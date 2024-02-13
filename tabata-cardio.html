@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Timer</title>
+  <style>
+    body {
+      background-color: #111111;
+      color: #eeeeee;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    #timer {
+      font-size: 10vw;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .buttons-container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    button {
+      width: 30%;
+      padding: 10px;
+      font-size: 1.5vw;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      width: 100%;
+      text-align: center;
+      height: 30px;
+      background-color: #333333;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #eeeeee;
+      transition: width 0.5s;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="buttons-container">
+      <button onclick="setTimer(30)">30 Minutes</button>
+      <button onclick="setTimer(45)">45 Minutes</button>
+      <button onclick="setTimer(60)">60 Minutes</button>
+    </div>
+    <div id="timer">00:00</div>
+    <div class="progress-bar">
+      <div class="progress-bar-fill"></div>
+    </div>
+    <button id="start" disabled>Start</button>
+    <button id="pause" disabled>Pause</button>
+    <button id="restart" disabled>Restart</button>
+  </div>
+
+  <script>
+    const timer = document.getElementById('timer');
+    const startButton = document.getElementById('start');
+    const pauseButton = document.getElementById('pause');
+    const restartButton = document.getElementById('restart');
+    const progressBarFill = document.querySelector('.progress-bar-fill');
+    let totalSeconds = 0;
+    let secondsRemaining = 0;
+    let interval;
+
+    function updateTimer() {
+      const minutes = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
+      const seconds = (secondsRemaining % 60).toString().padStart(2, '0');
+      timer.textContent = `${minutes}:${seconds}`;
+    }
+
+    function updateProgress() {
+      const progressPercentage = ((totalSeconds - secondsRemaining) / totalSeconds) * 100;
+      progressBarFill.style.width = `${progressPercentage}%`;
+    }
+
+    function setTimer(minutes) {
+      totalSeconds = minutes * 60;
+      secondsRemaining = totalSeconds;
+      updateTimer();
+      startButton.disabled = false;
+      pauseButton.disabled = true;
+      restartButton.disabled = true;
+    }
+
+    function startTimer() {
+      startButton.disabled = true;
+      pauseButton.disabled = false;
+      restartButton.disabled = false;
+
+      interval = setInterval(() => {
+        if (secondsRemaining > 0) {
+          secondsRemaining--;
+          updateTimer();
+          updateProgress();
+        } else {
+          clearInterval(interval);
+          timer.textContent = 'Finished!';
+          pauseButton.disabled = true;
+          restartButton.disabled = false;
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(interval);
+      startButton.disabled = false;
+      pauseButton.disabled = true;
+    }
+
+    function restartTimer() {
+      clearInterval(interval);
+      secondsRemaining = totalSeconds;
+      updateTimer();
+      updateProgress();
+      startButton.disabled = false;
+      pauseButton.disabled = true;
+      restartButton.disabled = true;
+    }
+
+    startButton.addEventListener('click', startTimer);
+    pauseButton.addEventListener('click', pauseTimer);
+    restartButton.addEventListener('click', restartTimer);
+  </script>
+</body>
+</html>
