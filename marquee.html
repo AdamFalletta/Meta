@@ -17,20 +17,23 @@
   .breaking-news {
     position: absolute;
     white-space: nowrap;
-    opacity: 0;
-    animation: marquee 15s linear infinite;
+    animation: fade-in 2s ease-in-out forwards;
   }
 
   .news-item {
     display: inline-block;
     padding-right: 20px;
+    opacity: 0;
+  }
+
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
 
   @keyframes marquee {
-    0% { opacity: 1; transform: translateX(0); }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { opacity: 0; transform: translateX(-100%); }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
   }
 </style>
 </head>
@@ -48,10 +51,21 @@
 <script>
   // JavaScript to control the animation
   const breakingNews = document.querySelector('.breaking-news');
+  const newsItems = document.querySelectorAll('.news-item');
+  let currentItemIndex = 0;
+
+  function showNextItem() {
+    if (currentItemIndex < newsItems.length) {
+      newsItems[currentItemIndex].style.opacity = '1';
+      currentItemIndex++;
+    } else {
+      currentItemIndex = 0;
+    }
+  }
 
   function startAnimation() {
-    breakingNews.style.opacity = '1';
     breakingNews.style.animation = 'marquee 15s linear infinite';
+    setInterval(showNextItem, 2000); // Adjust timing as needed
   }
 
   // Start the animation after page load
