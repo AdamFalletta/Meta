@@ -27,7 +27,7 @@
   }
 
   @keyframes marquee {
-    0% { opacity: 0; transform: translateX(100%); }
+    0% { opacity: 1; transform: translateX(0); }
     10% { opacity: 1; }
     90% { opacity: 1; }
     100% { opacity: 0; transform: translateX(-100%); }
@@ -47,25 +47,15 @@
 
 <script>
   // JavaScript to control the animation
-  const newsItems = document.querySelectorAll('.news-item');
-  let currentNewsIndex = 0;
+  const breakingNews = document.querySelector('.breaking-news');
 
-  function animateNews() {
-    // Fade out the current news item
-    newsItems[currentNewsIndex].style.opacity = '0';
-
-    // Move to the next news item
-    currentNewsIndex = (currentNewsIndex + 1) % newsItems.length;
-
-    // Fade in the next news item
-    newsItems[currentNewsIndex].style.opacity = '1';
+  function startAnimation() {
+    breakingNews.style.opacity = '1';
+    breakingNews.style.animation = 'marquee 15s linear infinite';
   }
 
-  // Call the animateNews function every 15 seconds
-  setInterval(animateNews, 15000);
-
-  // Initial animation start
-  animateNews();
+  // Start the animation after page load
+  window.addEventListener('load', startAnimation);
 </script>
 
 </body>
