@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breaking News Marquee</title>
+<style>
+  .marquee {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+  }
+
+  .breaking-news {
+    display: inline-block;
+    animation: marquee 20s linear infinite;
+  }
+
+  .news-item {
+    padding-right: 20px;
+  }
+
+  @keyframes marquee {
+    0%   { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+</style>
+</head>
+<body>
+<div class="marquee">
+  <div class="breaking-news">
+    <span class="news-item">Breaking News 1: Lorem ipsum dolor sit amet</span>
+    <span class="news-item">Breaking News 2: Consectetur adipiscing elit</span>
+    <span class="news-item">Breaking News 3: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua</span>
+    <span class="news-item">Breaking News 4: Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat</span>
+    <span class="news-item">Breaking News 5: Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur</span>
+  </div>
+</div>
+
+<script>
+  // JavaScript to pause the marquee on hover
+  const marquee = document.querySelector('.marquee');
+
+  marquee.addEventListener('mouseenter', () => {
+    const breakingNews = document.querySelector('.breaking-news');
+    breakingNews.style.animationPlayState = 'paused';
+  });
+
+  marquee.addEventListener('mouseleave', () => {
+    const breakingNews = document.querySelector('.breaking-news');
+    breakingNews.style.animationPlayState = 'running';
+  });
+</script>
+
+</body>
+</html>
