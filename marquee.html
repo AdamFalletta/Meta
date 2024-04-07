@@ -7,32 +7,30 @@
 <style>
   .marquee {
     width: 800px;
-    height: 30px; /* Adjust height as needed */
+    height: 30px;
     overflow: hidden;
     position: relative;
-    box-sizing: border-box;
     border: 1px solid #ccc;
   }
 
   .breaking-news {
-    position: absolute;
     white-space: nowrap;
-    animation: fade-in 2s ease-in-out forwards;
+    position: absolute;
   }
 
   .news-item {
     display: inline-block;
     padding-right: 20px;
     opacity: 0;
+    transition: opacity 1s ease-in-out;
   }
 
-  @keyframes fade-in {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+  .animate {
+    animation: marquee 20s linear infinite;
   }
 
   @keyframes marquee {
-    0% { transform: translateX(0); }
+    0% { transform: translateX(100%); }
     100% { transform: translateX(-100%); }
   }
 </style>
@@ -49,7 +47,6 @@
 </div>
 
 <script>
-  // JavaScript to control the animation
   const breakingNews = document.querySelector('.breaking-news');
   const newsItems = document.querySelectorAll('.news-item');
   let currentItemIndex = 0;
@@ -63,13 +60,11 @@
     }
   }
 
-  function startAnimation() {
-    breakingNews.style.animation = 'marquee 15s linear infinite';
-    setInterval(showNextItem, 2000); // Adjust timing as needed
-  }
-
   // Start the animation after page load
-  window.addEventListener('load', startAnimation);
+  window.addEventListener('load', () => {
+    breakingNews.classList.add('animate');
+    setInterval(showNextItem, 2000); // Adjust timing as needed
+  });
 </script>
 
 </body>
