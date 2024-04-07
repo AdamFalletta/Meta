@@ -6,25 +6,31 @@
 <title>Breaking News Marquee</title>
 <style>
   .marquee {
-    width: 100%;
+    width: 800px;
+    height: 30px; /* Adjust height as needed */
     overflow: hidden;
-    white-space: nowrap;
+    position: relative;
     box-sizing: border-box;
     border: 1px solid #ccc;
   }
 
   .breaking-news {
-    display: inline-block;
-    animation: marquee 20s linear infinite;
+    position: absolute;
+    white-space: nowrap;
+    opacity: 0;
+    animation: marquee 15s linear infinite;
   }
 
   .news-item {
+    display: inline-block;
     padding-right: 20px;
   }
 
   @keyframes marquee {
-    0%   { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
+    0% { opacity: 0; transform: translateX(100%); }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(-100%); }
   }
 </style>
 </head>
@@ -40,18 +46,26 @@
 </div>
 
 <script>
-  // JavaScript to pause the marquee on hover
-  const marquee = document.querySelector('.marquee');
+  // JavaScript to control the animation
+  const newsItems = document.querySelectorAll('.news-item');
+  let currentNewsIndex = 0;
 
-  marquee.addEventListener('mouseenter', () => {
-    const breakingNews = document.querySelector('.breaking-news');
-    breakingNews.style.animationPlayState = 'paused';
-  });
+  function animateNews() {
+    // Fade out the current news item
+    newsItems[currentNewsIndex].style.opacity = '0';
 
-  marquee.addEventListener('mouseleave', () => {
-    const breakingNews = document.querySelector('.breaking-news');
-    breakingNews.style.animationPlayState = 'running';
-  });
+    // Move to the next news item
+    currentNewsIndex = (currentNewsIndex + 1) % newsItems.length;
+
+    // Fade in the next news item
+    newsItems[currentNewsIndex].style.opacity = '1';
+  }
+
+  // Call the animateNews function every 15 seconds
+  setInterval(animateNews, 15000);
+
+  // Initial animation start
+  animateNews();
 </script>
 
 </body>
