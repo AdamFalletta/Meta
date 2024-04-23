@@ -8,18 +8,22 @@
         body {
             margin: 0;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
         #canvas {
             width: 100%;
             height: 100vh;
             display: block;
         }
-        .ui-button {
-
-            display:inline-block;
+        .nav-container {
+            position: absolute;
             top: 20px;
             left: 20px;
+        }
+        .nav-button {
+            display: inline-block;
             padding: 10px 20px;
+            margin-right: 10px;
             background-color: #3498db;
             color: #fff;
             border: none;
@@ -27,21 +31,22 @@
             font-size: 16px;
             border-radius: 5px;
         }
-        .ui-button:hover {
+        .nav-button:hover {
             background-color: #2980b9;
         }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <button class="ui-button" id="btn1">Location 1</button>
-    <button class="ui-button" id="btn2">Location 2</button>
-    <button class="ui-button" id="btn3">Location 3</button>
-    <button class="ui-button" id="btn4">Location 4</button>
-    <button class="ui-button" id="btn5">Location 5</button>
+    <div class="nav-container">
+        <button class="nav-button" id="btn1">Location 1</button>
+        <button class="nav-button" id="btn2">Location 2</button>
+        <button class="nav-button" id="btn3">Location 3</button>
+        <button class="nav-button" id="btn4">Location 4</button>
+        <button class="nav-button" id="btn5">Location 5</button>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Include GSAP library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/gsap.min.js"></script>
     <script>
         // Setup scene
@@ -59,36 +64,27 @@
         // Set initial camera position
         camera.position.z = 5;
 
+        // Define rotation angles
+        const rotationAngles = [
+            { x: 0, y: 0, z: 0 },
+            { x: Math.PI / 2, y: 0, z: 0 },
+            { x: 0, y: Math.PI / 2, z: 0 },
+            { x: 0, y: -Math.PI / 2, z: 0 },
+            { x: 0, y: Math.PI, z: 0 }
+        ];
+
         // Handle button clicks
-        document.getElementById('btn1').addEventListener('click', () => {
-            // Transition to Location 1
-            cube.material.color.setHex(0xff0000); // Change cube color
-            gsap.to(camera.position, { duration: 1, z: 5, ease: "power2.inOut" }); // Zoom in
-        });
+        document.getElementById('btn1').addEventListener('click', () => rotateToFace(0));
+        document.getElementById('btn2').addEventListener('click', () => rotateToFace(1));
+        document.getElementById('btn3').addEventListener('click', () => rotateToFace(2));
+        document.getElementById('btn4').addEventListener('click', () => rotateToFace(3));
+        document.getElementById('btn5').addEventListener('click', () => rotateToFace(4));
 
-        document.getElementById('btn2').addEventListener('click', () => {
-            // Transition to Location 2
-            cube.material.color.setHex(0x00ff00);
-            gsap.to(camera.position, { duration: 1, z: 7, ease: "power2.inOut" });
-        });
-
-        document.getElementById('btn3').addEventListener('click', () => {
-            // Transition to Location 3
-            cube.material.color.setHex(0x0000ff);
-            gsap.to(camera.position, { duration: 1, z: 10, ease: "power2.inOut" });
-        });
-
-        document.getElementById('btn4').addEventListener('click', () => {
-            // Transition to Location 4
-            cube.material.color.setHex(0xffff00);
-            gsap.to(camera.position, { duration: 1, z: 13, ease: "power2.inOut" });
-        });
-
-        document.getElementById('btn5').addEventListener('click', () => {
-            // Transition to Location 5
-            cube.material.color.setHex(0xff00ff);
-            gsap.to(camera.position, { duration: 1, z: 15, ease: "power2.inOut" });
-        });
+        // Rotate the cube to the specified face
+        function rotateToFace(faceIndex) {
+            const targetRotation = rotationAngles[faceIndex];
+            gsap.to(cube.rotation, { duration: 1, x: targetRotation.x, y: targetRotation.y, z: targetRotation.z });
+        }
 
         // Render loop
         function animate() {
