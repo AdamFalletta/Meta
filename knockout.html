@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knockout Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #canvas {
+            width: 100%;
+            height: 100vh;
+            display: block;
+        }
+        .ui-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .ui-button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <button class="ui-button" id="btn1">Location 1</button>
+    <button class="ui-button" id="btn2">Location 2</button>
+    <button class="ui-button" id="btn3">Location 3</button>
+    <button class="ui-button" id="btn4">Location 4</button>
+    <button class="ui-button" id="btn5">Location 5</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Setup scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas') });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Create geometry and material
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        // Set initial camera position
+        camera.position.z = 5;
+
+        // Handle button clicks
+        document.getElementById('btn1').addEventListener('click', () => {
+            // Transition to Location 1
+            cube.material.color.setHex(0xff0000); // Change cube color
+            TweenMax.to(camera.position, 1, { z: 5, ease: Power2.easeInOut }); // Zoom in
+        });
+
+        document.getElementById('btn2').addEventListener('click', () => {
+            // Transition to Location 2
+            cube.material.color.setHex(0x00ff00);
+            TweenMax.to(camera.position, 1, { z: 7, ease: Power2.easeInOut });
+        });
+
+        document.getElementById('btn3').addEventListener('click', () => {
+            // Transition to Location 3
+            cube.material.color.setHex(0x0000ff);
+            TweenMax.to(camera.position, 1, { z: 10, ease: Power2.easeInOut });
+        });
+
+        document.getElementById('btn4').addEventListener('click', () => {
+            // Transition to Location 4
+            cube.material.color.setHex(0xffff00);
+            TweenMax.to(camera.position, 1, { z: 13, ease: Power2.easeInOut });
+        });
+
+        document.getElementById('btn5').addEventListener('click', () => {
+            // Transition to Location 5
+            cube.material.color.setHex(0xff00ff);
+            TweenMax.to(camera.position, 1, { z: 15, ease: Power2.easeInOut });
+        });
+
+        // Render loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
