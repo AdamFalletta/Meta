@@ -26,6 +26,7 @@
       <div class="col-md-8">
         <h3 id="task-title">Select a task</h3>
         <p id="task-desc">Task description will appear here.</p>
+        <button id="edit-task-btn" class="btn btn-secondary d-none" data-toggle="modal" data-target="#editTaskModal">Edit Task</button>
         <button id="delete-task-btn" class="btn btn-danger d-none" data-toggle="modal" data-target="#confirmDeleteModal">Delete Task</button>
       </div>
     </div>
@@ -58,6 +59,33 @@
     </div>
   </div>
 
+  <!-- Edit Task Modal -->
+  <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="edit-task-form">
+            <div class="form-group">
+              <label for="edit-task-title-input">Title</label>
+              <input type="text" class="form-control" id="edit-task-title-input" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-task-desc-input">Description</label>
+              <textarea class="form-control" id="edit-task-desc-input" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Task</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Confirm Delete Modal -->
   <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -83,14 +111,18 @@
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script>
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
   const taskList = document.getElementById('task-list');
   const taskTitle = document.getElementById('task-title');
   const taskDesc = document.getElementById('task-desc');
   const deleteTaskBtn = document.getElementById('delete-task-btn');
+  const editTaskBtn = document.getElementById('edit-task-btn');
   const taskForm = document.getElementById('task-form');
   const taskTitleInput = document.getElementById('task-title-input');
   const taskDescInput = document.getElementById('task-desc-input');
+  const editTaskForm = document.getElementById('edit-task-form');
+  const editTaskTitleInput = document.getElementById('edit-task-title-input');
+  const editTaskDescInput = document.getElementById('edit-task-desc-input');
   const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 
   let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
@@ -114,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     taskTitle.textContent = task.title;
     taskDesc.textContent = task.description;
     deleteTaskBtn.classList.remove('d-none');
+    editTaskBtn.classList.remove('d-none');
   }
 
   taskForm.addEventListener('submit', (e) => {
@@ -129,6 +162,24 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#addTaskModal').modal('hide');
   });
 
+  editTaskBtn.addEventListener('click', () => {
+    const task = tasks[currentTaskId];
+    editTaskTitleInput.value = task.title;
+    editTaskDescInput.value = task.description;
+    $('#editTaskModal').modal('show');
+  });
+
+  editTaskForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    tasks[currentTaskId].title = editTaskTitleInput.value;
+    tasks[currentTaskId].description = editTaskDescInput.value;
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderTasks();
+    taskTitle.textContent = tasks[currentTaskId].title;
+    taskDesc.textContent = tasks[currentTaskId].description;
+    $('#editTaskModal').modal('hide');
+  });
+
   deleteTaskBtn.addEventListener('click', () => {
     $('#confirmDeleteModal').modal('show');
   });
@@ -140,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     taskTitle.textContent = 'Select a task';
     taskDesc.textContent = 'Task description will appear here.';
     deleteTaskBtn.classList.add('d-none');
+    editTaskBtn.classList.add('d-none');
     $('#confirmDeleteModal').modal('hide');
   });
 
