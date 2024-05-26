@@ -83,7 +83,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   const taskList = document.getElementById('task-list');
   const taskTitle = document.getElementById('task-title');
   const taskDesc = document.getElementById('task-desc');
@@ -98,12 +98,12 @@
 
   function renderTasks() {
     taskList.innerHTML = '';
-    tasks.forEach((task, index) => {
+    tasks.slice().reverse().forEach((task, index) => {
       const li = document.createElement('li');
       li.className = 'list-group-item task-item';
       li.textContent = task.title;
-      li.dataset.id = index;
-      li.addEventListener('click', () => showTask(index));
+      li.dataset.id = tasks.length - 1 - index;
+      li.addEventListener('click', () => showTask(tasks.length - 1 - index));
       taskList.appendChild(li);
     });
   }
