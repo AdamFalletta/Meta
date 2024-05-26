@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #task-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .task-item {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">To-Do List</h1>
+    <div class="row">
+      <div class="col-md-4">
+        <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addTaskModal">Create Task</button>
+        <ul class="list-group" id="task-list"></ul>
+      </div>
+      <div class="col-md-8">
+        <h3 id="task-title">Select a task</h3>
+        <p id="task-desc">Task description will appear here.</p>
+        <button id="delete-task-btn" class="btn btn-danger d-none" data-toggle="modal" data-target="#confirmDeleteModal">Delete Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Task Modal -->
+  <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addTaskModalLabel">Add Task</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="task-form">
+            <div class="form-group">
+              <label for="task-title-input">Title</label>
+              <input type="text" class="form-control" id="task-title-input" required>
+            </div>
+            <div class="form-group">
+              <label for="task-desc-input">Description</label>
+              <textarea class="form-control" id="task-desc-input" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Add to list</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmDeleteModalLabel">Delete Task</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this task?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button type="button" class="btn btn-danger" id="confirm-delete-btn">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+  const taskList = document.getElementById('task-list');
+  const taskTitle = document.getElementById('task-title');
+  const taskDesc = document.getElementById('task-desc');
+  const deleteTaskBtn = document.getElementById('delete-task-btn');
+  const taskForm = document.getElementById('task-form');
+  const taskTitleInput = document.getElementById('task-title-input');
+  const taskDescInput = document.getElementById('task-desc-input');
+  const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  let currentTaskId = null;
+
+  function renderTasks() {
+    taskList.innerHTML = '';
+    tasks.forEach((task, index) => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item task-item';
+      li.textContent = task.title;
+      li.dataset.id = index;
+      li.addEventListener('click', () => showTask(index));
+      taskList.appendChild(li);
+    });
+  }
+
+  function showTask(index) {
+    currentTaskId = index;
+    const task = tasks[index];
+    taskTitle.textContent = task.title;
+    taskDesc.textContent = task.description;
+    deleteTaskBtn.classList.remove('d-none');
+  }
+
+  taskForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newTask = {
+      title: taskTitleInput.value,
+      description: taskDescInput.value,
+    };
+    tasks.push(newTask);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderTasks();
+    taskForm.reset();
+    $('#addTaskModal').modal('hide');
+  });
+
+  deleteTaskBtn.addEventListener('click', () => {
+    $('#confirmDeleteModal').modal('show');
+  });
+
+  confirmDeleteBtn.addEventListener('click', () => {
+    tasks.splice(currentTaskId, 1);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderTasks();
+    taskTitle.textContent = 'Select a task';
+    taskDesc.textContent = 'Task description will appear here.';
+    deleteTaskBtn.classList.add('d-none');
+    $('#confirmDeleteModal').modal('hide');
+  });
+
+  renderTasks();
+});
+
+  </script>
+</body>
+</html>
