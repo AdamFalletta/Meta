@@ -118,6 +118,46 @@ body::-webkit-scrollbar {
             color: #fff;
             margin-left: 10px;
         }
+
+
+
+
+
+     .CARD {
+            display: inline-block;
+            width: 200px;
+            margin: 10px;
+            background-color: #333;
+            color: #fff;
+        }
+        .CARD-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .CARD-emoji {
+            font-size: 30px;
+        }
+        .CARD-progress-circle {
+            width: 80px;
+            height: 80px;
+            background-color: transparent;
+            border-radius: 50%;
+            position: relative;
+            border: 6px solid #fff;
+            margin: 10px auto;
+        }
+        .CARD-progress-circle .progress-fill {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 50%;
+            clip: rect(0, 40px, 80px, 0);
+        }
+        .CARD-clicked {
+            box-shadow: 0 0 10px #3498db;
+        }
   </style>
 </head>
 <body>
@@ -159,6 +199,44 @@ body::-webkit-scrollbar {
         <ul class="list-group" id="task-list"></ul>
       </div>
       <div class="col-md-8">
+            <div class="container">
+        <div class="row">
+            <div class="CARD" onclick="toggleClicked(this)">
+                <div class="CARD-body text-center">
+                    <div class="CARD-emoji">💼</div>
+                    <h5 class="CARD-title">AFI CLIENTS</h5>
+                    <div class="CARD-progress-circle">
+                        <div class="CARD-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="CARD" onclick="toggleClicked(this)">
+                <div class="CARD-body text-center">
+                    <div class="CARD-emoji">📄</div>
+                    <h5 class="CARD-title">FRESH DOCUMENT</h5>
+                    <div class="CARD-progress-circle">
+                        <div class="CARD-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="CARD" onclick="toggleClicked(this)">
+                <div class="CARD-body text-center">
+                    <div class="CARD-emoji">🔎</div>
+                    <h5 class="CARD-title">FOCUS RIGHT NOW</h5>
+                    <div class="CARD-progress-circle">
+                        <div class="CARD-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Add more cards here -->
+        </div>
+    </div>
+
+    <script>
+        function toggleClicked(card) {
+            card.classList.toggle('CARD-clicked');
+        }
+    </script>
         <h3 id="task-title">Hello, Adam Falletta</h3>
         <div id="task-desc">Task description will appear here.</div>
         <button id="edit-task-btn" class="btn btn-secondary d-none" data-toggle="modal" data-target="#editTaskModal">Edit Task</button>
