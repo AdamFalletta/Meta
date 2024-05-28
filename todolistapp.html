@@ -24,7 +24,13 @@ body::-webkit-scrollbar {
       margin-top: 60px !important;
     }
 }
-
+@media (min-width: 768px) {
+    .col-md-8 {
+        -ms-flex: 0 0 66.666667%;
+        flex: 1 0 66.666667%;
+        max-width: 90.666667%;
+    }
+}
     @media (min-width: 576px) {
     .modal-dialog {
         max-width: 1200px;
@@ -138,7 +144,15 @@ body::-webkit-scrollbar {
             font-size: 16px;
         }
 
-  
+  @media (min-width: 576px) {
+    .col-sm-4 {
+        -ms-flex: 0 0 33.333333%;
+        flex: 0 0 33.333333%;
+        max-width: 12%;
+        margin-right: 10p;
+    }
+}
+    
   </style>
 </head>
 <body>
