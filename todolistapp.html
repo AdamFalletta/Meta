@@ -51,6 +51,13 @@ body::-webkit-scrollbar {
   background-color: #212121;
   color: #fff;
 }
+
+ .button-new {
+    text-transform: uppercase;
+    font-weight: 700;
+    width: 350px;
+    height: 50px;
+}
     #task-list {
       max-height: 1200px;
       overflow-y: auto;
@@ -77,7 +84,7 @@ body::-webkit-scrollbar {
     <h1 class="text-center">Adam Falletta Inc. 2024</h1>
     <div class="row">
       <div class="col-md-4">
-        <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addTaskModal">Create Task</button>
+        <button class="btn btn-primary mb-3 button-new" data-toggle="modal" data-target="#addTaskModal">Create Task</button>
         <ul class="list-group" id="task-list"></ul>
       </div>
       <div class="col-md-8">
