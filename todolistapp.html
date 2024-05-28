@@ -77,9 +77,78 @@ body::-webkit-scrollbar {
     .list-group {
     width: 350px;
 }
+          .navbar {
+            height: 20px;
+            font-size: 10px;
+            background-color: #333;
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+            padding: 0 10px;
+        }
+        .navbar-nav .nav-link:hover {
+            background-color: #555;
+        }
+        .navbar-brand {
+            padding: 0;
+        }
+        .navbar-dark .navbar-nav .nav-link {
+            color: rgba(255,255,255,.5);
+        }
+        .navbar-dark .navbar-nav .nav-link:hover {
+            color: rgba(255,255,255,.75);
+        }
+        .navbar-nav .dropdown-menu {
+            background-color: #333;
+            border: none;
+        }
+        .navbar-nav .dropdown-item {
+            color: #fff !important;
+        }
+        .navbar-nav .dropdown-item:hover {
+            background-color: #555;
+        }
+        .navbar-right-icons {
+            display: flex;
+            align-items: center;
+        }
+        .navbar-right-icons i, .navbar-right-icons span {
+            color: #fff;
+            margin-left: 10px;
+        }
   </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <a class="navbar-brand" href="#">Brand</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                        Menu
+                    </a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">Action 1</a>
+                        <a class="dropdown-item" href="#">Action 2</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Action 3</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Link 1</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Link 2</a>
+                </li>
+            </ul>
+            <div class="navbar-right-icons">
+                <i class="fas fa-bell"></i>
+                <i class="fas fa-envelope"></i>
+                <i class="fas fa-user"></i>
+                <span id="datetime"></span>
+            </div>
+        </div>
+    </nav>
   <div class="container mt-5">
     
     <div class="row">
@@ -268,5 +337,25 @@ body::-webkit-scrollbar {
       renderTasks();
     });
   </script>
+     <script>
+        function updateDateTime() {
+            const now = new Date();
+            const formatted = now.toLocaleString('en-US', {
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: true,
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            document.getElementById('datetime').innerText = formatted;
+        }
+
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+    </script>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>
