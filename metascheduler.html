@@ -114,8 +114,12 @@
             const scheduleBody = document.getElementById("schedule-body");
             const daysHeader = document.getElementById("days-header");
             const redLine = document.getElementById("red-line");
-            const currentDayIndex = new Date().getDay() + 1;
-            daysHeader.children[currentDayIndex].classList.add("current-day");
+            const currentDayIndex = new Date().getDay(); // Sunday is 0, Saturday is 6
+
+            // Add ms_ prefix to avoid conflicts with other localStorage data
+            function getLocalStorageKey(day, time) {
+                return `ms_${day}-${time}`;
+            }
 
             // Generate the schedule matrix
             for (let hour = startHour; hour < 30; hour++) {
@@ -157,7 +161,7 @@
                 $('#eventModal').modal('show');
                 const form = document.getElementById('event-form');
                 form.reset();
-                document.getElementById('event-id').value = `ms_${eventData.day}-${eventData.time}`;
+                document.getElementById('event-id').value = getLocalStorageKey(eventData.day, eventData.time);
                 document.getElementById('delete-event').style.display = 'none';
                 form.onsubmit = saveEvent;
             }
@@ -225,55 +229,6 @@
             }
 
             function clearEvent(id) {
-                const [prefix, dayTime                const [prefix, dayTime] = id.split('_');
-                const [day, time] = dayTime.split('-');
-                const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
-                if (!cell) return; // Ensure the cell exists
-
-                // Clear existing events in the cell
-                cell.innerHTML = '';
-
-                const eventBlock = document.createElement('div');
-                eventBlock.className = `event-block ${eventData.color}`;
-                eventBlock.textContent = eventData.name;
-                eventBlock.title = eventData.description;
-                eventBlock.style.cursor = 'pointer';
-                eventBlock.addEventListener('click', () => openEditModal(id, eventData));
-                cell.appendChild(eventBlock);
-            }
-
-            function openEditModal(id, eventData) {
-                $('#eventModal').modal('show');
-                const form = document.getElementById('event-form');
-                document.getElementById('event-id').value = id;
-                document.getElementById('event-name').value = eventData.name;
-                document.getElementById('event-description').value = eventData.description;
-                document.getElementById('event-color').value = eventData.color;
-                document.getElementById('delete-event').style.display = 'block';
-                form.onsubmit = (event) => updateEvent(event, id);
-                document.getElementById('delete-event').onclick = () => deleteEvent(id);
-            }
-
-            function updateEvent(event, id) {
-                event.preventDefault();
-                const name = document.getElementById('event-name').value;
-                const description = document.getElementById('event-description').value;
-                const color = document.getElementById('event-color').value;
-                const eventData = { name, description, color };
-
-                localStorage.setItem(id, JSON.stringify(eventData));
-                clearEvent(id);
-                renderEvent(id, eventData);
-                $('#eventModal').modal('hide');
-            }
-
-            function deleteEvent(id) {
-                localStorage.removeItem(id);
-                clearEvent(id);
-                $('#eventModal').modal('hide');
-            }
-
-            function clearEvent(id) {
                 const [prefix, dayTime] = id.split('_');
                 const [day, time] = dayTime.split('-');
                 const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
@@ -281,16 +236,17 @@
             }
 
             // Load events from localStorage
-            for (let i = 0; i < localStorage.length; i++) {
-                const id = localStorage.key(i);
-                if (id.startsWith('ms_')) {
-                    const eventDataStr = localStorage.getItem(id);
-                    try {
-                        const eventData = JSON.parse(eventDataStr);
-                        renderEvent(id, eventData);
-                    } catch (error) {
-                        console.error(`Error parsing event data for key '${id}':`, error);
-                        localStorage.removeItem(id); // Remove invalid entry
+                    for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('ms_')) {
+                        const eventDataStr = localStorage.getItem(key);
+                        try {
+                            const eventData = JSON.parse(eventDataStr);
+                            renderEvent(key, eventData);
+                        } catch (error) {
+                            console.error(`Error parsing event data for key '${key}':`, error);
+                            localStorage.removeItem(key); // Remove invalid entry
+                        }
                     }
                 }
             }
