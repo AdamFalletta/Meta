@@ -162,8 +162,21 @@
                 const form = document.getElementById('event-form');
                 form.reset();
                 document.getElementById('event-id').value = getLocalStorageKey(eventData.day, eventData.time);
-                document.getElementById('delete-event').style.display = 'none';
+
+                // Check if the event exists in localStorage
+                const existingEvent = localStorage.getItem(document.getElementById('event-id').value);
+                if (existingEvent) {
+                    const eventData = JSON.parse(existingEvent);
+                    document.getElementById('event-name').value = eventData.name;
+                    document.getElementById('event-description').value = eventData.description;
+                    document.getElementById('event-color').value = eventData.color;
+                    document.getElementById('delete-event').style.display = 'block';
+                } else {
+                    document.getElementById('delete-event').style.display = 'none';
+                }
+
                 form.onsubmit = saveEvent;
+                document.getElementById('delete-event').onclick = deleteEvent;
             }
 
             function saveEvent(event) {
@@ -193,46 +206,20 @@
                 eventBlock.textContent = eventData.name;
                 eventBlock.title = eventData.description;
                 eventBlock.style.cursor = 'pointer';
-                eventBlock.addEventListener('click', () => openEditModal(id, eventData));
+                eventBlock.addEventListener('click', () => openEventModal({ day, time }));
                 cell.appendChild(eventBlock);
             }
 
-            function openEditModal(id, eventData) {
-                $('#eventModal').modal('show');
-                const form = document.getElementById('event-form');
-                document.getElementById('event-id').value = id;
-                document.getElementById('event-name').value = eventData.name;
-                document.getElementById('event-description').value = eventData.description;
-                document.getElementById('event-color').value = eventData.color;
-                document.getElementById('delete-event').style.display = 'block';
-                form.onsubmit = (event) => updateEvent(event, id);
-                document.getElementById('delete-event').onclick = () => deleteEvent(id);
-            }
-
-            function updateEvent(event, id) {
-                event.preventDefault();
-                const name = document.getElementById('event-name').value;
-                const description = document.getElementById('event-description').value;
-                const color = document.getElementById('event-color').value;
-                const eventData = { name, description, color };
-
-                localStorage.setItem(id, JSON.stringify(eventData));
-                clearEvent(id);
-                renderEvent(id, eventData);
-                $('#eventModal').modal('hide');
-            }
-
-            function deleteEvent(id) {
+            function deleteEvent() {
+                const id = document.getElementById('event-id').value;
                 localStorage.removeItem(id);
-                clearEvent(id);
-                $('#eventModal').modal('hide');
-            }
-
-            function clearEvent(id) {
                 const [prefix, dayTime] = id.split('_');
                 const [day, time] = dayTime.split('-');
                 const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
-                if (cell) cell.innerHTML = '';
+                if (cell) {
+                    cell.innerHTML = ''; // Clear the event block from the cell
+                }
+                $('#eventModal').modal('hide'); // Hide the modal after deletion
             }
 
             // Load events from localStorage
@@ -253,4 +240,3 @@
     </script>
 </body>
 </html>
-
