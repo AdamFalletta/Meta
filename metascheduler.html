@@ -122,20 +122,29 @@
                 return `ms_${day}-${time}`;
             }
 
-    // Generate the schedule matrix
+      // Generate the schedule matrix
     for (let hour = startHour; hour < 30; hour++) {
         const row = document.createElement("tr");
         const timeCell = document.createElement("td");
         
         // Format hour in 12-hour format with AM/PM
-        const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
-        const period = hour < 12 ? 'AM' : 'PM';
-        timeCell.textContent = `${formattedHour} ${period}`;
+        let formattedHour;
+        if (hour % 24 === 0) {
+            formattedHour = '12 AM';
+        } else if (hour % 24 < 12) {
+            formattedHour = `${hour % 12} AM`;
+        } else if (hour % 24 === 12) {
+            formattedHour = '12 PM';
+        } else {
+            formattedHour = `${hour % 12} PM`;
+        }
+        
+        timeCell.textContent = formattedHour;
         
         row.appendChild(timeCell);
         for (let day = 0; day < 7; day++) {
             const cell = document.createElement("td");
-            const time = `${formattedHour} ${period}`;
+            const time = formattedHour;
             cell.dataset.time = time;
             cell.dataset.day = day;
             cell.addEventListener("click", handleCellClick);
