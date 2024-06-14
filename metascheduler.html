@@ -122,21 +122,27 @@
                 return `ms_${day}-${time}`;
             }
 
-            // Generate the schedule matrix
-            for (let hour = startHour; hour < 30; hour++) {
-                const row = document.createElement("tr");
-                const timeCell = document.createElement("td");
-                timeCell.textContent = `${hour % 24}:00`;
-                row.appendChild(timeCell);
-                for (let day = 0; day < 7; day++) {
-                    const cell = document.createElement("td");
-                    cell.dataset.time = `${hour % 24}:00`;
-                    cell.dataset.day = day;
-                    cell.addEventListener("click", handleCellClick);
-                    row.appendChild(cell);
-                }
-                scheduleBody.appendChild(row);
-            }
+    // Generate the schedule matrix
+    for (let hour = startHour; hour < 30; hour++) {
+        const row = document.createElement("tr");
+        const timeCell = document.createElement("td");
+        
+        // Format hour in 12-hour format with AM/PM
+        const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
+        const period = hour < 12 ? 'AM' : 'PM';
+        timeCell.textContent = `${formattedHour} ${period}`;
+        
+        row.appendChild(timeCell);
+        for (let day = 0; day < 7; day++) {
+            const cell = document.createElement("td");
+            const time = `${formattedHour} ${period}`;
+            cell.dataset.time = time;
+            cell.dataset.day = day;
+            cell.addEventListener("click", handleCellClick);
+            row.appendChild(cell);
+        }
+        scheduleBody.appendChild(row);
+    }
 
             // Update the red line position every minute
             setInterval(updateRedLine, 60000);
