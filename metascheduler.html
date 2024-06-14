@@ -110,33 +110,26 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            const startHour = 6;
             const scheduleBody = document.getElementById("schedule-body");
             const daysHeader = document.getElementById("days-header");
             const redLine = document.getElementById("red-line");
             const currentDayIndex = new Date().getDay(); // Sunday is 0, Saturday is 6
 
-            function formatTime(hour) {
-                if (hour === 0) {
-                    return `12 AM`;
-                } else if (hour < 12) {
-                    return `${hour} AM`;
-                } else if (hour === 12) {
-                    return `12 PM`;
-                } else {
-                    return `${hour - 12} PM`;
-                }
+            // Add ms_ prefix to avoid conflicts with other localStorage data
+            function getLocalStorageKey(day, time) {
+                return `ms_${day}-${time}`;
             }
 
             // Generate the schedule matrix
-            for (let hour = 6; hour < 30; hour++) {
+            for (let hour = startHour; hour < 30; hour++) {
                 const row = document.createElement("tr");
                 const timeCell = document.createElement("td");
-                const formattedHour = formatTime(hour % 24);
-                timeCell.textContent = formattedHour;
+                timeCell.textContent = `${hour % 24}:00`;
                 row.appendChild(timeCell);
                 for (let day = 0; day < 7; day++) {
                     const cell = document.createElement("td");
-                    cell.dataset.time = formattedHour;
+                    cell.dataset.time = `${hour % 24}:00`;
                     cell.dataset.day = day;
                     cell.addEventListener("click", handleCellClick);
                     row.appendChild(cell);
@@ -150,7 +143,7 @@
 
             function updateRedLine() {
                 const now = new Date();
-                const totalMinutes = now.getHours() * 60 + now.getMinutes() - 360;
+                const totalMinutes = (now.getHours() * 60 + now.getMinutes()) - 360;
                 const totalSlots = 1440; // 24 hours
                 const slotHeight = document.querySelector('.schedule-table tbody tr').offsetHeight;
                 const redLinePosition = (totalMinutes / totalSlots) * (slotHeight * 24);
@@ -219,19 +212,14 @@
 
             function deleteEvent() {
                 const id = document.getElementById('event-id').value;
+                localStorage.removeItem(id);
                 const [prefix, dayTime] = id.split('_');
                 const [day, time] = dayTime.split('-');
                 const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
                 if (cell) {
                     cell.innerHTML = ''; // Clear the event block from the cell
                 }
-                localStorage.removeItem(id);
                 $('#eventModal').modal('hide'); // Hide the modal after deletion
-            }
-
-            function getLocalStorageKey(day, time) {
-                const formattedTime = time.replace(/( AM| PM)/, ''); // Remove AM/PM for key
-                return `ms_${day}-${formattedTime}`;
             }
 
             // Load events from localStorage
@@ -252,4 +240,3 @@
     </script>
 </body>
 </html>
-
