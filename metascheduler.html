@@ -139,9 +139,11 @@
 
             function updateRedLine() {
                 const now = new Date();
-                const totalMinutes = now.getHours() * 60 + now.getMinutes();
-                const redLinePosition = ((totalMinutes - 360) % 1440) / 1440 * 100;
-                redLine.style.top = `${redLinePosition}%`;
+                const totalMinutes = (now.getHours() * 60 + now.getMinutes()) - 360;
+                const totalSlots = 1440; // 24 hours
+                const slotHeight = document.querySelector('.schedule-table tbody tr').offsetHeight;
+                const redLinePosition = (totalMinutes / totalSlots) * (slotHeight * 24);
+                redLine.style.top = `${redLinePosition}px`;
             }
 
             function handleCellClick(event) {
