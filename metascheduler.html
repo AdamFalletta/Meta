@@ -178,6 +178,11 @@
             function renderEvent(id, eventData) {
                 const [day, time] = id.split('-');
                 const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
+                if (!cell) return; // Ensure the cell exists
+
+                // Clear existing events in the cell
+                cell.innerHTML = '';
+
                 const eventBlock = document.createElement('div');
                 eventBlock.className = `event-block ${eventData.color}`;
                 eventBlock.textContent = eventData.name;
@@ -221,7 +226,7 @@
             function clearEvent(id) {
                 const [day, time] = id.split('-');
                 const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
-                cell.innerHTML = '';
+                if (cell) cell.innerHTML = '';
             }
 
             // Load events from localStorage
