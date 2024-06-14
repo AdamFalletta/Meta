@@ -157,7 +157,7 @@
                 $('#eventModal').modal('show');
                 const form = document.getElementById('event-form');
                 form.reset();
-                document.getElementById('event-id').value = `${eventData.day}-${eventData.time}`;
+                document.getElementById('event-id').value = `ms_${eventData.day}-${eventData.time}`;
                 document.getElementById('delete-event').style.display = 'none';
                 form.onsubmit = saveEvent;
             }
@@ -176,7 +176,8 @@
             }
 
             function renderEvent(id, eventData) {
-                const [day, time] = id.split('-');
+                const [prefix, dayTime] = id.split('_');
+                const [day, time] = dayTime.split('-');
                 const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
                 if (!cell) return; // Ensure the cell exists
 
@@ -224,7 +225,57 @@
             }
 
             function clearEvent(id) {
-                const [day, time] = id.split('-');
+                const [prefix, dayTime                const [prefix, dayTime] = id.split('_');
+                const [day, time] = dayTime.split('-');
+                const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
+                if (!cell) return; // Ensure the cell exists
+
+                // Clear existing events in the cell
+                cell.innerHTML = '';
+
+                const eventBlock = document.createElement('div');
+                eventBlock.className = `event-block ${eventData.color}`;
+                eventBlock.textContent = eventData.name;
+                eventBlock.title = eventData.description;
+                eventBlock.style.cursor = 'pointer';
+                eventBlock.addEventListener('click', () => openEditModal(id, eventData));
+                cell.appendChild(eventBlock);
+            }
+
+            function openEditModal(id, eventData) {
+                $('#eventModal').modal('show');
+                const form = document.getElementById('event-form');
+                document.getElementById('event-id').value = id;
+                document.getElementById('event-name').value = eventData.name;
+                document.getElementById('event-description').value = eventData.description;
+                document.getElementById('event-color').value = eventData.color;
+                document.getElementById('delete-event').style.display = 'block';
+                form.onsubmit = (event) => updateEvent(event, id);
+                document.getElementById('delete-event').onclick = () => deleteEvent(id);
+            }
+
+            function updateEvent(event, id) {
+                event.preventDefault();
+                const name = document.getElementById('event-name').value;
+                const description = document.getElementById('event-description').value;
+                const color = document.getElementById('event-color').value;
+                const eventData = { name, description, color };
+
+                localStorage.setItem(id, JSON.stringify(eventData));
+                clearEvent(id);
+                renderEvent(id, eventData);
+                $('#eventModal').modal('hide');
+            }
+
+            function deleteEvent(id) {
+                localStorage.removeItem(id);
+                clearEvent(id);
+                $('#eventModal').modal('hide');
+            }
+
+            function clearEvent(id) {
+                const [prefix, dayTime] = id.split('_');
+                const [day, time] = dayTime.split('-');
                 const cell = document.querySelector(`td[data-day="${day}"][data-time="${time}"]`);
                 if (cell) cell.innerHTML = '';
             }
@@ -232,10 +283,19 @@
             // Load events from localStorage
             for (let i = 0; i < localStorage.length; i++) {
                 const id = localStorage.key(i);
-                const eventData = JSON.parse(localStorage.getItem(id));
-                renderEvent(id, eventData);
+                if (id.startsWith('ms_')) {
+                    const eventDataStr = localStorage.getItem(id);
+                    try {
+                        const eventData = JSON.parse(eventDataStr);
+                        renderEvent(id, eventData);
+                    } catch (error) {
+                        console.error(`Error parsing event data for key '${id}':`, error);
+                        localStorage.removeItem(id); // Remove invalid entry
+                    }
+                }
             }
         });
     </script>
 </body>
 </html>
+
