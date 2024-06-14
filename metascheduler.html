@@ -236,17 +236,16 @@
             }
 
             // Load events from localStorage
-                    for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key.startsWith('ms_')) {
-                        const eventDataStr = localStorage.getItem(key);
-                        try {
-                            const eventData = JSON.parse(eventDataStr);
-                            renderEvent(key, eventData);
-                        } catch (error) {
-                            console.error(`Error parsing event data for key '${key}':`, error);
-                            localStorage.removeItem(key); // Remove invalid entry
-                        }
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('ms_')) {
+                    const eventDataStr = localStorage.getItem(key);
+                    try {
+                        const eventData = JSON.parse(eventDataStr);
+                        renderEvent(key, eventData);
+                    } catch (error) {
+                        console.error(`Error parsing event data for key '${key}':`, error);
+                        localStorage.removeItem(key); // Remove invalid entry
                     }
                 }
             }
