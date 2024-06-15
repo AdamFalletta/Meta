@@ -1344,7 +1344,7 @@ text-shadow: 3px 6px #2a2a2a;
     }
  .clock{
     font-size:30px;
-    font-weight:900;
+
  
     text-transform:uppercase;
 
@@ -1663,7 +1663,7 @@ setInterval(update, 1000);
 
 
 function updateTime() {
-  $('#clockTime').html(moment().format('h:mm a [ET]'));
+  $('#clockTime').html(moment().format('h:mma [ET]'));
 }
 
 setInterval(updateTime, 1000);
