@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Foods Matrix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 1.2rem;
+            background-color: #121212;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        .table {
+            margin: 20px 0;
+        }
+        .table-responsive {
+            max-height: 100vh;
+        }
+        th, td {
+            vertical-align: middle;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #333;
+        }
+        .red { background-color: #e57373; }
+        .brown { background-color: #a1887f; }
+        .orange { background-color: #ffb74d; }
+        .yellow { background-color: #fff176; }
+        .green { background-color: #81c784; }
+        .blue { background-color: #64b5f6; }
+        .purple { background-color: #9575cd; }
+        .white { background-color: #e0e0e0; color: #000; }
+        .black { background-color: #616161; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid h-100 d-flex justify-content-center align-items-center">
+        <div class="table-responsive">
+            <table class="table table-dark table-bordered table-hover text-center align-middle">
+                <thead>
+                    <tr>
+                        <th>Colors</th>
+                        <th>Fruit</th>
+                        <th>Veggies</th>
+                        <th>Whole Grains</th>
+                        <th>Legumes</th>
+                        <th>Nuts & Seeds</th>
+                        <th>Herbs & Spices</th>
+                    </tr>
+                </thead>
+                <tbody id="food-table">
+                    <!-- Rows will be inserted by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        const foods = [
+            { color: 'RED', fruit: ['Strawberries', 'Cherries', 'Raspberries', 'Watermelon', 'Red Apples'], veggies: ['Tomatoes', 'Red Peppers', 'Radishes', 'Red Cabbage', 'Beets'], grains: ['Red Quinoa', 'Red Rice', 'Amaranth', 'Teff', 'Sorghum'], legumes: ['Red Lentils', 'Kidney Beans', 'Adzuki Beans', 'Red Peas', 'Cranberry Beans'], nuts: ['Goji Berries', 'Red Peanuts', 'Red Almonds', 'Red Pistachios', 'Red Cashews'], spices: ['Paprika', 'Cayenne Pepper', 'Red Chili Flakes', 'Sumac', 'Red Pepper Powder'] },
+            { color: 'BROWN', fruit: ['Dates', 'Figs', 'Brown Pears', 'Brown Kiwi', 'Brown Plums'], veggies: ['Potatoes', 'Mushrooms', 'Parsnips', 'Jerusalem Artichokes', 'Brown Onions'], grains: ['Brown Rice', 'Whole Wheat', 'Barley', 'Millet', 'Rye'], legumes: ['Chickpeas', 'Pinto Beans', 'Brown Lentils', 'Black-Eyed Peas', 'Carob'], nuts: ['Walnuts', 'Almonds', 'Pecans', 'Hazelnuts', 'Macadamia Nuts'], spices: ['Cinnamon', 'Cumin', 'Nutmeg', 'Cloves', 'Allspice'] },
+            { color: 'ORANGE', fruit: ['Oranges', 'Mangoes', 'Papayas', 'Peaches', 'Apricots'], veggies: ['Carrots', 'Pumpkins', 'Butternut Squash', 'Sweet Potatoes', 'Orange Bell Peppers'], grains: ['Farro', 'Bulgur', 'Golden Flaxseed', 'Freekeh', 'Corn'], legumes: ['Yellow Lentils', 'Yellow Peas', 'Yellow Mung Beans', 'Orange Lupin Beans', 'Golden Soybeans'], nuts: ['Golden Raisins', 'Orange Peanuts', 'Golden Almonds', 'Golden Cashews', 'Golden Walnuts'], spices: ['Turmeric', 'Saffron', 'Ginger', 'Orange Zest', 'Mustard Powder'] },
+            { color: 'YELLOW', fruit: ['Bananas', 'Pineapples', 'Lemons', 'Yellow Apples', 'Yellow Pears'], veggies: ['Yellow Squash', 'Corn', 'Yellow Tomatoes', 'Yellow Peppers', 'Yellow Beets'], grains: ['Golden Rice', 'Yellow Quinoa', 'Amaranth', 'Teff', 'Sorghum'], legumes: ['Yellow Lentils', 'Yellow Split Peas', 'Soybeans', 'Yellow Lupin Beans', 'Yellow Mung Beans'], nuts: ['Pine Nuts', 'Yellow Cashews', 'Yellow Almonds', 'Yellow Walnuts', 'Yellow Pistachios'], spices: ['Turmeric', 'Saffron', 'Yellow Curry Powder', 'Lemon Zest', 'Mustard Seeds'] },
+            { color: 'GREEN', fruit: ['Kiwi', 'Green Apples', 'Grapes', 'Limes', 'Avocados'], veggies: ['Spinach', 'Kale', 'Broccoli', 'Green Peppers', 'Zucchini'], grains: ['Green Lentils', 'Green Peas', 'Green Beans', 'Green Chickpeas', 'Edamame'], legumes: ['Green Lentils', 'Green Split Peas', 'Mung Beans', 'Green Soybeans', 'Edamame'], nuts: ['Pumpkin Seeds', 'Pistachios', 'Hemp Seeds', 'Chia Seeds', 'Sunflower Seeds'], spices: ['Basil', 'Parsley', 'Mint', 'Cilantro', 'Thyme'] },
+            { color: 'BLUE', fruit: ['Blueberries', 'Elderberries', 'Black Currants', 'Damson Plums', 'Concord Grapes'], veggies: ['Blue Potatoes', 'Blue Carrots', 'Blue Corn', 'Blue Beans', 'Blue Peas'], grains: ['Blue Cornmeal', 'Blue Maize', 'Blue Amaranth', 'Blue Quinoa', 'Blue Rice'], legumes: ['Blue Lentils', 'Blue Lupin Beans', 'Blue Soybeans', 'Blue Mung Beans', 'Blue Peas'], nuts: ['Blue Almonds', 'Blue Cashews', 'Blue Walnuts', 'Blue Peanuts', 'Blue Pistachios'], spices: ['Lavender', 'Blueberry Powder', 'Blue Cornflower', 'Blue Spirulina', 'Blue Matcha'] },
+            { color: 'PURPLE', fruit: ['Grapes', 'Plums', 'Blackberries', 'Purple Figs', 'Acai Berries'], veggies: ['Purple Cabbage', 'Eggplant', 'Purple Carrots', 'Purple Kale', 'Purple Asparagus'], grains: ['Purple Rice', 'Purple Barley', 'Purple Corn', 'Purple Quinoa', 'Purple Millet'], legumes: ['Purple Lentils', 'Purple Peas', 'Purple Soybeans', 'Purple Kidney Beans', 'Purple Mung Beans'], nuts: ['Purple Almonds', 'Purple Cashews', 'Purple Walnuts', 'Purple Pistachios', 'Purple Peanuts'], spices: ['Purple Basil', 'Purple Sage', 'Purple Shiso', 'Purple Thyme', 'Purple Oregano'] },
+            { color: 'WHITE', fruit: ['White Peaches', 'White Nectarines', 'Pears', 'Bananas', 'Lychee'], veggies: ['Cauliflower', 'Garlic', 'Onions', 'Mushrooms', 'White Potatoes'], grains: ['White Rice', 'White Quinoa', 'White Corn', 'White Oats', 'White Wheat'], legumes: ['White Beans', 'Navy Beans', 'White Lentils', 'White Chickpeas', 'White Peas'], nuts: ['Almonds', 'Cashews', 'Macadamia Nuts', 'Brazil Nuts', 'Pine Nuts'], spices: ['Garlic Powder', 'Onion Powder', 'White Pepper', 'Ginger', 'Salt'] },
+            { color: 'BLACK', fruit: ['Blackberries', 'Black Grapes', 'Black Currants', 'Black Plums', 'Black Cherries'], veggies: ['Black Garlic', 'Black Olives', 'Black Carrots', 'Black Kale', 'Black Tomatoes'], grains: ['Black Rice', 'Black Quinoa', 'Black Barley', 'Black Millet', 'Black Wheat'], legumes: ['Black Beans', 'Black Lentils', 'Black Soybeans', 'Black Peas', 'Black Chickpeas'], nuts: ['Black Walnuts', 'Black Sesame Seeds', 'Black Almonds', 'Black Pistachios', 'Black Peanuts'], spices: ['Black Pepper', 'Nigella Seeds', 'Black Salt', 'Black Cumin', 'Black Cardamom'] }
+        ];
+
+        const tbody = document.getElementById('food-table');
+
+        foods.forEach(food => {
+            const row = document.createElement('tr');
+            row.classList.add(food.color.toLowerCase());
+            row.innerHTML = `
+                <td>${food.color}</td>
+                <td>${food.fruit.join('<br>')}</td>
+                <td>${food.veggies.join('<br>')}</td>
+                <td>${food.grains.join('<br>')}</td>
+                <td>${food.legumes.join('<br>')}</td>
+                <td>${food.nuts.join('<br>')}</td>
+                <td>${food.spices.join('<br>')}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    </script>
+</body>
+</html>
