@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Matrix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 1.2rem;
+            background-color: #121212;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        .table {
+            margin: 20px 0;
+        }
+        .table-responsive {
+            max-height: 100vh;
+        }
+        th, td {
+            vertical-align: middle;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid h-100 d-flex justify-content-center align-items-center">
+        <div class="table-responsive">
+            <table class="table table-dark table-bordered table-hover text-center align-middle">
+                <thead>
+                    <tr>
+                        <th>Body Part</th>
+                        <th>Center</th>
+                        <th>Upper</th>
+                        <th>Lower</th>
+                        <th>Inner</th>
+                        <th>Outer</th>
+                    </tr>
+                </thead>
+                <tbody id="workout-table">
+                    <!-- Rows will be inserted by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        const workouts = [
+            { part: 'CHEST', center: ['Push-Ups', 'Dumbbell Floor Press', 'Medicine Ball Push-Ups'], upper: ['Incline Push-Ups', 'Dumbbell Incline Press', 'Incline Medicine Ball Push-Ups'], lower: ['Decline Push-Ups', 'Dumbbell Decline Press', 'Decline Medicine Ball Push-Ups'], inner: ['Close-Grip Push-Ups', 'Dumbbell Squeeze Press', 'Resistance Band Close-Grip Push-Ups'], outer: ['Wide-Grip Push-Ups', 'Dumbbell Flyes', 'Resistance Band Flyes'] },
+            { part: 'SHOULDERS', center: ['Dumbbell Shoulder Press', 'Resistance Band Shoulder Press', 'Medicine Ball Push Press'], upper: ['Arnold Press', 'Resistance Band Front Raises', 'Medicine Ball Overhead Press'], lower: ['Dumbbell Shoulder Press', 'Resistance Band Shoulder Press', 'Medicine Ball Push Press'], inner: ['Front Raises', 'Resistance Band Front Raises', 'Medicine Ball Front Raises'], outer: ['Lateral Raises', 'Resistance Band Lateral Raises', 'Medicine Ball Side Raises'] },
+            { part: 'TRAPS', center: ['Dumbbell Shrugs', 'Resistance Band Shrugs', 'Medicine Ball Shrugs'], upper: ['High Pulls', 'Resistance Band High Pulls', 'Medicine Ball High Pulls'], lower: ['Face Pulls', 'Resistance Band Face Pulls', 'Medicine Ball Face Pulls'], inner: ['Upright Rows', 'Resistance Band Upright Rows', 'Medicine Ball Upright Rows'], outer: ['Behind-the-Back Shrugs', 'Resistance Band Behind-the-Back Shrugs', 'Medicine Ball Behind-the-Back Shrugs'] },
+            { part: 'LATS', center: ['Lat Pulldown (Resistance Bands)', 'Single-Arm Dumbbell Row', 'Medicine Ball Row'], upper: ['Pull-Up', 'Incline Dumbbell Row', 'Resistance Band Pull-Up'], lower: ['Straight-Arm Pulldown (Resistance Bands)', 'Dumbbell Pullover', 'Resistance Band Pullover'], inner: ['Close-Grip Lat Pulldown (Resistance Bands)', 'Close-Grip Row (Dumbbells)', 'Resistance Band Close-Grip Row'], outer: ['Wide-Grip Lat Pulldown (Resistance Bands)', 'Wide-Grip Row (Dumbbells)', 'Resistance Band Wide-Grip Row'] },
+            { part: 'TRICEPS', center: ['Tricep Dips', 'Dumbbell Tricep Extension', 'Medicine Ball Tricep Extension'], upper: ['Overhead Tricep Extension', 'Dumbbell Skull Crushers', 'Medicine Ball Skull Crushers'], lower: ['Tricep Kickback', 'Dumbbell Kickbacks', 'Medicine Ball Kickbacks'], inner: ['Close-Grip Push-Up', 'Resistance Band Close-Grip Push-Up', 'Medicine Ball Close-Grip Push-Up'], outer: ['Tricep Pushdown (Resistance Bands)', 'Resistance Band Pushdown', 'Medicine Ball Pushdown'] },
+            { part: 'BICEPS', center: ['Bicep Curl', 'Resistance Band Curl', 'Medicine Ball Curl'], upper: ['Preacher Curl', 'Resistance Band Preacher Curl', 'Medicine Ball Preacher Curl'], lower: ['Concentration Curl', 'Resistance Band Concentration Curl', 'Medicine Ball Concentration Curl'], inner: ['Spider Curl', 'Resistance Band Spider Curl', 'Medicine Ball Spider Curl'], outer: ['Hammer Curl', 'Resistance Band Hammer Curl', 'Medicine Ball Hammer Curl'] },
+            { part: 'FOREARMS', center: ['Wrist Curl', 'Resistance Band Wrist Curl', 'Medicine Ball Wrist Curl'], upper: ['Reverse Wrist Curl', 'Resistance Band Reverse Wrist Curl', 'Medicine Ball Reverse Wrist Curl'], lower: ['Farmer\'s Walk', 'Resistance Band Farmer\'s Walk', 'Medicine Ball Farmer\'s Walk'], inner: ['Wrist Roller', 'Resistance Band Wrist Roller', 'Medicine Ball Wrist Roller'], outer: ['Zottman Curl', 'Resistance Band Zottman Curl', 'Medicine Ball Zottman Curl'] },
+            { part: 'ABS', center: ['Crunches', 'Medicine Ball Russian Twists', 'Resistance Band Crunches'], upper: ['Sit-Ups', 'Medicine Ball Sit-Ups', 'Resistance Band Sit-Ups'], lower: ['Leg Raises', 'Medicine Ball Leg Raises', 'Resistance Band Leg Raises'], inner: ['Flutter Kicks', 'Medicine Ball Flutter Kicks', 'Resistance Band Flutter Kicks'], outer: ['Bicycle Crunches', 'Medicine Ball Bicycle Crunches', 'Resistance Band Bicycle Crunches'] },
+            { part: 'OBLIQUES', center: ['Russian Twists', 'Medicine Ball Russian Twists', 'Resistance Band Russian Twists'], upper: ['Side Crunch', 'Medicine Ball Side Crunch', 'Resistance Band Side Crunch'], lower: ['Oblique Leg Raise', 'Medicine Ball Oblique Leg Raise', 'Resistance Band Oblique Leg Raise'], inner: ['Side Plank', 'Medicine Ball Side Plank', 'Resistance Band Side Plank'], outer: ['Woodchopper', 'Medicine Ball Woodchopper', 'Resistance Band Woodchopper'] },
+            { part: 'LOWER BACK', center: ['Hyperextensions', 'Resistance Band Hyperextensions', 'Medicine Ball Hyperextensions'], upper: ['Deadlift', 'Resistance Band Deadlift', 'Medicine Ball Deadlift'], lower: ['Good Mornings', 'Resistance Band Good Mornings', 'Medicine Ball Good Mornings'], inner: ['Bird-Dog', 'Resistance Band Bird-Dog', 'Medicine Ball Bird-Dog'], outer: ['Superman Exercise', 'Resistance Band Superman Exercise', 'Medicine Ball Superman Exercise'] },
+            { part: 'HIPS', center: ['Hip Thrust', 'Resistance Band Hip Thrust', 'Medicine Ball Hip Thrust'], upper: ['Hip Abduction', 'Resistance Band Hip Abduction', 'Medicine Ball Hip Abduction'], lower: ['Hip Adduction', 'Resistance Band Hip Adduction', 'Medicine Ball Hip Adduction'], inner: ['Side-Lying Leg Lift', 'Resistance Band Side-Lying Leg Lift', 'Medicine Ball Side-Lying Leg Lift'], outer: ['Cable Hip Extension (Resistance Bands)', 'Resistance Band Hip Extension', 'Medicine Ball Hip Extension'] },
+            { part: 'GLUTES', center: ['Squats', 'Resistance Band Squats', 'Medicine Ball Squats'], upper: ['Bulgarian Split Squat', 'Resistance Band Bulgarian Split Squat', 'Medicine Ball Bulgarian Split Squat'], lower: ['Glute Bridges', 'Resistance Band Glute Bridges', 'Medicine Ball Glute Bridges'], inner: ['Sumo Squats', 'Resistance Band Sumo Squats', 'Medicine Ball Sumo Squats'], outer: ['Lateral Band Walk', 'Resistance Band Lateral Walk', 'Medicine Ball Lateral Walk'] },
+            { part: 'QUADS', center: ['Leg Press (Resistance Bands)', 'Dumbbell Leg Press', 'Medicine Ball Leg Press'], upper: ['Front Squat', 'Dumbbell Front Squat', 'Medicine Ball Front Squat'], lower: ['Hack Squat', 'Dumbbell Hack Squat', 'Medicine Ball Hack Squat'], inner: ['Sissy Squat', 'Resistance Band Sissy Squat', 'Medicine Ball Sissy Squat'], outer: ['Split Squat', 'Resistance Band Split Squat', 'Medicine Ball Split Squat'] },
+            { part: 'HAMSTRINGS', center: ['Leg Curl (ResistanceBands)', 'Dumbbell Leg Curl', 'Medicine Ball Leg Curl'], upper: ['Romanian Deadlift', 'Dumbbell Romanian Deadlift', 'Medicine Ball Romanian Deadlift'], lower: ['Glute-Ham Raise', 'Dumbbell Glute-Ham Raise', 'Medicine Ball Glute-Ham Raise'], inner: ['Single-Leg Deadlift', 'Dumbbell Single-Leg Deadlift', 'Medicine Ball Single-Leg Deadlift'], outer: ['Nordic Hamstring Curl', 'Resistance Band Nordic Hamstring Curl', 'Medicine Ball Nordic Hamstring Curl'] },
+            { part: 'CALVES', center: ['Calf Raise', 'Resistance Band Calf Raise', 'Medicine Ball Calf Raise'], upper: ['Seated Calf Raise', 'Resistance Band Seated Calf Raise', 'Medicine Ball Seated Calf Raise'], lower: ['Donkey Calf Raise', 'Resistance Band Donkey Calf Raise', 'Medicine Ball Donkey Calf Raise'], inner: ['Single-Leg Calf Raise', 'Resistance Band Single-Leg Calf Raise', 'Medicine Ball Single-Leg Calf Raise'], outer: ['Standing Calf Raise', 'Resistance Band Standing Calf Raise', 'Medicine Ball Standing Calf Raise'] }
+        ];
+
+        const tbody = document.getElementById('workout-table');
+
+        workouts.forEach(workout => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${workout.part}</td>
+                <td>${workout.center.join('<br>')}</td>
+                <td>${workout.upper.join('<br>')}</td>
+                <td>${workout.lower.join('<br>')}</td>
+                <td>${workout.inner.join('<br>')}</td>
+                <td>${workout.outer.join('<br>')}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    </script>
+</body>
+</html>
+
