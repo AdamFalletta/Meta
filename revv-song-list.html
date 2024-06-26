@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Album</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      overflow: hidden;
+    }
+
+    .card {
+      width: 150px;
+      height: 150px;
+      margin: 10px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .audio-controls {
+      display: none;
+    }
+
+    .card:hover .audio-controls {
+      display: block;
+    }
+
+    .bg-dark {
+      background-color: #343a40 !important;
+    }
+
+    .text-light {
+      color: #f8f9fa !important;
+    }
+
+    .container {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-dark text-light">
+  <div class="container my-5">
+    <div class="row" id="audio-cards"></div>
+  </div>
+
+  <script>
+    const songs = [
+      'In Malibu', 'BlueBirds', 'Take me Back', 'Amber Song', 'Only Little Stars', 'Drift Song', 'RHCP 7ths',
+      'Going Away', 'The Sky is Gold', 'Crunch Song', 'RevV Anthem', 'Wild', 'Take2', 'Fun with Music', 'Julias Song',
+      'Adams Rock Riff', 'Hendrix1', 'Hendrix2 Fast', 'Hendrix3&4', 'That Metal Song', 'Shooting Light', 'Save you',
+      'Behave', 'Weezer Love Song', 'IMF', 'Surf Beat', 'Surf Punk', 'Surf Bop', 'Surf Bass Gb', 'AbCbEb', 'Johnny',
+      'Eddie', 'The Clap Song', 'Image Issues', 'Where did you Go', 'Needed Someone', 'Waiting', 'Someday', 
+      '7A 7E 5A 5E 7E', 'Morning Comes', 'Angel Eyes', 'Gb Ballad', 'Imagine Like', 'Tears of Love', 'That Pop Song', 
+      'Acoustic Ballad Gb', 'Somewhere like', 'Ska Like'
+    ];
+
+    const audioCards = document.getElementById('audio-cards');
+
+    songs.forEach((song, index) => {
+      const col = document.createElement('div');
+      col.className = 'col-xs-6 col-sm-4 col-md-3 col-lg-2';
+
+      const card = document.createElement('div');
+      card.className = 'card bg-secondary text-white';
+
+      const cardBody = document.createElement('div');
+      cardBody.className = 'card-body';
+
+      const cardTitle = document.createElement('h5');
+      cardTitle.className = 'card-title';
+      cardTitle.textContent = song;
+
+      const formattedSong = song.toLowerCase().replace(/ /g, '-');
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.className = 'audio-controls';
+      audio.src = `audio/${formattedSong}.mp3`;
+
+      cardBody.appendChild(cardTitle);
+      cardBody.appendChild(audio);
+      card.appendChild(cardBody);
+      col.appendChild(card);
+      audioCards.appendChild(col);
+
+      card.addEventListener('click', () => {
+        audio.play();
+      });
+    });
+  </script>
+</body>
+</html>
