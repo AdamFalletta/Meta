@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrix Application</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #343a40;
+      color: white;
+      font-family: 'Courier New', monospace;
+    }
+    .matrix-container {
+      width: 1000px;
+      height: 1000px;
+      margin: 20px auto;
+      background-color: #495057;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+    }
+    .matrix-box {
+      position: absolute;
+      padding: 20px;
+      background-color: #212529;
+      border: 1px solid #495057;
+      border-radius: 5px;
+      width: 45%;
+      height: 45%;
+    }
+    .matrix-box textarea {
+      width: 100%;
+      height: 100%;
+      background-color: #212529;
+      color: white;
+      border: none;
+      font-size: 20px;
+      resize: none;
+    }
+    .matrix-title {
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .sidebar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 200px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background-color: #212529;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #495057;
+    }
+    .sidebar .matrix-item {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #495057;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">Matrix Application</h1>
+    <div class="matrix-container">
+      <div class="matrix-box" id="matrix-1" style="top: 0; left: 0;">
+        <div class="matrix-title" contenteditable="true">Top-Left</div>
+        <textarea></textarea>
+      </div>
+      <div class="matrix-box" id="matrix-2" style="top: 0; right: 0;">
+        <div class="matrix-title" contenteditable="true">Top-Right</div>
+        <textarea></textarea>
+      </div>
+      <div class="matrix-box" id="matrix-3" style="bottom: 0; left: 0;">
+        <div class="matrix-title" contenteditable="true">Bottom-Left</div>
+        <textarea></textarea>
+      </div>
+      <div class="matrix-box" id="matrix-4" style="bottom: 0; right: 0;">
+        <div class="matrix-title" contenteditable="true">Bottom-Right</div>
+        <textarea></textarea>
+      </div>
+    </div>
+    <button id="new-matrix" class="btn btn-primary">New Matrix</button>
+    <div class="sidebar" id="sidebar"></div>
+  </div>
+
+  <script>
+    let matrixCount = 1;
+    const sidebar = document.getElementById('sidebar');
+
+    document.getElementById('new-matrix').addEventListener('click', () => {
+      const matrices = Array.from(document.getElementsByClassName('matrix-box'));
+      const savedData = matrices.map(matrix => ({
+        title: matrix.querySelector('.matrix-title').innerText,
+        content: matrix.querySelector('textarea').value
+      }));
+
+      localStorage.setItem(`matrix-${matrixCount}`, JSON.stringify(savedData));
+      addMatrixToSidebar(`Matrix ${matrixCount}`, savedData);
+      matrixCount++;
+    });
+
+    function addMatrixToSidebar(title, data) {
+      const matrixItem = document.createElement('div');
+      matrixItem.className = 'matrix-item';
+      matrixItem.innerText = title;
+      matrixItem.addEventListener('click', () => loadMatrix(data));
+      sidebar.appendChild(matrixItem);
+    }
+
+    function loadMatrix(data) {
+      data.forEach((boxData, index) => {
+        const matrixBox = document.getElementById(`matrix-${index + 1}`);
+        matrixBox.querySelector('.matrix-title').innerText = boxData.title;
+        matrixBox.querySelector('textarea').value = boxData.content;
+      });
+    }
+
+    window.onload = () => {
+      // Load saved matrices from localStorage
+      for (let i = 1; i <= localStorage.length; i++) {
+        const matrixData = JSON.parse(localStorage.getItem(`matrix-${i}`));
+        if (matrixData) {
+          addMatrixToSidebar(`Matrix ${i}`, matrixData);
+        }
+      }
+    };
+  </script>
+</body>
+</html>
