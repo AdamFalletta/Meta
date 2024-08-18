@@ -43,6 +43,13 @@
         const scheduleContainer = document.getElementById('schedule');
         const hours = Array.from({ length: 18 }, (_, i) => i + 6); // Hours from 6am to 11pm
 
+        // Function to format time in 12-hour format with AM/PM
+        function formatTime(hour) {
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const formattedHour = hour % 12 || 12; // Convert hour to 12-hour format
+            return `${formattedHour}:00 ${period}`;
+        }
+
         // Create schedule slots
         hours.forEach(hour => {
             const slot = document.createElement('div');
@@ -50,21 +57,21 @@
 
             const titleInput = document.createElement('input');
             titleInput.type = 'text';
-            titleInput.placeholder = `Title for ${hour}:00`;
+            titleInput.placeholder = `Title for ${formatTime(hour)}`;
             titleInput.value = localStorage.getItem(`title_${hour}`) || '';
             titleInput.addEventListener('input', () => {
                 localStorage.setItem(`title_${hour}`, titleInput.value);
             });
 
             const descriptionInput = document.createElement('textarea');
-            descriptionInput.placeholder = `Description for ${hour}:00`;
+            descriptionInput.placeholder = `Description for ${formatTime(hour)}`;
             descriptionInput.value = localStorage.getItem(`description_${hour}`) || '';
             descriptionInput.addEventListener('input', () => {
                 localStorage.setItem(`description_${hour}`, descriptionInput.value);
             });
 
             const label = document.createElement('label');
-            label.textContent = `${hour}:00`;
+            label.textContent = formatTime(hour);
 
             slot.appendChild(label);
             slot.appendChild(titleInput);
@@ -88,7 +95,7 @@
                 const title = localStorage.getItem(`title_${currentHour}`) || 'No title set';
                 const description = localStorage.getItem(`description_${currentHour}`) || 'No description set';
                 const motivationalQuote = "You got this!"; // Simple motivational quote
-                const message = `It's ${currentHour}:00 and it's time for ${title}. You have to ${description}. ${motivationalQuote}`;
+                const message = `It's ${formatTime(currentHour)} and it's time for ${title}. You have to ${description}. ${motivationalQuote}`;
                 speak(message);
             }
         }
