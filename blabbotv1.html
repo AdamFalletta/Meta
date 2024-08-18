@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlabBot! v1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+        }
+        .schedule {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .slot {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>BlabBot! v1</h1>
+    <div class="schedule" id="schedule">
+        <!-- Slots will be dynamically generated here -->
+    </div>
+    <script>
+        const scheduleContainer = document.getElementById('schedule');
+        const hours = Array.from({ length: 18 }, (_, i) => i + 6); // Hours from 6am to 11pm
+
+        // Create schedule slots
+        hours.forEach(hour => {
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+
+            const titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.placeholder = `Title for ${hour}:00`;
+            titleInput.value = localStorage.getItem(`title_${hour}`) || '';
+            titleInput.addEventListener('input', () => {
+                localStorage.setItem(`title_${hour}`, titleInput.value);
+            });
+
+            const descriptionInput = document.createElement('textarea');
+            descriptionInput.placeholder = `Description for ${hour}:00`;
+            descriptionInput.value = localStorage.getItem(`description_${hour}`) || '';
+            descriptionInput.addEventListener('input', () => {
+                localStorage.setItem(`description_${hour}`, descriptionInput.value);
+            });
+
+            const label = document.createElement('label');
+            label.textContent = `${hour}:00`;
+
+            slot.appendChild(label);
+            slot.appendChild(titleInput);
+            slot.appendChild(descriptionInput);
+            scheduleContainer.appendChild(slot);
+        });
+
+        function speak(text) {
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.pitch = 1;
+            speech.rate = 1;
+            speech.volume = 1;
+            speech.voice = speechSynthesis.getVoices().find(voice => voice.name.includes('Google UK English Male')) || null; // Robot-like voice
+            window.speechSynthesis.speak(speech);
+        }
+
+        function checkSchedule() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            if (hours.includes(currentHour)) {
+                const title = localStorage.getItem(`title_${currentHour}`) || 'No title set';
+                const description = localStorage.getItem(`description_${currentHour}`) || 'No description set';
+                const motivationalQuote = "You got this!"; // Simple motivational quote
+                const message = `It's ${currentHour}:00 and it's time for ${title}. You have to ${description}. ${motivationalQuote}`;
+                speak(message);
+            }
+        }
+
+        // Check the schedule every minute
+        setInterval(checkSchedule, 60000);
+
+        // Check immediately in case it's the top of the hour when the app starts
+        checkSchedule();
+    </script>
+</body>
+</html>
