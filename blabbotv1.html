@@ -80,6 +80,7 @@
         });
 
         function speak(text) {
+            console.log("Speaking:", text); // Log what is being spoken
             const speech = new SpeechSynthesisUtterance(text);
             speech.pitch = 1;
             speech.rate = 1;
@@ -91,12 +92,15 @@
         function checkSchedule() {
             const now = new Date();
             const currentHour = now.getHours();
+            console.log("Current Hour:", currentHour); // Log the current hour
             if (hours.includes(currentHour)) {
                 const title = localStorage.getItem(`title_${currentHour}`) || 'No title set';
                 const description = localStorage.getItem(`description_${currentHour}`) || 'No description set';
                 const motivationalQuote = "You got this!"; // Simple motivational quote
                 const message = `It's ${formatTime(currentHour)} and it's time for ${title}. You have to ${description}. ${motivationalQuote}`;
                 speak(message);
+            } else {
+                console.log("Not the top of the hour for the set schedule."); // Log if it's not the right time
             }
         }
 
