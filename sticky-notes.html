@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,12 +10,18 @@
         body {
             background-color: #1f1f1f;
             color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding-top: 20px;
         }
 
         .note-card {
             background-color: #343a40;
             border-radius: 12px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background-color 0.3s;
         }
 
         .note-card:hover {
@@ -27,37 +34,70 @@
             background-color: #343a40;
             color: #f8f9fa;
             border-radius: 8px;
+            padding: 10px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        #add-note {
-            border-radius: 50px;
+        .note-content:focus {
+            background-color: #007bff;
+            color: #f8f9fa;
+        }
+
+        .color-picker {
+            width: 100%;
+            padding: 2px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .btn-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #28a745;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            border: none;
+            cursor: pointer;
             transition: background-color 0.3s;
         }
 
-        #add-note:hover {
-            background-color: #007bff;
+        .btn-circle:hover {
+            background-color: #218838;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 1000px;
+            margin-top: 20px;
+        }
+
+        #note-container {
+            margin-top: 20px;
         }
     </style>
 </head>
+
 <body>
 
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">My Sticky Notes</h1>
-        <div id="note-container" class="row"></div>
-        <div class="text-center mt-4">
-            <button id="add-note" class="btn btn-primary">Add Note</button>
-        </div>
+    <div class="container text-center">
+        <button id="add-note" class="btn-circle">+</button>
+        <div id="note-container" class="row justify-content-center"></div>
     </div>
 
     <template id="note-template">
-        <div class="col-md-3 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="card note-card shadow-lg border-0">
                 <div class="card-body">
                     <textarea class="note-content form-control bg-transparent text-light border-0"></textarea>
+                    <input type="color" class="color-picker mt-2" value="#343a40">
                 </div>
                 <div class="card-footer d-flex justify-content-between bg-transparent border-0">
                     <button class="btn btn-danger btn-sm delete-note">Delete</button>
-                    <button class="btn btn-secondary btn-sm archive-note">Archive</button>
                 </div>
             </div>
         </div>
@@ -68,17 +108,13 @@
             const noteContainer = document.getElementById('note-container');
             const addNoteButton = document.getElementById('add-note');
             const noteTemplate = document.getElementById('note-template').content;
-            
+
             // Load notes from local storage
             const loadNotes = () => {
                 noteContainer.innerHTML = '';
                 const notes = JSON.parse(localStorage.getItem('notes')) || [];
                 notes.forEach(note => {
-                    const noteElement = noteTemplate.cloneNode(true);
-                    const textarea = noteElement.querySelector('.note-content');
-                    textarea.value = note.content;
-                    noteElement.querySelector('.delete-note').addEventListener('click', () => deleteNote(noteElement, note.id));
-                    noteElement.querySelector('.archive-note').addEventListener('click', () => archiveNote(noteElement, note.id));
+                    const noteElement = createNoteElement(note.content, note.color);
                     noteContainer.appendChild(noteElement);
                 });
             };
@@ -86,40 +122,50 @@
             // Save notes to local storage
             const saveNotes = () => {
                 const notes = [];
-                noteContainer.querySelectorAll('.note-card').forEach((noteElement, index) => {
+                noteContainer.querySelectorAll('.note-card').forEach(noteElement => {
                     const content = noteElement.querySelector('.note-content').value;
-                    notes.push({ id: index, content: content });
+                    const color = noteElement.querySelector('.color-picker').value;
+                    notes.push({ content, color });
                 });
                 localStorage.setItem('notes', JSON.stringify(notes));
             };
 
+            // Create a new note element
+            const createNoteElement = (content = '', color = '#343a40') => {
+                const noteElement = noteTemplate.cloneNode(true);
+                const textarea = noteElement.querySelector('.note-content');
+                const colorPicker = noteElement.querySelector('.color-picker');
+
+                textarea.value = content;
+                textarea.style.backgroundColor = color;
+                colorPicker.value = color;
+
+                colorPicker.addEventListener('input', function () {
+                    textarea.style.backgroundColor = this.value;
+                    saveNotes();
+                });
+
+                noteElement.querySelector('.delete-note').addEventListener('click', () => {
+                    noteElement.remove();
+                    saveNotes();
+                });
+
+                textarea.addEventListener('input', saveNotes);
+
+                return noteElement;
+            };
+
             // Add a new note
             addNoteButton.addEventListener('click', () => {
-                const noteElement = noteTemplate.cloneNode(true);
-                noteElement.querySelector('.delete-note').addEventListener('click', () => deleteNote(noteElement));
-                noteElement.querySelector('.archive-note').addEventListener('click', () => archiveNote(noteElement));
-                noteContainer.appendChild(noteElement);
+                const noteElement = createNoteElement();
+                noteContainer.prepend(noteElement);
                 saveNotes();
             });
-
-            // Delete a note
-            const deleteNote = (noteElement, id) => {
-                noteElement.remove();
-                saveNotes();
-            };
-
-            // Archive a note (for now, just delete it)
-            const archiveNote = (noteElement, id) => {
-                noteElement.remove();
-                saveNotes();
-            };
-
-            // Auto-save notes content
-            noteContainer.addEventListener('input', saveNotes);
 
             // Load notes on page load
             loadNotes();
         });
     </script>
 </body>
+
 </html>
