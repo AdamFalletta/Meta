@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sticky Notes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1f1f1f;
+            color: #f8f9fa;
+        }
+
+        .note-card {
+            background-color: #343a40;
+            border-radius: 12px;
+            transition: transform 0.2s;
+        }
+
+        .note-card:hover {
+            transform: scale(1.05);
+        }
+
+        .note-content {
+            resize: none;
+            height: 150px;
+            background-color: #343a40;
+            color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        #add-note {
+            border-radius: 50px;
+            transition: background-color 0.3s;
+        }
+
+        #add-note:hover {
+            background-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">My Sticky Notes</h1>
+        <div id="note-container" class="row"></div>
+        <div class="text-center mt-4">
+            <button id="add-note" class="btn btn-primary">Add Note</button>
+        </div>
+    </div>
+
+    <template id="note-template">
+        <div class="col-md-3 mb-4">
+            <div class="card note-card shadow-lg border-0">
+                <div class="card-body">
+                    <textarea class="note-content form-control bg-transparent text-light border-0"></textarea>
+                </div>
+                <div class="card-footer d-flex justify-content-between bg-transparent border-0">
+                    <button class="btn btn-danger btn-sm delete-note">Delete</button>
+                    <button class="btn btn-secondary btn-sm archive-note">Archive</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const noteContainer = document.getElementById('note-container');
+            const addNoteButton = document.getElementById('add-note');
+            const noteTemplate = document.getElementById('note-template').content;
+            
+            // Load notes from local storage
+            const loadNotes = () => {
+                noteContainer.innerHTML = '';
+                const notes = JSON.parse(localStorage.getItem('notes')) || [];
+                notes.forEach(note => {
+                    const noteElement = noteTemplate.cloneNode(true);
+                    const textarea = noteElement.querySelector('.note-content');
+                    textarea.value = note.content;
+                    noteElement.querySelector('.delete-note').addEventListener('click', () => deleteNote(noteElement, note.id));
+                    noteElement.querySelector('.archive-note').addEventListener('click', () => archiveNote(noteElement, note.id));
+                    noteContainer.appendChild(noteElement);
+                });
+            };
+
+            // Save notes to local storage
+            const saveNotes = () => {
+                const notes = [];
+                noteContainer.querySelectorAll('.note-card').forEach((noteElement, index) => {
+                    const content = noteElement.querySelector('.note-content').value;
+                    notes.push({ id: index, content: content });
+                });
+                localStorage.setItem('notes', JSON.stringify(notes));
+            };
+
+            // Add a new note
+            addNoteButton.addEventListener('click', () => {
+                const noteElement = noteTemplate.cloneNode(true);
+                noteElement.querySelector('.delete-note').addEventListener('click', () => deleteNote(noteElement));
+                noteElement.querySelector('.archive-note').addEventListener('click', () => archiveNote(noteElement));
+                noteContainer.appendChild(noteElement);
+                saveNotes();
+            });
+
+            // Delete a note
+            const deleteNote = (noteElement, id) => {
+                noteElement.remove();
+                saveNotes();
+            };
+
+            // Archive a note (for now, just delete it)
+            const archiveNote = (noteElement, id) => {
+                noteElement.remove();
+                saveNotes();
+            };
+
+            // Auto-save notes content
+            noteContainer.addEventListener('input', saveNotes);
+
+            // Load notes on page load
+            loadNotes();
+        });
+    </script>
+</body>
+</html>
