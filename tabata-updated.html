@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabata Timer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #111111;
+      color: #eeeeee;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    #timer {
+      font-size: 25vw;
+      margin-bottom: 20px;
+      color: #0d6efd;
+      text-shadow: 0px 0px 20px rgba(13, 110, 253, 0.7);
+    }
+
+    #rounds {
+      font-size: 5vw;
+      margin-bottom: 20px;
+      color: #f8f9fa;
+      text-shadow: 0px 0px 10px rgba(248, 249, 250, 0.5);
+    }
+
+    .progress-bar {
+      background-color: #333333;
+      height: 30px;
+      margin-bottom: 20px;
+      border-radius: 20px;
+      box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #0dcaf0;
+      transition: width 0.5s;
+      border-radius: 20px;
+      box-shadow: 0px 0px 15px rgba(13, 202, 240, 0.8);
+    }
+
+    button {
+      font-size: 1.5vw;
+      padding: 15px;
+      width: 100%;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #start {
+      background-color: #198754;
+      color: white;
+    }
+
+    #pause {
+      background-color: #ffc107;
+      color: white;
+    }
+
+    #restart {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    button:hover {
+      box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.7);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="timer" class="display-1">00:00</div>
+    <div id="rounds"></div>
+    <div class="progress-bar">
+      <div class="progress-bar-fill"></div>
+    </div>
+    <button id="start">Start</button>
+    <button id="pause" disabled>Pause</button>
+    <button id="restart" disabled>Restart</button>
+  </div>
+
+  <script>
+    const timer = document.getElementById('timer');
+    const roundsDisplay = document.getElementById('rounds');
+    const startButton = document.getElementById('start');
+    const pauseButton = document.getElementById('pause');
+    const restartButton = document.getElementById('restart');
+    const progressBarFill = document.querySelector('.progress-bar-fill');
+    let totalRounds = 36;
+    let currentRound = 1;
+    let secondsRemaining = 100;
+    let interval;
+
+    function updateTimer() {
+      const minutes = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
+      const seconds = (secondsRemaining % 60).toString().padStart(2, '0');
+      timer.textContent = `${minutes}:${seconds}`;
+    }
+
+    function getWorkoutName(round) {
+      const workoutNames = [
+        'Vacuum / Abs',
+        'Shrugs / Upright Rows',
+        'Lateral Raises',
+        'Bent Over Rows',
+        'Dips',
+        'Hammer Curls',
+        'Overhead Dumbbell Chest Press',
+        'Wrist Curls',
+        'Hand Grips',
+        'Squats',
+        'Dead Lifts',
+        'Calf Raises'
+      ];
+      return workoutNames[Math.floor((round - 1) / 3)];
+    }
+
+    function updateRounds() {
+      const workoutName = getWorkoutName(currentRound);
+      roundsDisplay.textContent = `Round ${currentRound} of ${totalRounds} - ${workoutName}`;
+    }
+
+    function updateProgress() {
+      const progressPercentage = (currentRound / totalRounds) * 100;
+      progressBarFill.style.width = `${progressPercentage}%`;
+    }
+
+    function startTimer() {
+      updateTimer();
+      updateRounds();
+      updateProgress();
+      startButton.disabled = true;
+      pauseButton.disabled = false;
+      restartButton.disabled = false;
+
+      interval = setInterval(() => {
+        if (secondsRemaining > 0) {
+          secondsRemaining--;
+          updateTimer();
+        } else {
+          currentRound++;
+          if (currentRound > totalRounds) {
+            clearInterval(interval);
+            timer.textContent = 'Finished!';
+            pauseButton.disabled = true;
+            restartButton.disabled = false;
+          } else {
+            secondsRemaining = 100;
+            updateRounds();
+            updateProgress();
+          }
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(interval);
+      startButton.disabled = false;
+      pauseButton.disabled = true;
+    }
+
+    function restartTimer() {
+      clearInterval(interval);
+      currentRound = 1;
+      secondsRemaining = 100;
+      updateTimer();
+      updateRounds();
+      updateProgress();
+      startButton.disabled = false;
+      pauseButton.disabled = true;
+    }
+
+    startButton.addEventListener('click', startTimer);
+    pauseButton.addEventListener('click', pauseTimer);
+    restartButton.addEventListener('click', restartTimer);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
