@@ -10,7 +10,8 @@
         .controls { position: absolute; top: 20px; left: 20px; z-index: 1; }
         .controls input { width: 50px; }
     </style>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/threejs-orbit-controls@1.0.3/dist/threejs-orbit-controls.umd.min.js"></script>
 </head>
 <body>
     <div class="controls">
@@ -22,7 +23,7 @@
     </div>
   
     <script>
-        let scene, camera, renderer, gridHelper;
+        let scene, camera, renderer, gridHelper, controls;
         let stickFigure = {};
         const points = {
             head: [0, 1.8, 0],
@@ -54,6 +55,8 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
+            controls = new THREE.OrbitControls(camera, renderer.domElement); // Initialize OrbitControls
+
             createGrid();
             createStickFigure();
             createControls();
@@ -68,7 +71,6 @@
             gridHelper.material.transparent = true;
             scene.add(gridHelper);
 
-            // Add grid labels using a simple sphere instead of text
             const labelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const labelGeometry = new THREE.SphereGeometry(0.05, 16, 16);
             
@@ -142,6 +144,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
+            controls.update(); // Update controls on each frame
             renderer.render(scene, camera);
         }
 
