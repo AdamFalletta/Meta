@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Batting Stance with Three.js</title>
+    <style>
+        body { margin: 0; background-color: #222; color: white; }
+        canvas { display: block; }
+        .controls { position: absolute; top: 20px; left: 20px; z-index: 1; }
+        .controls input { width: 50px; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/threejs-orbit-controls@1.0.3/dist/threejs-orbit-controls.umd.min.js"></script>
+</head>
+<body>
+    <div class="controls">
+        <h3>Edit Coordinates</h3>
+        <div id="points"></div>
+        <button id="update">Update Coordinates</button>
+        <button id="toggleGrid">Toggle Grid</button>
+        <button id="togglePoints">Toggle Points</button>
+    </div>
+    <script>
+        let scene, camera, renderer, gridHelper;
+        let stickFigure = {};
+        const points = {
+            head: [0, 1.8, 0],
+            rightShoulder: [0.5, 1.5, 0],
+            rightElbow: [1, 1.3, 0],
+            rightWrist: [1.2, 1.1, 0],
+            leftShoulder: [-0.5, 1.5, 0],
+            leftElbow: [-1, 1.3, 0],
+            leftWrist: [-1.2, 1.1, 0],
+            torso: [0, 1.2, 0],
+            hips: [0, 1, 0],
+            rightKnee: [0.5, 0.5, 0],
+            rightAnkle: [0.5, 0, 0],
+            leftKnee: [-0.5, 0.5, 0],
+            leftAnkle: [-0.5, 0, 0],
+            rightHip: [0.5, 1, 0],
+            leftHip: [-0.5, 1, 0],
+            rightHand: [1.3, 1.1, 0],
+            leftHand: [-1.3, 1.1, 0],
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(3, 3, 3);
+            camera.lookAt(0, 1, 0);
+
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Add OrbitControls
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+            createGrid();
+            createStickFigure();
+            createControls();
+            animate();
+        }
+
+        function createGrid() {
+            const size = 100;
+            const divisions = 10;
+            gridHelper = new THREE.GridHelper(size, divisions);
+            gridHelper.material.opacity = 0.5;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            const labelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const labelGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            
+            for (let i = -size / 2; i <= size / 2; i += divisions) {
+                for (let j = -size / 2; j <= size / 2; j += divisions) {
+                    if (i !== 0 || j !== 0) {
+                        const labelMesh = new THREE.Mesh(labelGeometry, labelMaterial);
+                        labelMesh.position.set(i, 0.1, j);
+                        scene.add(labelMesh);
+                    }
+                }
+            }
+        }
+
+        function createStickFigure() {
+            const geometry = new THREE.CircleGeometry(0.1, 32);
+            const colors = [
+                0xff0000, 0x00ff00, 0x0000ff, 0xffff00,
+                0xff00ff, 0x00ffff, 0xffffff, 0x888888,
+                0xffa500, 0x800080, 0x00ff7f, 0x7fff00,
+                0x1e90ff, 0xffd700, 0xcd5c5c, 0x4682b4,
+                0xadd8e6
+            ];
+
+            let index = 0;
+
+            for (let key in points) {
+                const [x, y, z] = points[key];
+                const material = new THREE.MeshBasicMaterial({ color: colors[index++ % colors.length] });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(x, y, z);
+                stickFigure[key] = mesh;
+                scene.add(mesh);
+            }
+        }
+
+        function createControls() {
+            const pointsDiv = document.getElementById('points');
+            for (let key in points) {
+                const pointDiv = document.createElement('div');
+                pointDiv.innerHTML = `${key}: 
+                    <input type="text" id="${key}X" value="${points[key][0]}">, 
+                    <input type="text" id="${key}Y" value="${points[key][1]}">, 
+                    <input type="text" id="${key}Z" value="${points[key][2]}">`;
+                pointsDiv.appendChild(pointDiv);
+            }
+            document.getElementById('update').onclick = updateCoordinates;
+            document.getElementById('toggleGrid').onclick = toggleGrid;
+            document.getElementById('togglePoints').onclick = togglePoints;
+        }
+
+        function updateCoordinates() {
+            for (let key in points) {
+                const x = parseFloat(document.getElementById(`${key}X`).value);
+                const y = parseFloat(document.getElementById(`${key}Y`).value);
+                const z = parseFloat(document.getElementById(`${key}Z`).value);
+                points[key] = [x, y, z];
+                stickFigure[key].position.set(x, y, z);
+            }
+        }
+
+        function toggleGrid() {
+            gridHelper.visible = !gridHelper.visible;
+        }
+
+        function togglePoints() {
+            for (let key in stickFigure) {
+                stickFigure[key].visible = !stickFigure[key].visible;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
