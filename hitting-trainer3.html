@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Stick Figure</title>
+    <style>
+        body { margin: 0; background-color: #222; color: white; }
+        canvas { display: block; }
+        .controls { position: absolute; top: 20px; left: 20px; z-index: 1; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>Edit Coordinates</h3>
+        <div id="points"></div>
+        <button id="update">Update Coordinates</button>
+        <button id="toggleGrid">Toggle Grid</button>
+        <button id="togglePoints">Toggle Points</button>
+    </div>
+
+    <!-- Import Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Import OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, gridHelper, controls;
+        let stickFigure = {};
+
+        const points = {
+            head: [0, 1.8, 0],
+            rightShoulder: [0.5, 1.5, 0],
+            rightElbow: [1, 1.3, 0],
+            rightWrist: [1.2, 1.1, 0],
+            leftShoulder: [-0.5, 1.5, 0],
+            leftElbow: [-1, 1.3, 0],
+            leftWrist: [-1.2, 1.1, 0],
+            torso: [0, 1.2, 0],
+            hips: [0, 1, 0],
+            rightKnee: [0.5, 0.5, 0],
+            rightAnkle: [0.5, 0, 0],
+            leftKnee: [-0.5, 0.5, 0],
+            leftAnkle: [-0.5, 0, 0]
+        };
+
+        function init() {
+            // Initialize Scene
+            scene = new THREE.Scene();
+
+            // Initialize Camera with extended clipping plane
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+            camera.position.set(3, 3, 3);
+            camera.lookAt(0, 1, 0);
+
+            // Initialize Renderer
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Initialize Orbit Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = false;
+            controls.maxPolarAngle = Math.PI; // Allow full vertical rotation
+            controls.minDistance = 1;
+            controls.maxDistance = 1000; // Allow zooming out
+
+            // Create grid and stick figure
+            createGrid();
+            createStickFigure();
+
+            animate();
+        }
+
+        // Create Grid Helper
+        function createGrid() {
+            const size = 10;
+            const divisions = 10;
+            gridHelper = new THREE.GridHelper(size, divisions);
+            gridHelper.material.opacity = 0.5;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+        }
+
+        // Create Stick Figure as Spheres
+        function createStickFigure() {
+            const sphereGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Create spheres with radius 0.1 and 16 segments
+            const colors = [
+                0xff0000, 0x00ff00, 0x0000ff, 0xffff00,
+                0xff00ff, 0x00ffff, 0xffffff, 0x888888,
+            ];
+
+            let index = 0;
+
+            // Loop through the points and create spheres
+            for (let key in points) {
+                const [x, y, z] = points[key];
+                const material = new THREE.MeshBasicMaterial({ color: colors[index++ % colors.length] });
+                const sphere = new THREE.Mesh(sphereGeometry, material);
+                sphere.position.set(x, y, z);
+                stickFigure[key] = sphere;
+                scene.add(sphere);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Only required if damping is enabled
+            renderer.render(scene, camera);
+        }
+
+        // Initialize the scene on window load
+        window.onload = init;
+    </script>
+</body>
+</html>
