@@ -10,6 +10,7 @@
         .controls { position: absolute; top: 20px; left: 20px; z-index: 1; }
         .controls input { width: 50px; }
     </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
     <div class="controls">
@@ -19,7 +20,7 @@
         <button id="toggleGrid">Toggle Grid</button>
         <button id="togglePoints">Toggle Points</button>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <script>
         let scene, camera, renderer, gridHelper;
         let stickFigure = {};
