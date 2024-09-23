@@ -22,9 +22,9 @@
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.168.0/build/three.module.js';
-     
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        let scene, camera, renderer, gridHelper;
+        let scene, camera, renderer, gridHelper, controls;
         let stickFigure = {};
         const points = {
             head: [0, 1.8, 0],
@@ -56,7 +56,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-
+            controls = new OrbitControls(camera, renderer.domElement);
 
             createGrid();
             createStickFigure();
@@ -145,7 +145,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
-     
+            controls.update();
             renderer.render(scene, camera);
         }
 
