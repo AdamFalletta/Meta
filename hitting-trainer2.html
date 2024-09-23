@@ -19,11 +19,9 @@
         <button id="toggleGrid">Toggle Grid</button>
         <button id="togglePoints">Toggle Points</button>
     </div>
-
-    <script type="module">
-        import * as THREE from 'https://unpkg.com/three@0.168.0/build/three.module.js';
-        import { OrbitControls } from 'https://unpkg.com/three@0.168.0/examples/jsm/controls/OrbitControls.js';
-
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
         let scene, camera, renderer, gridHelper, controls;
         let stickFigure = {};
         const points = {
