@@ -10,6 +10,7 @@
         .controls { position: absolute; top: 20px; left: 20px; }
         .controls input { width: 50px; }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
     <div class="controls">
@@ -17,7 +18,7 @@
         <div id="points"></div>
         <button id="update">Update Coordinates</button>
     </div>
-    <script src="https://threejs.org/build/three.min.js"></script>
+
     <script>
         let scene, camera, renderer, gridHelper;
         let stickFigure = {};
