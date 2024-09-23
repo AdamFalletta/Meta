@@ -68,18 +68,13 @@
             gridHelper.material.transparent = true;
             scene.add(gridHelper);
 
-            // Add labels for the grid
+            // Add grid labels using a simple sphere instead of text
             const labelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const labelGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            
             for (let i = -size / 2; i <= size / 2; i += divisions) {
                 for (let j = -size / 2; j <= size / 2; j += divisions) {
                     if (i !== 0 || j !== 0) {
-                        const labelGeometry = new THREE.TextGeometry(`${i}`, {
-                            font: new THREE.FontLoader().parse({
-                                // Font data here (choose a font you like)
-                            }),
-                            size: 0.2,
-                            height: 0.01,
-                        });
                         const labelMesh = new THREE.Mesh(labelGeometry, labelMaterial);
                         labelMesh.position.set(i, 0.1, j);
                         scene.add(labelMesh);
