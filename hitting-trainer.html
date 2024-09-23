@@ -10,9 +10,8 @@
         .controls { position: absolute; top: 20px; left: 20px; z-index: 1; }
         .controls input { width: 50px; }
     </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
-
 </head>
 <body>
     <div class="controls">
@@ -22,7 +21,6 @@
         <button id="toggleGrid">Toggle Grid</button>
         <button id="togglePoints">Toggle Points</button>
     </div>
-
     <script>
         let scene, camera, renderer, gridHelper;
         let stickFigure = {};
@@ -52,12 +50,13 @@
             camera.position.set(3, 3, 3);
             camera.lookAt(0, 1, 0);
 
-
             renderer = new THREE.WebGLRenderer({ alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
+            // Add OrbitControls
             const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
             createGrid();
             createStickFigure();
             createControls();
@@ -72,7 +71,6 @@
             gridHelper.material.transparent = true;
             scene.add(gridHelper);
 
-            // Add grid labels using a simple sphere instead of text
             const labelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const labelGeometry = new THREE.SphereGeometry(0.05, 16, 16);
             
@@ -146,7 +144,6 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
             renderer.render(scene, camera);
         }
 
