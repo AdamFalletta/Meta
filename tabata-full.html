@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabata Timer with YouTube</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #111111;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Full-screen YouTube video */
+    .youtube-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Timer card styling */
+    .card {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 320px;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 15px;
+      color: #fff;
+      z-index: 1;
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    #timer {
+      font-size: 3em;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    #rounds {
+      text-align: center;
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #333333;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #4caf50;
+      width: 0;
+      transition: width 0.5s ease;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      cursor: pointer;
+      background-color: #f44336;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    button:disabled {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- YouTube video in the background -->
+  <div class="youtube-container">
+    <iframe src="https://www.youtube.com/embed/iXQ4AyyJSEk?autoplay=1&mute=1&loop=1&playlist=iXQ4AyyJSEk" allowfullscreen></iframe>
+  </div>
+
+  <!-- Timer Card in the corner -->
+  <div class="card">
+    <div id="timer">00:00</div>
+    <div id="rounds">Round 1 of 36 - Vacuum / Abs</div>
+    <div class="progress-bar">
+      <div class="progress-bar-fill"></div>
+    </div>
+    <button id="start">Start</button>
+    <button id="pause" disabled>Pause</button>
+    <button id="restart" disabled>Restart</button>
+  </div>
+
+  <script>
+    const timer = document.getElementById('timer');
+    const roundsDisplay = document.getElementById('rounds');
+    const startButton = document.getElementById('start');
+    const pauseButton = document.getElementById('pause');
+    const restartButton = document.getElementById('restart');
+    const progressBarFill = document.querySelector('.progress-bar-fill');
+    let totalRounds = 36;
+    let currentRound = 1;
+    let secondsRemaining = 100;
+    let interval;
+
+    function updateTimer() {
+      const minutes = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
+      const seconds = (secondsRemaining % 60).toString().padStart(2, '0');
+      timer.textContent = `${minutes}:${seconds}`;
+    }
+
+    function getWorkoutName(round) {
+      const workoutNames = [
+        'Vacuum / Abs',
+        'Shrugs / Upright Rows',
+        'Lateral Raises',
+        'Bent Over Rows',
+        'Dips',
+        'Hammer Curls',
+        'Overhead Dumbbell Chest Press',
+        'Wrist Curls',
+        'Hand Grips',
+        'Squats',
+        'Dead Lifts',
+        'Calf Raises'
+      ];
+      return workoutNames[Math.floor((round - 1) / 3)];
+    }
+
+    function updateRounds() {
+      const workoutName = getWorkoutName(currentRound);
+      roundsDisplay.textContent = `Round ${currentRound} of ${totalRounds} - ${workoutName}`;
+    }
+
+    function updateProgress() {
+      const progressPercentage = (currentRound / totalRounds) * 100;
+      progressBarFill.style.width = `${progressPercentage}%`;
+    }
+
+    function startTimer() {
+      updateTimer();
+      updateRounds();
+      updateProgress();
+      startButton.disabled = true;
+      pauseButton.disabled = false;
+      restartButton.disabled = false;
+
+      interval = setInterval(() => {
+        if (secondsRemaining > 0) {
+          secondsRemaining--;
+          updateTimer();
+        } else {
+          currentRound++;
+          if (currentRound > totalRounds) {
+            clearInterval(interval);
+            timer.textContent = 'Finished!';
+            pauseButton.disabled = true;
+            restartButton.disabled = false;
+          } else {
+            secondsRemaining = 100;
+            updateRounds();
+            updateProgress();
+          }
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(interval);
+      startButton.disabled = false;
+      pauseButton.disabled = true;
+    }
+
+    function restartTimer() {
+      clearInterval(interval);
+      currentRound = 1;
+      secondsRemaining = 100;
+      updateTimer();
+      updateRounds();
+      updateProgress();
+      startButton.disabled = false;
+      pauseButton.disabled = true;
+    }
+
+    startButton.addEventListener('click', startTimer);
+    pauseButton.addEventListener('click', pauseTimer);
+    restartButton.addEventListener('click', restartTimer);
+  </script>
+</body>
+</html>
