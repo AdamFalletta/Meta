@@ -1,115 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Netflix-Style App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>LocalStorage App</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         body {
             background-color: #121212;
-            color: #ffffff;
+            color: white;
             font-family: Arial, sans-serif;
         }
 
         h2 {
-            margin: 20px 0;
-            display: inline-block;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 18px;
         }
 
         .add-card-btn {
-            margin-left: 15px;
-            display: inline-block;
-            font-size: 14px;
+            background-color: #28a745;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
         }
 
-        .category-wrapper {
+        .card-wrapper {
             position: relative;
-     
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 20px;
         }
 
         .card-list {
-            display: flex;
-            overflow: hidden;
+            display: inline-flex;
+            white-space: nowrap;
             scroll-behavior: smooth;
+            overflow-x: auto;
         }
 
         .card {
+            flex: 0 0 auto;
             width: 100px;
             height: 100px;
-            margin-right: 10px;
+            margin: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #222;
+            border-radius: 8px;
             text-align: center;
-            background-color: #333;
-            color: #fff;
-            border: none;
-            position: relative;
+            overflow: hidden;
+            color: white;
+            border: 1px solid #333;
         }
 
-        .card .emoji {
-            font-size: 40px;
-            margin-bottom: 5px;
+        .card-title {
+            margin-top: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            word-wrap: break-word;
+            white-space: normal; /* Allow text to wrap */
         }
 
-        .arrows {
+        .scroll-arrow {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.7);
             border: none;
             color: white;
-            padding: 10px;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
 
-        .left-arrow {
-            left: 0;
+        .scroll-arrow.left-arrow {
+            left: -20px;
         }
 
-        .right-arrow {
-            right: 0;
-        }
-
-        .card:hover .menu-icon {
-            display: block;
-        }
-
-        .menu-icon {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 18px;
-            display: none;
-            cursor: pointer;
-        }
-
-        .tooltip-menu {
-            position: absolute;
-            top: 40px;
-            right: 5px;
-            background-color: #333;
-            color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 100;
-        }
-
-        .tooltip-menu button {
-            display: block;
-            background: none;
-            border: none;
-            color: #fff;
-            text-align: left;
-            margin: 5px 0;
-            cursor: pointer;
-        }
-
-        .tooltip-menu button:hover {
-            text-decoration: underline;
-        }
-
-        .tooltip-menu-hidden {
-            display: none;
+        .scroll-arrow.right-arrow {
+            right: -20px;
         }
 
         .popup-overlay {
@@ -118,208 +105,98 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
             align-items: center;
-            z-index: 200;
+            justify-content: center;
+            z-index: 20;
         }
 
-        .popup {
-            background-color: #222;
-            color: #fff;
+        .popup-content {
+            background: #333;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 8px;
             text-align: center;
+            width: 300px;
         }
 
-        .popup input {
-            margin: 10px 0;
-            width: 80%;
-            padding: 5px;
-            border: 1px solid #555;
-            border-radius: 5px;
-            background-color: #333;
-            color: #fff;
+        .popup-content input {
+            margin-bottom: 10px;
+            width: 100%;
         }
 
-        .popup button {
-            margin: 5px;
-            padding: 5px 15px;
-            background-color: #007bff;
-            border: none;
-            color: #fff;
-            border-radius: 5px;
-            cursor: pointer;
+        .popup-content button {
+            margin-top: 10px;
         }
-
-        .popup button:hover {
-            background-color: #0056b3;
-        }
-
-        .card-list {
-    display: inline-flex; /* Ensure the cards are laid out horizontally */
-    overflow-x: hidden; /* Hide native scrollbars */
-    white-space: nowrap; /* Prevent wrapping */
-    scroll-behavior: smooth; /* Smooth scrolling for left/right buttons */
-    width: 100%; /* Ensure it doesn't shrink to fit cards */
-    position: relative;
-}
-
-.card {
-    flex: 0 0 auto; /* Prevent cards from shrinking or stretching */
-}
-
-.arrows {
-    z-index: 10; /* Ensure arrows stay visible over the card list */
-}
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1 class="text-center my-4">Netflix-Style LocalStorage App</h1>
-
-        <!-- Dynamic Categories -->
-        <div id="categories"></div>
-    </div>
-
-    <!-- Pop-up for Add/Rename Card -->
-    <div id="popup-overlay" class="popup-overlay" style="display: none;">
-        <div class="popup">
-            <h3 id="popup-title">Add New Card</h3>
-            <input type="text" id="emoji-input" placeholder="Enter Emoji" maxlength="2">
-            <input type="text" id="title-input" placeholder="Enter Title">
-            <div>
-                <button onclick="confirmPopup()">Confirm</button>
-                <button onclick="closePopup()">Cancel</button>
+    <div id="app">
+        <div class="category-section">
+            <h2>Category Name <button class="add-card-btn" onclick="openPopup()">+</button></h2>
+            <div class="card-wrapper">
+                <button class="scroll-arrow left-arrow" onclick="scrollCards(this.parentElement, 'left')">❮</button>
+                <div class="card-list" id="card-list">
+                    <!-- Cards dynamically generated here -->
+                </div>
+                <button class="scroll-arrow right-arrow" onclick="scrollCards(this.parentElement, 'right')">❯</button>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap and JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Popup for Adding/Renaming Cards -->
+    <div class="popup-overlay" id="popup-overlay">
+        <div class="popup-content">
+            <h3 id="popup-title">Add New Card</h3>
+            <input type="text" id="emoji-input" placeholder="Emoji (e.g., 😀)" maxlength="2">
+            <input type="text" id="title-input" placeholder="Title">
+            <button onclick="confirmPopup()">Submit</button>
+        </div>
+    </div>
+
     <script>
-        const categories = [
-            "FITNESS",
-            "MUSIC",
-            "TECH",
-            "PROJECTS",
-            "PRODUCTS",
-            "NSN",
-            "LEAGUE",
-            "FUN"
-        ];
+        const appData = {
+            "Category Name": []
+        };
 
-        const icons = ["🏋️‍♂️", "🎵", "💻", "📂", "📦", "🌐", "⚾", "🎉"];
-        const storageKey = "netflixStyleApp";
-
-        let appData = loadAppData();
-        let currentCategory = null;
+        let currentCategory = "Category Name";
         let editIndex = null;
 
-        // Load data from localStorage
-        function loadAppData() {
-            const data = localStorage.getItem(storageKey);
-            return data
-                ? JSON.parse(data)
-                : categories.reduce((acc, category, index) => {
-                    acc[category] = [
-                        { emoji: icons[index], title: "Example 1" },
-                        { emoji: icons[index], title: "Example 2" }
-                    ];
-                    return acc;
-                }, {});
-        }
-
-        // Save data to localStorage
         function saveAppData() {
-            localStorage.setItem(storageKey, JSON.stringify(appData));
+            localStorage.setItem("appData", JSON.stringify(appData));
         }
 
-        // Render all categories
+        function loadAppData() {
+            const data = localStorage.getItem("appData");
+            return data ? JSON.parse(data) : appData;
+        }
+
         function renderCategories() {
-            const categoriesContainer = document.getElementById("categories");
-            categoriesContainer.innerHTML = "";
+            const cardList = document.getElementById("card-list");
+            cardList.innerHTML = "";
 
-            for (const category in appData) {
-                const wrapper = document.createElement("div");
-                wrapper.className = "category-wrapper";
-
-                const titleContainer = document.createElement("div");
-                titleContainer.style.display = "flex";
-                titleContainer.style.alignItems = "center";
-
-                const title = document.createElement("h2");
-                title.textContent = category;
-
-                const addCardButton = document.createElement("button");
-                addCardButton.className = "btn btn-primary add-card-btn";
-                addCardButton.textContent = "Add Card";
-                addCardButton.onclick = () => openPopup(category);
-
-                titleContainer.appendChild(title);
-                titleContainer.appendChild(addCardButton);
-
-                const arrowLeft = document.createElement("button");
-                arrowLeft.className = "arrows left-arrow";
-                arrowLeft.innerHTML = "&#8592;";
-                arrowLeft.onclick = () => scrollCards(wrapper, "left");
-
-                const arrowRight = document.createElement("button");
-                arrowRight.className = "arrows right-arrow";
-                arrowRight.innerHTML = "&#8594;";
-                arrowRight.onclick = () => scrollCards(wrapper, "right");
-
-                const cardList = document.createElement("div");
-                cardList.className = "card-list";
-
-                appData[category].forEach((card, index) => {
-                    const cardDiv = document.createElement("div");
-                    cardDiv.className = "card";
-
-                    cardDiv.innerHTML = `
-                        <div class="emoji">${card.emoji}</div>
-                        <strong>${card.title}</strong>
-                        <span class="menu-icon">&#8942;</span>
-                        <div class="tooltip-menu tooltip-menu-hidden">
-                            <button onclick="renameCard('${category}', ${index})">Rename</button>
-                            <button onclick="deleteCard('${category}', ${index})">Delete</button>
-                        </div>
-                    `;
-
-                    const menuIcon = cardDiv.querySelector(".menu-icon");
-                    const tooltipMenu = cardDiv.querySelector(".tooltip-menu");
-                    menuIcon.onclick = () => {
-                        tooltipMenu.classList.toggle("tooltip-menu-hidden");
-                    };
-
-                    cardList.appendChild(cardDiv);
-                });
-
-                wrapper.appendChild(titleContainer);
-                wrapper.appendChild(arrowLeft);
-                wrapper.appendChild(cardList);
-                wrapper.appendChild(arrowRight);
-
-                categoriesContainer.appendChild(wrapper);
-            }
+            appData[currentCategory].forEach((card, index) => {
+                const cardDiv = document.createElement("div");
+                cardDiv.className = "card";
+                cardDiv.innerHTML = `
+                    <div>${card.emoji}</div>
+                    <div class="card-title">${card.title}</div>
+                `;
+                cardList.appendChild(cardDiv);
+            });
         }
 
-function scrollCards(wrapper, direction) {
-    const cardList = wrapper.querySelector(".card-list");
-    const scrollAmount = direction === "left" ? -200 : 200;
+        function scrollCards(wrapper, direction) {
+            const cardList = wrapper.querySelector(".card-list");
+            const scrollAmount = direction === "left" ? -200 : 200;
+            cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        }
 
-    // Scroll the card list by the specified amount
-    cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
-}
-
-        function openPopup(category, index = null) {
-            currentCategory = category;
+        function openPopup(category = currentCategory, index = null) {
             editIndex = index;
-            document.getElementById("emoji-input").value = "";
-            document.getElementById("title-input").value = "";
-            document.getElementById("popup-title").textContent = index !== null ? "Rename Card" : "Add New Card";
+            document.getElementById("emoji-input").value = editIndex !== null ? appData[category][index].emoji : "";
+            document.getElementById("title-input").value = editIndex !== null ? appData[category][index].title : "";
+            document.getElementById("popup-title").textContent = editIndex !== null ? "Edit Card" : "Add New Card";
             document.getElementById("popup-overlay").style.display = "flex";
         }
 
@@ -331,14 +208,15 @@ function scrollCards(wrapper, direction) {
             const emoji = document.getElementById("emoji-input").value.trim();
             const title = document.getElementById("title-input").value.trim();
 
-            if (!emoji || !title) return alert("Both fields are required.");
-
-            const categoryCards = appData[currentCategory];
+            if (!emoji || !title) {
+                alert("Both fields are required.");
+                return;
+            }
 
             if (editIndex !== null) {
-                categoryCards[editIndex] = { emoji, title };
+                appData[currentCategory][editIndex] = { emoji, title };
             } else {
-                categoryCards.push({ emoji, title });
+                appData[currentCategory].push({ emoji, title });
             }
 
             saveAppData();
@@ -346,18 +224,19 @@ function scrollCards(wrapper, direction) {
             closePopup();
         }
 
-        function renameCard(category, index) {
-            openPopup(category, index);
-        }
+        document.getElementById("title-input").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                confirmPopup();
+            }
+        });
 
-        function deleteCard(category, index) {
-            appData[category].splice(index, 1);
-            saveAppData();
-            renderCategories();
-        }
+        document.getElementById("emoji-input").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                confirmPopup();
+            }
+        });
 
         renderCategories();
     </script>
 </body>
-
 </html>
