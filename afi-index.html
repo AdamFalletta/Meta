@@ -156,6 +156,23 @@
         .popup button:hover {
             background-color: #0056b3;
         }
+
+        .card-list {
+    display: inline-flex; /* Ensure the cards are laid out horizontally */
+    overflow-x: hidden; /* Hide native scrollbars */
+    white-space: nowrap; /* Prevent wrapping */
+    scroll-behavior: smooth; /* Smooth scrolling for left/right buttons */
+    width: 100%; /* Ensure it doesn't shrink to fit cards */
+    position: relative;
+}
+
+.card {
+    flex: 0 0 auto; /* Prevent cards from shrinking or stretching */
+}
+
+.arrows {
+    z-index: 10; /* Ensure arrows stay visible over the card list */
+}
     </style>
 </head>
 
@@ -289,11 +306,13 @@
             }
         }
 
-        function scrollCards(wrapper, direction) {
-            const cardList = wrapper.querySelector(".card-list");
-            const scrollAmount = direction === "left" ? -200 : 200;
-            cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
-        }
+function scrollCards(wrapper, direction) {
+    const cardList = wrapper.querySelector(".card-list");
+    const scrollAmount = direction === "left" ? -200 : 200;
+
+    // Scroll the card list by the specified amount
+    cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
+}
 
         function openPopup(category, index = null) {
             currentCategory = category;
