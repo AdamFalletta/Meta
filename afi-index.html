@@ -15,6 +15,13 @@
 
         h2 {
             margin: 20px 0;
+            display: inline-block;
+        }
+
+        .add-card-btn {
+            margin-left: 15px;
+            display: inline-block;
+            font-size: 14px;
         }
 
         .category-wrapper {
@@ -36,6 +43,7 @@
             background-color: #333;
             color: #fff;
             border: none;
+            position: relative;
         }
 
         .card .emoji {
@@ -83,7 +91,6 @@
             color: #fff;
             padding: 10px;
             border-radius: 5px;
-            display: none;
             z-index: 100;
         }
 
@@ -100,6 +107,55 @@
         .tooltip-menu button:hover {
             text-decoration: underline;
         }
+
+        .tooltip-menu-hidden {
+            display: none;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .popup {
+            background-color: #222;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .popup input {
+            margin: 10px 0;
+            width: 80%;
+            padding: 5px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+        }
+
+        .popup button {
+            margin: 5px;
+            padding: 5px 15px;
+            background-color: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 
@@ -109,6 +165,19 @@
 
         <!-- Dynamic Categories -->
         <div id="categories"></div>
+    </div>
+
+    <!-- Pop-up for Add/Rename Card -->
+    <div id="popup-overlay" class="popup-overlay" style="display: none;">
+        <div class="popup">
+            <h3 id="popup-title">Add New Card</h3>
+            <input type="text" id="emoji-input" placeholder="Enter Emoji" maxlength="2">
+            <input type="text" id="title-input" placeholder="Enter Title">
+            <div>
+                <button onclick="confirmPopup()">Confirm</button>
+                <button onclick="closePopup()">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap and JavaScript -->
@@ -128,27 +197,31 @@
         const icons = ["🏋️‍♂️", "🎵", "💻", "📂", "📦", "🌐", "⚾", "🎉"];
         const storageKey = "netflixStyleApp";
 
-        // Load data from localStorage
-        const loadAppData = () => {
-            const data = localStorage.getItem(storageKey);
-            return data ? JSON.parse(data) : categories.reduce((acc, category, index) => {
-                acc[category] = [
-                    { emoji: icons[index], title: "Example 1" },
-                    { emoji: icons[index], title: "Example 2" }
-                ];
-                return acc;
-            }, {});
-        };
-
         let appData = loadAppData();
+        let currentCategory = null;
+        let editIndex = null;
+
+        // Load data from localStorage
+        function loadAppData() {
+            const data = localStorage.getItem(storageKey);
+            return data
+                ? JSON.parse(data)
+                : categories.reduce((acc, category, index) => {
+                    acc[category] = [
+                        { emoji: icons[index], title: "Example 1" },
+                        { emoji: icons[index], title: "Example 2" }
+                    ];
+                    return acc;
+                }, {});
+        }
 
         // Save data to localStorage
-        const saveAppData = () => {
+        function saveAppData() {
             localStorage.setItem(storageKey, JSON.stringify(appData));
-        };
+        }
 
         // Render all categories
-        const renderCategories = () => {
+        function renderCategories() {
             const categoriesContainer = document.getElementById("categories");
             categoriesContainer.innerHTML = "";
 
@@ -156,8 +229,20 @@
                 const wrapper = document.createElement("div");
                 wrapper.className = "category-wrapper";
 
+                const titleContainer = document.createElement("div");
+                titleContainer.style.display = "flex";
+                titleContainer.style.alignItems = "center";
+
                 const title = document.createElement("h2");
                 title.textContent = category;
+
+                const addCardButton = document.createElement("button");
+                addCardButton.className = "btn btn-primary add-card-btn";
+                addCardButton.textContent = "Add Card";
+                addCardButton.onclick = () => openPopup(category);
+
+                titleContainer.appendChild(title);
+                titleContainer.appendChild(addCardButton);
 
                 const arrowLeft = document.createElement("button");
                 arrowLeft.className = "arrows left-arrow";
@@ -174,80 +259,84 @@
 
                 appData[category].forEach((card, index) => {
                     const cardDiv = document.createElement("div");
-                    cardDiv.className = "card position-relative";
+                    cardDiv.className = "card";
 
                     cardDiv.innerHTML = `
                         <div class="emoji">${card.emoji}</div>
                         <strong>${card.title}</strong>
                         <span class="menu-icon">&#8942;</span>
-                        <div class="tooltip-menu">
+                        <div class="tooltip-menu tooltip-menu-hidden">
                             <button onclick="renameCard('${category}', ${index})">Rename</button>
                             <button onclick="deleteCard('${category}', ${index})">Delete</button>
                         </div>
                     `;
 
-                    // Show/hide tooltip menu
                     const menuIcon = cardDiv.querySelector(".menu-icon");
                     const tooltipMenu = cardDiv.querySelector(".tooltip-menu");
                     menuIcon.onclick = () => {
-                        tooltipMenu.style.display =
-                            tooltipMenu.style.display === "block" ? "none" : "block";
+                        tooltipMenu.classList.toggle("tooltip-menu-hidden");
                     };
 
                     cardList.appendChild(cardDiv);
                 });
 
-                const addCardButton = document.createElement("button");
-                addCardButton.className = "btn btn-primary mt-2";
-                addCardButton.textContent = `Add Card to ${category}`;
-                addCardButton.onclick = () => addCard(category);
-
-                wrapper.appendChild(title);
+                wrapper.appendChild(titleContainer);
                 wrapper.appendChild(arrowLeft);
                 wrapper.appendChild(cardList);
                 wrapper.appendChild(arrowRight);
-                wrapper.appendChild(addCardButton);
 
                 categoriesContainer.appendChild(wrapper);
             }
-        };
+        }
 
-        // Scroll cards
-        const scrollCards = (wrapper, direction) => {
+        function scrollCards(wrapper, direction) {
             const cardList = wrapper.querySelector(".card-list");
             const scrollAmount = direction === "left" ? -200 : 200;
             cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
-        };
+        }
 
-        // Add card
-        const addCard = (category) => {
-            const emoji = prompt("Enter emoji:");
-            const title = prompt("Enter title:");
-            if (emoji && title) {
-                appData[category].push({ emoji, title });
-                saveAppData();
-                renderCategories();
+        function openPopup(category, index = null) {
+            currentCategory = category;
+            editIndex = index;
+            document.getElementById("emoji-input").value = "";
+            document.getElementById("title-input").value = "";
+            document.getElementById("popup-title").textContent = index !== null ? "Rename Card" : "Add New Card";
+            document.getElementById("popup-overlay").style.display = "flex";
+        }
+
+        function closePopup() {
+            document.getElementById("popup-overlay").style.display = "none";
+        }
+
+        function confirmPopup() {
+            const emoji = document.getElementById("emoji-input").value.trim();
+            const title = document.getElementById("title-input").value.trim();
+
+            if (!emoji || !title) return alert("Both fields are required.");
+
+            const categoryCards = appData[currentCategory];
+
+            if (editIndex !== null) {
+                categoryCards[editIndex] = { emoji, title };
+            } else {
+                categoryCards.push({ emoji, title });
             }
-        };
 
-        // Rename card
-        const renameCard = (category, index) => {
-            const title = prompt("Enter new title:");
-            if (title) {
-                appData[category][index].title = title;
-                saveAppData();
-                renderCategories();
-            }
-        };
+            saveAppData();
+            renderCategories();
+            closePopup();
+        }
 
-        // Delete card
-        const deleteCard = (category, index) => {
+        function renameCard(category, index) {
+            openPopup(category, index);
+        }
+
+        function deleteCard(category, index) {
             appData[category].splice(index, 1);
             saveAppData();
             renderCategories();
-        };
+        }
 
-        // Initialize
         renderCategories();
     </script>
 </body>
