@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix-Style App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        h2 {
+            margin: 20px 0;
+        }
+
+        .category-wrapper {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .card-list {
+            display: flex;
+            overflow: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            margin-right: 10px;
+            text-align: center;
+            background-color: #333;
+            color: #fff;
+            border: none;
+        }
+
+        .card .emoji {
+            font-size: 40px;
+            margin-bottom: 5px;
+        }
+
+        .arrows {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            border: none;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .left-arrow {
+            left: 0;
+        }
+
+        .right-arrow {
+            right: 0;
+        }
+
+        .card:hover .menu-icon {
+            display: block;
+        }
+
+        .menu-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 18px;
+            display: none;
+            cursor: pointer;
+        }
+
+        .tooltip-menu {
+            position: absolute;
+            top: 40px;
+            right: 5px;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            z-index: 100;
+        }
+
+        .tooltip-menu button {
+            display: block;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        .tooltip-menu button:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">Netflix-Style LocalStorage App</h1>
+
+        <!-- Dynamic Categories -->
+        <div id="categories"></div>
+    </div>
+
+    <!-- Bootstrap and JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const categories = [
+            "FITNESS",
+            "MUSIC",
+            "TECH",
+            "PROJECTS",
+            "PRODUCTS",
+            "NSN",
+            "LEAGUE",
+            "FUN"
+        ];
+
+        const icons = ["🏋️‍♂️", "🎵", "💻", "📂", "📦", "🌐", "⚾", "🎉"];
+        const storageKey = "netflixStyleApp";
+
+        // Load data from localStorage
+        const loadAppData = () => {
+            const data = localStorage.getItem(storageKey);
+            return data ? JSON.parse(data) : categories.reduce((acc, category, index) => {
+                acc[category] = [
+                    { emoji: icons[index], title: "Example 1" },
+                    { emoji: icons[index], title: "Example 2" }
+                ];
+                return acc;
+            }, {});
+        };
+
+        let appData = loadAppData();
+
+        // Save data to localStorage
+        const saveAppData = () => {
+            localStorage.setItem(storageKey, JSON.stringify(appData));
+        };
+
+        // Render all categories
+        const renderCategories = () => {
+            const categoriesContainer = document.getElementById("categories");
+            categoriesContainer.innerHTML = "";
+
+            for (const category in appData) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "category-wrapper";
+
+                const title = document.createElement("h2");
+                title.textContent = category;
+
+                const arrowLeft = document.createElement("button");
+                arrowLeft.className = "arrows left-arrow";
+                arrowLeft.innerHTML = "&#8592;";
+                arrowLeft.onclick = () => scrollCards(wrapper, "left");
+
+                const arrowRight = document.createElement("button");
+                arrowRight.className = "arrows right-arrow";
+                arrowRight.innerHTML = "&#8594;";
+                arrowRight.onclick = () => scrollCards(wrapper, "right");
+
+                const cardList = document.createElement("div");
+                cardList.className = "card-list";
+
+                appData[category].forEach((card, index) => {
+                    const cardDiv = document.createElement("div");
+                    cardDiv.className = "card position-relative";
+
+                    cardDiv.innerHTML = `
+                        <div class="emoji">${card.emoji}</div>
+                        <strong>${card.title}</strong>
+                        <span class="menu-icon">&#8942;</span>
+                        <div class="tooltip-menu">
+                            <button onclick="renameCard('${category}', ${index})">Rename</button>
+                            <button onclick="deleteCard('${category}', ${index})">Delete</button>
+                        </div>
+                    `;
+
+                    // Show/hide tooltip menu
+                    const menuIcon = cardDiv.querySelector(".menu-icon");
+                    const tooltipMenu = cardDiv.querySelector(".tooltip-menu");
+                    menuIcon.onclick = () => {
+                        tooltipMenu.style.display =
+                            tooltipMenu.style.display === "block" ? "none" : "block";
+                    };
+
+                    cardList.appendChild(cardDiv);
+                });
+
+                const addCardButton = document.createElement("button");
+                addCardButton.className = "btn btn-primary mt-2";
+                addCardButton.textContent = `Add Card to ${category}`;
+                addCardButton.onclick = () => addCard(category);
+
+                wrapper.appendChild(title);
+                wrapper.appendChild(arrowLeft);
+                wrapper.appendChild(cardList);
+                wrapper.appendChild(arrowRight);
+                wrapper.appendChild(addCardButton);
+
+                categoriesContainer.appendChild(wrapper);
+            }
+        };
+
+        // Scroll cards
+        const scrollCards = (wrapper, direction) => {
+            const cardList = wrapper.querySelector(".card-list");
+            const scrollAmount = direction === "left" ? -200 : 200;
+            cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        };
+
+        // Add card
+        const addCard = (category) => {
+            const emoji = prompt("Enter emoji:");
+            const title = prompt("Enter title:");
+            if (emoji && title) {
+                appData[category].push({ emoji, title });
+                saveAppData();
+                renderCategories();
+            }
+        };
+
+        // Rename card
+        const renameCard = (category, index) => {
+            const title = prompt("Enter new title:");
+            if (title) {
+                appData[category][index].title = title;
+                saveAppData();
+                renderCategories();
+            }
+        };
+
+        // Delete card
+        const deleteCard = (category, index) => {
+            appData[category].splice(index, 1);
+            saveAppData();
+            renderCategories();
+        };
+
+        // Initialize
+        renderCategories();
+    </script>
+</body>
+
+</html>
