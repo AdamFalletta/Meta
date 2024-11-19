@@ -13,7 +13,7 @@
         }
 
         h2 {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: space-between;
             font-size: 18px;
@@ -31,6 +31,7 @@
             justify-content: center;
             font-size: 24px;
             cursor: pointer;
+            margin-left: 10px;
         }
 
         .card-wrapper {
@@ -38,7 +39,7 @@
             display: flex;
             align-items: center;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
 
         .card-list {
@@ -60,17 +61,16 @@
             background-color: #222;
             border-radius: 8px;
             text-align: center;
-            overflow: hidden;
             color: white;
             border: 1px solid #333;
+            word-wrap: break-word;
+            white-space: normal;
         }
 
         .card-title {
             margin-top: 5px;
             font-size: 14px;
             font-weight: bold;
-            word-wrap: break-word;
-            white-space: normal; /* Allow text to wrap */
         }
 
         .scroll-arrow {
@@ -133,18 +133,20 @@
 <body>
     <div id="app">
         <div class="category-section">
-            <h2>Category Name <button class="add-card-btn" onclick="openPopup()">+</button></h2>
+            <h2>Category Name 
+                <button class="add-card-btn" onclick="openPopup()">+</button>
+            </h2>
             <div class="card-wrapper">
-                <button class="scroll-arrow left-arrow" onclick="scrollCards(this.parentElement, 'left')">❮</button>
+                <button class="scroll-arrow left-arrow" onclick="scrollCards('left')">❮</button>
                 <div class="card-list" id="card-list">
                     <!-- Cards dynamically generated here -->
                 </div>
-                <button class="scroll-arrow right-arrow" onclick="scrollCards(this.parentElement, 'right')">❯</button>
+                <button class="scroll-arrow right-arrow" onclick="scrollCards('right')">❯</button>
             </div>
         </div>
     </div>
 
-    <!-- Popup for Adding/Renaming Cards -->
+    <!-- Popup for Adding Cards -->
     <div class="popup-overlay" id="popup-overlay">
         <div class="popup-content">
             <h3 id="popup-title">Add New Card</h3>
@@ -159,9 +161,6 @@
             "Category Name": []
         };
 
-        let currentCategory = "Category Name";
-        let editIndex = null;
-
         function saveAppData() {
             localStorage.setItem("appData", JSON.stringify(appData));
         }
@@ -175,7 +174,7 @@
             const cardList = document.getElementById("card-list");
             cardList.innerHTML = "";
 
-            appData[currentCategory].forEach((card, index) => {
+            appData["Category Name"].forEach((card) => {
                 const cardDiv = document.createElement("div");
                 cardDiv.className = "card";
                 cardDiv.innerHTML = `
@@ -186,17 +185,15 @@
             });
         }
 
-        function scrollCards(wrapper, direction) {
-            const cardList = wrapper.querySelector(".card-list");
+        function scrollCards(direction) {
+            const cardList = document.getElementById("card-list");
             const scrollAmount = direction === "left" ? -200 : 200;
             cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
         }
 
-        function openPopup(category = currentCategory, index = null) {
-            editIndex = index;
-            document.getElementById("emoji-input").value = editIndex !== null ? appData[category][index].emoji : "";
-            document.getElementById("title-input").value = editIndex !== null ? appData[category][index].title : "";
-            document.getElementById("popup-title").textContent = editIndex !== null ? "Edit Card" : "Add New Card";
+        function openPopup() {
+            document.getElementById("emoji-input").value = "";
+            document.getElementById("title-input").value = "";
             document.getElementById("popup-overlay").style.display = "flex";
         }
 
@@ -213,27 +210,18 @@
                 return;
             }
 
-            if (editIndex !== null) {
-                appData[currentCategory][editIndex] = { emoji, title };
-            } else {
-                appData[currentCategory].push({ emoji, title });
-            }
-
+            appData["Category Name"].push({ emoji, title });
             saveAppData();
             renderCategories();
             closePopup();
         }
 
         document.getElementById("title-input").addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-                confirmPopup();
-            }
+            if (e.key === "Enter") confirmPopup();
         });
 
         document.getElementById("emoji-input").addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-                confirmPopup();
-            }
+            if (e.key === "Enter") confirmPopup();
         });
 
         renderCategories();
