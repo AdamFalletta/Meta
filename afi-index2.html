@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFI Project Management Overview</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        h1{
+            font-size: 34px;
+            font-weight:bold;
+            margin-bottom:0px;
+            color: #dddddd;
+        }
+        h2 {
+            margin: 10px 0;
+            display: inline-block;
+            font-size:16px;
+            font-weight:bold;
+                color: #dddddd;
+        }
+
+        .add-card-btn {
+           margin-left: 8px;
+           display: inline-block;
+           font-size: 14px;
+           width: 20px;
+           height: 20px;
+           padding: 0px;
+           transform: scale(.9);
+           border-radius: 50px;
+        }
+
+        .category-wrapper {
+            position: relative;
+       
+        }
+
+        .card-list {
+            display: flex;
+            overflow: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .card {
+            width: 98px;
+            height: 52px;
+            margin-right: 10px;
+            margin-bottom:6px;
+            font-size:12px;
+            text-align: center;
+            background-color: #333;
+            background-image: linear-gradient(to bottom right, #000000, #3a3a3a);
+            color: #bbbbbb;
+            border: 1px solid #272727;
+            position: relative;
+        }
+
+        .card .emoji {
+            font-size: 20px;
+
+        }
+
+        .arrows {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.3);
+            border: none;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .left-arrow {
+            left: -40px;
+            top:66px
+        }
+
+        .right-arrow {
+            right: -40px;
+            top:66px
+        }
+
+        .card:hover .menu-icon {
+            display: block;
+        }
+
+        .menu-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 18px;
+            display: none;
+            cursor: pointer;
+        }
+
+        .tooltip-menu {
+            position: absolute;
+           
+            right: 5px;
+            background-color: #333;
+            color: #fff;
+            line-height:14px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+
+        .tooltip-menu button {
+            display: block;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        .tooltip-menu button:hover {
+            text-decoration: underline;
+        }
+
+        .tooltip-menu-hidden {
+            display: none;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .popup {
+            background-color: #222;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .popup input {
+            margin: 10px 0;
+            width: 80%;
+            padding: 5px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+        }
+
+        .popup button {
+            margin: 5px;
+            padding: 5px 15px;
+            background-color: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: #0056b3;
+        }
+
+        .card-list {
+    display: inline-flex; /* Ensure the cards are laid out horizontally */
+    overflow-x: hidden; /* Hide native scrollbars */
+    white-space: nowrap; /* Prevent wrapping */
+    scroll-behavior: smooth; /* Smooth scrolling for left/right buttons */
+    width: 100%; /* Ensure it doesn't shrink to fit cards */
+    position: relative;
+}
+
+.card {
+    flex: 0 0 auto; /* Prevent cards from shrinking or stretching */
+}
+
+.arrows {
+    z-index: 10; /* Ensure arrows stay visible over the card list */
+}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">AFI Project Management Overview</h1>
+
+        <!-- Dynamic Categories -->
+        <div id="categories"></div>
+    </div>
+
+    <!-- Pop-up for Add/Rename Card -->
+    <div id="popup-overlay" class="popup-overlay" style="display: none;">
+        <div class="popup">
+            <h3 id="popup-title">Add New Card</h3>
+            <input type="text" id="emoji-input" placeholder="Enter Emoji" maxlength="2">
+            <input type="text" id="title-input" placeholder="Enter Title">
+            <div>
+                <button onclick="confirmPopup()">Confirm</button>
+                <button onclick="closePopup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const categories = [
+            "AFI ADMIN",
+            "FITNESS",
+            "MUSIC",
+            "TECH",
+            "APPS",
+            "PRODUCTS",
+            "PROJECTS",
+            "NSN",
+            "LEAGUE",
+            "FUN"
+        ];
+
+        const icons = ["🏋️‍♂️", "🎵", "💻", "📂", "📦", "🌐", "⚾", "🎉"];
+        const storageKey = "afiOverview";
+
+        let appData = loadAppData();
+        let currentCategory = null;
+        let editIndex = null;
+
+        // Load data from localStorage
+        function loadAppData() {
+            const data = localStorage.getItem(storageKey);
+            return data
+                ? JSON.parse(data)
+                : categories.reduce((acc, category, index) => {
+                    acc[category] = [
+                        { emoji: icons[index], title: "Example 1" },
+                        { emoji: icons[index], title: "Example 2" }
+                    ];
+                    return acc;
+                }, {});
+        }
+
+        // Save data to localStorage
+        function saveAppData() {
+            localStorage.setItem(storageKey, JSON.stringify(appData));
+        }
+
+        // Render all categories
+        function renderCategories() {
+            const categoriesContainer = document.getElementById("categories");
+            categoriesContainer.innerHTML = "";
+
+            for (const category in appData) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "category-wrapper";
+
+                const titleContainer = document.createElement("div");
+                titleContainer.style.display = "flex";
+                titleContainer.style.alignItems = "center";
+
+                const title = document.createElement("h2");
+                title.textContent = category;
+
+                const addCardButton = document.createElement("button");
+                addCardButton.className = "btn btn-success add-card-btn";
+                addCardButton.textContent = "+";
+                addCardButton.onclick = () => openPopup(category);
+
+                titleContainer.appendChild(title);
+                titleContainer.appendChild(addCardButton);
+
+                const arrowLeft = document.createElement("button");
+                arrowLeft.className = "arrows left-arrow";
+                arrowLeft.innerHTML = "&#8592;";
+                arrowLeft.onclick = () => scrollCards(wrapper, "left");
+
+                const arrowRight = document.createElement("button");
+                arrowRight.className = "arrows right-arrow";
+                arrowRight.innerHTML = "&#8594;";
+                arrowRight.onclick = () => scrollCards(wrapper, "right");
+
+                const cardList = document.createElement("div");
+                cardList.className = "card-list";
+
+                appData[category].forEach((card, index) => {
+                    const cardDiv = document.createElement("div");
+                    cardDiv.className = "card";
+
+                    cardDiv.innerHTML = `
+                        <div class="emoji">${card.emoji}</div>
+                        <strong>${card.title}</strong>
+                        <span class="menu-icon">&#8942;</span>
+                        <div class="tooltip-menu tooltip-menu-hidden">
+                            <button onclick="renameCard('${category}', ${index})">Rename</button>
+                            <button onclick="deleteCard('${category}', ${index})">Delete</button>
+                        </div>
+                    `;
+
+                    const menuIcon = cardDiv.querySelector(".menu-icon");
+                    const tooltipMenu = cardDiv.querySelector(".tooltip-menu");
+                    menuIcon.onclick = () => {
+                        tooltipMenu.classList.toggle("tooltip-menu-hidden");
+                    };
+
+                    cardList.appendChild(cardDiv);
+                });
+
+                wrapper.appendChild(titleContainer);
+                wrapper.appendChild(arrowLeft);
+                wrapper.appendChild(cardList);
+                wrapper.appendChild(arrowRight);
+
+                categoriesContainer.appendChild(wrapper);
+            }
+        }
+
+     function scrollCards(wrapper, direction) {
+    const cardList = wrapper.querySelector(".card-list");
+    const scrollAmount = direction === "left" ? -200 : 200;
+
+    // Scroll the card list by the specified amount
+    cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
+}
+
+function openPopup(category, index = null) {
+    currentCategory = category;
+    editIndex = index;
+
+    // Pre-populate the input fields if editing
+    if (index !== null) {
+        const card = appData[category][index];
+        document.getElementById("emoji-input").value = card.emoji;
+        document.getElementById("title-input").value = card.title;
+        document.getElementById("popup-title").textContent = "Rename Card";
+    } else {
+        document.getElementById("emoji-input").value = "";
+        document.getElementById("title-input").value = "";
+        document.getElementById("popup-title").textContent = "Add New Card";
+    }
+
+    document.getElementById("popup-overlay").style.display = "flex";
+}
+
+
+        function closePopup() {
+            document.getElementById("popup-overlay").style.display = "none";
+        }
+
+        function confirmPopup() {
+            const emoji = document.getElementById("emoji-input").value.trim();
+            const title = document.getElementById("title-input").value.trim();
+
+            if (!emoji || !title) return alert("Both fields are required.");
+
+            const categoryCards = appData[currentCategory];
+
+            if (editIndex !== null) {
+                categoryCards[editIndex] = { emoji, title };
+            } else {
+                categoryCards.push({ emoji, title });
+            }
+
+            saveAppData();
+            renderCategories();
+            closePopup();
+        }
+
+        function renameCard(category, index) {
+            openPopup(category, index);
+        }
+
+        function deleteCard(category, index) {
+            appData[category].splice(index, 1);
+            saveAppData();
+            renderCategories();
+        }
+
+        renderCategories();
+    </script>
+</body>
+
+</html>
