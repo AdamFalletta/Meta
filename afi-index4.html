@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFI Overview</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            background-image: linear-gradient(to bottom right, #270f0f, #00334f);
+        }
+
+        h1 {
+            font-size: 34px;
+            font-weight: bold;
+            margin-bottom: 0px !important;
+            color: #dddddd;
+        }
+
+        h2 {
+            margin: 20px 0;
+            display: inline-block;
+            font-size: 28px;
+            font-weight: bold;
+            color: #cccccc;
+            filter: drop-shadow(0px 10px 6px #00000066);
+        }
+
+        b, strong {
+            font-weight: bolder;
+            background: #000000;
+            border-radius: 4px;
+            padding-top: 1px;
+        }
+
+        .add-card-btn {
+            margin-left: 8px;
+            display: inline-block;
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            padding: 0px;
+            mix-blend-mode: color-dodge;
+            transform: scale(.9);
+        }
+
+        .category-wrapper {
+            position: relative;
+        }
+
+        .card-list {
+            display: flex;
+            overflow: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .card {
+            width: 98px;
+            height: 72px;
+            margin-right: 10px;
+            margin-bottom: 26px;
+            font-size: 12px;
+            text-align: center;
+            background-color: #333;
+            background-image: linear-gradient(to bottom right, #000000, #2f2f2f);
+            color: #bbbbbb;
+            border: 1px solid #272727;
+            position: relative;
+            mix-blend-mode: screen;
+        }
+
+        .card .emoji {
+            font-size: 34px;
+        }
+
+        .arrows {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.3);
+            border: none;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .left-arrow {
+            left: -46px;
+            top: 36px;
+            height: 70px;
+        }
+
+        .right-arrow {
+            top: 36px;
+            height: 70px;
+        }
+
+        .card:hover .menu-icon {
+            display: block;
+        }
+
+        .menu-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 18px;
+            display: none;
+            cursor: pointer;
+        }
+
+        .tooltip-menu {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            line-height: 14px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+
+        .tooltip-menu button {
+            display: block;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        .tooltip-menu button:hover {
+            text-decoration: underline;
+        }
+
+        .tooltip-menu-hidden {
+            display: none;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .popup {
+            background-color: #222;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .popup input {
+            margin: 10px 0;
+            width: 80%;
+            padding: 5px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+        }
+
+        .popup button {
+            margin: 5px;
+            padding: 5px 15px;
+            background-color: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: #0056b3;
+        }
+
+        .card-list {
+            display: inline-flex;
+            overflow-x: hidden;
+            white-space: nowrap;
+            scroll-behavior: smooth;
+            width: 100%;
+            position: relative;
+        }
+
+        .card {
+            flex: 0 0 auto;
+        }
+
+        .arrows {
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">AFI Overview</h1>
+
+        <!-- Dynamic Categories -->
+        <div id="categories"></div>
+    </div>
+
+    <!-- Pop-up for Add/Rename Card -->
+    <div id="popup-overlay" class="popup-overlay" style="display: none;">
+        <div class="popup">
+            <h3 id="popup-title">Add New Card</h3>
+            <input type="text" id="emoji-input" placeholder="Enter Emoji" maxlength="2">
+            <input type="text" id="title-input" placeholder="Enter Title">
+            <div>
+                <button onclick="confirmPopup()">Confirm</button>
+                <button onclick="closePopup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const categories = [
+            "AFI ADMIN",
+            "FITNESS",
+            "MUSIC",
+            "TECH",
+            "APPS",
+            "PRODUCTS",
+            "GAMES",
+            "NSN",
+            "LEAGUE",
+            "FUN"
+        ];
+
+        const icons = ["🏋️‍♂️", "🎵", "💻", "📂", "📦", "🌐", "⚾", "🎉"];
+        const storageKey = "afiOverview";
+
+        let appData = loadAppData();
+        let currentCategory = null;
+        let editIndex = null;
+
+        // Load data from localStorage
+        function loadAppData() {
+            const data = localStorage.getItem(storageKey);
+            return data
+                ? JSON.parse(data)
+                : categories.reduce((acc, category, index) => {
+                    acc[category] = [
+                        { emoji: icons[index], title: "Example 1" },
+                        { emoji: icons[index], title: "Example 2" }
+                    ];
+                    return acc;
+                }, {});
+        }
+
+        // Save data to localStorage
+        function saveAppData() {
+            localStorage.setItem(storageKey, JSON.stringify(appData));
+        }
+
+        // Render all categories
+        function renderCategories() {
+            const categoriesContainer = document.getElementById("categories");
+            categoriesContainer.innerHTML = "";
+
+            for (const category in appData) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "category-wrapper";
+
+                const titleContainer = document.createElement("div");
+                titleContainer.style.display = "flex";
+                titleContainer.style.alignItems = "center";
+                titleContainer.style.position = "absolute";
+                titleContainer.style.marginLeft = "-270px";
+
+                const title = document.createElement("h2");
+                title.textContent = category;
+
+                const addCardButton = document.createElement("button");
+                addCardButton.className = "btn btn-success add-card-btn";
+                addCardButton.textContent = "+";
+                addCardButton.onclick = () => openPopup(category);
+
+                titleContainer.appendChild(title);
+                titleContainer.appendChild(addCardButton);
+
+                const arrowLeft = document.createElement("button");
+                arrowLeft.className = "arrows left-arrow";
+                arrowLeft.innerHTML = "&#8592;";
+                arrowLeft.onclick = () => scrollCards(wrapper, "left");
+
+                const arrowRight = document.createElement("button");
+                arrowRight.className = "arrows right-arrow";
+                arrowRight.innerHTML = "&#8594;";
+                arrowRight.onclick = () => scrollCards(wrapper, "right");
+
+                const cardList = document.createElement("div");
+                cardList.className = "card-list";
+
+                appData[category].forEach((card, index) => {
+                    const cardDiv = document.createElement("div");
+                    cardDiv.className = "card";
+
+                    cardDiv.innerHTML = `
+                        <div class="emoji">${card.emoji}</div>
+                        <div>${card.title}</div>
+                    `;
+
+                    const menuIcon = document.createElement("div");
+                    menuIcon.className = "menu-icon";
+                    menuIcon.innerHTML = "&#x22EE;";
+                    menuIcon.onclick = (event) => showMenu(event, category, index);
+
+                    cardDiv.appendChild(menuIcon);
+                    cardList.appendChild(cardDiv);
+                });
+
+                wrapper.appendChild(titleContainer);
+                wrapper.appendChild(arrowLeft);
+                wrapper.appendChild(arrowRight);
+                wrapper.appendChild(cardList);
+
+                categoriesContainer.appendChild(wrapper);
+            }
+        }
+
+        // Show menu for card options (edit/delete)
+        function showMenu(event, category, index) {
+            event.stopPropagation();
+            const card = appData[category][index];
+
+            const menu = document.createElement("div");
+            menu.className = "tooltip-menu";
+
+            const renameButton = document.createElement("button");
+            renameButton.textContent = "Rename Card";
+            renameButton.onclick = () => renameCard(category, index);
+
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete Card";
+            deleteButton.onclick = () => deleteCard(category, index);
+
+            menu.appendChild(renameButton);
+            menu.appendChild(deleteButton);
+
+            event.target.appendChild(menu);
+
+            setTimeout(() => {
+                menu.classList.add("tooltip-menu-hidden");
+            }, 4000);
+        }
+
+        // Scroll cards in the direction specified
+        function scrollCards(wrapper, direction) {
+            const cardList = wrapper.querySelector(".card-list");
+            const scrollAmount = direction === "left" ? -200 : 200;
+            cardList.scrollLeft += scrollAmount;
+        }
+
+        // Open the add card popup
+        function openPopup(category, index = null) {
+            currentCategory = category;
+            editIndex = index;
+
+            const popupTitle = document.getElementById("popup-title");
+            if (editIndex === null) {
+                popupTitle.textContent = "Add New Card";
+            } else {
+                popupTitle.textContent = "Edit Card";
+                document.getElementById("emoji-input").value = appData[category][index].emoji;
+                document.getElementById("title-input").value = appData[category][index].title;
+            }
+
+            document.getElementById("popup-overlay").style.display = "flex";
+        }
+
+        // Close the popup
+        function closePopup() {
+            document.getElementById("popup-overlay").style.display = "none";
+            document.getElementById("emoji-input").value = "";
+            document.getElementById("title-input").value = "";
+        }
+
+        // Confirm action on the popup (add or edit)
+        function confirmPopup() {
+            const emoji = document.getElementById("emoji-input").value;
+            const title = document.getElementById("title-input").value;
+
+            if (emoji && title) {
+                if (editIndex === null) {
+                    appData[currentCategory].push({ emoji, title });
+                } else {
+                    appData[currentCategory][editIndex] = { emoji, title };
+                }
+
+                saveAppData();
+                renderCategories();
+                closePopup();
+            } else {
+                alert("Please enter both emoji and title.");
+            }
+        }
+
+        // Rename a card
+        function renameCard(category, index) {
+            openPopup(category, index);
+        }
+
+        // Delete a card
+        function deleteCard(category, index) {
+            appData[category].splice(index, 1);
+            saveAppData();
+            renderCategories();
+        }
+
+        // Initialize the app
+        renderCategories();
+    </script>
+</body>
+
+</html>
