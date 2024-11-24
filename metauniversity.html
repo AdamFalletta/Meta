@@ -11,45 +11,44 @@
             background-color: #121212;
             color: #ffffff;
             font-family: Arial, sans-serif;
-            background-image: linear-gradient(to bottom right, #270f0f, #00334f);
+               background-image: linear-gradient(to bottom right, #270f0f, #00334f);
         }
 
-        h1 {
+        h1{
             font-size: 34px;
-            font-weight: bold;
-            margin-bottom: 0px !important;
+            font-weight:bold;
+            margin-bottom:0px !important;
             color: #dddddd;
         }
-
         h2 {
             margin: 20px 0;
             display: inline-block;
-            font-size: 28px;
-            font-weight: bold;
-            color: #cccccc;
+            font-size:24px;
+            font-weight:bold;
+                color: #cccccc;
+            padding-left: 10px;
             filter: drop-shadow(0px 10px 6px #00000066);
         }
-
-        b, strong {
-            font-weight: bolder;
-            background: #000000;
-            border-radius: 4px;
-            padding-top: 1px;
-        }
-
+       b, strong {
+    font-weight: bolder;
+    background: #000000;
+    border-radius: 4px;
+    padding-top: 1px;
+}
         .add-card-btn {
-            margin-left: 8px;
-            display: inline-block;
-            font-size: 18px;
-            width: 36px;
-            height: 36px;
-            padding: 0px;
-            mix-blend-mode: color-dodge;
-            transform: scale(.9);
+           margin-left: 8px;
+           display: inline-block;
+           font-size: 18px;
+           width: 36px;
+           height: 36px;
+           padding: 0px;
+           mix-blend-mode: color-dodge;
+           transform: scale(.9);
         }
 
         .category-wrapper {
             position: relative;
+       
         }
 
         .card-list {
@@ -62,8 +61,8 @@
             width: 98px;
             height: 72px;
             margin-right: 10px;
-            margin-bottom: 26px;
-            font-size: 12px;
+            margin-bottom:26px;
+            font-size:12px;
             text-align: center;
             background-color: #333;
             background-image: linear-gradient(to bottom right, #000000, #2f2f2f);
@@ -75,6 +74,7 @@
 
         .card .emoji {
             font-size: 34px;
+
         }
 
         .arrows {
@@ -86,18 +86,19 @@
             color: white;
             padding: 10px;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius:8px;
         }
 
         .left-arrow {
             left: -46px;
-            top: 36px;
-            height: 70px;
+            top:36px;
+            height:70px;
+          
         }
 
         .right-arrow {
-            top: 36px;
-            height: 70px;
+            top:36px;
+            height:70px;
         }
 
         .card:hover .menu-icon {
@@ -117,7 +118,7 @@
             position: absolute;
             background-color: #333;
             color: #fff;
-            line-height: 14px;
+            line-height:14px;
             border-radius: 5px;
             z-index: 100;
         }
@@ -186,21 +187,21 @@
         }
 
         .card-list {
-            display: inline-flex;
-            overflow-x: hidden;
-            white-space: nowrap;
-            scroll-behavior: smooth;
-            width: 100%;
-            position: relative;
-        }
+    display: inline-flex; /* Ensure the cards are laid out horizontally */
+    overflow-x: hidden; /* Hide native scrollbars */
+    white-space: nowrap; /* Prevent wrapping */
+    scroll-behavior: smooth; /* Smooth scrolling for left/right buttons */
+    width: 100%; /* Ensure it doesn't shrink to fit cards */
+    position: relative;
+}
 
-        .card {
-            flex: 0 0 auto;
-        }
+.card {
+    flex: 0 0 auto; /* Prevent cards from shrinking or stretching */
+}
 
-        .arrows {
-            z-index: 10;
-        }
+.arrows {
+    z-index: 10; /* Ensure arrows stay visible over the card list */
+}
     </style>
 </head>
 
@@ -239,7 +240,7 @@
             "SCIENCE",
             "SPANISH",
             "The RevV"
-                    ];
+        ];
 
         const icons = ["🏋️‍♂️", "🎵", "💻", "📂", "📦", "🌐", "⚾", "🎉"];
         const storageKey = "metauniversity";
@@ -312,117 +313,93 @@
 
                     cardDiv.innerHTML = `
                         <div class="emoji">${card.emoji}</div>
-                        <div>${card.title}</div>
+                        <strong>${card.title}</strong>
+                        <span class="menu-icon">&#8942;</span>
+                        <div class="tooltip-menu tooltip-menu-hidden">
+                            <button onclick="renameCard('${category}', ${index})">Rename</button>
+                            <button onclick="deleteCard('${category}', ${index})">Delete</button>
+                        </div>
                     `;
 
-                    const menuIcon = document.createElement("div");
-                    menuIcon.className = "menu-icon";
-                    menuIcon.innerHTML = "&#x22EE;";
-                    menuIcon.onclick = (event) => showMenu(event, category, index);
+                    const menuIcon = cardDiv.querySelector(".menu-icon");
+                    const tooltipMenu = cardDiv.querySelector(".tooltip-menu");
+                    menuIcon.onclick = () => {
+                        tooltipMenu.classList.toggle("tooltip-menu-hidden");
+                    };
 
-                    cardDiv.appendChild(menuIcon);
                     cardList.appendChild(cardDiv);
                 });
 
                 wrapper.appendChild(titleContainer);
                 wrapper.appendChild(arrowLeft);
-                wrapper.appendChild(arrowRight);
                 wrapper.appendChild(cardList);
+                wrapper.appendChild(arrowRight);
 
                 categoriesContainer.appendChild(wrapper);
             }
         }
 
-        // Show menu for card options (edit/delete)
-        function showMenu(event, category, index) {
-            event.stopPropagation();
-            const card = appData[category][index];
+     function scrollCards(wrapper, direction) {
+    const cardList = wrapper.querySelector(".card-list");
+    const scrollAmount = direction === "left" ? -200 : 200;
 
-            const menu = document.createElement("div");
-            menu.className = "tooltip-menu";
+    // Scroll the card list by the specified amount
+    cardList.scrollBy({ left: scrollAmount, behavior: "smooth" });
+}
 
-            const renameButton = document.createElement("button");
-            renameButton.textContent = "Rename Card";
-            renameButton.onclick = () => renameCard(category, index);
+function openPopup(category, index = null) {
+    currentCategory = category;
+    editIndex = index;
 
-            const deleteButton = document.createElement("button");
-            deleteButton.textContent = "Delete Card";
-            deleteButton.onclick = () => deleteCard(category, index);
+    // Pre-populate the input fields if editing
+    if (index !== null) {
+        const card = appData[category][index];
+        document.getElementById("emoji-input").value = card.emoji;
+        document.getElementById("title-input").value = card.title;
+        document.getElementById("popup-title").textContent = "Rename Card";
+    } else {
+        document.getElementById("emoji-input").value = "";
+        document.getElementById("title-input").value = "";
+        document.getElementById("popup-title").textContent = "Add New Card";
+    }
 
-            menu.appendChild(renameButton);
-            menu.appendChild(deleteButton);
+    document.getElementById("popup-overlay").style.display = "flex";
+}
 
-            event.target.appendChild(menu);
 
-            setTimeout(() => {
-                menu.classList.add("tooltip-menu-hidden");
-            }, 4000);
-        }
-
-        // Scroll cards in the direction specified
-        function scrollCards(wrapper, direction) {
-            const cardList = wrapper.querySelector(".card-list");
-            const scrollAmount = direction === "left" ? -200 : 200;
-            cardList.scrollLeft += scrollAmount;
-        }
-
-        // Open the add card popup
-        function openPopup(category, index = null) {
-            currentCategory = category;
-            editIndex = index;
-
-            const popupTitle = document.getElementById("popup-title");
-            if (editIndex === null) {
-                popupTitle.textContent = "Add New Card";
-            } else {
-                popupTitle.textContent = "Edit Card";
-                document.getElementById("emoji-input").value = appData[category][index].emoji;
-                document.getElementById("title-input").value = appData[category][index].title;
-            }
-
-            document.getElementById("popup-overlay").style.display = "flex";
-        }
-
-        // Close the popup
         function closePopup() {
             document.getElementById("popup-overlay").style.display = "none";
-            document.getElementById("emoji-input").value = "";
-            document.getElementById("title-input").value = "";
         }
 
-        // Confirm action on the popup (add or edit)
         function confirmPopup() {
-            const emoji = document.getElementById("emoji-input").value;
-            const title = document.getElementById("title-input").value;
+            const emoji = document.getElementById("emoji-input").value.trim();
+            const title = document.getElementById("title-input").value.trim();
 
-            if (emoji && title) {
-                if (editIndex === null) {
-                    appData[currentCategory].push({ emoji, title });
-                } else {
-                    appData[currentCategory][editIndex] = { emoji, title };
-                }
+            if (!emoji || !title) return alert("Both fields are required.");
 
-                saveAppData();
-                renderCategories();
-                closePopup();
+            const categoryCards = appData[currentCategory];
+
+            if (editIndex !== null) {
+                categoryCards[editIndex] = { emoji, title };
             } else {
-                alert("Please enter both emoji and title.");
+                categoryCards.push({ emoji, title });
             }
+
+            saveAppData();
+            renderCategories();
+            closePopup();
         }
 
-        // Rename a card
         function renameCard(category, index) {
             openPopup(category, index);
         }
 
-        // Delete a card
         function deleteCard(category, index) {
             appData[category].splice(index, 1);
             saveAppData();
             renderCategories();
         }
 
-        // Initialize the app
         renderCategories();
     </script>
 </body>
