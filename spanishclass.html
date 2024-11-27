@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spanish Flashcards - Boss Worker Phrases</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-MQ8F9bZjIW5Ivw1yUzwlAgt6UOWP5w5lGq6wq2ZT27q2moiZbOwCLOHCD6w+NCtA" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .flashcard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 50px;
+        }
+        .flashcard {
+            background-color: #333;
+            border-radius: 10px;
+            width: 100%;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            backface-visibility: hidden;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 20px;
+            color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+        .flashcard-front {
+            background-color: #444;
+        }
+        .flashcard-back {
+            background-color: #222;
+            transform: rotateY(180deg);
+        }
+        .flashcard:hover .flashcard-front {
+            opacity: 0;
+        }
+        .flashcard:hover .flashcard-back {
+            transform: rotateY(0deg);
+            opacity: 1;
+        }
+        .fitness { background-color: rgba(34, 193, 195, 0.2); }
+        .cooking { background-color: rgba(253, 187, 45, 0.2); }
+        .working { background-color: rgba(30, 144, 255, 0.2); }
+        .dating { background-color: rgba(255, 99, 71, 0.2); }
+        .shopping { background-color: rgba(0, 128, 0, 0.2); }
+        .being-at-home { background-color: rgba(255, 105, 180, 0.2); }
+        .school { background-color: rgba(255, 255, 0, 0.2); }
+        .party { background-color: rgba(138, 43, 226, 0.2); }
+        .card-text {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        .overview-btn {
+            margin-top: 30px;
+            background-color: #444;
+            color: white;
+        }
+        .update-btn {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1 class="text-center mt-4 mb-5">Spanish Flashcards - Boss Worker Phrases</h1>
+
+        <div id="flashcard-section" class="flashcard-container"></div>
+        <button class="overview-btn btn btn-dark" onclick="viewLocalStorageData()">View Local Storage</button>
+        <button class="overview-btn btn btn-primary" onclick="showEditForm()">Update Flashcards</button>
+
+        <div id="edit-form" style="display: none; margin-top: 30px;">
+            <h3>Edit Flashcards</h3>
+            <textarea id="flashcard-input" rows="8" cols="80"></textarea><br>
+            <button class="update-btn btn btn-success" onclick="updateFlashcards()">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        // Initial flashcards array
+        const flashcards = [
+            {
+                category: 'fitness',
+                front: 'Vamos a entrenar.',
+                back: 'Let\'s train.'
+            },
+            {
+                category: 'cooking',
+                front: 'Pon el martillo sobre la repisa.',
+                back: 'Put the hammer over the ledge.'
+            },
+            {
+                category: 'working',
+                front: 'Vamos a tomar un descanso.',
+                back: 'Let\'s take a break from work.'
+            },
+            {
+                category: 'dating',
+                front: 'Por favor, ven al trabajo más temprano.',
+                back: 'Please come to work earlier.'
+            },
+            {
+                category: 'shopping',
+                front: '¿Puedo ayudarte a comprar?',
+                back: 'Can I help you shop?'
+            },
+            {
+                category: 'being-at-home',
+                front: 'Voy a descansar en casa.',
+                back: 'I’m going to relax at home.'
+            },
+            {
+                category: 'school',
+                front: 'Tengo que estudiar para el examen.',
+                back: 'I have to study for the exam.'
+            },
+            {
+                category: 'party',
+                front: 'Vamos a la fiesta esta noche.',
+                back: 'Let\'s go to the party tonight.'
+            }
+        ];
+
+        // Store flashcards in localStorage if not present
+        if (!localStorage.getItem('flashcards')) {
+            localStorage.setItem('flashcards', JSON.stringify(flashcards));
+        }
+
+        // Function to render flashcards
+        function renderFlashcards() {
+            const flashcardsData = JSON.parse(localStorage.getItem('flashcards'));
+            const flashcardSection = document.getElementById('flashcard-section');
+            flashcardSection.innerHTML = ''; // Clear previous cards
+
+            flashcardsData.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('flashcard', card.category);
+
+                const cardFront = document.createElement('div');
+                cardFront.classList.add('flashcard-front');
+                cardFront.innerHTML = `<p class="card-text">${card.front}</p>`;
+
+                const cardBack = document.createElement('div');
+                cardBack.classList.add('flashcard-back');
+                cardBack.innerHTML = `<p class="card-text">${card.back}</p>`;
+
+                cardElement.appendChild(cardFront);
+                cardElement.appendChild(cardBack);
+                flashcardSection.appendChild(cardElement);
+            });
+        }
+
+        // Function to show stored data in localStorage
+        function viewLocalStorageData() {
+            const flashcardsData = JSON.parse(localStorage.getItem('flashcards'));
+            alert(JSON.stringify(flashcardsData, null, 2));
+        }
+
+        // Show form to edit flashcards
+        function showEditForm() {
+            const flashcardsData = JSON.parse(localStorage.getItem('flashcards'));
+            const inputField = document.getElementById('flashcard-input');
+            inputField.value = flashcardsData.map(card => `${card.front} | ${card.back}`).join('\n');
+            document.getElementById('edit-form').style.display = 'block';
+        }
+
+        // Function to update flashcards in localStorage
+        function updateFlashcards() {
+            const inputField = document.getElementById('flashcard-input');
+            const updatedData = inputField.value.split('\n').map(line => {
+                const [front, back] = line.split(' | ');
+                return { front, back, category: 'fitness' }; // Default category for now
+            });
+
+            localStorage.setItem('flashcards', JSON.stringify(updatedData));
+            renderFlashcards(); // Re-render flashcards
+            document.getElementById('edit-form').style.display = 'none';
+        }
+
+        // Initial render
+        renderFlashcards();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz4fnFO9gybG1+z2JccvSO7oVd8LsZ9A4U7MXtV7j3FhFYpaNdF+uM5G4hC" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js" integrity="sha384-pzjw8f+ua7Kw1TIq0v8FqJf3Jv4W+Y0D13Ck2HZyXjFwYYGp7k0g2iBzA8c6hd9M" crossorigin="anonymous"></script>
+</body>
+</html>
