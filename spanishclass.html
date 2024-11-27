@@ -97,48 +97,344 @@
 
     <script>
         // Initial flashcards array
-        const flashcards = [
-            {
-                category: 'fitness',
-                front: 'Vamos a entrenar.',
-                back: 'Let\'s train.'
-            },
-            {
-                category: 'cooking',
-                front: 'Pon el martillo sobre la repisa.',
-                back: 'Put the hammer over the ledge.'
-            },
-            {
-                category: 'working',
-                front: 'Vamos a tomar un descanso.',
-                back: 'Let\'s take a break from work.'
-            },
-            {
-                category: 'dating',
-                front: 'Por favor, ven al trabajo más temprano.',
-                back: 'Please come to work earlier.'
-            },
-            {
-                category: 'shopping',
-                front: '¿Puedo ayudarte a comprar?',
-                back: 'Can I help you shop?'
-            },
-            {
-                category: 'being-at-home',
-                front: 'Voy a descansar en casa.',
-                back: 'I’m going to relax at home.'
-            },
-            {
-                category: 'school',
-                front: 'Tengo que estudiar para el examen.',
-                back: 'I have to study for the exam.'
-            },
-            {
-                category: 'party',
-                front: 'Vamos a la fiesta esta noche.',
-                back: 'Let\'s go to the party tonight.'
-            }
-        ];
+const flashcards = [
+    // Fitness
+    {
+        category: 'fitness',
+        front: 'Vamos a entrenar.',
+        back: 'Let\'s train.'
+    },
+    {
+        category: 'fitness',
+        front: 'Haz tus estiramientos.',
+        back: 'Do your stretches.'
+    },
+    {
+        category: 'fitness',
+        front: 'Es hora de correr.',
+        back: 'It\'s time to run.'
+    },
+    {
+        category: 'fitness',
+        front: '¿Listo para el entrenamiento?',
+        back: 'Ready for the workout?'
+    },
+    {
+        category: 'fitness',
+        front: 'Vamos a hacer pesas.',
+        back: 'Let\'s lift weights.'
+    },
+    {
+        category: 'fitness',
+        front: 'Quema esas calorías.',
+        back: 'Burn those calories.'
+    },
+    {
+        category: 'fitness',
+        front: 'Mantén una buena postura.',
+        back: 'Keep a good posture.'
+    },
+    {
+        category: 'fitness',
+        front: 'Toma agua durante el ejercicio.',
+        back: 'Drink water during exercise.'
+    },
+    
+    // Cooking
+    {
+        category: 'cooking',
+        front: 'Pon el martillo sobre la repisa.',
+        back: 'Put the hammer over the ledge.'
+    },
+    {
+        category: 'cooking',
+        front: 'Corta las verduras.',
+        back: 'Cut the vegetables.'
+    },
+    {
+        category: 'cooking',
+        front: 'Precalienta el horno.',
+        back: 'Preheat the oven.'
+    },
+    {
+        category: 'cooking',
+        front: 'Revuelve la mezcla.',
+        back: 'Stir the mixture.'
+    },
+    {
+        category: 'cooking',
+        front: 'Añade sal al gusto.',
+        back: 'Add salt to taste.'
+    },
+    {
+        category: 'cooking',
+        front: 'Hornea por 30 minutos.',
+        back: 'Bake for 30 minutes.'
+    },
+    {
+        category: 'cooking',
+        front: 'Sírvelo con arroz.',
+        back: 'Serve it with rice.'
+    },
+    {
+        category: 'cooking',
+        front: 'Deja reposar la comida.',
+        back: 'Let the food rest.'
+    },
+    
+    // Working
+    {
+        category: 'working',
+        front: 'Vamos a tomar un descanso.',
+        back: 'Let\'s take a break from work.'
+    },
+    {
+        category: 'working',
+        front: '¿Puedes ayudarme con esto?',
+        back: 'Can you help me with this?'
+    },
+    {
+        category: 'working',
+        front: 'Necesito que termines esto hoy.',
+        back: 'I need you to finish this today.'
+    },
+    {
+        category: 'working',
+        front: 'Por favor, organiza tu espacio de trabajo.',
+        back: 'Please organize your workspace.'
+    },
+    {
+        category: 'working',
+        front: '¿Has terminado tus tareas?',
+        back: 'Have you finished your tasks?'
+    },
+    {
+        category: 'working',
+        front: 'Vamos a revisar los resultados.',
+        back: 'Let\'s review the results.'
+    },
+    {
+        category: 'working',
+        front: '¿Estás listo para el informe?',
+        back: 'Are you ready for the report?'
+    },
+    {
+        category: 'working',
+        front: 'Es hora de la reunión.',
+        back: 'It\'s time for the meeting.'
+    },
+    
+    // Dating
+    {
+        category: 'dating',
+        front: '¿Te gustaría salir conmigo?',
+        back: 'Would you like to go out with me?'
+    },
+    {
+        category: 'dating',
+        front: 'Vamos a cenar juntos.',
+        back: 'Let\'s have dinner together.'
+    },
+    {
+        category: 'dating',
+        front: '¿Qué te gusta hacer en tu tiempo libre?',
+        back: 'What do you like to do in your free time?'
+    },
+    {
+        category: 'dating',
+        front: '¿Te gustaría ver una película?',
+        back: 'Would you like to watch a movie?'
+    },
+    {
+        category: 'dating',
+        front: '¿Qué opinas de este lugar?',
+        back: 'What do you think of this place?'
+    },
+    {
+        category: 'dating',
+        front: 'Espero verte pronto.',
+        back: 'I hope to see you soon.'
+    },
+    {
+        category: 'dating',
+        front: 'Me encanta pasar tiempo contigo.',
+        back: 'I love spending time with you.'
+    },
+    {
+        category: 'dating',
+        front: '¿Quieres tomar un café?',
+        back: 'Do you want to grab a coffee?'
+    },
+    
+    // Shopping
+    {
+        category: 'shopping',
+        front: '¿Puedo ayudarte a comprar?',
+        back: 'Can I help you shop?'
+    },
+    {
+        category: 'shopping',
+        front: '¿Cuánto cuesta esto?',
+        back: 'How much does this cost?'
+    },
+    {
+        category: 'shopping',
+        front: '¿Dónde está la caja?',
+        back: 'Where is the checkout?'
+    },
+    {
+        category: 'shopping',
+        front: 'Voy a pagar con tarjeta.',
+        back: 'I\'m going to pay with card.'
+    },
+    {
+        category: 'shopping',
+        front: '¿Tienen descuento?',
+        back: 'Do you have a discount?'
+    },
+    {
+        category: 'shopping',
+        front: 'Me gustaría comprarlo.',
+        back: 'I would like to buy it.'
+    },
+    {
+        category: 'shopping',
+        front: '¿Puedes envolverlo para regalo?',
+        back: 'Can you wrap it as a gift?'
+    },
+    {
+        category: 'shopping',
+        front: 'Voy a regresar a la tienda mañana.',
+        back: 'I\'ll return to the store tomorrow.'
+    },
+    
+    // Being At Home
+    {
+        category: 'being-at-home',
+        front: 'Voy a descansar en casa.',
+        back: 'I’m going to relax at home.'
+    },
+    {
+        category: 'being-at-home',
+        front: 'Quiero ver una película.',
+        back: 'I want to watch a movie.'
+    },
+    {
+        category: 'being-at-home',
+        front: 'Vamos a ordenar la casa.',
+        back: 'Let\'s clean the house.'
+    },
+    {
+        category: 'being-at-home',
+        front: 'Es hora de descansar.',
+        back: 'It\'s time to rest.'
+    },
+    {
+        category: 'being-at-home',
+        front: 'Voy a preparar una taza de café.',
+        back: 'I\'m going to make a cup of coffee.'
+    },
+    {
+        category: 'being-at-home',
+        front: 'Cierra las ventanas.',
+        back: 'Close the windows.'
+    },
+    {
+        category: 'being-at-home',
+        front: 'Asegúrate de apagar las luces.',
+        back: 'Make sure to turn off the lights.'
+    },
+    {
+        category: 'being-at-home',
+        front: 'Voy a organizar mis cosas.',
+        back: 'I\'m going to organize my things.'
+    },
+    
+    // School
+    {
+        category: 'school',
+        front: 'Tengo que estudiar para el examen.',
+        back: 'I have to study for the exam.'
+    },
+    {
+        category: 'school',
+        front: 'Vamos a hacer los deberes.',
+        back: 'Let\'s do the homework.'
+    },
+    {
+        category: 'school',
+        front: '¿Tienes el libro de texto?',
+        back: 'Do you have the textbook?'
+    },
+    {
+        category: 'school',
+        front: '¿Cuándo es el examen?',
+        back: 'When is the exam?'
+    },
+    {
+        category: 'school',
+        front: '¿Puedes ayudarme con esta tarea?',
+        back: 'Can you help me with this task?'
+    },
+    {
+        category: 'school',
+        front: 'Necesito entregar mi proyecto.',
+        back: 'I need to submit my project.'
+    },
+    {
+        category: 'school',
+        front: 'Tenemos una prueba mañana.',
+        back: 'We have a test tomorrow.'
+    },
+    {
+        category: 'school',
+        front: 'Voy a la biblioteca a estudiar.',
+        back: 'I\'m going to the library to study.'
+    },
+    
+    // Party
+    {
+        category: 'party',
+        front: 'Vamos a la fiesta esta noche.',
+        back: 'Let\'s go to the party tonight.'
+    },
+    {
+        category: 'party',
+        front: '¿A qué hora empieza la fiesta?',
+        back: 'What time does the party start?'
+    },
+    {
+        category: 'party',
+        front: 'Tengo que comprar una bebida.',
+        back: 'I need to buy a drink.'
+    },
+    {
+        category: 'party',
+        front: '¿Puedo invitar a un amigo?',
+        back: 'Can I invite a friend?'
+    },
+    {
+        category: 'party',
+        front: 'Vamos a bailar.',
+        back: 'Let\'s dance.'
+    },
+    {
+        category: 'party',
+        front: 'Este lugar está increíble.',
+        back: 'This place is amazing.'
+    },
+    {
+        category: 'party',
+        front: '¿Te divertiste?',
+        back: 'Did you have fun?'
+    },
+    {
+        category: 'party',
+        front: 'Gracias por invitarme.',
+        back: 'Thank you for inviting me.'
+    }
+];
+
 
         // Store flashcards in localStorage if not present
         if (!localStorage.getItem('flashcards')) {
