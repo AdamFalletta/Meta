@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js Zombie Example</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // 1. Create a basic scene
+    const scene = new THREE.Scene();
+    
+    // 2. Set up a camera
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    // 3. Create a WebGL renderer
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    // 4. Create a "Zombie" object (represented as a simple cube for now)
+    const zombieGeometry = new THREE.BoxGeometry(1, 2, 1); // Cube of size 1x2x1 (width x height x depth)
+    const zombieMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green color for the zombie
+    const zombie = new THREE.Mesh(zombieGeometry, zombieMaterial);
+    scene.add(zombie); // Add the zombie to the scene
+    
+    // 5. Set initial position of the zombie
+    zombie.position.set(0, 1, 0); // Position it above the ground level
+    
+    // 6. Camera positioning
+    camera.position.z = 5; // Move camera back so we can view the zombie
+
+    // 7. Handle window resizing to maintain aspect ratio
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    // 8. Zombie movement logic (moving forward along the X-axis)
+    function moveZombie() {
+      zombie.position.x += 0.05; // Move zombie by 0.05 units along the X-axis each frame
+    }
+
+    // 9. Animation loop
+    function animate() {
+      requestAnimationFrame(animate); // Call animate recursively
+
+      moveZombie(); // Move the zombie on each frame
+
+      renderer.render(scene, camera); // Render the scene from the camera's perspective
+    }
+
+    // 10. Start animation
+    animate();
+  </script>
+</body>
+</html>
