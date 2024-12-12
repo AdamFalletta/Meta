@@ -148,7 +148,7 @@ ul.news-items > li:first-child{height:0px;background:#000000;border-left: 4px #4
       <div class="outer-wrapper">
         <div class="main-content-wrapper">
 <p style="visibility:hidden;"id="demo">0</p>
-  <video autoplay onended="myFunction()" class="video-background-screen" id="myVideo1"><source id="mp4_src" src="https://previews.customer.envatousercontent.com/h264-video-previews/624aca04-69fe-4014-b213-8530c94a5556/21219810.mp4" type="video/mp4"></video>
+  <video autoplay onended="myFunction()" class="video-background-screen" id="myVideo1"><source id="mp4_src" src="" type="video/mp4"></video>
     <script>
   // This variable works outside the the add function
   var counter = 0;
@@ -157,9 +157,9 @@ var add = (function () {
 })();
 function myFunction(){
   document.getElementById("demo").innerHTML = add();
- if (counter == 1){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/bd827db8-9456-4d21-882d-a68ad8b5ee24/43989246.mp4";} 
- if (counter == 2){currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/224c467b-05ab-4064-b430-ed78c07309c6/1502870.mp4";}
- if (counter == 3){counter = 0; currentSrc = "https://video-previews.elements.envatousercontent.com/h264-video-previews/e720b29f-b71d-4655-99fb-4b8a7ed49495/22497721.mp4";}
+ if (counter == 1){currentSrc = "";} 
+ if (counter == 2){currentSrc = "";}
+ if (counter == 3){counter = 0; currentSrc = "";}
   console.log(currentSrc); 
   // put currentSource and bind it to a div element
    document.getElementById("mp4_src").src = currentSrc;
