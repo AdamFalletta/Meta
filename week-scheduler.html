@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dark Mode Excel Table</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 0;
+      border: 1px solid #444;
+    }
+    td {
+      width: 100px;
+      height: 30px;
+      border: 1px solid #444;
+      text-align: center;
+      vertical-align: middle;
+      color: #f0f0f0;
+      background-color: #2e2e2e;
+    }
+    td:focus {
+      outline: none;
+      border: 2px solid #00ccff;
+      box-shadow: 0 0 10px #00ccff;
+      background-color: #333;
+    }
+    td input {
+      width: 98%;
+      height: 98%;
+      background: none;
+      border: none;
+      color: #f0f0f0;
+      font-size: 14px;
+      text-align: center;
+    }
+    td input:focus {
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <table id="excelTable"></table>
+
+  <script>
+    const table = document.getElementById("excelTable");
+    const rows = 25;
+    const cols = 8;
+
+    // Load saved data from local storage
+    const savedData = JSON.parse(localStorage.getItem("excelData")) || [];
+
+    // Create table
+    for (let r = 0; r < rows; r++) {
+      const tr = document.createElement("tr");
+      for (let c = 0; c < cols; c++) {
+        const td = document.createElement("td");
+        const input = document.createElement("input");
+
+        input.value = savedData[r]?.[c] || "";
+        input.addEventListener("input", () => saveData());
+
+        td.appendChild(input);
+        td.addEventListener("click", () => input.focus());
+
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+
+    // Save data to local storage
+    function saveData() {
+      const data = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) {
+          row.push(table.rows[r].cells[c].querySelector("input").value);
+        }
+        data.push(row);
+      }
+      localStorage.setItem("excelData", JSON.stringify(data));
+    }
+  </script>
+</body>
+</html>
