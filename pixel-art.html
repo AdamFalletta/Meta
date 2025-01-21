@@ -137,6 +137,8 @@
                 input.addEventListener('input', (event) => {
                     slot.style.backgroundColor = event.target.value;
                     selectedColor = event.target.value;
+                });
+                input.addEventListener('blur', () => {
                     input.remove();
                 });
                 document.body.appendChild(input);
