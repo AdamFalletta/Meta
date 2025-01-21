@@ -120,23 +120,27 @@
             const cell = document.createElement('div');
             cell.classList.add('cell');
             cell.addEventListener('click', () => {
-                const color = prompt("Choose a color (hex or name):", selectedColor);
-                if (color) {
-                    cell.style.backgroundColor = color;
-                    saveBoard();
-                }
+                cell.style.backgroundColor = selectedColor;
+                saveBoard();
             });
             board.appendChild(cell);
         }
 
         // Palette functionality
-        paletteSlots.forEach((slot, index) => {
+        paletteSlots.forEach((slot) => {
             slot.addEventListener('click', () => {
-                const color = prompt("Set color for this slot (hex or name):", '#ffffff');
-                if (color) {
-                    slot.style.backgroundColor = color;
-                    selectedColor = color;
-                }
+                const input = document.createElement('input');
+                input.type = 'color';
+                input.value = selectedColor;
+                input.style.position = 'absolute';
+                input.style.opacity = 0;
+                input.addEventListener('input', (event) => {
+                    slot.style.backgroundColor = event.target.value;
+                    selectedColor = event.target.value;
+                    input.remove();
+                });
+                document.body.appendChild(input);
+                input.click();
             });
         });
 
@@ -159,11 +163,9 @@
 
         // Clear board
         document.getElementById('clear-board').addEventListener('click', () => {
-            if (confirm('Are you sure you want to clear the board?')) {
-                const cells = document.querySelectorAll('.cell');
-                cells.forEach(cell => cell.style.backgroundColor = 'black');
-                saveBoard();
-            }
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.style.backgroundColor = 'black');
+            saveBoard();
         });
 
         // Initialize
