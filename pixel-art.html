@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art App</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            position: relative;
+        }
+
+        #pixel-board {
+            display: grid;
+            grid-template-columns: repeat(64, 20px);
+            grid-template-rows: repeat(64, 20px);
+            gap: 1px;
+            background-color: #000;
+            width: 1000px;
+            height: 1000px;
+            border: 2px solid #555;
+            margin-right: 20px;
+        }
+
+        .cell {
+            width: 20px;
+            height: 20px;
+            background-color: black;
+            border: 1px solid #333;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+        }
+
+        .palette {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: absolute;
+            top: 10px;
+            right: -180px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .palette-slot {
+            width: 40px;
+            height: 40px;
+            background-color: #555;
+            border: 2px solid #777;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .palette-slot:hover {
+            transform: scale(1.1);
+        }
+
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #444;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="pixel-board"></div>
+        <div class="palette">
+            <div id="slot-1" class="palette-slot"></div>
+            <div id="slot-2" class="palette-slot"></div>
+            <div id="slot-3" class="palette-slot"></div>
+            <div id="slot-4" class="palette-slot"></div>
+            <div id="slot-5" class="palette-slot"></div>
+            <div id="slot-6" class="palette-slot"></div>
+            <div id="slot-7" class="palette-slot"></div>
+            <div id="slot-8" class="palette-slot"></div>
+        </div>
+    </div>
+    <div class="controls">
+        <button class="btn" id="clear-board">Clear Board</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('pixel-board');
+        const paletteSlots = document.querySelectorAll('.palette-slot');
+        let selectedColor = '#ffffff';
+
+        // Create grid cells
+        for (let i = 0; i < 64 * 64; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.addEventListener('click', () => {
+                const color = prompt("Choose a color (hex or name):", selectedColor);
+                if (color) {
+                    cell.style.backgroundColor = color;
+                    saveBoard();
+                }
+            });
+            board.appendChild(cell);
+        }
+
+        // Palette functionality
+        paletteSlots.forEach((slot, index) => {
+            slot.addEventListener('click', () => {
+                const color = prompt("Set color for this slot (hex or name):", '#ffffff');
+                if (color) {
+                    slot.style.backgroundColor = color;
+                    selectedColor = color;
+                }
+            });
+        });
+
+        // Save and load board state
+        function saveBoard() {
+            const cells = Array.from(document.querySelectorAll('.cell'));
+            const colors = cells.map(cell => cell.style.backgroundColor);
+            localStorage.setItem('pixelBoard', JSON.stringify(colors));
+        }
+
+        function loadBoard() {
+            const colors = JSON.parse(localStorage.getItem('pixelBoard'));
+            if (colors) {
+                const cells = document.querySelectorAll('.cell');
+                colors.forEach((color, index) => {
+                    cells[index].style.backgroundColor = color;
+                });
+            }
+        }
+
+        // Clear board
+        document.getElementById('clear-board').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the board?')) {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => cell.style.backgroundColor = 'black');
+                saveBoard();
+            }
+        });
+
+        // Initialize
+        loadBoard();
+    </script>
+</body>
+</html>
