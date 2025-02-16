@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baseball Matrix</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #121212;
+      font-family: 'Courier New', Courier, monospace;
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .cell {
+      background-color: #1e1e2e; /* Extremely dark blue */
+      border-radius: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+      color: white;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1rem;
+      border: none;
+      outline: none;
+      resize: none;
+      overflow: hidden;
+    }
+
+    .cell:nth-child(4n+1) {
+      background-color: #282828; /* Extremely dark green */
+    }
+
+    .cell:nth-child(4n+2) {
+      background-color: #302838; /* Extremely dark pink */
+    }
+
+    .cell:nth-child(4n+3) {
+      background-color: #282830; /* Extremely dark blue */
+    }
+
+    .cell:nth-child(4n+4) {
+      background-color: #302828; /* Extremely dark yellow */
+    }
+  </style>
+</head>
+<body>
+  <div class="matrix" id="matrix">
+    <div class="cell"><textarea id="cell-1"></textarea></div>
+    <div class="cell"><textarea id="cell-2"></textarea></div>
+    <div class="cell"><textarea id="cell-3"></textarea></div>
+    <div class="cell"><textarea id="cell-4"></textarea></div>
+    <div class="cell"><textarea id="cell-5"></textarea></div>
+    <div class="cell"><textarea id="cell-6"></textarea></div>
+    <div class="cell"><textarea id="cell-7"></textarea></div>
+    <div class="cell"><textarea id="cell-8"></textarea></div>
+    <div class="cell"><textarea id="cell-9"></textarea></div>
+    <div class="cell"><textarea id="cell-10"></textarea></div>
+    <div class="cell"><textarea id="cell-11"></textarea></div>
+    <div class="cell"><textarea id="cell-12"></textarea></div>
+    <div class="cell"><textarea id="cell-13"></textarea></div>
+    <div class="cell"><textarea id="cell-14"></textarea></div>
+    <div class="cell"><textarea id="cell-15"></textarea></div>
+    <div class="cell"><textarea id="cell-16"></textarea></div>
+  </div>
+
+  <script>
+    const titles = [
+      "Design the Remainder of the Baseball Network (NSN)",
+      "Create a NEOBaseball League Rules and Feature List",
+      "Toys: NEOStrikeZone V1 and NEOBat V1 [NEOArcade MultiSports]",
+      "Games: Perfect Game \"Sounds of Baseball\" & HR Hero",
+      "Sensor Add-ons for NEOBat [Design and Fabrication]",
+      "Flagship Baseball Tools: Official NBL NEOBat V2 and NEOScreen V2",
+      "NEOCards",
+      "MetaCoins / NEOCoins",
+      "3D Hitting Trainer with UWB",
+      "MetaOS: MetaPhone and MetaBots feat. BlabBot!",
+      "Baseball Game Asset Production & Media (Images, Audio, Video)",
+      "NEOGym feat. Pump Up",
+      "NEOCenter",
+      "OmniConnectX1 Microcontroller",
+      "NEOBox Single Board Computer",
+      "RevV-X Series RISC-V Architecture feat. AuRaCore"
+    ];
+
+    const textareas = document.querySelectorAll('textarea');
+
+    textareas.forEach((textarea, index) => {
+      const key = `cell-${index + 1}`;
+      textarea.value = localStorage.getItem(key) || titles[index] || "";
+      textarea.addEventListener('input', () => {
+        localStorage.setItem(key, textarea.value);
+      });
+    });
+  </script>
+</body>
+</html>
