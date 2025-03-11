@@ -1,9 +1,12 @@
+requested. Here is the updated code for a 2D slider:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Game Carousel</title>
+    <title>2D Smooth Slider</title>
     <style>
         body {
             margin: 0;
@@ -13,64 +16,43 @@
             height: 100vh;
             background-color: #101010;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         .carousel-container {
             position: relative;
             width: 1080px;
             height: 630px;
-            perspective: 1000px;
+            overflow: hidden;
         }
 
         .carousel {
-            position: absolute;
-            top: 0;
-            left: 50%;
+            display: flex;
             width: 100%;
             height: 100%;
-            transform-style: preserve-3d;
-            transform: translateX(-50%) rotateY(0deg);
             transition: transform 0.5s ease;
         }
 
         .carousel-slide {
-            position: absolute;
-            width: 600px;
-            height: 400px;
-            left: 50%;
-            transform-style: preserve-3d;
-            transform: translateX(-50%) translateZ(-600px) rotateY(0deg);
-            transition: transform 0.5s ease;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            background: #333;
+            min-width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
+            background: #333;
             color: #fff;
             font-size: 2rem;
-        }
-
-        .carousel-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .carousel-slide[data-active="true"] {
-            background: #555;
+            text-align: center;
         }
 
         .info {
             position: absolute;
-            bottom: 20px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             color: red;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
         }
-
     </style>
 </head>
 <body>
@@ -96,11 +78,9 @@
         }
 
         function moveCarousel(direction) {
-            slides[currentIndex].removeAttribute('data-active');
             currentIndex = (currentIndex + direction + slides.length) % slides.length;
-            slides[currentIndex].setAttribute('data-active', 'true');
-            const angle = currentIndex * -120;
-            carousel.style.transform = `translateX(-50%) rotateY(${angle}deg)`;
+            const offset = currentIndex * -100; // Move by 100% per slide
+            carousel.style.transform = `translateX(${offset}%)`;
             updateInfo();
         }
 
@@ -117,3 +97,12 @@
     </script>
 </body>
 </html>
+```
+
+### Features
+1. **2D Slider**: No 3D perspective; simple horizontal slider.
+2. **Smooth Fade**: Transitions between slides are smooth.
+3. **Keyboard Navigation**: Use the left and right arrow keys to navigate.
+4. **Current Slide Info**: Displays the current slide's ID in red text.
+
+Let me know if you’d like to extend this further!
