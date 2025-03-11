@@ -167,58 +167,6 @@ function stopDrawing() {
   ctx.beginPath();
 }
 
-let history = []; // Stack to hold drawing states
-let brushSize = 5;
-
-// Function to save current drawing to history stack
-function saveState() {
-  history.push(canvas.toDataURL('image/png'));
-}
-
-// Undo function
-function undo() {
-  if (history.length > 0) {
-    let lastState = history.pop();
-    let img = new Image();
-    img.onload = function() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before restoring
-      ctx.drawImage(img, 0, 0); // Draw the previous state
-    };
-    img.src = lastState;
-  }
-}
-
-// Listen for Control + Z to undo the last stroke
-window.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === 'z') {
-    undo();
-  }
-});
-
-// Save the current canvas state when drawing
-function draw(e) {
-  if (!isDrawing) return;
-  saveState(); // Save the current state before drawing
-  ctx.lineWidth = brushSize;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = currentColor;
-
-  if (neonEffect) {
-    ctx.shadowColor = currentColor;
-    ctx.shadowBlur = 15;
-  } else {
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-  }
-
-  ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-}
-
-
-    
 // Save as PNG
 document.getElementById('save-btn').addEventListener('click', () => {
   let dataURL = canvas.toDataURL('image/png');
