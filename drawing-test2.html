@@ -256,13 +256,6 @@ window.addEventListener('load', () => {
 // Add Undo button functionality
 document.getElementById('undo-btn').addEventListener('click', undoLastAction);
 
-    // Add keyboard event listener for Ctrl + Z (Undo)
-window.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === 'z') {
-    e.preventDefault(); // Prevent the default undo behavior in the browser
-    undoLastAction(); // Trigger undo
-  }
-});
   </script>
 </body>
 </html>
