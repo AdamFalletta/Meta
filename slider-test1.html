@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2D Smooth Slider</title>
+    <title>Continuous Loop Slider</title>
     <style>
         body {
             margin: 0;
@@ -25,13 +25,13 @@
 
         .carousel {
             display: flex;
-            width: 100%;
+            width: calc(100% * 5); /* 3 slides + 2 clones */
             height: 100%;
             transition: transform 0.5s ease;
         }
 
         .carousel-slide {
-            min-width: 100%;
+            min-width: 1080px;
             height: 100%;
             display: flex;
             justify-content: center;
@@ -55,9 +55,12 @@
 <body>
     <div class="carousel-container">
         <div id="carousel" class="carousel">
+            <!-- Cloned slides for looping -->
+            <div class="carousel-slide" data-slide-id="3">Game 3</div>
             <div class="carousel-slide" data-slide-id="1">Game 1</div>
             <div class="carousel-slide" data-slide-id="2">Game 2</div>
             <div class="carousel-slide" data-slide-id="3">Game 3</div>
+            <div class="carousel-slide" data-slide-id="1">Game 1</div>
         </div>
     </div>
     <div id="info" class="info"></div>
@@ -66,21 +69,38 @@
         const slides = document.querySelectorAll('.carousel-slide');
         const infoDiv = document.getElementById('info');
 
-        let currentIndex = 0;
+        let currentIndex = 1; // Start at the first real slide (Game 1)
+        const totalSlides = slides.length - 2; // Exclude clones
+        const slideWidth = 1080;
 
+        // Update current slide information
         function updateInfo() {
-            const currentSlide = slides[currentIndex];
-            const slideID = currentSlide.getAttribute('data-slide-id');
+            const slideID = slides[currentIndex].getAttribute('data-slide-id');
             infoDiv.textContent = `Current Slide ID: ${slideID}`;
         }
 
+        // Move the carousel to the desired slide
         function moveCarousel(direction) {
-            currentIndex = (currentIndex + direction + slides.length) % slides.length;
-            const offset = currentIndex * -100; // Move by 100% per slide
-            carousel.style.transform = `translateX(${offset}%)`;
-            updateInfo();
+            currentIndex += direction;
+            carousel.style.transition = 'transform 0.5s ease';
+            carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
+
+            // Handle looping
+            setTimeout(() => {
+                if (currentIndex === 0) {
+                    currentIndex = totalSlides;
+                    carousel.style.transition = 'none';
+                    carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
+                } else if (currentIndex === slides.length - 1) {
+                    currentIndex = 1;
+                    carousel.style.transition = 'none';
+                    carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
+                }
+                updateInfo();
+            }, 500); // Match the transition duration
         }
 
+        // Keyboard navigation
         document.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowLeft') {
                 moveCarousel(-1);
@@ -90,8 +110,8 @@
         });
 
         // Initialize
+        carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
         updateInfo();
     </script>
 </body>
 </html>
-
