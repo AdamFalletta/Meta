@@ -77,7 +77,7 @@ button {
   <div id="canvas-container">
     <div id="tools">
       <div id="color-picker">
-        <div id="current-color" style="width: 100px; height: 100px;"></div>
+        <div id="current-color" style="width: 100px; height: 100px; background-color: rgb(0, 128, 128); margin-bottom: 10px;"></div>
         <div class="color-options">
           <!-- Add color boxes here -->
         </div>
@@ -97,6 +97,7 @@ button {
   <div id="controls">
     <button id="save-btn">Save as PNG</button>
     <button id="toggle-board">Toggle Board Color</button>
+    <button id="toggle-canvas-bg-btn">Toggle Canvas Background</button>
     <button id="delete-btn">Delete Canvas</button>
   </div>
   <script>
@@ -166,6 +167,58 @@ function stopDrawing() {
   ctx.beginPath();
 }
 
+let history = []; // Stack to hold drawing states
+let brushSize = 5;
+
+// Function to save current drawing to history stack
+function saveState() {
+  history.push(canvas.toDataURL('image/png'));
+}
+
+// Undo function
+function undo() {
+  if (history.length > 0) {
+    let lastState = history.pop();
+    let img = new Image();
+    img.onload = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before restoring
+      ctx.drawImage(img, 0, 0); // Draw the previous state
+    };
+    img.src = lastState;
+  }
+}
+
+// Listen for Control + Z to undo the last stroke
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'z') {
+    undo();
+  }
+});
+
+// Save the current canvas state when drawing
+function draw(e) {
+  if (!isDrawing) return;
+  saveState(); // Save the current state before drawing
+  ctx.lineWidth = brushSize;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = currentColor;
+
+  if (neonEffect) {
+    ctx.shadowColor = currentColor;
+    ctx.shadowBlur = 15;
+  } else {
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+}
+
+
+    
 // Save as PNG
 document.getElementById('save-btn').addEventListener('click', () => {
   let dataURL = canvas.toDataURL('image/png');
@@ -175,6 +228,12 @@ document.getElementById('save-btn').addEventListener('click', () => {
   link.click();
 });
 
+    // Toggle canvas background color
+document.getElementById('toggle-canvas-bg-btn').addEventListener('click', () => {
+  let currentCanvasBg = canvas.style.backgroundColor;
+  canvas.style.backgroundColor = currentCanvasBg === 'black' ? '#f0f0f0' : 'black';
+});
+    
 // Brush size input control
 document.getElementById('brush-size-input').addEventListener('input', (e) => {
   brushSize = e.target.value;
