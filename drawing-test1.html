@@ -218,12 +218,12 @@ document.getElementById('fx-toggle-checkbox').addEventListener('change', (e) => 
     // Save the canvas drawing to local storage
 canvas.addEventListener('mouseup', () => {
   let dataURL = canvas.toDataURL('image/png');
-  localStorage.setItem('drawing', dataURL); // Save to localStorage
+  localStorage.setItem('drawing1', dataURL); // Save to localStorage
 });
 
 // Check for saved drawing in localStorage on page load
 window.addEventListener('load', () => {
-  let savedDrawing = localStorage.getItem('drawing');
+  let savedDrawing = localStorage.getItem('drawing1');
   if (savedDrawing) {
     let img = new Image();
     img.onload = function() {
