@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Drawing Tool</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f0f0f0;
+  transition: background-color 0.3s;
+}
+
+#canvas-container {
+  display: flex;
+  padding: 20px;
+}
+
+#tools {
+  margin-right: 20px;
+}
+
+#color-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.color-options {
+  display: grid;
+  grid-template-columns: repeat(2, 20px);
+  grid-template-rows: repeat(8, 20px);
+  gap: 5px;
+}
+
+.color-options div {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+#brush-size {
+  margin-top: 20px;
+}
+
+#fx-toggle {
+  margin-top: 20px;
+}
+
+#drawing-canvas {
+  border: 1px solid #000;
+  cursor: crosshair;
+}
+
+#controls {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+  </style>
+</head>
+  
+<body>
+
+  <div id="canvas-container">
+    <div id="tools">
+      <div id="color-picker">
+        <div id="current-color" style="width: 100px; height: 100px; background-color: rgb(0, 128, 128); margin-bottom: 10px;"></div>
+        <div class="color-options">
+          <!-- Add color boxes here -->
+        </div>
+      </div>
+      <div id="brush-size">
+        <input type="range" id="brush-slider" min="1" max="100" value="5">
+        <label for="brush-slider" style="display:block;>Brush Size</label>
+        <input type="number" id="brush-size-input" value="5" min="1" max="50" step="1" />
+      </div>
+      <div id="fx-toggle">
+        <label for="fx-toggle-checkbox">Neon Glow</label>
+        <input type="checkbox" id="fx-toggle-checkbox">
+      </div>
+    </div>
+    <canvas id="drawing-canvas" width="1200" height="800"></canvas>
+  </div>
+  <div id="controls">
+    <button id="undo-btn">Undo</button>
+    <button id="save-btn">Save as PNG</button>
+    <button id="toggle-board">Toggle Board Color</button>
+    <button id="toggle-canvas-bg-btn">Toggle Canvas Background</button>
+    <button id="delete-btn">Delete Canvas</button>
+  </div>
+  <script>
+let canvas = document.getElementById('drawing-canvas');
+let ctx = canvas.getContext('2d');
+let currentColor = '#000000';
+let brushSize = 5;
+let isDrawing = false;
+let neonEffect = false;
+let undoStack = []; // Stack to hold canvas states
+let maxUndoStackSize = 20; // Maximum number of states to hold in the stack
+
+// Get color boxes dynamically
+const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF', '#808080', '#800000', '#008000', '#000080', '#808000', '#800080', '#008080', '#C0C0C0'];
+let colorBoxes = document.querySelector('.color-options');
+
+colors.forEach(color => {
+  let colorBox = document.createElement('div');
+  colorBox.style.backgroundColor = color;
+  colorBox.addEventListener('click', () => changeColor(color));
+  colorBoxes.appendChild(colorBox);
+});
+
+// Set initial color
+document.getElementById('current-color').style.backgroundColor = currentColor;
+
+// Update current color
+function changeColor(color) {
+  currentColor = color;
+  document.getElementById('current-color').style.backgroundColor = color;
+}
+
+// Mouse events to draw
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseout', stopDrawing);
+
+// Start drawing
+function startDrawing(e) {
+  isDrawing = true;
+  draw(e);
+}
+
+// Draw function
+function draw(e) {
+  if (!isDrawing) return;
+  ctx.lineWidth = brushSize;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = currentColor;
+
+  if (neonEffect) {
+    ctx.shadowColor = currentColor;
+    ctx.shadowBlur = 15;
+  } else {
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+}
+
+// Stop drawing
+function stopDrawing() {
+  isDrawing = false;
+  ctx.beginPath();
+  saveCanvasState(); // Save the canvas state after each drawing action
+}
+
+// Save the canvas state to the undo stack
+function saveCanvasState() {
+  if (undoStack.length >= maxUndoStackSize) {
+    undoStack.shift(); // Remove the oldest state if the stack exceeds the limit
+  }
+  undoStack.push(canvas.toDataURL()); // Push the current canvas state to the stack
+}
+
+// Undo the last drawing action
+function undoLastAction() {
+  if (undoStack.length > 0) {
+    let lastState = undoStack.pop(); // Pop the last state from the stack
+    let img = new Image();
+    img.onload = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+      ctx.drawImage(img, 0, 0); // Restore the last state
+    };
+    img.src = lastState; // Load the last canvas state
+  }
+}
+
+// Save as PNG
+document.getElementById('save-btn').addEventListener('click', () => {
+  let dataURL = canvas.toDataURL('image/png');
+  let link = document.createElement('a');
+  link.href = dataURL;
+  link.download = 'drawing.png';
+  link.click();
+});
+
+// Toggle canvas background color
+document.getElementById('toggle-canvas-bg-btn').addEventListener('click', () => {
+  let currentCanvasBg = canvas.style.backgroundColor;
+  canvas.style.backgroundColor = currentCanvasBg === 'black' ? '#f0f0f0' : 'black';
+});
+
+// Brush size input control
+document.getElementById('brush-size-input').addEventListener('input', (e) => {
+  brushSize = e.target.value;
+  document.getElementById('brush-slider').value = brushSize; // Update slider to match the input
+});
+
+// Brush size slider update
+document.getElementById('brush-slider').addEventListener('input', (e) => {
+  brushSize = e.target.value;
+  document.getElementById('brush-size-input').value = brushSize; // Update textbox to match the slider
+});
+
+// Clear canvas and reset localStorage
+document.getElementById('delete-btn').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+  localStorage.removeItem('drawing'); // Remove saved drawing from localStorage
+});
+
+// Toggle board color
+document.getElementById('toggle-board').addEventListener('click', () => {
+  document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#f0f0f0' : 'black';
+});
+
+// Neon effect toggle
+document.getElementById('fx-toggle-checkbox').addEventListener('change', (e) => {
+  neonEffect = e.target.checked;
+});
+
+// Save the canvas drawing to local storage
+canvas.addEventListener('mouseup', () => {
+  let dataURL = canvas.toDataURL('image/png');
+  localStorage.setItem('drawing', dataURL); // Save to localStorage
+});
+
+// Check for saved drawing in localStorage on page load
+window.addEventListener('load', () => {
+  let savedDrawing = localStorage.getItem('drawing');
+  if (savedDrawing) {
+    let img = new Image();
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0); // Draw the saved image onto the canvas
+    };
+    img.src = savedDrawing;
+  }
+});
+
+// Add Undo button functionality
+document.getElementById('undo-btn').addEventListener('click', undoLastAction);
+
+  </script>
+</body>
+</html>
