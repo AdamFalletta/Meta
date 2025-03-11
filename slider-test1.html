@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Continuous Loop Slider</title>
+    <title>Carousel Slider</title>
     <style>
         body {
             margin: 0;
@@ -12,106 +12,94 @@
             align-items: center;
             height: 100vh;
             background-color: #101010;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
         }
 
         .carousel-container {
-            position: relative;
             width: 1080px;
             height: 630px;
             overflow: hidden;
+            position: relative;
+            border: 2px solid #333;
+            border-radius: 10px;
         }
 
         .carousel {
             display: flex;
-            width: calc(100% * 5); /* 3 slides + 2 clones */
-            height: 100%;
             transition: transform 0.5s ease;
         }
 
         .carousel-slide {
-            min-width: 1080px;
-            height: 100%;
+            width: 1080px;
+            height: 630px;
+            flex-shrink: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #333;
-            color: #fff;
+            background: #222;
+            color: white;
             font-size: 2rem;
-            text-align: center;
         }
 
         .info {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            margin-top: 10px;
+            text-align: center;
             color: red;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
         }
     </style>
 </head>
 <body>
     <div class="carousel-container">
         <div id="carousel" class="carousel">
-            <!-- Cloned slides for looping -->
-            <div class="carousel-slide" data-slide-id="3">Game 3</div>
             <div class="carousel-slide" data-slide-id="1">Game 1</div>
             <div class="carousel-slide" data-slide-id="2">Game 2</div>
             <div class="carousel-slide" data-slide-id="3">Game 3</div>
-            <div class="carousel-slide" data-slide-id="1">Game 1</div>
+            <div class="carousel-slide" data-slide-id="4">Game 4</div>
         </div>
     </div>
     <div id="info" class="info"></div>
+
     <script>
+        // Elements
         const carousel = document.getElementById('carousel');
         const slides = document.querySelectorAll('.carousel-slide');
         const infoDiv = document.getElementById('info');
 
-        let currentIndex = 1; // Start at the first real slide (Game 1)
-        const totalSlides = slides.length - 2; // Exclude clones
-        const slideWidth = 1080;
+        // Variables
+        const slideWidth = 1080; // Width of each slide
+        const totalSlides = slides.length; // Total number of slides
+        let currentIndex = 0; // Track the current slide index
 
-        // Update current slide information
+        // Update slide info display
         function updateInfo() {
-            const slideID = slides[currentIndex].getAttribute('data-slide-id');
+            const currentSlide = slides[currentIndex];
+            const slideID = currentSlide.getAttribute('data-slide-id');
             infoDiv.textContent = `Current Slide ID: ${slideID}`;
         }
 
-        // Move the carousel to the desired slide
+        // Move the carousel
         function moveCarousel(direction) {
-            currentIndex += direction;
-            carousel.style.transition = 'transform 0.5s ease';
+            // Calculate the new index (looping logic)
+            currentIndex = (currentIndex + direction + totalSlides) % totalSlides;
+
+            // Move carousel to the new slide
             carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
 
-            // Handle looping
-            setTimeout(() => {
-                if (currentIndex === 0) {
-                    currentIndex = totalSlides;
-                    carousel.style.transition = 'none';
-                    carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
-                } else if (currentIndex === slides.length - 1) {
-                    currentIndex = 1;
-                    carousel.style.transition = 'none';
-                    carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
-                }
-                updateInfo();
-            }, 500); // Match the transition duration
+            // Update the info
+            updateInfo();
         }
 
-        // Keyboard navigation
+        // Keyboard event listeners
         document.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowLeft') {
-                moveCarousel(-1);
+                moveCarousel(-1); // Move left
             } else if (event.key === 'ArrowRight') {
-                moveCarousel(1);
+                moveCarousel(1); // Move right
             }
         });
 
         // Initialize
-        carousel.style.transform = `translateX(${-currentIndex * slideWidth}px)`;
-        updateInfo();
+        updateInfo(); // Display initial slide info
     </script>
 </body>
 </html>
