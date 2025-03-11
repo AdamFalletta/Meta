@@ -96,6 +96,7 @@ button {
   <div id="controls">
     <button id="save-btn">Save as PNG</button>
     <button id="toggle-board">Toggle Board Color</button>
+    <button id="delete-btn">Delete Canvas</button>
   </div>
   <script>
     let canvas = document.getElementById('drawing-canvas');
@@ -173,6 +174,12 @@ document.getElementById('save-btn').addEventListener('click', () => {
   link.click();
 });
 
+    // Clear canvas and reset localStorage
+document.getElementById('delete-btn').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+  localStorage.removeItem('drawing'); // Remove saved drawing from localStorage
+});
+    
 // Toggle board color
 document.getElementById('toggle-board').addEventListener('click', () => {
   document.body.style.backgroundColor = document.body.style.backgroundColor === 'black' ? '#f0f0f0' : 'black';
@@ -188,6 +195,23 @@ document.getElementById('fx-toggle-checkbox').addEventListener('change', (e) => 
   neonEffect = e.target.checked;
 });
 
+    // Save the canvas drawing to local storage
+canvas.addEventListener('mouseup', () => {
+  let dataURL = canvas.toDataURL('image/png');
+  localStorage.setItem('drawing', dataURL); // Save to localStorage
+});
+
+// Check for saved drawing in localStorage on page load
+window.addEventListener('load', () => {
+  let savedDrawing = localStorage.getItem('drawing');
+  if (savedDrawing) {
+    let img = new Image();
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0); // Draw the saved image onto the canvas
+    };
+    img.src = savedDrawing;
+  }
+});
   </script>
 </body>
 </html>
