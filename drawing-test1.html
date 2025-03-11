@@ -85,6 +85,7 @@ button {
       <div id="brush-size">
         <input type="range" id="brush-slider" min="1" max="100" value="5">
         <label for="brush-slider">Brush Size</label>
+        <input type="number" id="brush-size-input" value="5" min="1" max="50" step="1" />
       </div>
       <div id="fx-toggle">
         <label for="fx-toggle-checkbox">Neon Glow</label>
@@ -174,6 +175,18 @@ document.getElementById('save-btn').addEventListener('click', () => {
   link.click();
 });
 
+// Brush size input control
+document.getElementById('brush-size-input').addEventListener('input', (e) => {
+  brushSize = e.target.value;
+  document.getElementById('brush-slider').value = brushSize; // Update slider to match the input
+});
+
+// Brush size slider update
+document.getElementById('brush-slider').addEventListener('input', (e) => {
+  brushSize = e.target.value;
+  document.getElementById('brush-size-input').value = brushSize; // Update textbox to match the slider
+});
+    
     // Clear canvas and reset localStorage
 document.getElementById('delete-btn').addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
