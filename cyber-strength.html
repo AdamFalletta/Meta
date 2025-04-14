@@ -3,210 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness Log App</title>
+    <title>Cyber Strength</title>
     <style>
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
             background-color: #121212;
-            color: white;
-            margin: 0;
-            padding: 0;
+            color: #ffffff;
             display: flex;
             flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-        }
-
-        h1 {
-            margin-top: 20px;
-            font-size: 36px;
-        }
-
-        .log-container {
-            width: 100%;
-            max-width: 800px;
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #1e1e1e;
-            border-radius: 8px;
-        }
-
-        .log-container input,
-        .log-container select,
-        .log-container textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background-color: #333;
-            color: white;
-            border: 1px solid #444;
-            border-radius: 5px;
-        }
-
-        .log-container button {
-            background-color: #6200ea;
-            color: white;
+            background-color: #1e1e2f;
             padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
+        }
+
+        header .menu-icon, header .settings-icon {
             cursor: pointer;
         }
 
-        .log-container button:hover {
-            background-color: #3700b3;
+        .menu {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100%;
+            background-color: #2c2c3e;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+            transition: left 0.3s;
+            z-index: 1000;
         }
 
-        .logs-list {
-            margin-top: 30px;
+        .menu.open {
+            left: 0;
+        }
+
+        .menu-content {
+            padding: 20px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 800px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+            display: none;
         }
 
-        .log-entry {
-            background-color: #2c2c2c;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
+        .overlay.active {
+            display: block;
+        }
+
+        .settings {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 300px;
+            background-color: #2c2c3e;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 1001;
+            transition: transform 0.3s;
+        }
+
+        .settings.open {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        main .day-row {
             display: flex;
-            flex-direction: column;
-            gap: 5px;
+            align-items: center;
+            padding: 10px;
         }
 
-        .log-entry p {
-            margin: 5px 0;
+        main .day-row:nth-child(odd) {
+            background-color: #2e2e38;
         }
 
-        .log-entry button {
-            background-color: red;
-            padding: 5px 10px;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
+        main .day-row:nth-child(even) {
+            background-color: #3c3c47;
         }
 
-        .log-entry button:hover {
-            background-color: darkred;
+        main .day-row.today .date {
+            border: 2px solid #4fc3f7;
+            border-radius: 50%;
+            padding: 5px;
         }
 
-        .toggle-dark-mode {
-            margin: 10px;
-            cursor: pointer;
-            font-size: 18px;
-            color: #6200ea;
-            background-color: transparent;
+        main .day-row .workout-matrix {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        footer {
+            display: flex;
+            justify-content: space-around;
+            background-color: #1e1e2f;
+            padding: 10px;
+        }
+
+        footer button {
+            flex: 1;
+            margin: 0 5px;
+            padding: 10px;
             border: none;
+            border-radius: 10px;
+            background-color: #3c3c47;
+            color: #ffffff;
+            cursor: pointer;
+            text-align: center;
         }
 
-        .toggle-dark-mode:hover {
-            color: #3700b3;
+        footer button.active {
+            background-color: #4fc3f7;
+            color: #121212;
         }
 
-        .dark-mode {
-            background-color: #121212;
-            color: white;
+        .motivation {
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #4fc3f7;
+            color: #121212;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <button class="toggle-dark-mode">Toggle Dark Mode</button>
-    <h1>Fitness Log App</h1>
+    <header>
+        <div class="menu-icon">
+            <span>&#9776;</span>
+        </div>
+        <div>Cyber Strength</div>
+        <div class="settings-icon">
+            <span>&#9881;</span>
+        </div>
+    </header>
 
-    <div class="log-container">
-        <h2>Log your workout</h2>
-        <input type="text" id="exercise-name" placeholder="Exercise Name" required />
-        <select id="exercise-type">
-            <option value="">Select Exercise Type</option>
-            <option value="Cardio">Cardio</option>
-            <option value="Strength">Strength</option>
-            <option value="Flexibility">Flexibility</option>
-            <option value="Endurance">Endurance</option>
-        </select>
-        <input type="number" id="duration" placeholder="Duration (in minutes)" required />
-        <textarea id="notes" placeholder="Notes (optional)"></textarea>
-        <button onclick="addLog()">Add Log</button>
+    <div class="menu">
+        <div class="menu-content">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="#">Help</a></li>
+            </ul>
+        </div>
     </div>
 
-    <div class="logs-list" id="logs-list">
-        <!-- Logs will appear here -->
+    <div class="overlay"></div>
+
+    <div class="settings">
+        <h2>Settings</h2>
+        <p>Configure your app preferences here.</p>
     </div>
+
+    <main>
+        <!-- Left Column -->
+        <div>
+            <div class="day-row today">
+                <div class="date">MON</div>
+                <div class="workout-matrix">
+                    <div>Workout</div>
+                    <div>Weight</div>
+                    <div>Sets</div>
+                    <div>Reps</div>
+                </div>
+            </div>
+            <!-- Repeat rows -->
+        </div>
+        
+        <!-- Right Column -->
+        <div>
+            <div class="day-row">
+                <div class="date">FRI</div>
+                <div class="workout-matrix">
+                    <div>Workout</div>
+                    <div>Weight</div>
+                    <div>Sets</div>
+                    <div>Reps</div>
+                </div>
+            </div>
+            <!-- Repeat rows -->
+        </div>
+
+        <!-- Motivation Section -->
+        <div class="motivation">"Stay strong, stay consistent!"</div>
+    </main>
+
+    <footer>
+        <button class="active">Workout Log</button>
+        <button>Food Log</button>
+        <button>Workout Timer</button>
+        <button>Notes</button>
+    </footer>
 
     <script>
-        // Dark Mode Toggle
-        const toggleButton = document.querySelector('.toggle-dark-mode');
-        toggleButton.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
+        const menuIcon = document.querySelector('.menu-icon');
+        const menu = document.querySelector('.menu');
+        const overlay = document.querySelector('.overlay');
+        const settingsIcon = document.querySelector('.settings-icon');
+        const settings = document.querySelector('.settings');
+
+        menuIcon.addEventListener('click', () => {
+            menu.classList.toggle('open');
+            overlay.classList.toggle('active');
         });
 
-        // Add log to local storage
-        function addLog() {
-            const exerciseName = document.getElementById('exercise-name').value;
-            const exerciseType = document.getElementById('exercise-type').value;
-            const duration = document.getElementById('duration').value;
-            const notes = document.getElementById('notes').value;
+        overlay.addEventListener('click', () => {
+            menu.classList.remove('open');
+            settings.classList.remove('open');
+            overlay.classList.remove('active');
+        });
 
-            if (!exerciseName || !exerciseType || !duration) {
-                alert('Please fill in all fields.');
-                return;
-            }
-
-            const log = {
-                exerciseName,
-                exerciseType,
-                duration,
-                notes,
-                date: new Date().toLocaleString()
-            };
-
-            const logs = JSON.parse(localStorage.getItem('fitnessLogs')) || [];
-            logs.push(log);
-            localStorage.setItem('fitnessLogs', JSON.stringify(logs));
-
-            displayLogs();
-            clearInputFields();
-        }
-
-        // Display logs from local storage
-        function displayLogs() {
-            const logs = JSON.parse(localStorage.getItem('fitnessLogs')) || [];
-            const logsList = document.getElementById('logs-list');
-            logsList.innerHTML = '';
-
-            logs.forEach((log, index) => {
-                const logEntry = document.createElement('div');
-                logEntry.classList.add('log-entry');
-                logEntry.innerHTML = `
-                    <p><strong>${log.exerciseName}</strong> (${log.exerciseType})</p>
-                    <p><strong>Duration:</strong> ${log.duration} minutes</p>
-                    <p><strong>Notes:</strong> ${log.notes || 'No notes'}</p>
-                    <p><strong>Date:</strong> ${log.date}</p>
-                    <button onclick="deleteLog(${index})">Delete Log</button>
-                `;
-                logsList.appendChild(logEntry);
-            });
-        }
-
-        // Delete log from local storage
-        function deleteLog(index) {
-            const logs = JSON.parse(localStorage.getItem('fitnessLogs')) || [];
-            logs.splice(index, 1);
-            localStorage.setItem('fitnessLogs', JSON.stringify(logs));
-
-            displayLogs();
-        }
-
-        // Clear input fields after adding log
-        function clearInputFields() {
-            document.getElementById('exercise-name').value = '';
-            document.getElementById('exercise-type').value = '';
-            document.getElementById('duration').value = '';
-            document.getElementById('notes').value = '';
-        }
-
-        // Initialize the display of logs when the page loads
-        window.onload = function() {
-            displayLogs();
-        };
+        settingsIcon.addEventListener('click', () => {
+            settings.classList.toggle('open');
+            overlay.classList.toggle('active');
+        });
     </script>
 </body>
 </html>
