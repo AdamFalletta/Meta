@@ -27,10 +27,12 @@
         }
 
         .main {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            display: none;
             padding: 20px;
+        }
+
+        .main.active {
+            display: block;
         }
 
         .day-column {
@@ -124,6 +126,7 @@
             const slideMenu = document.querySelector('.slide-menu');
             const settingsPopup = document.querySelector('.popup');
             const footerButtons = document.querySelectorAll('footer button');
+            const mainSections = document.querySelectorAll('.main');
 
             menuIcon.addEventListener('click', () => {
                 slideMenu.classList.toggle('active');
@@ -133,12 +136,18 @@
                 settingsPopup.classList.toggle('active');
             });
 
-            footerButtons.forEach(button => {
+            footerButtons.forEach((button, index) => {
                 button.addEventListener('click', () => {
                     footerButtons.forEach(btn => btn.classList.remove('active'));
+                    mainSections.forEach(section => section.classList.remove('active'));
                     button.classList.add('active');
+                    mainSections[index].classList.add('active');
                 });
             });
+
+            // Set default active tab
+            footerButtons[0].classList.add('active');
+            mainSections[0].classList.add('active');
         });
     </script>
 </head>
@@ -150,6 +159,7 @@
     </header>
 
     <div class="main">
+        <h2>Workout Log</h2>
         <div class="day-column">
             <div class="day-header today">MON</div>
             <div class="workout-row">
@@ -159,13 +169,25 @@
                 <div>8</div>
             </div>
         </div>
-        <div class="day-column">
-            <div class="day-header">TUE</div>
-        </div>
+    </div>
+
+    <div class="main">
+        <h2>Food Log</h2>
+        <p>Content for Food Log goes here.</p>
+    </div>
+
+    <div class="main">
+        <h2>Workout Timer</h2>
+        <p>Content for Workout Timer goes here.</p>
+    </div>
+
+    <div class="main">
+        <h2>Notes</h2>
+        <textarea rows="10" cols="50" style="width: 100%; background-color: #1e1e1e; color: #f5f5f5; border: none; padding: 10px;">Write your notes here...</textarea>
     </div>
 
     <footer>
-        <button class="active">Workout Log</button>
+        <button>Workout Log</button>
         <button>Food Log</button>
         <button>Timer</button>
         <button>Notes</button>
