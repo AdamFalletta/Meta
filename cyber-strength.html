@@ -1,9 +1,17 @@
+To achieve the column-based layout and implement the popup functionality for creating, editing, and deleting workouts, the following updated code incorporates these features:
+
+### Changes:
+1. **Column-based Days Layout**: Adjusted the layout to display days as columns.
+2. **Popup Form for Workouts**: Added a modal for creating/editing/deleting workouts.
+3. **Local Storage Integration**: Workouts are stored and retrieved using `localStorage`.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness Log App</title>
+    <title>Fitness Log</title>
     <style>
         body {
             margin: 0;
@@ -13,152 +21,205 @@
         }
 
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background-color: #1e1e1e;
             padding: 10px;
-            background: #1e1e1e;
+            text-align: center;
         }
 
-        header h1 {
-            margin: 0;
+        .week-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            padding: 10px;
         }
 
-        .calendar, .workout-log, .notes {
-            margin: 20px;
+        .day-column {
+            border: 1px solid #333;
+            border-radius: 8px;
+            background-color: #1e1e1e;
+            padding: 10px;
         }
 
-        .calendar-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .day-header {
+            font-weight: bold;
+            text-align: center;
             margin-bottom: 10px;
         }
 
-        .calendar-controls button {
-            background: #007bff;
-            border: none;
-            color: #fff;
-            padding: 5px 10px;
+        .workout-item {
+            background-color: #2a2a2a;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
-        .workout-day {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #333;
-            border-radius: 8px;
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
         }
 
-        textarea {
-            width: 100%;
-            height: 150px;
-            background: #1e1e1e;
+        .popup.active {
+            display: flex;
+        }
+
+        .popup-content {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
             color: #f5f5f5;
-            border: none;
-            border-radius: 5px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        input, button {
+            margin: 5px 0;
             padding: 10px;
+            width: 90%;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Fitness Log App</h1>
+        <h1>Fitness Log</h1>
     </header>
 
-    <div class="calendar">
-        <div class="calendar-controls">
-            <button id="prev-week">Previous Week</button>
-            <span id="week-display"></span>
-            <button id="next-week">Next Week</button>
+    <div class="week-container" id="weekContainer"></div>
+
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <h3 id="popupTitle">Add/Edit Workout</h3>
+            <input type="text" id="exerciseInput" placeholder="Exercise">
+            <input type="number" id="weightInput" placeholder="Weight">
+            <input type="number" id="setsInput" placeholder="Sets">
+            <input type="number" id="repsInput" placeholder="Reps">
+            <button id="saveButton">Save</button>
+            <button id="deleteButton" style="background-color: red;">Delete</button>
+            <button onclick="closePopup()">Cancel</button>
         </div>
     </div>
 
-    <div class="workout-log">
-        <h2>Workout Log</h2>
-        <div id="workout-container"></div>
-    </div>
-
-    <div class="notes">
-        <h2>Notes</h2>
-        <textarea id="notes-area" placeholder="Write your notes..."></textarea>
-    </div>
-
     <script>
-        // Helpers for week handling
-        const MS_PER_DAY = 86400000;
-        const DAYS_PER_WEEK = 7;
+        const weekContainer = document.getElementById("weekContainer");
+        const popup = document.getElementById("popup");
+        const popupTitle = document.getElementById("popupTitle");
+        const exerciseInput = document.getElementById("exerciseInput");
+        const weightInput = document.getElementById("weightInput");
+        const setsInput = document.getElementById("setsInput");
+        const repsInput = document.getElementById("repsInput");
+        const saveButton = document.getElementById("saveButton");
+        const deleteButton = document.getElementById("deleteButton");
 
-        let currentDate = new Date();
-        let currentWeekStart = getWeekStart(currentDate);
+        const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        let currentDay = null;
 
-        function getWeekStart(date) {
-            const dayOfWeek = date.getDay();
-            const start = new Date(date);
-            start.setDate(date.getDate() - dayOfWeek);
-            return start;
+        function loadWeek() {
+            weekContainer.innerHTML = "";
+            DAYS.forEach(day => {
+                const column = document.createElement("div");
+                column.className = "day-column";
+                column.innerHTML = `
+                    <div class="day-header">${day}</div>
+                    <div id="${day}-workouts"></div>
+                `;
+                column.onclick = () => openPopup(day);
+                weekContainer.appendChild(column);
+
+                const savedWorkouts = JSON.parse(localStorage.getItem(day) || "[]");
+                renderWorkouts(day, savedWorkouts);
+            });
         }
 
-        function formatDate(date) {
-            return date.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' });
+        function renderWorkouts(day, workouts) {
+            const workoutContainer = document.getElementById(`${day}-workouts`);
+            workoutContainer.innerHTML = "";
+            workouts.forEach(workout => {
+                const workoutDiv = document.createElement("div");
+                workoutDiv.className = "workout-item";
+                workoutDiv.textContent = `${workout.exercise} (${workout.weight} lbs, ${workout.sets}x${workout.reps})`;
+                workoutDiv.onclick = (event) => {
+                    event.stopPropagation();
+                    openPopup(day, workout);
+                };
+                workoutContainer.appendChild(workoutDiv);
+            });
         }
 
-        function updateWeekDisplay() {
-            const weekDisplay = document.getElementById("week-display");
-            const startOfWeek = formatDate(currentWeekStart);
-            const endOfWeek = formatDate(new Date(currentWeekStart.getTime() + (DAYS_PER_WEEK - 1) * MS_PER_DAY));
-            weekDisplay.textContent = `${startOfWeek} - ${endOfWeek}`;
-        }
-
-        function loadWorkouts() {
-            const container = document.getElementById("workout-container");
-            container.innerHTML = '';
-            for (let i = 0; i < DAYS_PER_WEEK; i++) {
-                const day = new Date(currentWeekStart.getTime() + i * MS_PER_DAY);
-                const dayKey = day.toISOString().split('T')[0];
-                const workoutData = JSON.parse(localStorage.getItem(dayKey) || '[]');
-
-                const dayDiv = document.createElement("div");
-                dayDiv.className = "workout-day";
-                dayDiv.innerHTML = `<strong>${formatDate(day)}</strong>`;
-                workoutData.forEach(w => {
-                    const p = document.createElement("p");
-                    p.textContent = `${w.exercise}: ${w.sets} sets of ${w.reps}`;
-                    dayDiv.appendChild(p);
-                });
-                container.appendChild(dayDiv);
+        function openPopup(day, workout = null) {
+            currentDay = day;
+            popup.classList.add("active");
+            if (workout) {
+                popupTitle.textContent = "Edit Workout";
+                exerciseInput.value = workout.exercise;
+                weightInput.value = workout.weight;
+                setsInput.value = workout.sets;
+                repsInput.value = workout.reps;
+                deleteButton.style.display = "block";
+                deleteButton.onclick = () => deleteWorkout(workout);
+            } else {
+                popupTitle.textContent = "Add Workout";
+                exerciseInput.value = "";
+                weightInput.value = "";
+                setsInput.value = "";
+                repsInput.value = "";
+                deleteButton.style.display = "none";
             }
+            saveButton.onclick = saveWorkout;
         }
 
-        function saveNotes() {
-            const notes = document.getElementById("notes-area").value;
-            localStorage.setItem("fitnessNotes", notes);
+        function closePopup() {
+            popup.classList.remove("active");
         }
 
-        function loadNotes() {
-            const notes = localStorage.getItem("fitnessNotes") || '';
-            document.getElementById("notes-area").value = notes;
+        function saveWorkout() {
+            const newWorkout = {
+                exercise: exerciseInput.value,
+                weight: weightInput.value,
+                sets: setsInput.value,
+                reps: repsInput.value,
+            };
+
+            let workouts = JSON.parse(localStorage.getItem(currentDay) || "[]");
+            workouts = workouts.filter(w => w.exercise !== newWorkout.exercise); // Replace or add workout
+            workouts.push(newWorkout);
+            localStorage.setItem(currentDay, JSON.stringify(workouts));
+            renderWorkouts(currentDay, workouts);
+            closePopup();
         }
 
-        // Event Listeners
-        document.getElementById("prev-week").addEventListener("click", () => {
-            currentWeekStart.setDate(currentWeekStart.getDate() - DAYS_PER_WEEK);
-            updateWeekDisplay();
-            loadWorkouts();
-        });
+        function deleteWorkout(workout) {
+            let workouts = JSON.parse(localStorage.getItem(currentDay) || "[]");
+            workouts = workouts.filter(w => w.exercise !== workout.exercise);
+            localStorage.setItem(currentDay, JSON.stringify(workouts));
+            renderWorkouts(currentDay, workouts);
+            closePopup();
+        }
 
-        document.getElementById("next-week").addEventListener("click", () => {
-            currentWeekStart.setDate(currentWeekStart.getDate() + DAYS_PER_WEEK);
-            updateWeekDisplay();
-            loadWorkouts();
-        });
-
-        document.getElementById("notes-area").addEventListener("mouseout", saveNotes);
-
-        // Initialize
-        updateWeekDisplay();
-        loadWorkouts();
-        loadNotes();
+        loadWeek();
     </script>
 </body>
 </html>
+```
+
+### Key Features:
+1. **Days in Columns**: Days are displayed as vertical columns.
+2. **Workout Management**: Click a day to add/edit/delete workouts.
+3. **Dynamic Storage**: Workouts are saved in and loaded from `localStorage`.
+4. **Popup Modal**: Intuitive popup for managing workouts.
+
+Let me know if further adjustments are needed!
