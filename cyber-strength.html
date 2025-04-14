@@ -3,49 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness Log</title>
+    <title>Cyber Strength: Weekly Fitness Log</title>
     <style>
         body {
-            margin: 0;
             font-family: Arial, sans-serif;
             background-color: #121212;
             color: #f5f5f5;
+            margin: 0;
+            padding: 0;
         }
-
         header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background-color: #1e1e1e;
-            padding: 10px;
-            text-align: center;
+            padding: 10px 20px;
         }
-
-        .week-container {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-            padding: 10px;
+        header h1 {
+            font-size: 18px;
         }
-
-        .day-column {
+        header .date-display {
+            font-size: 16px;
+        }
+        .week-controls {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .week-controls button {
+            background-color: #1e1e1e;
+            color: #f5f5f5;
             border: 1px solid #333;
-            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .week-controls button:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 20px;
+        }
+        .day-column {
             background-color: #1e1e1e;
+            border-radius: 8px;
             padding: 10px;
         }
-
         .day-header {
-            font-weight: bold;
             text-align: center;
+            font-weight: bold;
             margin-bottom: 10px;
         }
-
-        .workout-item {
-            background-color: #2a2a2a;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        table th, table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .add-workout {
+            display: block;
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
             padding: 5px;
-            margin-bottom: 5px;
             border-radius: 5px;
             cursor: pointer;
         }
-
         .popup {
             display: none;
             position: fixed;
@@ -53,156 +83,206 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.8);
             justify-content: center;
             align-items: center;
         }
-
         .popup.active {
             display: flex;
         }
-
         .popup-content {
             background-color: #1e1e1e;
             padding: 20px;
             border-radius: 8px;
             color: #f5f5f5;
-            max-width: 90%;
-            text-align: center;
+            width: 300px;
         }
-
-        input, button {
-            margin: 5px 0;
-            padding: 10px;
-            width: 90%;
+        .popup-content input {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #333;
+            background-color: #121212;
+            color: #f5f5f5;
         }
-
-        button {
-            background-color: #007bff;
-            color: #fff;
+        .popup-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        .popup-buttons button {
+            flex: 1;
+            margin: 0 5px;
+            padding: 8px;
             border: none;
             cursor: pointer;
-            border-radius: 5px;
+        }
+        .popup-buttons button.save {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .popup-buttons button.cancel {
+            background-color: #444;
+            color: #fff;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Fitness Log</h1>
+        <h1>Cyber Strength</h1>
+        <div class="date-display"></div>
     </header>
-
-    <div class="week-container" id="weekContainer"></div>
+    <div class="week-controls">
+        <button id="prev-week">Previous Week</button>
+        <button id="next-week">Next Week</button>
+    </div>
+    <div class="content" id="content"></div>
 
     <div class="popup" id="popup">
         <div class="popup-content">
-            <h3 id="popupTitle">Add/Edit Workout</h3>
-            <input type="text" id="exerciseInput" placeholder="Exercise">
-            <input type="number" id="weightInput" placeholder="Weight">
-            <input type="number" id="setsInput" placeholder="Sets">
-            <input type="number" id="repsInput" placeholder="Reps">
-            <button id="saveButton">Save</button>
-            <button id="deleteButton" style="background-color: red;">Delete</button>
-            <button onclick="closePopup()">Cancel</button>
+            <h3>Edit Workout</h3>
+            <input type="text" id="exercise" placeholder="Exercise">
+            <input type="number" id="weight" placeholder="Weight">
+            <input type="number" id="sets" placeholder="Sets">
+            <input type="number" id="reps" placeholder="Reps">
+            <div class="popup-buttons">
+                <button class="save" id="save-workout">Save</button>
+                <button class="cancel" id="cancel-workout">Cancel</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const weekContainer = document.getElementById("weekContainer");
-        const popup = document.getElementById("popup");
-        const popupTitle = document.getElementById("popupTitle");
-        const exerciseInput = document.getElementById("exerciseInput");
-        const weightInput = document.getElementById("weightInput");
-        const setsInput = document.getElementById("setsInput");
-        const repsInput = document.getElementById("repsInput");
-        const saveButton = document.getElementById("saveButton");
-        const deleteButton = document.getElementById("deleteButton");
+        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Notes"];
+        let currentDate = new Date();
+        let currentWeekStart;
 
-        const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        let currentDay = null;
+        const content = document.getElementById('content');
+        const popup = document.getElementById('popup');
+        const dateDisplay = document.querySelector('.date-display');
 
-        function loadWeek() {
-            weekContainer.innerHTML = "";
-            DAYS.forEach(day => {
-                const column = document.createElement("div");
-                column.className = "day-column";
-                column.innerHTML = `
-                    <div class="day-header">${day}</div>
-                    <div id="${day}-workouts"></div>
-                `;
-                column.onclick = () => openPopup(day);
-                weekContainer.appendChild(column);
+        const exerciseInput = document.getElementById('exercise');
+        const weightInput = document.getElementById('weight');
+        const setsInput = document.getElementById('sets');
+        const repsInput = document.getElementById('reps');
 
-                const savedWorkouts = JSON.parse(localStorage.getItem(day) || "[]");
-                renderWorkouts(day, savedWorkouts);
+        const saveWorkoutBtn = document.getElementById('save-workout');
+        const cancelWorkoutBtn = document.getElementById('cancel-workout');
+
+        function initialize() {
+            calculateWeekStart();
+            updateWeekDisplay();
+            renderDays();
+        }
+
+        function calculateWeekStart() {
+            const dayOffset = currentDate.getDay() || 7; // Sunday is 0, adjust to 7
+            currentWeekStart = new Date(currentDate);
+            currentWeekStart.setDate(currentDate.getDate() - (dayOffset - 1));
+        }
+
+        function updateWeekDisplay() {
+            const month = currentWeekStart.toLocaleString('default', { month: 'long' });
+            const year = currentWeekStart.getFullYear();
+            dateDisplay.textContent = `${month} ${year}`;
+        }
+
+        function renderDays() {
+            content.innerHTML = "";
+            days.forEach((day, index) => {
+                const column = document.createElement('div');
+                column.className = 'day-column';
+
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.textContent = day;
+
+                const addButton = document.createElement('div');
+                addButton.className = 'add-workout';
+                addButton.textContent = "Add Workout";
+                addButton.addEventListener('click', () => openPopup(index));
+
+                column.appendChild(header);
+
+                if (day !== "Notes") {
+                    const table = document.createElement('table');
+                    const thead = document.createElement('thead');
+                    const tr = document.createElement('tr');
+                    ["Exercise", "Weight", "Sets", "Reps"].forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        tr.appendChild(th);
+                    });
+                    thead.appendChild(tr);
+                    table.appendChild(thead);
+
+                    const tbody = document.createElement('tbody');
+                    tbody.id = `workout-data-${index}`;
+                    table.appendChild(tbody);
+
+                    column.appendChild(table);
+                }
+
+                column.appendChild(addButton);
+                content.appendChild(column);
             });
         }
 
-        function renderWorkouts(day, workouts) {
-            const workoutContainer = document.getElementById(`${day}-workouts`);
-            workoutContainer.innerHTML = "";
-            workouts.forEach(workout => {
-                const workoutDiv = document.createElement("div");
-                workoutDiv.className = "workout-item";
-                workoutDiv.textContent = `${workout.exercise} (${workout.weight} lbs, ${workout.sets}x${workout.reps})`;
-                workoutDiv.onclick = (event) => {
-                    event.stopPropagation();
-                    openPopup(day, workout);
-                };
-                workoutContainer.appendChild(workoutDiv);
-            });
-        }
-
-        function openPopup(day, workout = null) {
-            currentDay = day;
-            popup.classList.add("active");
-            if (workout) {
-                popupTitle.textContent = "Edit Workout";
-                exerciseInput.value = workout.exercise;
-                weightInput.value = workout.weight;
-                setsInput.value = workout.sets;
-                repsInput.value = workout.reps;
-                deleteButton.style.display = "block";
-                deleteButton.onclick = () => deleteWorkout(workout);
-            } else {
-                popupTitle.textContent = "Add Workout";
-                exerciseInput.value = "";
-                weightInput.value = "";
-                setsInput.value = "";
-                repsInput.value = "";
-                deleteButton.style.display = "none";
-            }
-            saveButton.onclick = saveWorkout;
+        function openPopup(dayIndex) {
+            popup.classList.add('active');
+            saveWorkoutBtn.onclick = () => saveWorkout(dayIndex);
+            cancelWorkoutBtn.onclick = closePopup;
         }
 
         function closePopup() {
-            popup.classList.remove("active");
+            popup.classList.remove('active');
+            exerciseInput.value = "";
+            weightInput.value = "";
+            setsInput.value = "";
+            repsInput.value = "";
         }
 
-        function saveWorkout() {
-            const newWorkout = {
+        function saveWorkout(dayIndex) {
+            const workout = {
                 exercise: exerciseInput.value,
                 weight: weightInput.value,
                 sets: setsInput.value,
                 reps: repsInput.value,
             };
-
-            let workouts = JSON.parse(localStorage.getItem(currentDay) || "[]");
-            workouts = workouts.filter(w => w.exercise !== newWorkout.exercise); // Replace or add workout
-            workouts.push(newWorkout);
-            localStorage.setItem(currentDay, JSON.stringify(workouts));
-            renderWorkouts(currentDay, workouts);
+            const dayKey = `${currentWeekStart.toISOString()}-day-${dayIndex}`;
+            const workouts = JSON.parse(localStorage.getItem(dayKey)) || [];
+            workouts.push(workout);
+            localStorage.setItem(dayKey, JSON.stringify(workouts));
+            renderWorkouts(dayIndex);
             closePopup();
         }
 
-        function deleteWorkout(workout) {
-            let workouts = JSON.parse(localStorage.getItem(currentDay) || "[]");
-            workouts = workouts.filter(w => w.exercise !== workout.exercise);
-            localStorage.setItem(currentDay, JSON.stringify(workouts));
-            renderWorkouts(currentDay, workouts);
-            closePopup();
+        function renderWorkouts(dayIndex) {
+            const dayKey = `${currentWeekStart.toISOString()}-day-${dayIndex}`;
+            const workouts = JSON.parse(localStorage.getItem(dayKey)) || [];
+            const tbody = document.getElementById(`workout-data-${dayIndex}`);
+            tbody.innerHTML = "";
+            workouts.forEach(workout => {
+                const tr = document.createElement('tr');
+                ["exercise", "weight", "sets", "reps"].forEach(key => {
+                    const td = document.createElement('td');
+                    td.textContent = workout[key];
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
         }
 
-        loadWeek();
+        document.getElementById('prev-week').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() - 7);
+            initialize();
+        });
+
+        document.getElementById('next-week').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() + 7);
+            initialize();
+        });
+
+        initialize();
     </script>
 </body>
 </html>
