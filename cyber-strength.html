@@ -89,6 +89,7 @@
       background-color: #444;
       margin-bottom: 5px;
       border-radius: 5px;
+      cursor: pointer;
     }
 
     .day-row:nth-child(even) {
@@ -148,6 +149,50 @@
       background-color: #007bff;
       color: #fff;
     }
+
+    /* Popup Styling */
+    #popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      background-color: #2c2c3c;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      z-index: 2000;
+    }
+
+    #popup.active {
+      display: block;
+    }
+
+    #popup h2 {
+      margin-top: 0;
+    }
+
+    #popup input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #popup button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #popup .close {
+      background-color: #ff4d4d;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -201,6 +246,16 @@
     <div class="tab">Workout Timer</div>
     <div class="tab">Notes</div>
   </footer>
+
+  <div id="popup">
+    <h2>Edit Workout</h2>
+    <input type="text" placeholder="Workout">
+    <input type="text" placeholder="Weight">
+    <input type="text" placeholder="Sets">
+    <input type="text" placeholder="Reps">
+    <button class="close">Close</button>
+    <button class="delete">Delete Workout</button>
+  </div>
 
   <script>
     // Toggle Slide Out Menu
@@ -263,6 +318,26 @@
         tab.classList.add('active');
         alert(`Switching to Tab ${index + 1}. Customize this functionality.`);
       });
+    });
+
+    // Popup Functionality
+    const popup = document.getElementById('popup');
+    const closeBtn = popup.querySelector('.close');
+    const deleteBtn = popup.querySelector('.delete');
+
+    document.querySelectorAll('.day-row').forEach((row) => {
+      row.addEventListener('click', () => {
+        popup.classList.add('active');
+      });
+    });
+
+    closeBtn.addEventListener('click', () => {
+      popup.classList.remove('active');
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      alert('Workout deleted! Customize this functionality.');
+      popup.classList.remove('active');
     });
   </script>
 </body>
