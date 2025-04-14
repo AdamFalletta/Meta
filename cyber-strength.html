@@ -3,229 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Strength: Weekly Fitness Log</title>
+    <title>Fitness Log App</title>
     <style>
-        /* Same styles as before */
-        /* Additional styling for table interactivity */
-        table tr {
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 20px;
+            font-size: 36px;
+        }
+
+        .log-container {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+        }
+
+        .log-container input,
+        .log-container select,
+        .log-container textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #333;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+
+        .log-container button {
+            background-color: #6200ea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
         }
 
-        table tr:hover {
-            background-color: #444;
+        .log-container button:hover {
+            background-color: #3700b3;
         }
 
-        .popup {
-            /* Keep the previous popup styles */
+        .logs-list {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .log-entry {
+            background-color: #2c2c2c;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .log-entry p {
+            margin: 5px 0;
+        }
+
+        .log-entry button {
+            background-color: red;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .log-entry button:hover {
+            background-color: darkred;
+        }
+
+        .toggle-dark-mode {
+            margin: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #6200ea;
+            background-color: transparent;
+            border: none;
+        }
+
+        .toggle-dark-mode:hover {
+            color: #3700b3;
+        }
+
+        .dark-mode {
+            background-color: #121212;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Cyber Strength</h1>
-        <div class="date-display"></div>
-    </header>
-    <div class="week-controls">
-        <button id="prev-week">Previous Week</button>
-        <button id="next-week">Next Week</button>
-    </div>
-    <div class="content" id="content"></div>
+    <button class="toggle-dark-mode">Toggle Dark Mode</button>
+    <h1>Fitness Log App</h1>
 
-    <div class="popup" id="popup">
-        <div class="popup-content">
-            <h3 id="popup-title">Add/Edit Workout</h3>
-            <input type="text" id="exercise" placeholder="Exercise">
-            <input type="number" id="weight" placeholder="Weight">
-            <input type="number" id="sets" placeholder="Sets">
-            <input type="number" id="reps" placeholder="Reps">
-            <div class="popup-buttons">
-                <button class="save" id="save-workout">Save</button>
-                <button class="delete" id="delete-workout" style="display: none;">Delete</button>
-                <button class="cancel" id="cancel-workout">Cancel</button>
-            </div>
-        </div>
+    <div class="log-container">
+        <h2>Log your workout</h2>
+        <input type="text" id="exercise-name" placeholder="Exercise Name" required />
+        <select id="exercise-type">
+            <option value="">Select Exercise Type</option>
+            <option value="Cardio">Cardio</option>
+            <option value="Strength">Strength</option>
+            <option value="Flexibility">Flexibility</option>
+            <option value="Endurance">Endurance</option>
+        </select>
+        <input type="number" id="duration" placeholder="Duration (in minutes)" required />
+        <textarea id="notes" placeholder="Notes (optional)"></textarea>
+        <button onclick="addLog()">Add Log</button>
+    </div>
+
+    <div class="logs-list" id="logs-list">
+        <!-- Logs will appear here -->
     </div>
 
     <script>
-        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-        let currentDate = new Date();
-        let currentWeekStart;
-        let currentEditDayIndex = null;
-        let currentEditWorkoutIndex = null;
+        // Dark Mode Toggle
+        const toggleButton = document.querySelector('.toggle-dark-mode');
+        toggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
 
-        const content = document.getElementById('content');
-        const popup = document.getElementById('popup');
-        const dateDisplay = document.querySelector('.date-display');
+        // Add log to local storage
+        function addLog() {
+            const exerciseName = document.getElementById('exercise-name').value;
+            const exerciseType = document.getElementById('exercise-type').value;
+            const duration = document.getElementById('duration').value;
+            const notes = document.getElementById('notes').value;
 
-        const exerciseInput = document.getElementById('exercise');
-        const weightInput = document.getElementById('weight');
-        const setsInput = document.getElementById('sets');
-        const repsInput = document.getElementById('reps');
-
-        const saveWorkoutBtn = document.getElementById('save-workout');
-        const deleteWorkoutBtn = document.getElementById('delete-workout');
-        const cancelWorkoutBtn = document.getElementById('cancel-workout');
-
-        function initialize() {
-            calculateWeekStart();
-            updateWeekDisplay();
-            renderDays();
-        }
-
-        function calculateWeekStart() {
-            const dayOffset = currentDate.getDay() || 7;
-            currentWeekStart = new Date(currentDate);
-            currentWeekStart.setDate(currentDate.getDate() - (dayOffset - 1));
-        }
-
-        function updateWeekDisplay() {
-            const month = currentWeekStart.toLocaleString('default', { month: 'long' });
-            const year = currentWeekStart.getFullYear();
-            dateDisplay.textContent = `${month} ${year}`;
-        }
-
-        function renderDays() {
-            content.innerHTML = "";
-            days.forEach((day, index) => {
-                const column = document.createElement('div');
-                column.className = 'day-column';
-
-                const header = document.createElement('div');
-                header.className = 'day-header';
-                header.textContent = day;
-
-                const table = document.createElement('table');
-                table.addEventListener('click', (event) => {
-                    const rowIndex = [...event.target.parentNode.parentNode.children].indexOf(event.target.parentNode);
-                    openPopup(index, rowIndex);
-                });
-
-                const thead = document.createElement('thead');
-                const tr = document.createElement('tr');
-                ["Exercise", "Weight", "Sets", "Reps"].forEach(headerText => {
-                    const th = document.createElement('th');
-                    th.textContent = headerText;
-                    tr.appendChild(th);
-                });
-                thead.appendChild(tr);
-                table.appendChild(thead);
-
-                const tbody = document.createElement('tbody');
-                tbody.id = `workout-data-${index}`;
-                table.appendChild(tbody);
-
-                column.appendChild(header);
-                column.appendChild(table);
-                content.appendChild(column);
-
-                renderWorkouts(index);
-            });
-        }
-
-        function openPopup(dayIndex, workoutIndex = null) {
-            currentEditDayIndex = dayIndex;
-            currentEditWorkoutIndex = workoutIndex;
-
-            const workouts = getWorkouts(dayIndex);
-            if (workoutIndex !== null && workouts[workoutIndex]) {
-                const workout = workouts[workoutIndex];
-                exerciseInput.value = workout.exercise;
-                weightInput.value = workout.weight;
-                setsInput.value = workout.sets;
-                repsInput.value = workout.reps;
-                deleteWorkoutBtn.style.display = 'block';
-                document.getElementById('popup-title').textContent = 'Edit Workout';
-            } else {
-                exerciseInput.value = '';
-                weightInput.value = '';
-                setsInput.value = '';
-                repsInput.value = '';
-                deleteWorkoutBtn.style.display = 'none';
-                document.getElementById('popup-title').textContent = 'Add Workout';
+            if (!exerciseName || !exerciseType || !duration) {
+                alert('Please fill in all fields.');
+                return;
             }
 
-            popup.classList.add('active');
-        }
-
-        function closePopup() {
-            popup.classList.remove('active');
-            currentEditDayIndex = null;
-            currentEditWorkoutIndex = null;
-        }
-
-        function saveWorkout() {
-            const workout = {
-                exercise: exerciseInput.value,
-                weight: parseInt(weightInput.value),
-                sets: parseInt(setsInput.value),
-                reps: parseInt(repsInput.value),
+            const log = {
+                exerciseName,
+                exerciseType,
+                duration,
+                notes,
+                date: new Date().toLocaleString()
             };
 
-            const workouts = getWorkouts(currentEditDayIndex);
-            if (currentEditWorkoutIndex !== null) {
-                workouts[currentEditWorkoutIndex] = workout;
-            } else {
-                workouts.push(workout);
-            }
+            const logs = JSON.parse(localStorage.getItem('fitnessLogs')) || [];
+            logs.push(log);
+            localStorage.setItem('fitnessLogs', JSON.stringify(logs));
 
-            saveWorkouts(currentEditDayIndex, workouts);
-            renderWorkouts(currentEditDayIndex);
-            closePopup();
+            displayLogs();
+            clearInputFields();
         }
 
-        function deleteWorkout() {
-            const workouts = getWorkouts(currentEditDayIndex);
-            if (currentEditWorkoutIndex !== null) {
-                workouts.splice(currentEditWorkoutIndex, 1);
-                saveWorkouts(currentEditDayIndex, workouts);
-                renderWorkouts(currentEditDayIndex);
-            }
-            closePopup();
-        }
+        // Display logs from local storage
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('fitnessLogs')) || [];
+            const logsList = document.getElementById('logs-list');
+            logsList.innerHTML = '';
 
-        function getWorkouts(dayIndex) {
-            const weekKey = currentWeekStart.toISOString();
-            const weekData = JSON.parse(localStorage.getItem(weekKey)) || {};
-            return weekData[dayIndex] || [];
-        }
-
-        function saveWorkouts(dayIndex, workouts) {
-            const weekKey = currentWeekStart.toISOString();
-            const weekData = JSON.parse(localStorage.getItem(weekKey)) || {};
-            weekData[dayIndex] = workouts;
-            localStorage.setItem(weekKey, JSON.stringify(weekData));
-        }
-
-        function renderWorkouts(dayIndex) {
-            const workouts = getWorkouts(dayIndex);
-            const tbody = document.getElementById(`workout-data-${dayIndex}`);
-            tbody.innerHTML = "";
-            workouts.forEach((workout, index) => {
-                const tr = document.createElement('tr');
-                ["exercise", "weight", "sets", "reps"].forEach(key => {
-                    const td = document.createElement('td');
-                    td.textContent = workout[key];
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
+            logs.forEach((log, index) => {
+                const logEntry = document.createElement('div');
+                logEntry.classList.add('log-entry');
+                logEntry.innerHTML = `
+                    <p><strong>${log.exerciseName}</strong> (${log.exerciseType})</p>
+                    <p><strong>Duration:</strong> ${log.duration} minutes</p>
+                    <p><strong>Notes:</strong> ${log.notes || 'No notes'}</p>
+                    <p><strong>Date:</strong> ${log.date}</p>
+                    <button onclick="deleteLog(${index})">Delete Log</button>
+                `;
+                logsList.appendChild(logEntry);
             });
         }
 
-        document.getElementById('prev-week').addEventListener('click', () => {
-            currentDate.setDate(currentDate.getDate() - 7);
-            initialize();
-        });
+        // Delete log from local storage
+        function deleteLog(index) {
+            const logs = JSON.parse(localStorage.getItem('fitnessLogs')) || [];
+            logs.splice(index, 1);
+            localStorage.setItem('fitnessLogs', JSON.stringify(logs));
 
-        document.getElementById('next-week').addEventListener('click', () => {
-            currentDate.setDate(currentDate.getDate() + 7);
-            initialize();
-        });
+            displayLogs();
+        }
 
-        saveWorkoutBtn.addEventListener('click', saveWorkout);
-        deleteWorkoutBtn.addEventListener('click', deleteWorkout);
-        cancelWorkoutBtn.addEventListener('click', closePopup);
+        // Clear input fields after adding log
+        function clearInputFields() {
+            document.getElementById('exercise-name').value = '';
+            document.getElementById('exercise-type').value = '';
+            document.getElementById('duration').value = '';
+            document.getElementById('notes').value = '';
+        }
 
-        initialize();
+        // Initialize the display of logs when the page loads
+        window.onload = function() {
+            displayLogs();
+        };
     </script>
 </body>
 </html>
