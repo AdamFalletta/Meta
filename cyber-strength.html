@@ -3,202 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Strength: Fitness and Nutrition Log App</title>
+    <title>Fitness Log App</title>
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             background-color: #121212;
             color: #f5f5f5;
-            overflow-x: hidden;
         }
 
-        header, footer {
-            background-color: #1e1e1e;
-            padding: 10px;
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 10px;
+            background: #1e1e1e;
         }
 
-        header .menu-icon, header .settings-icon {
-            font-size: 24px;
+        header h1 {
+            margin: 0;
+        }
+
+        .calendar, .workout-log, .notes {
+            margin: 20px;
+        }
+
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .calendar-controls button {
+            background: #007bff;
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
             cursor: pointer;
         }
 
-        .main {
-            display: none;
-            padding: 20px;
-        }
-
-        .main.active {
-            display: block;
-        }
-
-        .day-column {
+        .workout-day {
+            margin: 10px 0;
+            padding: 10px;
             border: 1px solid #333;
             border-radius: 8px;
-            overflow: hidden;
         }
 
-        .day-header {
-            background-color: #1e1e1e;
-            text-align: center;
-            padding: 10px;
-            font-weight: bold;
-            position: relative;
-        }
-
-        .day-header.today {
-            background-color: #007bff;
-            color: #fff;
-        }
-
-        .workout-row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            padding: 10px;
-            border-bottom: 1px solid #333;
-            align-items: center;
-        }
-
-        .workout-row:nth-child(odd) {
-            background-color: #1c1c1c;
-        }
-
-        .workout-row:nth-child(even) {
-            background-color: #2a2a2a;
-        }
-
-        footer {
-            display: flex;
-            justify-content: space-around;
-        }
-
-        footer button {
-            flex: 1;
-            background: none;
-            border: none;
-            color: #f5f5f5;
-            padding: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        footer button.active {
-            background-color: #007bff;
-            color: #fff;
-        }
-
-        .popup, .slide-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
+        textarea {
             width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .popup-content, .menu-content {
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            padding: 20px;
-            max-width: 90%;
+            height: 150px;
+            background: #1e1e1e;
             color: #f5f5f5;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
         }
-
-        .popup.active, .slide-menu.active {
-            display: flex;
-        }
-
-        .hidden {
-            display: none;
-        }
-
     </style>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuIcon = document.querySelector('.menu-icon');
-            const settingsIcon = document.querySelector('.settings-icon');
-            const slideMenu = document.querySelector('.slide-menu');
-            const settingsPopup = document.querySelector('.popup');
-            const footerButtons = document.querySelectorAll('footer button');
-            const mainSections = document.querySelectorAll('.main');
-
-            menuIcon.addEventListener('click', () => {
-                slideMenu.classList.toggle('active');
-            });
-
-            settingsIcon.addEventListener('click', () => {
-                settingsPopup.classList.toggle('active');
-            });
-
-            footerButtons.forEach((button, index) => {
-                button.addEventListener('click', () => {
-                    footerButtons.forEach(btn => btn.classList.remove('active'));
-                    mainSections.forEach(section => section.classList.remove('active'));
-                    button.classList.add('active');
-                    mainSections[index].classList.add('active');
-                });
-            });
-
-            // Set default active tab
-            footerButtons[0].classList.add('active');
-            mainSections[0].classList.add('active');
-        });
-    </script>
 </head>
 <body>
     <header>
-        <span class="menu-icon">&#9776;</span>
-        <h1>Cyber Strength</h1>
-        <span class="settings-icon">&#9881;</span>
+        <h1>Fitness Log App</h1>
     </header>
 
-    <div class="main">
-        <h2>Workout Log</h2>
-        <div class="day-column">
-            <div class="day-header today">MON</div>
-            <div class="workout-row">
-                <div>Bench Press</div>
-                <div>200</div>
-                <div>3</div>
-                <div>8</div>
-            </div>
+    <div class="calendar">
+        <div class="calendar-controls">
+            <button id="prev-week">Previous Week</button>
+            <span id="week-display"></span>
+            <button id="next-week">Next Week</button>
         </div>
     </div>
 
-    <div class="main">
-        <h2>Food Log</h2>
-        <p>Content for Food Log goes here.</p>
+    <div class="workout-log">
+        <h2>Workout Log</h2>
+        <div id="workout-container"></div>
     </div>
 
-    <div class="main">
-        <h2>Workout Timer</h2>
-        <p>Content for Workout Timer goes here.</p>
-    </div>
-
-    <div class="main">
+    <div class="notes">
         <h2>Notes</h2>
-        <textarea rows="10" cols="50" style="width: 100%; background-color: #1e1e1e; color: #f5f5f5; border: none; padding: 10px;">Write your notes here...</textarea>
+        <textarea id="notes-area" placeholder="Write your notes..."></textarea>
     </div>
 
-    <footer>
-        <button>Workout Log</button>
-        <button>Food Log</button>
-        <button>Timer</button>
-        <button>Notes</button>
-    </footer>
+    <script>
+        // Helpers for week handling
+        const MS_PER_DAY = 86400000;
+        const DAYS_PER_WEEK = 7;
 
-    <div class="slide-menu">
-        <div class="menu-content">Menu Content Here</div>
-    </div>
+        let currentDate = new Date();
+        let currentWeekStart = getWeekStart(currentDate);
 
-    <div class="popup">
-        <div class="popup-content">Settings Content Here</div>
-    </div>
+        function getWeekStart(date) {
+            const dayOfWeek = date.getDay();
+            const start = new Date(date);
+            start.setDate(date.getDate() - dayOfWeek);
+            return start;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function updateWeekDisplay() {
+            const weekDisplay = document.getElementById("week-display");
+            const startOfWeek = formatDate(currentWeekStart);
+            const endOfWeek = formatDate(new Date(currentWeekStart.getTime() + (DAYS_PER_WEEK - 1) * MS_PER_DAY));
+            weekDisplay.textContent = `${startOfWeek} - ${endOfWeek}`;
+        }
+
+        function loadWorkouts() {
+            const container = document.getElementById("workout-container");
+            container.innerHTML = '';
+            for (let i = 0; i < DAYS_PER_WEEK; i++) {
+                const day = new Date(currentWeekStart.getTime() + i * MS_PER_DAY);
+                const dayKey = day.toISOString().split('T')[0];
+                const workoutData = JSON.parse(localStorage.getItem(dayKey) || '[]');
+
+                const dayDiv = document.createElement("div");
+                dayDiv.className = "workout-day";
+                dayDiv.innerHTML = `<strong>${formatDate(day)}</strong>`;
+                workoutData.forEach(w => {
+                    const p = document.createElement("p");
+                    p.textContent = `${w.exercise}: ${w.sets} sets of ${w.reps}`;
+                    dayDiv.appendChild(p);
+                });
+                container.appendChild(dayDiv);
+            }
+        }
+
+        function saveNotes() {
+            const notes = document.getElementById("notes-area").value;
+            localStorage.setItem("fitnessNotes", notes);
+        }
+
+        function loadNotes() {
+            const notes = localStorage.getItem("fitnessNotes") || '';
+            document.getElementById("notes-area").value = notes;
+        }
+
+        // Event Listeners
+        document.getElementById("prev-week").addEventListener("click", () => {
+            currentWeekStart.setDate(currentWeekStart.getDate() - DAYS_PER_WEEK);
+            updateWeekDisplay();
+            loadWorkouts();
+        });
+
+        document.getElementById("next-week").addEventListener("click", () => {
+            currentWeekStart.setDate(currentWeekStart.getDate() + DAYS_PER_WEEK);
+            updateWeekDisplay();
+            loadWorkouts();
+        });
+
+        document.getElementById("notes-area").addEventListener("mouseout", saveNotes);
+
+        // Initialize
+        updateWeekDisplay();
+        loadWorkouts();
+        loadNotes();
+    </script>
 </body>
 </html>
