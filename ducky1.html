@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kn*cKOuT!</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: black;
+            overflow: hidden;
+        }
+
+        .logo{
+            width:100%;
+            margin-left:auto;
+            margin-right:auto;
+        }
+
+        .bg-art{       
+            position:absolute;
+            display: block;
+            z-index:1;
+            width:1080px;
+            height:630px;
+            margin-top:-10px;
+            object-fit:cover;
+            transform:scale(1.5);
+            
+        }
+               .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            grid-gap:8px;
+            width: 1062px;
+            height: 1062px;
+            border: 1px solid black;
+            margin-left:8px;
+            z-index:4;
+            margin-top:852px;
+            position:relative;
+        }
+        .cell {
+            background-color: #121212;
+            border-radius:4px;
+            opacity:1;
+  border: 8px solid;
+  border-color: 
+    rgba(255, 255, 255, 0.1) /* Top border */
+    rgba(0, 0, 0, 0.1)      /* Right border */
+    rgba(0, 0, 0, 0.1)      /* Bottom border */
+    rgba(255, 255, 255, 0.1); /* Left border */
+              animation: shim7mer 1.5s infinite;
+        }
+            .matrix {
+                position:absolute;
+                z-index:6;
+                display: grid;
+                grid-template-columns: repeat(128, 1fr);
+                grid-template-rows: repeat(32, 1fr);
+                gap: 2px;
+                width:1026px;
+                margin-left:16px;
+                margin-top:590px;
+                height: 250px;
+                transform:scale(0.7);
+                background: #08004d;
+                border: 10px solid black;
+    }
+    .cell-dm {
+      width: 100%;
+      aspect-ratio: 1;
+      background-color: #111;
+      border-radius: 50%;
+    }
+    .cell-dm.on {
+      background-color: #f00;
+    }
+
+        .blue{     background: radial-gradient(#0083ff, #001326);animation-delay: 0.2s;}
+        .green{ background: radial-gradient(#00d802, #002e01); animation-delay: 0.1s;}
+        .gold{     background: radial-gradient(#ffca00, #332800); animation-delay: 0.3s;}
+        .pink{    background: radial-gradient(#ff00d0, #47003a);animation-delay: 0.5s;}
+        .purple{ background: radial-gradient(#9800ff, #25003e);animation-delay: 0.4s;}
+        .red{background: radial-gradient(#ff0000, #470000);}
+        .teal{background: radial-gradient(#00e1ff, #004c56); animation-delay: 0.7s;}
+        .orange{background: radial-gradient(#ff6c00, #491400);animation-delay: 0.8s;}
+        .white{    background: radial-gradient(#ffffff, #696969);animation-delay: 0.6s;}
+        .grey{background:radial-gradient(#646464, #222222);}
+
+                @keyframes shimmer {
+            0% {
+             
+            
+                filter: brightness(1);
+           
+            }
+            50% {
+             
+                   filter: brightness(.4);
+            
+            }
+            100% {
+        
+          
+              filter: brightness(1);
+            }
+        }
+
+        
+    </style>
+</head>
+<body>
+    <div class="logo">
+         <img src="https://cdn.pixabay.com/photo/2013/07/12/14/53/loudspeaker-148969_1280.png" style="position:absolute;z-index:3;width: 140px;margin-top: 642px;margin-left: 923px; filter:brightness(.65) drop-shadow(2px 4px 6px black);">
+<img src="https://cdn.pixabay.com/photo/2013/07/12/14/53/loudspeaker-148969_1280.png" style="position:absolute;z-index:3;width: 140px;margin-top: 642px;margin-left: 14px;filter:brightness(.65) drop-shadow(2px 4px 6px black);">
+          <img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.4; margin-top:-231px;"><img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3;margin-top:850px;filter: invert(1);mix-blend-mode: soft-light;">
+        <div style="background: #111111;width:1080px;height: 244px;position:absolute;z-index:2;margin-top: 600px; border-top: 2px solid #333333;"></div>
+        <img class="bg-art" src="">
+         <div class="matrix" id="matrix"></div>
+
+  <script>
+    // Define the character map with 8x8 characters
+    const charMap = {
+      ' ': [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+      'H': [0x66, 0x66, 0x66, 0x7E, 0x66, 0x66, 0x66, 0x00],
+      'E': [0x7E, 0x60, 0x60, 0x7C, 0x60, 0x60, 0x7E, 0x00],
+      'L': [0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x7E, 0x00],
+      'O': [0x3C, 0x66, 0x66, 0x66, 0x66, 0x66, 0x3C, 0x00],
+      'W': [0x66, 0x66, 0x66, 0x66, 0x66, 0x7E, 0x66, 0x00],
+      'R': [0x7C, 0x66, 0x66, 0x7C, 0x6C, 0x66, 0x66, 0x00],
+      'D': [0x7C, 0x66, 0x66, 0x66, 0x66, 0x66, 0x7C, 0x00],
+      '.': [0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x18, 0x00],
+      'A': [0x3C, 0x66, 0x66, 0x7E, 0x66, 0x66, 0x66, 0x00],
+      'V': [0x66, 0x66, 0x66, 0x66, 0x66, 0x3C, 0x18, 0x00],
+      'N': [0x66, 0x76, 0x7E, 0x7E, 0x6E, 0x66, 0x66, 0x00],
+      'I': [0x7E, 0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x00],
+      'C': [0x3C, 0x66, 0x60, 0x60, 0x60, 0x66, 0x3C, 0x00],
+      'Y': [0x66, 0x66, 0x66, 0x3C, 0x18, 0x18, 0x7E, 0x00]
+    };
+
+    const message = "HELLO WORLD".split("");
+    const matrix = document.getElementById("matrix");
+    const rows = 32;
+    const cols = 128;
+    const grid = [];
+
+    // Create the matrix grid
+    for (let i = 0; i < rows; i++) {
+      grid[i] = [];
+      for (let j = 0; j < cols; j++) {
+        const cell = document.createElement("div");
+        cell.className = "cell-dm";
+        matrix.appendChild(cell);
+        grid[i][j] = cell;
+      }
+    }
+
+    let offset = 0;
+    let colorIndex = 0;
+    const colors = ["#f00","#0f0", "#00f", "#ff0", "#f0f"];
+    const scrollSpeed = 75; // Speed in milliseconds
+    const colorChangeInterval = 50; // Interval to change colors in milliseconds
+
+    // Render the matrix
+    function renderMatrix() {
+      // Clear the grid
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          grid[i][j].classList.remove("on");
+          grid[i][j].style.backgroundColor = "#111";
+        }
+      }
+
+      // Draw the message
+      let col = offset;
+      for (const char of message) {
+        const glyph = charMap[char] || charMap[' '];
+        for (let i = 0; i < glyph.length; i++) {
+          const row = glyph[i];
+          for (let bit = 0; bit < 8; bit++) {
+            if (row & (1 << (7 - bit))) {
+              const x = i;
+              const y = (col + bit) % cols;
+              if (x < rows && y >= 0) {
+                grid[x][y].classList.add("on");
+                grid[x][y].style.backgroundColor = colors[colorIndex];
+              }
+            }
+          }
+        }
+        col += 8;
+      }
+
+      offset = (offset - 1 + cols) % cols;
+    }
+
+    // Scroll the marquee
+    function startMarquee() {
+      setInterval(() => {
+        renderMatrix();
+      }, scrollSpeed);
+    }
+
+    // Cycle colors after the scroll finishes
+    function cycleColors() {
+      setInterval(() => {
+        colorIndex = (colorIndex + 1) % colors.length;
+      }, colorChangeInterval);
+    }
+
+    startMarquee();
+    cycleColors();
+  </script>
+    </div>
+      <div class="grid">
+        
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+
+        <div class="cell"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell"></div>
+        <div class="cell gold"></div>
+
+        <div class="cell orange"></div>
+        <div class="cell orange"></div>
+        <div class="cell orange"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell"></div>
+        <div class="cell gold"></div>
+
+        <div class="cell orange"></div>
+        <div class="cell orange"></div>
+        <div class="cell orange"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+        <div class="cell gold"></div>
+          
+        <div class="cell blue"></div>
+        <div class="cell blue"></div>
+        <div class="cell blue"></div>
+        <div class="cell blue"></div>
+        <div class="cell blue"></div>
+        <div class="cell blue"></div>
+        <div class="cell blue"></div>
+        <div class="cell blue"></div>
+    </div>
+</body>
+</html>
