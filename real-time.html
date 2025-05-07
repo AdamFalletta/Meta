@@ -19,19 +19,25 @@
 
         .schedule {
             display: grid;
-            grid-template-columns: 1fr 7fr;
+            grid-template-columns: 1fr 6fr;
+            grid-auto-rows: 1fr;
             width: 90%;
             height: 90%;
             border: 1px solid #444;
             border-radius: 8px;
+            overflow: hidden;
         }
 
-        .time-slot {
-            padding: 10px;
+        .time-slot, .week-slot {
+            padding: 5px;
             border-bottom: 1px solid #333;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .time-slot {
+            border-right: 1px solid #333;
         }
 
         .time-slot.highlight {
@@ -63,52 +69,70 @@
             }
         }
 
-        .week-day {
+        .header {
+            grid-column: span 2;
             text-align: center;
+            background-color: #1e1e1e;
             padding: 10px;
-            border-bottom: 1px solid #333;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
         }
 
         .row {
-            display: flex;
-            flex-direction: column;
+            display: contents;
         }
     </style>
 </head>
 <body>
     <div class="schedule">
-        <div class="row" id="timeColumn"></div>
-        <div class="row" id="weekColumn"></div>
+        <div class="header">Weekly Schedule</div>
+        <div class="row">
+            <div class="time-slot header">Time</div>
+            <div class="week-slot header">Day</div>
+        </div>
+        <div id="scheduleContent"></div>
     </div>
 
     <script>
-        const timeSlots = [
-            "5:15 AM", "6:00 AM", "6:45 AM", "7:30 AM", "8:15 AM", "9:00 AM", "9:45 AM", "10:30 AM",
-            "11:15 AM", "12:00 PM", "12:45 PM", "1:30 PM", "2:15 PM", "3:00 PM", "3:45 PM", "4:30 PM",
-            "5:15 PM", "6:00 PM", "6:45 PM", "7:30 PM", "8:15 PM", "9:00 PM", "9:45 PM", "10:30 PM",
-            "11:15 PM"
-        ];
-
+        const timeIntervals = 15; // minutes
+        const startHour = 5; // 5:00 AM
+        const startMinute = 15;
+        const endHour = 23; // 11:00 PM
         const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        const timeColumn = document.getElementById("timeColumn");
-        const weekColumn = document.getElementById("weekColumn");
+        const scheduleContent = document.getElementById("scheduleContent");
 
-        // Populate time slots
-        timeSlots.forEach(time => {
-            const div = document.createElement("div");
-            div.className = "time-slot";
-            div.textContent = time;
-            timeColumn.appendChild(div);
-        });
+        function generateTimeSlots() {
+            const slots = [];
+            let currentHour = startHour;
+            let currentMinute = startMinute;
+            while (currentHour < endHour || (currentHour === endHour && currentMinute === 0)) {
+                const formattedTime = `${currentHour % 12 || 12}:${currentMinute.toString().padStart(2, '0')} ${currentHour < 12 ? 'AM' : 'PM'}`;
+                slots.push(formattedTime);
+                currentMinute += timeIntervals;
+                if (currentMinute >= 60) {
+                    currentMinute -= 60;
+                    currentHour += 1;
+                }
+            }
+            return slots;
+        }
 
-        // Populate week days
-        daysOfWeek.forEach(day => {
-            const div = document.createElement("div");
-            div.className = "week-day";
-            div.textContent = day;
-            weekColumn.appendChild(div);
-        });
+        function populateSchedule() {
+            const timeSlots = generateTimeSlots();
+
+            timeSlots.forEach(time => {
+                const timeSlotDiv = document.createElement("div");
+                timeSlotDiv.className = "time-slot";
+                timeSlotDiv.textContent = time;
+                scheduleContent.appendChild(timeSlotDiv);
+
+                const daySlotDiv = document.createElement("div");
+                daySlotDiv.className = "week-slot";
+                daySlotDiv.textContent = daysOfWeek[new Date().getDay()];
+                scheduleContent.appendChild(daySlotDiv);
+            });
+        }
 
         function updateHighlight() {
             const now = new Date();
@@ -116,27 +140,30 @@
             const currentMinutes = now.getMinutes();
             const totalMinutes = currentHours * 60 + currentMinutes;
 
-            // Find the current slot index
-            const currentIndex = timeSlots.findIndex(time => {
-                const [hour, minutePart] = time.split(/[: ]/);
-                const minutes = parseInt(minutePart);
-                const isPM = time.includes("PM");
-                let hours = parseInt(hour) % 12;
-                if (isPM) hours += 12;
-                const slotMinutes = hours * 60 + minutes;
-                return slotMinutes <= totalMinutes && totalMinutes < slotMinutes + 45;
-            });
+            const timeSlots = document.querySelectorAll(".time-slot");
+            const daySlots = document.querySelectorAll(".week-slot");
 
             // Remove previous highlights
-            document.querySelectorAll(".time-slot.highlight").forEach(slot => slot.classList.remove("highlight"));
+            document.querySelectorAll(".highlight").forEach(slot => slot.classList.remove("highlight"));
 
-            if (currentIndex !== -1) {
-                timeColumn.children[currentIndex].classList.add("highlight");
-            }
+            // Highlight current slot
+            timeSlots.forEach((slot, index) => {
+                const [hour, minutePart, period] = slot.textContent.split(/[: ]/);
+                const minutes = parseInt(minutePart);
+                let hours = parseInt(hour) % 12;
+                if (period === "PM") hours += 12;
+                const slotMinutes = hours * 60 + minutes;
+
+                if (slotMinutes <= totalMinutes && totalMinutes < slotMinutes + timeIntervals) {
+                    timeSlots[index].classList.add("highlight");
+                    daySlots[index].classList.add("highlight");
+                }
+            });
         }
 
-        setInterval(updateHighlight, 1000); // Check every second
-        updateHighlight(); // Initial call
+        populateSchedule();
+        setInterval(updateHighlight, 1000);
+        updateHighlight();
     </script>
 </body>
 </html>
