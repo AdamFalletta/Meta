@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Schedule App</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #FFFFFF;
+        }
+
+        .container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+        }
+
+        .header {
+            display: grid;
+            grid-template-columns: 60px repeat(7, 1fr);
+            text-align: center;
+            background-color: #1F1F1F;
+            padding: 1rem 0;
+            border-bottom: 2px solid #333333;
+        }
+
+        .header div {
+            font-size: 3.2rem;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 60px repeat(7, 1fr);
+            grid-auto-rows: 1fr;
+            overflow-y: auto;
+            grid-gap: 8px;
+        }
+
+        .time-slot {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #333333;
+            border-right: 1px solid #333333;
+            background-color: #1F1F1F;
+        }
+
+        .cell {
+            border: 1px solid #333333;
+            padding: 0.5rem;
+            position: relative;
+            cursor: pointer;
+            background-color: #1E1E1E;
+            border-left: 12px solid transparent;
+            font-size: 20px;
+            border-radius: 4px;
+        }
+
+        .cell:hover {
+            background-color: #292929;
+        }
+
+        .cell .content {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #1E1E1E;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .modal-content input, .modal-content select, .modal-content button {
+            width: 100%;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .modal-content button {
+            background-color: #4CAF50;
+            color: #FFF;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #45A049;
+        }
+
+        .color-red { border-left-color: #FF4C4C; }
+        .color-orange { border-left-color: #FFA500; }
+        .color-yellow { border-left-color: #FFD700; }
+        .color-light-green { border-left-color: #90EE90; }
+        .color-dark-green { border-left-color: #006400; }
+        .color-clear { border-left-color: transparent; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div></div>
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+        </div>
+        <div class="grid" id="grid">
+            <!-- Time slots and cells -->
+            <div class="time-slot">6AM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+            <div class="time-slot">9AM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+            <div class="time-slot">12PM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+            <div class="time-slot">3PM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+            <div class="time-slot">6PM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+            <div class="time-slot">9PM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+            <div class="time-slot">12AM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+            <div class="time-slot">3AM</div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2>Edit Slot</h2>
+            <input type="text" id="task-title" placeholder="Task Title">
+            <select id="importance">
+                <option value="color-red">Red - High Importance</option>
+                <option value="color-orange">Orange - Medium Importance</option>
+                <option value="color-yellow">Yellow - Low Importance</option>
+                <option value="color-light-green">Light Green - Very Low Importance</option>
+                <option value="color-dark-green">Dark Green - Completed</option>
+                <option value="color-clear">Clear - No Color</option>
+            </select>
+            <button id="save-task">Save</button>
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const modal = document.getElementById('modal');
+        const taskTitle = document.getElementById('task-title');
+        const importance = document.getElementById('importance');
+        const saveTask = document.getElementById('save-task');
+        let currentCell = null;
+
+        // Load saved tasks from localStorage
+        const loadTasks = () => {
+            const savedTasks = JSON.parse(localStorage.getItem('weeklySchedule')) || {};
+            document.querySelectorAll('.cell').forEach((cell, index) => {
+                const taskData = savedTasks[index];
+                if (taskData) {
+                    cell.innerHTML = `<div class="content">${taskData.title}</div>`;
+                    cell.className = `cell ${taskData.color}`;
+                } else {
+                    cell.innerHTML = '';
+                    cell.className = 'cell';
+                }
+            });
+        };
+
+        // Save tasks to localStorage
+        const saveTasks = () => {
+            const tasks = {};
+            document.querySelectorAll('.cell').forEach((cell, index) => {
+                const content = cell.querySelector('.content');
+                if (content) {
+                    tasks[index] = {
+                        title: content.textContent,
+                        color: cell.className.replace('cell ', '').trim()
+                    };
+                }
+            });
+            localStorage.setItem('weeklySchedule', JSON.stringify(tasks));
+        };
+
+        // Add event listener to cells
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                currentCell = cell;
+                const content = currentCell.querySelector('.content');
+                taskTitle.value = content ? content.textContent : '';
+                modal.classList.add('active');
+            });
+        });
+
+        // Save task and close modal
+        saveTask.addEventListener('click', () => {
+            const title = taskTitle.value;
+            const colorClass = importance.value;
+            if (currentCell) {
+                if (colorClass === 'color-clear') {
+                    currentCell.innerHTML = '';
+                    currentCell.className = 'cell';
+                } else {
+                    currentCell.innerHTML = `<div class="content">${title}</div>`;
+                    currentCell.className = `cell ${colorClass}`;
+                }
+                saveTasks(); // Save changes
+            }
+            modal.classList.remove('active');
+        });
+
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Initialize the schedule by loading tasks
+        loadTasks();
+    </script>
+</body>
+</html>
