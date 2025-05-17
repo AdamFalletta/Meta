@@ -120,6 +120,7 @@
         .color-yellow { border-left-color: #FFD700; }
         .color-light-green { border-left-color: #90EE90; }
         .color-dark-green { border-left-color: #006400; }
+        .color-clear {border-left-color: transparent;}
     </style>
 </head>
 <body>
@@ -172,6 +173,7 @@
                 <option value="color-yellow">Yellow - Low Importance</option>
                 <option value="color-light-green">Light Green - Very Low Importance</option>
                 <option value="color-dark-green">Dark Green - Completed</option>
+                <option value="color-clear">Clear - No Color</option>
             </select>
             <button id="save-task">Save</button>
         </div>
@@ -222,18 +224,20 @@
         });
     });
 
-    // Save task
-    saveTask.addEventListener('click', () => {
-        const title = taskTitle.value;
-        const colorClass = importance.value;
-        if (currentCell) {
-            currentCell.innerHTML = `<div class="content">${title}</div>`;
-            currentCell.className = `cell ${colorClass}`;
-            saveTasks();
-        }
-        modal.classList.remove('active');
-    });
+saveTask.addEventListener('click', () => {
+    const title = taskTitle.value;
+    const colorClass = importance.value;
+    if (currentCell) {
+        currentCell.innerHTML = `<div class="content">${title}</div>`;
+        currentCell.className = `cell ${colorClass}`;
 
+        // If "Clear" is selected, remove the border-left class
+        if (colorClass === 'color-clear') {
+            currentCell.style.borderLeftColor = 'transparent';
+        }
+    }
+    modal.classList.remove('active');
+});
     // Close modal on outside click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
