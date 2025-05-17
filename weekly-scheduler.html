@@ -175,41 +175,72 @@
         </div>
     </div>
 
-    <script>
-        const grid = document.getElementById('grid');
-        const modal = document.getElementById('modal');
-        const taskTitle = document.getElementById('task-title');
-        const importance = document.getElementById('importance');
-        const saveTask = document.getElementById('save-task');
-        let currentCell = null;
+<script>
+    const grid = document.getElementById('grid');
+    const modal = document.getElementById('modal');
+    const taskTitle = document.getElementById('task-title');
+    const importance = document.getElementById('importance');
+    const saveTask = document.getElementById('save-task');
+    let currentCell = null;
 
-        // Add event listener to cells
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.addEventListener('click', () => {
-                currentCell = cell;
-                const content = currentCell.querySelector('.content');
-                taskTitle.value = content ? content.textContent : '';
-                modal.classList.add('active');
-            });
-        });
-
-        // Save task
-        saveTask.addEventListener('click', () => {
-            const title = taskTitle.value;
-            const colorClass = importance.value;
-            if (currentCell) {
-                currentCell.innerHTML = `<div class="content">${title}</div>`;
-                currentCell.className = `cell ${colorClass}`;
+    // Load saved tasks from localStorage
+    const loadTasks = () => {
+        const savedTasks = JSON.parse(localStorage.getItem('weeklySchedule')) || {};
+        document.querySelectorAll('.cell').forEach((cell, index) => {
+            const taskData = savedTasks[index];
+            if (taskData) {
+                cell.innerHTML = `<div class="content">${taskData.title}</div>`;
+                cell.className = `cell ${taskData.color}`;
             }
+        });
+    };
+
+    // Save tasks to localStorage
+    const saveTasks = () => {
+        const tasks = {};
+        document.querySelectorAll('.cell').forEach((cell, index) => {
+            const content = cell.querySelector('.content');
+            if (content) {
+                tasks[index] = {
+                    title: content.textContent,
+                    color: cell.className.replace('cell ', '').trim()
+                };
+            }
+        });
+        localStorage.setItem('weeklySchedule', JSON.stringify(tasks));
+    };
+
+    // Add event listener to cells
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+            currentCell = cell;
+            const content = currentCell.querySelector('.content');
+            taskTitle.value = content ? content.textContent : '';
+            modal.classList.add('active');
+        });
+    });
+
+    // Save task
+    saveTask.addEventListener('click', () => {
+        const title = taskTitle.value;
+        const colorClass = importance.value;
+        if (currentCell) {
+            currentCell.innerHTML = `<div class="content">${title}</div>`;
+            currentCell.className = `cell ${colorClass}`;
+            saveTasks();
+        }
+        modal.classList.remove('active');
+    });
+
+    // Close modal on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
             modal.classList.remove('active');
-        });
+        }
+    });
 
-        // Close modal on outside click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
-    </script>
+    // Initialize the schedule by loading tasks
+    loadTasks();
+</script>
 </body>
 </html>
