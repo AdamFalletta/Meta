@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Wall</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="videoWall"></canvas>
+
+    <script>
+        const canvas = document.getElementById('videoWall');
+        const ctx = canvas.getContext('2d');
+
+        const gridSize = 64;
+        const videoURL = 'https://video-previews.elements.envatousercontent.com/h264-video-previews/bd827db8-9456-4d21-882d-a68ad8b5ee24/43989246.mp4'; // Replace with your video URL
+
+        // Resize canvas to fill screen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const video = document.createElement('video');
+        video.src = videoURL;
+        video.crossOrigin = 'anonymous';
+        video.loop = true;
+        video.muted = true;
+        video.play();
+
+        video.addEventListener('loadeddata', () => {
+            const cellWidth = canvas.width / gridSize;
+            const cellHeight = canvas.height / gridSize;
+
+            function drawFrame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let y = 0; y < gridSize; y++) {
+                    for (let x = 0; x < gridSize; x++) {
+                        const sx = (video.videoWidth / gridSize) * x;
+                        const sy = (video.videoHeight / gridSize) * y;
+                        const sWidth = video.videoWidth / gridSize;
+                        const sHeight = video.videoHeight / gridSize;
+
+                        const dx = cellWidth * x;
+                        const dy = cellHeight * y;
+                        const dWidth = cellWidth;
+                        const dHeight = cellHeight;
+
+                        ctx.drawImage(video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+                    }
+                }
+
+                requestAnimationFrame(drawFrame);
+            }
+
+            drawFrame();
+        });
+    </script>
+</body>
+</html>
