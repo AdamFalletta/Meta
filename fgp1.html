@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kn*cKOuT!</title>
     <style>
+@font-face {font-family: arcadefont;src: url(ARCADE_N.ttf);format('truetype');}
+
         html, body {
             margin: 0;
             padding: 0;
@@ -20,6 +22,18 @@
             margin-right:auto;
         }
 
+	.credits-p1{
+		position: absolute; 
+		z-index:8; 
+		display:inline-block; 
+		font-family: arcadefont; 
+		color: #fff7b1; 
+		font-size:30px;
+		filter: drop-shadow(8px 4px 1px black);
+		margin-top:30px;
+		margin-left:740px;
+		}
+
         .bg-art{       
             position:absolute;
             display: block;
@@ -27,8 +41,19 @@
             width:1080px;
             height:600px;
             object-fit:cover;
-            transform:scale(1);
+            transform:scale(1.2);
         }
+logo-top{
+
+      position:absolute;
+      z-index:2;
+            display: block;
+            width:1080px;
+            height:1080px;
+            object-fit:cover;
+        transform:scale(.4);
+}
+
                .grid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
@@ -43,7 +68,7 @@
             position:relative;
         }
         .cell {
-            background-color: #0d0d0d;
+            background-color: #060606;
             border-radius:4px;
             opacity:1;
   border: 8px solid;
@@ -64,7 +89,7 @@
                 margin-left:16px;
                 margin-top:590px;
                 height: 250px;
-                transform:scale(0.7);
+                transform:scale(0.6);
                 background: #042903;
     border: 10px solid black;
     }
@@ -89,12 +114,16 @@
     </style>
 </head>
 <body>
+<div class="credits-p1">CREDITS: 0</div>
+
     <div class="logo">
-         <img src="https://cdn.pixabay.com/photo/2013/07/12/14/53/loudspeaker-148969_1280.png" style="position:absolute;z-index:3;;width: 140px;margin-top: 642px;margin-left: 910px; filter:brightness(.65) drop-shadow(2px 4px 6px black);">
-<img src="https://cdn.pixabay.com/photo/2013/07/12/14/53/loudspeaker-148969_1280.png" style="position:absolute;z-index:3;width: 140px;margin-top: 642px;margin-left: 8px;filter:brightness(.65) drop-shadow(2px 4px 6px black);">
+         <img src="https://cdn.pixabay.com/photo/2013/07/12/14/53/loudspeaker-148969_1280.png" style="position:absolute;z-index:3;;width: 160px;margin-top: 642px;margin-left: 890px; filter:brightness(.65) drop-shadow(2px 4px 6px black);">
+
+<img src="https://cdn.pixabay.com/photo/2013/07/12/14/53/loudspeaker-148969_1280.png" style="position:absolute;z-index:3;width: 160px;margin-top: 642px;margin-left: 30px;filter:brightness(.65) drop-shadow(2px 4px 6px black);">
           <img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.4; margin-top:-231px;"><img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3;margin-top:850px;filter: invert(1);mix-blend-mode: soft-light;">
-        <img class="bg-art" src="img/fgf1.jfif">
-        <div style="background: #111111;width:1080px;height: 244px;position:absolute;z-index:2;margin-top: 600px; border-top: 2px solid #333333;"></div>
+        <img class="bg-art" src="img/fgf418.png">
+ 
+        <div style="background: #030303;width:1080px;height: 244px;position:absolute;z-index:2;margin-top: 600px; border-top: 2px solid #333333;"></div>
         <div style="background: #000000;width:1080px;height: 300px;position:absolute;z-index:2;margin-top: 844px;"></div>
          <div class="matrix" id="matrix"></div>
 
@@ -192,7 +221,7 @@
     cycleColors();
   </script>
     </div>
-  <img src="img/s-o-chat.PNG" style="display:none;position:absolute;width:1062px;height:1062px;margin-top: 850px;margin-left: 8px;z-index: 8;mix-blend-mode: color;filter: contrast(1.5); transform:scaleX(-1);">
+
       <div class="grid">
         <div class="cell"></div>
         <div class="cell gold"></div>
