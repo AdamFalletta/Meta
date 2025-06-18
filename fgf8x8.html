@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +7,8 @@
     <title>Kn*cKOuT!</title>
     <style>
 @font-face {font-family: arcadefont;src: url(ARCADE_N.ttf);format('truetype');}
-
+@font-face {font-family: digitalfont;src: url(DS-DIGI.ttf);format('truetype');}
+@font-face {font-family: digitalbfont;src: url(DS-DIGIB.ttf);format('truetype');}
         html, body {
             margin: 0;
             padding: 0;
@@ -22,6 +24,12 @@
             margin-right:auto;
         }
 
+.digital-font{
+	font-family: digitalbfont; 
+	font-size:160px;
+	color:#efce29;
+}
+
 	.credits-p1{
 		position: absolute; 
 		z-index:8; 
@@ -31,7 +39,7 @@
 		font-size:34px;
 		filter: drop-shadow(8px 4px 1px black);
 		margin-top:15px;
-		margin-left:720px;
+		margin-left:680px;
 		}
 
 	.credits-p2{
@@ -44,6 +52,33 @@
 		filter: drop-shadow(8px 4px 1px black);
 		margin-top:15px;
 		margin-left:30px;
+		}
+
+	.home-score{
+		position: absolute; 
+		z-index:8; 
+		margin-top:349px;
+		margin-left:80px;
+		}
+	.away-score{
+		position: absolute; 
+		z-index:8; 
+		margin-top:349px;
+		margin-left:875px;
+		}
+	.home-score-bottom{
+		position: absolute; 
+		z-index:7; 
+		margin-top:349px;
+		margin-left:80px;
+                color: #282828;
+		}
+	.away-score-bottom{
+		position: absolute; 
+		z-index:7; 
+		margin-top:349px;
+		margin-left:836px;
+		color: #282828;
 		}
 
         .bg-art{       
@@ -85,10 +120,10 @@ logo-top{
             opacity:1;
   border: 8px solid;
   border-color: 
-    rgba(255, 255, 255, 0.05) /* Top border */
+    rgba(255, 255, 255, 0.02) /* Top border */
     rgba(0, 0, 0, 0.1)      /* Right border */
     rgba(0, 0, 0, 0.1)      /* Bottom border */
-    rgba(255, 255, 255, 0.05); /* Left border */
+    rgba(255, 255, 255, 0.02); /* Left border */
         }
             .matrix {
                 position:absolute;
@@ -136,18 +171,48 @@ border-radius:10px;
   animation: color-cycle 15s infinite;
 
 }
+
+.scoreboard-black{
+position:absolute;
+display:none;
+width:530px;
+height:140px;
+background:#000000;
+margin-top:360px;
+margin-left:280px;
+z-index:8;
+}
+
+.resize{
+transform:scale(.95);
+}
     </style>
 </head>
+
 <body>
-<div class="credits-p1">CREDITS: 4</div>
-<div class="credits-p2">FREE PLAY</div>
+
+<img src="https://adamfalletta.github.io/Meta/img/bluehawkslogo.png" style="display:none;position:absolute;z-index: 9;width: 180px;margin-top: 50px;margin-left: 56px;transform: rotate(-14deg);mix-blend-mode: hard-light;filter: drop-shadow(2px 4px 6px black);">
+
+<img src="https://adamfalletta.github.io/Meta/img/bluehawkslogo.png" style="display:none;position:absolute;z-index: 9;width: 200px;margin-top: 50px;margin-left: 835px;transform: rotate(30deg) scaleX(-1);mix-blend-mode: hard-light;filter: drop-shadow(2px 4px 6px black) hue-rotate(260deg);">
+
+<div class="credits-p1">FREE PLAY</div>
+<div class="credits-p2">CREDITS: 04</div>
+
+<div class="home-score digital-font">24</div>
+<div class="away-score digital-font">15</div>
+
+<div class="home-score-bottom digital-font">88</div>
+<div class="away-score-bottom digital-font">88</div>
+
+<div class="scoreboard-black"></div>
+
 
     <div class="logo">
          <img src="img/speaker.png" style="position:absolute;z-index:3;;width: 160px;margin-top: 642px;margin-left: 890px; filter:brightness(.85) drop-shadow(2px 4px 6px black) hue-rotate(45deg);">
 
 <img src="img/speaker.png" style="position:absolute;z-index:3;width: 160px;margin-top: 642px;margin-left: 30px;filter:brightness(.85) drop-shadow(2px 4px 6px black) hue-rotate(45deg);">
           <img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.4; margin-top:-231px;"><img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3;margin-top:850px;filter: invert(1);mix-blend-mode: soft-light;">
-        <img class="bg-art" src="img/fgf436.png">
+        <img class="bg-art" src="img/fgf4348.png">
  
         <div style="background:url(img/backdrop-bar5.png); filter:brightness(.3);width:1080px;height: 244px;position:absolute;z-index:2;margin-top: 600px; "></div>
 
@@ -193,9 +258,9 @@ border-radius:10px;
 
     let offset = 0;
     let colorIndex = 0;
-    const colors = ["#0f0"];
-    const scrollSpeed = 50; // Speed in milliseconds
-    const colorChangeInterval = 50000; // Interval to change colors in milliseconds
+    const colors = ["#0f0","#ff0"];
+    const scrollSpeed = 40; // Speed in milliseconds
+    const colorChangeInterval = 500; // Interval to change colors in milliseconds
 
     // Render the matrix
     function renderMatrix() {
@@ -322,5 +387,6 @@ border-radius:10px;
         <div class="cell"></div>
         <div class="cell"></div>
     </div>
+
 </body>
 </html>
