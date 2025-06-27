@@ -43,10 +43,10 @@
         <canvas id="output"></canvas>
     </div>
     <div id="threejs-container"></div>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-    <script>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+        import { FaceLandmarksDetection } from 'https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection';
+
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output');
         const ctx = canvas.getContext('2d');
@@ -59,8 +59,8 @@
         }
 
         async function loadModel() {
-            model = await faceLandmarksDetection.load(
-                faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
+            model = await FaceLandmarksDetection.load(
+                FaceLandmarksDetection.SupportedPackages.mediapipeFacemesh
             );
             console.log("Model loaded");
         }
