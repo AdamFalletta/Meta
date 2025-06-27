@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaLens V1</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #202020;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        #container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+        }
+
+        video, canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 640px;
+            height: 480px;
+        }
+
+        #threejs-container {
+            width: 640px;
+            height: 480px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <video id="webcam" autoplay></video>
+        <canvas id="output"></canvas>
+    </div>
+    <div id="threejs-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('output');
+        const ctx = canvas.getContext('2d');
+
+        let model, scene, camera, renderer, cube;
+
+        async function startWebcam() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        }
+
+        async function loadModel() {
+            model = await faceLandmarksDetection.load(
+                faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
+            );
+            console.log("Model loaded");
+        }
+
+        function initThreeJS() {
+            const container = document.getElementById('threejs-container');
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            container.appendChild(renderer.domElement);
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            const geometry = new THREE.BoxGeometry();
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function calculateHeadPose(landmarks) {
+            const leftEye = landmarks[33];
+            const rightEye = landmarks[263];
+            const noseTip = landmarks[1];
+            const chin = landmarks[152];
+
+            // Calculate roll, pitch, and yaw
+            const roll = Math.atan2(leftEye.y - rightEye.y, leftEye.x - rightEye.x) * (180 / Math.PI);
+            const pitch = Math.atan2(noseTip.y - chin.y, noseTip.z - chin.z) * (180 / Math.PI);
+            const yaw = Math.atan2(noseTip.x - leftEye.x, noseTip.z - leftEye.z) * (180 / Math.PI);
+
+            return { roll, pitch, yaw };
+        }
+
+        async function processFrame() {
+            const predictions = await model.estimateFaces({ input: video });
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (predictions.length > 0) {
+                const face = predictions[0];
+                const landmarks = face.keypoints;
+
+                // Draw keypoints
+                for (let kp of landmarks) {
+                    ctx.beginPath();
+                    ctx.arc(kp.x, kp.y, 2, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
+                }
+
+                // Calculate head pose
+                const { roll, pitch, yaw } = calculateHeadPose(landmarks);
+
+                // Update camera based on head pose
+                camera.position.x = yaw / 20;
+                camera.position.y = -pitch / 20;
+                camera.rotation.z = roll * (Math.PI / 180);
+                camera.lookAt(0, 0, 0);
+            }
+
+            requestAnimationFrame(processFrame);
+        }
+
+        (async function main() {
+            await startWebcam();
+            await loadModel();
+            initThreeJS();
+            processFrame();
+        })();
+    </script>
+</body>
+</html>
