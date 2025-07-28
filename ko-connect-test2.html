@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect 4 - Blue vs. Pink (Refactored)</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font as per guidelines */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        .game-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px; /* Rounded corners */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 90%; /* Responsive width */
+            width: fit-content; /* Adjust to content */
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        #status {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #555;
+            min-height: 1.5em; /* Prevent layout shift */
+        }
+
+        #game-grid {
+            display: grid;
+            /* Calculate tile size based on viewport width for responsiveness */
+            grid-template-columns: repeat(8, min(10vw, 50px));
+            grid-template-rows: repeat(8, min(10vw, 50px));
+            gap: 5px;
+            border: 2px solid #333;
+            padding: 5px;
+            background-color: #ccc;
+            margin: 0 auto 20px auto;
+            border-radius: 8px; /* Rounded corners */
+        }
+
+        .tile {
+            width: 100%; /* Fill grid cell */
+            height: 100%; /* Fill grid cell */
+            background-color: #eee;
+            border: 1px solid #aaa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 50%; /* Make them circular for pieces */
+            transition: background-color 0.3s ease-in-out, transform 0.1s ease-out;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .tile:hover {
+            background-color: #ddd;
+            transform: scale(1.05); /* Slight hover effect */
+        }
+
+        .tile.blue {
+            background-color: #3498db; /* Blue team color */
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.2), 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .tile.pink {
+            background-color: #e91e63; /* Pink team color */
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.2), 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #reset-button {
+            padding: 10px 25px;
+            font-size: 1.1em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px; /* Rounded corners */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #reset-button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+
+        #reset-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            #status {
+                font-size: 1em;
+            }
+            #game-grid {
+                grid-template-columns: repeat(8, min(12vw, 40px));
+                grid-template-rows: repeat(8, min(12vw, 40px));
+                gap: 3px;
+            }
+            .tile {
+                border-radius: 50%; /* Ensure circles on small screens */
+            }
+            #reset-button {
+                padding: 8px 18px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Connect 4: Blue vs. Pink</h1>
+        <div id="status"></div>
+        <div id="game-grid"></div>
+        <button id="reset-button">Reset Game</button>
+    </div>
+
+    <script>
+        // --- Model Layer ---
+        // Manages the game state and rules. Pure functions where possible.
+        const GameModel = (() => {
+            const GRID_SIZE = 8;
+            let board = [];
+            let currentPlayer = 'blue';
+            let gameOver = false;
+            let movesMade = 0;
+
+            // Directions to check for win conditions (horizontal, vertical, two diagonals)
+            const directions = [
+                [0, 1],  // Horizontal
+                [1, 0],  // Vertical
+                [1, 1],  // Diagonal (down-right)
+                [1, -1]  // Diagonal (down-left)
+            ];
+
+            /**
+             * Initializes or resets the game board and state.
+             */
+            const initializeBoard = () => {
+                board = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+                currentPlayer = 'blue';
+                gameOver = false;
+                movesMade = 0;
+            };
+
+            /**
+             * Attempts to place a piece on the board.
+             * @param {number} row - The row index.
+             * @param {number} col - The column index.
+             * @param {string} player - The player ('blue' or 'pink').
+             * @returns {boolean} True if the piece was placed successfully, false if the tile was occupied.
+             */
+            const placePiece = (row, col, player) => {
+                if (board[row][col] === null) {
+                    board[row][col] = player;
+                    movesMade++;
+                    return true;
+                }
+                return false; // Tile already occupied
+            };
+
+            /**
+             * Checks if the current player has won after placing a piece at (row, col).
+             * @param {number} row - The row of the last placed piece.
+             * @param {number} col - The column of the last placed piece.
+             * @param {string} player - The player who just moved.
+             * @returns {boolean} True if a win condition is met, false otherwise.
+             */
+            const checkWin = (row, col, player) => {
+                // Iterate through all 4 directions
+                for (const [dRow, dCol] of directions) {
+                    // Count connected pieces in positive and negative directions for each axis
+                    const count = 1 + // Start with the piece just placed
+                                  countConnected(row, col, dRow, dCol, player) +
+                                  countConnected(row, col, -dRow, -dCol, player);
+
+                    if (count >= 4) {
+                        return true; // Found 4 or more in a row
+                    }
+                }
+                return false;
+            };
+
+            /**
+             * Helper function to count consecutive pieces in a given direction.
+             * @param {number} startRow - Starting row for counting.
+             * @param {number} startCol - Starting column for counting.
+             * @param {number} dRow - Row increment for direction.
+             * @param {number} dCol - Column increment for direction.
+             * @param {string} player - The player to count for.
+             * @returns {number} The number of connected pieces in that direction (excluding the start piece).
+             */
+            const countConnected = (startRow, startCol, dRow, dCol, player) => {
+                let count = 0;
+                let r = startRow + dRow;
+                let c = startCol + dCol;
+
+                while (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE && board[r][c] === player) {
+                    count++;
+                    r += dRow;
+                    c += dCol;
+                }
+                return count;
+            };
+
+            /**
+             * Checks if the board is completely full, indicating a draw.
+             * @returns {boolean} True if the board is full, false otherwise.
+             */
+            const isBoardFull = () => movesMade === GRID_SIZE * GRID_SIZE;
+
+            /**
+             * Gets the current state of the board.
+             * @returns {Array<Array<string|null>>} The 2D array representing the board.
+             */
+            const getBoard = () => board;
+
+            /**
+             * Gets the current player.
+             * @returns {string} 'blue' or 'pink'.
+             */
+            const getCurrentPlayer = () => currentPlayer;
+
+            /**
+             * Sets the current player.
+             * @param {string} player - The player to set.
+             */
+            const setCurrentPlayer = (player) => {
+                currentPlayer = player;
+            };
+
+            /**
+             * Checks if the game is over.
+             * @returns {boolean} True if the game is over, false otherwise.
+             */
+            const isGameOver = () => gameOver;
+
+            /**
+             * Sets the game over state.
+             * @param {boolean} state - The game over state.
+             */
+            const setGameOver = (state) => {
+                gameOver = state;
+            };
+
+            return {
+                initializeBoard,
+                placePiece,
+                checkWin,
+                isBoardFull,
+                getBoard,
+                getCurrentPlayer,
+                setCurrentPlayer,
+                isGameOver,
+                setGameOver,
+                GRID_SIZE // Expose for view/controller
+            };
+        })();
+
+        // --- View Layer ---
+        // Handles all DOM manipulation and rendering.
+        const GameView = (() => {
+            const gameGridElement = document.getElementById('game-grid');
+            const statusDisplayElement = document.getElementById('status');
+            const resetButtonElement = document.getElementById('reset-button');
+            const tiles = []; // Store references to tile DOM elements
+
+            /**
+             * Initializes the grid structure once.
+             * Creates all tile elements and stores their references.
+             * @param {number} gridSize - The size of the grid (e.g., 8).
+             */
+            const createGridElements = (gridSize) => {
+                gameGridElement.innerHTML = ''; // Clear any existing
+                tiles.length = 0; // Clear array
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const tile = document.createElement('div');
+                        tile.classList.add('tile');
+                        tile.dataset.row = i;
+                        tile.dataset.col = j;
+                        gameGridElement.appendChild(tile);
+                        tiles.push(tile); // Store reference
+                    }
+                }
+            };
+
+            /**
+             * Renders the current state of the board onto the DOM.
+             * Optimizes by only updating classes, not recreating elements.
+             * @param {Array<Array<string|null>>} boardState - The current state of the game board.
+             */
+            const renderBoard = (boardState) => {
+                let tileIndex = 0;
+                for (let i = 0; i < boardState.length; i++) {
+                    for (let j = 0; j < boardState[i].length; j++) {
+                        const tile = tiles[tileIndex];
+                        // Remove previous player classes
+                        tile.classList.remove('blue', 'pink');
+                        // Add current player class if occupied
+                        if (boardState[i][j] !== null) {
+                            tile.classList.add(boardState[i][j]);
+                        }
+                        tileIndex++;
+                    }
+                }
+            };
+
+            /**
+             * Updates the status message displayed to the user.
+             * @param {string} message - The message to display.
+             */
+            const updateStatus = (message) => {
+                statusDisplayElement.textContent = message;
+            };
+
+            /**
+             * Attaches a click handler to all tile elements.
+             * @param {Function} handler - The function to call on tile click.
+             */
+            const addTileClickListeners = (handler) => {
+                tiles.forEach(tile => {
+                    tile.addEventListener('click', handler);
+                });
+            };
+
+            /**
+             * Removes click handlers from all tile elements.
+             */
+            const removeTileClickListeners = () => {
+                tiles.forEach(tile => {
+                    tile.removeEventListener('click', GameController.handleTileClick); // Reference the specific handler
+                });
+            };
+
+            // Placeholder for future visual enhancements
+            const animateTilePlacement = (tileElement, player) => {
+                // CSS transitions already provide a basic animation
+                // For more complex animations (e.g., dropping effect),
+                // one would manipulate transform/opacity via JS or add/remove animation classes.
+            };
+
+            return {
+                createGridElements,
+                renderBoard,
+                updateStatus,
+                addTileClickListeners,
+                removeTileClickListeners,
+                getResetButton: () => resetButtonElement,
+                animateTilePlacement
+            };
+        })();
+
+        // --- Controller Layer ---
+        // Handles user input, orchestrates model and view updates.
+        const GameController = (() => {
+            let isProcessingClick = false; // Debounce flag
+
+            /**
+             * Initializes the game: sets up model, view, and event listeners.
+             */
+            const init = () => {
+                GameView.createGridElements(GameModel.GRID_SIZE); // Create DOM elements once
+                GameModel.initializeBoard();
+                GameView.renderBoard(GameModel.getBoard());
+                GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+                GameView.addTileClickListeners(handleTileClick);
+                GameView.getResetButton().addEventListener('click', resetGame);
+            };
+
+            /**
+             * Handles a click event on a game tile.
+             * This is the main game loop logic for each turn.
+             * @param {Event} event - The click event object.
+             */
+            const handleTileClick = (event) => {
+                if (GameModel.isGameOver() || isProcessingClick) {
+                    return; // Ignore clicks if game is over or another click is being processed
+                }
+
+                isProcessingClick = true; // Lock input
+
+                const row = parseInt(event.target.dataset.row);
+                const col = parseInt(event.target.dataset.col);
+                const currentPlayer = GameModel.getCurrentPlayer();
+                const tileElement = event.target;
+
+                // Attempt to place the piece
+                const piecePlaced = GameModel.placePiece(row, col, currentPlayer);
+
+                if (piecePlaced) {
+                    GameView.animateTilePlacement(tileElement, currentPlayer); // Basic animation hook
+                    GameView.renderBoard(GameModel.getBoard()); // Update visual board
+
+                    // Check for win or draw
+                    if (GameModel.checkWin(row, col, currentPlayer)) {
+                        GameView.updateStatus(`${capitalize(currentPlayer)} Wins!`);
+                        GameModel.setGameOver(true);
+                        GameView.removeTileClickListeners(); // Disable further clicks
+                    } else if (GameModel.isBoardFull()) {
+                        GameView.updateStatus("It's a Draw!");
+                        GameModel.setGameOver(true);
+                        GameView.removeTileClickListeners(); // Disable further clicks
+                    } else {
+                        // Switch turn if game is not over
+                        GameModel.setCurrentPlayer(currentPlayer === 'blue' ? 'pink' : 'blue');
+                        GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+                    }
+                } else {
+                    // Missed shot: tile was already occupied.
+                    // Turn still passes.
+                    GameModel.setCurrentPlayer(currentPlayer === 'blue' ? 'pink' : 'blue');
+                    GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+                }
+
+                // Small delay to prevent accidental double clicks and allow CSS transition to start
+                setTimeout(() => {
+                    isProcessingClick = false; // Unlock input
+                }, 100); // Adjust as needed
+            };
+
+            /**
+             * Resets the game to its initial state.
+             */
+            const resetGame = () => {
+                GameModel.initializeBoard();
+                GameView.renderBoard(GameModel.getBoard());
+                GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+                GameView.addTileClickListeners(handleTileClick); // Re-attach listeners
+            };
+
+            // --- Future Expansion Hooks ---
+
+            /**
+             * Placeholder for an AI opponent's move logic.
+             */
+            const makeAIMove = () => {
+                // Logic for AI to choose a tile
+                // Example: random move for now
+                if (GameModel.isGameOver()) return;
+                const availableMoves = [];
+                const board = GameModel.getBoard();
+                for (let r = 0; r < GameModel.GRID_SIZE; r++) {
+                    for (let c = 0; c < GameModel.GRID_SIZE; c++) {
+                        if (board[r][c] === null) {
+                            availableMoves.push({ row: r, col: c });
+                        }
+                    }
+                }
+                if (availableMoves.length > 0) {
+                    const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+                    // Simulate click on the tile
+                    const tileElement = document.querySelector(`[data-row="${randomMove.row}"][data-col="${randomMove.col}"]`);
+                    if (tileElement) {
+                         // Use a small timeout to make AI move visible
+                        setTimeout(() => {
+                            tileElement.click();
+                        }, 500);
+                    }
+                }
+            };
+
+            /**
+             * Placeholder for managing game history (undo/redo).
+             */
+            const manageMoveHistory = () => {
+                // Store board states or move actions in an array
+                // Implement undo/redo functionality
+            };
+
+            /**
+             * Placeholder for networking support (multiplayer).
+             */
+            const setupNetworking = () => {
+                // Use WebSockets or other APIs for real-time communication
+                // Sync game state between players
+            };
+
+            // --- Utility Functions ---
+
+            /**
+             * Capitalizes the first letter of a string.
+             * @param {string} str - The input string.
+             * @returns {string} The capitalized string.
+             */
+            const capitalize = (str) => {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            };
+
+            // Expose handleTileClick for view to attach
+            return {
+                init,
+                handleTileClick // Exposed for event listener attachment
+            };
+        })();
+
+        // Initialize the game when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', GameController.init);
+    </script>
+</body>
+</html>
