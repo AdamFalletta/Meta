@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect 4 - Blue vs. Pink (Arcade Style)</title>
+  <style>
+    @font-face {font-family: arcadefont;src: url(ARCADE_N.ttf);format('truetype');}
+    @font-face {font-family: digitalfont;src: url(DS-DIGI.ttf);format('truetype');}
+    @font-face {font-family: digitalbfont;src: url(DS-DIGIB.ttf);format('truetype');}
+
+    body {
+      font-family: arcadefont, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: black; 
+background: url(img/stars-bg.jpg);
+      margin: 0;
+      color: #fff;
+	overflow:hidden;
+    }
+
+    .game-container {
+      background-color: #101010;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+      text-align: center;
+      max-width: 90%;
+      width: fit-content;
+      border: 2px solid #333;
+    filter: drop-shadow(0px 0px 14px #000000);
+    }
+
+    h1 {
+      font-size: 5.8em;
+      margin-bottom: 15px;
+      background: linear-gradient(to right, #0083ff, #ff00d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 8px rgba(255,255,255,0.2);
+    }
+    h2 {
+      font-size: 3.8em;
+      margin-bottom: 15px;
+      background: linear-gradient(to right, #0083ff, #ff00d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 8px rgba(255,255,255,0.2);
+    }
+
+    #status {
+      font-size: 4.6em;
+      font-family: digitalbfont;
+      color: #73ef29;
+      margin-bottom: 20px;
+      min-height: 1.5em;
+    }
+#game-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 8px;
+ padding: 10px;
+width: 950px; 
+height: 950px;
+  margin: 0 auto 20px auto;
+  background-color: #000;
+  border: 0px solid #333;
+  border-radius: 8px;
+}
+
+    .tile {
+      width: 95%;
+      height: 95%;
+      border-radius: 4px;
+      background-color: #101010;
+      border: 4px solid;
+      border-color: rgba(255, 255, 255, 0.02)
+                   rgba(0, 0, 0, 0.1)
+                   rgba(0, 0, 0, 0.1)
+                   rgba(255, 255, 255, 0.02);
+      transition: transform 0.1s ease-out, opacity 0.2s;
+      cursor: pointer;
+    }
+
+    /* Arcade gradient pieces */
+    .tile.blue {
+      background: radial-gradient(#0083ff, #001326);
+      animation-delay: 0.2s;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    }
+
+    .tile.pink {
+      background: radial-gradient(#ff00d0, #47003a);
+      animation-delay: 0.5s;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    }
+
+    #reset-button {
+      padding: 10px 25px;
+      font-size: 1.2em;
+      background: linear-gradient(to right, #0083ff, #ff00d0);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      font-family: arcadefont;
+    }
+
+    #reset-button:hover {
+      transform: translateY(-2px);
+    }
+
+    #reset-button:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2em; }
+      #status { font-size: 1.2em; }
+      #game-grid {
+        grid-template-columns: repeat(8, min(12vw, 50px));
+        grid-template-rows: repeat(8, min(12vw, 50px));
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+ <img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3; margin-top:-450px;pointer-events: none; ">
+<img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3;margin-top:1706px;pointer-events: none; ">
+  <div class="game-container">
+    <h1>Knockout</h1>
+	<h2>Connect</h2>
+    <div id="status"></div>
+    <div id="game-grid"></div>
+    <button id="reset-button">Reset Game</button>
+  </div>
+
+  <script>
+    // (JS unchanged from your Connect 4 code)
+    // --- Model Layer ---
+    const GameModel = (() => {
+      const GRID_SIZE = 8;
+      let board = [];
+      let currentPlayer = 'blue';
+      let gameOver = false;
+      let movesMade = 0;
+
+      const directions = [
+        [0, 1], [1, 0], [1, 1], [1, -1]
+      ];
+
+      const initializeBoard = () => {
+        board = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+        currentPlayer = 'blue';
+        gameOver = false;
+        movesMade = 0;
+      };
+
+      const placePiece = (row, col, player) => {
+        if (board[row][col] === null) {
+          board[row][col] = player;
+          movesMade++;
+          return true;
+        }
+        return false;
+      };
+
+      const checkWin = (row, col, player) => {
+        for (const [dRow, dCol] of directions) {
+          const count = 1 +
+                        countConnected(row, col, dRow, dCol, player) +
+                        countConnected(row, col, -dRow, -dCol, player);
+          if (count >= 4) return true;
+        }
+        return false;
+      };
+
+      const countConnected = (startRow, startCol, dRow, dCol, player) => {
+        let count = 0;
+        let r = startRow + dRow;
+        let c = startCol + dCol;
+        while (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE && board[r][c] === player) {
+          count++;
+          r += dRow;
+          c += dCol;
+        }
+        return count;
+      };
+
+      const isBoardFull = () => movesMade === GRID_SIZE * GRID_SIZE;
+      const getBoard = () => board;
+      const getCurrentPlayer = () => currentPlayer;
+      const setCurrentPlayer = (p) => currentPlayer = p;
+      const isGameOver = () => gameOver;
+      const setGameOver = (s) => gameOver = s;
+
+      return { initializeBoard, placePiece, checkWin, isBoardFull, getBoard,
+               getCurrentPlayer, setCurrentPlayer, isGameOver, setGameOver, GRID_SIZE };
+    })();
+
+    // --- View Layer ---
+    const GameView = (() => {
+      const gameGridElement = document.getElementById('game-grid');
+      const statusDisplayElement = document.getElementById('status');
+      const resetButtonElement = document.getElementById('reset-button');
+      const tiles = [];
+
+      const createGridElements = (gridSize) => {
+        gameGridElement.innerHTML = '';
+        tiles.length = 0;
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const tile = document.createElement('div');
+            tile.classList.add('tile');
+            tile.dataset.row = i;
+            tile.dataset.col = j;
+            gameGridElement.appendChild(tile);
+            tiles.push(tile);
+          }
+        }
+      };
+
+      const renderBoard = (boardState) => {
+        let tileIndex = 0;
+        for (let i = 0; i < boardState.length; i++) {
+          for (let j = 0; j < boardState[i].length; j++) {
+            const tile = tiles[tileIndex];
+            tile.classList.remove('blue', 'pink');
+            if (boardState[i][j] !== null) {
+              tile.classList.add(boardState[i][j]);
+            }
+            tileIndex++;
+          }
+        }
+      };
+
+      const updateStatus = (msg) => statusDisplayElement.textContent = msg;
+      const addTileClickListeners = (handler) => tiles.forEach(tile => tile.addEventListener('click', handler));
+      const removeTileClickListeners = () => tiles.forEach(tile => tile.removeEventListener('click', GameController.handleTileClick));
+
+      return { createGridElements, renderBoard, updateStatus, addTileClickListeners,
+               removeTileClickListeners, getResetButton: () => resetButtonElement };
+    })();
+
+    // --- Controller Layer ---
+    const GameController = (() => {
+      let isProcessingClick = false;
+
+      const init = () => {
+        GameView.createGridElements(GameModel.GRID_SIZE);
+        GameModel.initializeBoard();
+        GameView.renderBoard(GameModel.getBoard());
+        GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+        GameView.addTileClickListeners(handleTileClick);
+        GameView.getResetButton().addEventListener('click', resetGame);
+      };
+
+      const handleTileClick = (event) => {
+        if (GameModel.isGameOver() || isProcessingClick) return;
+        isProcessingClick = true;
+
+        const row = parseInt(event.target.dataset.row);
+        const col = parseInt(event.target.dataset.col);
+        const currentPlayer = GameModel.getCurrentPlayer();
+        const piecePlaced = GameModel.placePiece(row, col, currentPlayer);
+
+        if (piecePlaced) {
+          GameView.renderBoard(GameModel.getBoard());
+          if (GameModel.checkWin(row, col, currentPlayer)) {
+            GameView.updateStatus(`${capitalize(currentPlayer)} Wins!`);
+            GameModel.setGameOver(true);
+            GameView.removeTileClickListeners();
+          } else if (GameModel.isBoardFull()) {
+            GameView.updateStatus("It's a Draw!");
+            GameModel.setGameOver(true);
+            GameView.removeTileClickListeners();
+          } else {
+            GameModel.setCurrentPlayer(currentPlayer === 'blue' ? 'pink' : 'blue');
+            GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+          }
+        } else {
+          GameModel.setCurrentPlayer(currentPlayer === 'blue' ? 'pink' : 'blue');
+          GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+        }
+
+        setTimeout(() => { isProcessingClick = false; }, 100);
+      };
+
+      const resetGame = () => {
+        GameModel.initializeBoard();
+        GameView.renderBoard(GameModel.getBoard());
+        GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+        GameView.addTileClickListeners(handleTileClick);
+      };
+
+      const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+      return { init, handleTileClick };
+    })();
+
+    document.addEventListener('DOMContentLoaded', GameController.init);
+  </script>
+</body>
+</html>
