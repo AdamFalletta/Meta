@@ -24,34 +24,72 @@ background: url(img/stars-bg.jpg);
 
     .game-container {
       background-color: #101010;
+      background: url(img/stars-bg.jpg);
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
       text-align: center;
       max-width: 90%;
       width: fit-content;
-      border: 2px solid #333;
-    filter: drop-shadow(0px 0px 14px #000000);
-    }
+      height:1800px;
+      filter: drop-shadow(0px 0px 14px #000000);
+      border: #000000 32px solid;
+      box-shadow: inset 0 0 .5em 0 #ffffff, 0 0 .5em 0 #ffffff;
+animation: arcadeHueCycle 6s linear infinite;
+     }
+
+@keyframes arcadeHueCycle {
+  0% {
+    box-shadow: inset 0 0 .5em 0 #ff8aa1, 0 0 .5em 0 #ff8aa1; /* rose pink */
+  }
+  16% {
+    box-shadow: inset 0 0 .5em 0 #ffc878, 0 0 .5em 0 #ffc878; /* soft amber */
+  }
+  32% {
+    box-shadow: inset 0 0 .5em 0 #dfff80, 0 0 .5em 0 #dfff80; /* mellow yellow-green */
+  }
+  48% {
+    box-shadow: inset 0 0 .5em 0 #7dffa0, 0 0 .5em 0 #7dffa0; /* mint green */
+  }
+  64% {
+    box-shadow: inset 0 0 .5em 0 #80d4ff, 0 0 .5em 0 #80d4ff; /* soft sky blue */
+  }
+  80% {
+    box-shadow: inset 0 0 .5em 0 #c0a0ff, 0 0 .5em 0 #c0a0ff; /* lavender purple */
+  }
+  100% {
+    box-shadow: inset 0 0 .5em 0 #ff8aa1, 0 0 .5em 0 #ff8aa1; /* back to rose pink */
+  }
+}
 
     h1 {
-      font-size: 6.2em;
+      font-size: 6.6em;
  
       background: linear-gradient(#0083ff, #ff00d0);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 0 8px rgba(255,255,255,0.2);
-margin-top:40px;
+margin-top:100px;
 margin-bottom:20px;
     }
+
     h2 {
       font-size: 2.8em;
       margin-bottom: 15px;
-      margin-top:-10px;
+      margin-top:-20px;
       background: linear-gradient(to right, #0083ff, #ff00d0);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 0 8px rgba(255,255,255,0.2);
+    }
+
+    h3 {
+    position: absolute;
+    font-size: 2.2em;
+    margin-top: 11px;
+    margin-left: 397px;
+    color: #dddddd;
+ display:none;
     }
 
     #status {
@@ -105,9 +143,8 @@ height: 950px;
     #reset-button {
       padding: 10px 25px;
       font-size: 1.6em;
-      background: linear-gradient(#3a3a3a, #343434);
-      color: white;
-      border: none;
+      background: #ffffff00;
+      color: #dddddd;
       border-radius: 8px;
       cursor: pointer;
       transition: transform 0.2s ease;
@@ -115,6 +152,8 @@ height: 950px;
       font-family: arcadefont;
       text-shadow: 0 0 8px rgba(255,255,255,0.2);
 	filter:brightness(.8);
+    border: #ffffff 2px solid;
+    box-shadow: inset 0 0 .2em 0 #a5a5a5, 0 0 .2em 0 #a5a5a5;
     }
 
     #reset-button:hover {
@@ -160,16 +199,69 @@ border-radius:4px;
     .cell-dm.on {
       background-color: #f00;
     }
+	.credits-p1{
+		position: absolute; 
+		z-index:8; 
+		display:inline-block; 
+		font-family: arcadefont; 
+		color: #9eff58; 
+		font-size:30px;
+		filter: drop-shadow(8px 4px 1px black);
+		margin-top:15px;
+		margin-left: 180px;
+     animation: hueCycle .5s linear infinite;
+		}
+
+	.credits-p2{
+		position: absolute; 
+		z-index:8; 
+		display:inline-block; 
+		font-family: arcadefont; 
+		color: #fff7b1; 
+		font-size:30px;
+		filter: drop-shadow(8px 4px 1px black);
+		margin-top:15px;
+		margin-left:-450px;
+		}
+
+@keyframes hueCycle {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+	.credits-count{
+		position: absolute; 
+		z-index:8; 
+		display:inline-block; 
+		font-family: digitalbfont;
+		color: #c92b2b; 
+		font-size:50px;
+		text-align:center;
+		width:60px;
+	
+		background:#000000;
+		margin-top:10px;
+		margin-left:-220px;
+		}
 
 
   </style>
 </head>
 <body>
  <img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3; margin-top:-450px;pointer-events: none; ">
-<img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3;margin-top:1706px;pointer-events: none; ">
-  <div class="game-container">
+<img src="img/scanlines.png" style="position:absolute;z-index: 9;opacity: 0.3;margin-top:1710px;pointer-events: none; ">
+
+<div class="game-container">
+<h3>02:43</h3>
+<div class="credits-p1">FREE PLAY!</div>
+<div class="credits-p2">CREDITS:</div>
+<div class="credits-count">99</div>
     <h1>Knockout</h1>
-	<h2>Connect</h2>
+	<h2>Connect!</h2>
          <div class="matrix" id="matrix"></div>
 
   <script>
@@ -343,6 +435,7 @@ border-radius:4px;
         currentPlayer = 'blue';
         gameOver = false;
         movesMade = 0;
+
       };
 
       const placePiece = (row, col, player) => {
@@ -424,8 +517,8 @@ border-radius:4px;
       };
 
       const updateStatus = (msg) => statusDisplayElement.textContent = msg;
-      const addTileClickListeners = (handler) => tiles.forEach(tile => tile.addEventListener('click', handler));
-      const removeTileClickListeners = () => tiles.forEach(tile => tile.removeEventListener('click', GameController.handleTileClick));
+      const addTileClickListeners = (handler) => tiles.forEach(tile => tile.addEventListener('mousedown', handler));
+      const removeTileClickListeners = () => tiles.forEach(tile => tile.removeEventListener('mousedown', GameController.handleTileClick));
 
       return { createGridElements, renderBoard, updateStatus, addTileClickListeners,
                removeTileClickListeners, getResetButton: () => resetButtonElement };
@@ -457,6 +550,7 @@ border-radius:4px;
           GameView.renderBoard(GameModel.getBoard());
           if (GameModel.checkWin(row, col, currentPlayer)) {
             GameView.updateStatus(`${capitalize(currentPlayer)} Wins!`);
+  document.getElementById('status').style.color = currentPlayer === 'blue' ? '#0083ff' : '#ff00d0';
             GameModel.setGameOver(true);
             GameView.removeTileClickListeners();
           } else if (GameModel.isBoardFull()) {
@@ -479,6 +573,7 @@ border-radius:4px;
         GameModel.initializeBoard();
         GameView.renderBoard(GameModel.getBoard());
         GameView.updateStatus(`${capitalize(GameModel.getCurrentPlayer())}'s Turn`);
+        document.getElementById('status').style.color = '#73ef29';
         GameView.addTileClickListeners(handleTileClick);
       };
 
@@ -490,4 +585,3 @@ border-radius:4px;
   </script>
 </body>
 </html>
-
