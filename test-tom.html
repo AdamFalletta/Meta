@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emoji Tamagotchi 🐱</title>
+<style>
+body { font-family:sans-serif; text-align:center; background:#f0f8ff; }
+.meter { width:200px; height:20px; background:#ccc; border-radius:10px; margin:5px auto; position:relative;}
+.fill { height:100%; background:#4caf50; border-radius:10px; transition:width 0.3s;}
+.cat-container { font-size:64px; margin:20px; }
+.buttons { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin:20px; }
+button { font-size:24px; padding:10px 15px; border-radius:10px; border:none; cursor:pointer; }
+.log { max-width:400px; margin:0 auto; text-align:left; height:150px; overflow-y:auto; border:1px solid #aaa; padding:5px; background:#fff; }
+</style>
+</head>
+<body>
+
+<h1>Emoji Tamagotchi 🐱</h1>
+<div class="cat-container" id="catDisplay">🐱</div>
+<div>Food</div>
+<div class="meter"><div class="fill" id="foodMeter"></div></div>
+<div>Happiness</div>
+<div class="meter"><div class="fill" id="happyMeter"></div></div>
+<div class="buttons" id="buttonContainer"></div>
+<h2>Log</h2>
+<div class="log" id="log"></div>
+
+<script>
+const logEl = document.getElementById('log');
+const log = msg => { const line = document.createElement('div'); line.textContent = msg; logEl.appendChild(line); logEl.scrollTop=logEl.scrollHeight; }
+
+// ------------------
+// meowSDK as object with emoji properties
+// ------------------
+const meowSDK = {};
+
+meowSDK['🐱'] = (name) => {
+  let data = localStorage.getItem('cat');
+  if(data) data = JSON.parse(data);
+  else data = { name, food:50, happy:50, lastVisit:Date.now() };
+  return data;
+};
+
+meowSDK['🍽️'] = (cat) => { 
+  cat.food = Math.min(100, cat.food+20);
+  log(`🍽️ Fed ${cat.name} Food: ${cat.food}`);
+  saveCat(cat); renderMeters(cat);
+};
+
+meowSDK['🔍'] = (cat) => log(`🔍 ${cat.name} Food:${cat.food} Happy:${cat.happy}`);
+meowSDK['🐟'] = (cat) => { cat.food=Math.min(100,cat.food+10); cat.happy=Math.min(100,cat.happy+5); log('🐟 Gave fish treat'); saveCat(cat); renderMeters(cat);}
+meowSDK['🎾'] = (cat) => { cat.happy=Math.min(100,cat.happy+15); log('🎾 Played with cat'); saveCat(cat); renderMeters(cat);}
+meowSDK['🛏️'] = (cat) => { cat.happy=Math.min(100,cat.happy+10); log('🛏️ Cat napped'); saveCat(cat); renderMeters(cat);}
+meowSDK['🌞'] = (cat) => { meowSDK['🍽️'](cat); meowSDK['🎾'](cat); log('🌞 Morning routine executed');}
+meowSDK['🌙'] = (cat) => { meowSDK['🛏️'](cat); log('🌙 Night routine executed');}
+meowSDK['🧴'] = (cat) => { cat.happy=Math.min(100,cat.happy+5); log('🧴 Groomed cat'); saveCat(cat); renderMeters(cat);}
+meowSDK['🏃'] = (cat) => { cat.food=Math.max(0,cat.food-10); cat.happy=Math.min(100,cat.happy+10); log('🏃 Cat exercised'); saveCat(cat); renderMeters(cat);}
+meowSDK['🛒'] = (item,q) => log(`🛒 Bought ${q} ${item}`);
+meowSDK['🐾'] = (cat) => log('🐾 Cat activity logged');
+meowSDK['💊'] = (cat,type,amt=1) => log(`💊 Administered ${amt} ${type} medicine`);
+meowSDK['📝'] = (msg) => log(`📝 ${msg}`);
+meowSDK['🔔'] = (msg) => alert(`🔔 ${msg}`);
+meowSDK['📦'] = (cat) => log('📦 Inventory checked');
+meowSDK['💡'] = (cat) => log(`💡 Mood check: ${cat.happy}`);
+meowSDK['⚡'] = (cat) => { cat.happy=Math.min(100,cat.happy+20); log('⚡ Energy Boost!'); saveCat(cat); renderMeters(cat);}
+meowSDK['🧭'] = (cat,loc) => log(`${cat.name} moved to ${loc}`);
+meowSDK['🔧'] = (settings) => log(`🔧 Settings updated: ${JSON.stringify(settings)}`);
+
+// ------------------
+// localStorage helpers
+// ------------------
+const saveCat = cat => localStorage.setItem('cat', JSON.stringify(cat));
+let 🐈 = meowSDK['🐱']('Whiskers');
+
+// time away decay
+const last = 🐈.lastVisit || Date.now();
+const diffHrs = Math.floor((Date.now()-last)/1000/60/60);
+if(diffHrs>0){ 🐈.food=Math.max(0,🐈.food-diffHrs*5); 🐈.happy=Math.max(0,🐈.happy-diffHrs*3); log(`⏳ Away for ${diffHrs}h, updated meters.`);}
+🐈.lastVisit = Date.now(); saveCat(🐈);
+
+// render meters
+function renderMeters(cat){
+  document.getElementById('foodMeter').style.width = cat.food+'%';
+  document.getElementById('happyMeter').style.width = cat.happy+'%';
+  document.getElementById('catDisplay').textContent = cat.happy>70?'😺':'😿';
+}
+
+// ------------------
+// Buttons
+// ------------------
+const buttonContainer = document.getElementById('buttonContainer');
+const functions = [
+  ['🍽️',()=>meowSDK['🍽️'](🐈)],
+  ['🔍',()=>meowSDK['🔍'](🐈)],
+  ['🐟',()=>meowSDK['🐟'](🐈)],
+  ['🎾',()=>meowSDK['🎾'](🐈)],
+  ['🛏️',()=>meowSDK['🛏️'](🐈)],
+  ['🌞',()=>meowSDK['🌞'](🐈)],
+  ['🌙',()=>meowSDK['🌙'](🐈)],
+  ['🧴',()=>meowSDK['🧴'](🐈)],
+  ['🏃',()=>meowSDK['🏃'](🐈)],
+  ['🛒',()=>meowSDK['🛒']('fish',1)],
+  ['🐾',()=>meowSDK['🐾'](🐈)],
+  ['💊',()=>meowSDK['💊'](🐈,'vitamin',1)],
+  ['📝',()=>meowSDK['📝']('Hello!')],
+  ['🔔',()=>meowSDK['🔔']('Meow alert!')],
+  ['📦',()=>meowSDK['📦'](🐈)],
+  ['💡',()=>meowSDK['💡'](🐈)],
+  ['⚡',()=>meowSDK['⚡'](🐈)],
+  ['🧭',()=>meowSDK['🧭'](🐈,'garden')],
+  ['🔧',()=>meowSDK['🔧']({volume:50})],
+];
+
+functions.forEach(([emoji,fn])=>{
+  const btn = document.createElement('button');
+  btn.textContent = emoji;
+  btn.onclick = fn;
+  buttonContainer.appendChild(btn);
+});
+
+// decay
+setInterval(()=>{
+  🐈.food=Math.max(0,🐈.food-2); 🐈.happy=Math.max(0,🐈.happy-1); saveCat(🐈); renderMeters(🐈);
+},60000);
+
+renderMeters(🐈);
+log('🐾 Emoji Tamagotchi started!');
+</script>
+
+</body>
+</html>
