@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Shooter MVC</title>
+    <title>Space Rage</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
         body {
             background-color: #000000;
+            background: url(img/stars-bg.jpg);
             color: #ffffff;
             font-family: 'Orbitron', sans-serif;
             display: flex;
@@ -26,6 +27,7 @@
             text-shadow: 0 0 5px #64ffda, 0 0 10px #64ffda;
             margin-bottom: 20px;
             text-align: center;
+            font-size:100px;
         }
         
         .header {
@@ -228,14 +230,14 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div class="game-overlay" id="start-overlay">
-            <h1>Space Shooter</h1>
+            <h1>Space Rage</h1>
             <p>Use arrow keys or 'W', 'A', 'S', 'D' to move and spacebar to shoot.</p>
             <button class="start-button" id="startButton">Start Game</button>
         </div>
         <div class="game-overlay hidden" id="game-over-overlay">
             <h2 class="game-over-text">GAME OVER</h2>
             <p class="final-score-text">Final Score: <span id="finalScore">0</span></p>
-            <button class="restart-button" id="restartButton">Restart</button>
+            <button class="restart-button" id="restartButton">Play Again</button>
         </div>
         <div class="game-overlay hidden" id="initials-overlay">
             <h2 class="game-over-text">New High Score!</h2>
