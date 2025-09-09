@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .kanban-column {
+            min-height: 400px;
+            @apply flex flex-col;
+        }
+        .task-card {
+            cursor: grab;
+            @apply transition duration-200 ease-in-out transform;
+        }
+        .dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        .drag-over {
+            border: 2px dashed #4299e1;
+            background-color: #2d3748;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex flex-col h-screen">
+
+    <div class="flex-grow p-8">
+        <!-- Header with project selector -->
+        <header class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+            <h1 class="text-3xl font-bold text-teal-400">Project Kanban Board</h1>
+            <div class="flex items-center space-x-2">
+                <label for="project-select" class="text-lg font-medium">Select Project:</label>
+                <select id="project-select" class="p-2 rounded-md bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-300">
+                    <!-- Projects will be populated here by JavaScript -->
+                </select>
+                <button id="add-project-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105">
+                    Add Project
+                </button>
+                <button id="remove-project-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105">
+                    Remove Project
+                </button>
+                <button id="download-csv-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 11.586V3a1 1 0 112 0v8.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Download All
+                </button>
+            </div>
+        </header>
+
+        <!-- Kanban Board Columns -->
+        <main id="kanban-board" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Columns will be rendered by JavaScript -->
+        </main>
+    </div>
+
+    <!-- Edit/Delete Modal -->
+    <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4">
+        <div id="modal-content" class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg transform scale-95 opacity-0 transition-all duration-300">
+            <!-- Modal content populated by JS -->
+        </div>
+    </div>
+
+    <script>
+        // --- MVC JavaScript Implementation ---
+
+        // =======================
+        // MVC: MODEL
+        // Handles all data logic and local storage interactions.
+        // =======================
+        const Model = {
+            // Stores the entire application state.
+            data: {
+                projects: {},
+                currentProjectId: 'default',
+            },
+
+            // Initializes the model by loading data from local storage.
+            loadData: () => {
+                const storedData = localStorage.getItem('kanbanData');
+                if (storedData) {
+                    Model.data = JSON.parse(storedData);
+                } else {
+                    // Initialize with a default project if no data exists.
+                    Model.data.projects['default'] = {
+                        name: 'Default Project',
+                        tasks: {
+                            'todo': [],
+                            'in-progress': [],
+                            'done': [],
+                        }
+                    };
+                    Model.saveData();
+                }
+            },
+
+            // Saves the current application state to local storage.
+            saveData: () => {
+                localStorage.setItem('kanbanData', JSON.stringify(Model.data));
+            },
+
+            // --- Project Management Methods ---
+            
+            addProject: (projectName) => {
+                const newId = new Date().getTime().toString();
+                Model.data.projects[newId] = {
+                    name: projectName,
+                    tasks: {
+                        'todo': [],
+                        'in-progress': [],
+                        'done': [],
+                    }
+                };
+                Model.data.currentProjectId = newId;
+                Model.saveData();
+            },
+
+            removeCurrentProject: () => {
+                if (Object.keys(Model.data.projects).length <= 1) {
+                    alert("Cannot remove the last project.");
+                    return false;
+                }
+                delete Model.data.projects[Model.data.currentProjectId];
+                // Select the first remaining project.
+                Model.data.currentProjectId = Object.keys(Model.data.projects)[0];
+                Model.saveData();
+                return true;
+            },
+
+            // --- Task Management Methods ---
+            
+            addTask: (columnId, taskName) => {
+                const currentProject = Model.data.projects[Model.data.currentProjectId];
+                const newTask = {
+                    id: new Date().getTime().toString(),
+                    name: taskName,
+                    timestamp: new Date().toISOString(),
+                };
+                currentProject.tasks[columnId].push(newTask);
+                Model.saveData();
+            },
+
+            updateTask: (columnId, taskId, newName) => {
+                const currentProject = Model.data.projects[Model.data.currentProjectId];
+                const task = currentProject.tasks[columnId].find(t => t.id === taskId);
+                if (task) {
+                    task.name = newName;
+                    task.lastEdited = new Date().toISOString(); // Add or update last edited timestamp
+                    Model.saveData();
+                }
+            },
+
+            deleteTask: (columnId, taskId) => {
+                const currentProject = Model.data.projects[Model.data.currentProjectId];
+                currentProject.tasks[columnId] = currentProject.tasks[columnId].filter(t => t.id !== taskId);
+                Model.saveData();
+            },
+            
+            moveTask: (taskId, oldColumn, newColumn) => {
+                const currentProject = Model.data.projects[Model.data.currentProjectId];
+                const taskIndex = currentProject.tasks[oldColumn].findIndex(t => t.id === taskId);
+                if (taskIndex > -1) {
+                    const [task] = currentProject.tasks[oldColumn].splice(taskIndex, 1);
+                    currentProject.tasks[newColumn].push(task);
+                    Model.saveData();
+                }
+            }
+        };
+
+        // =======================
+        // MVC: VIEW
+        // Responsible for rendering the UI and handling user input events.
+        // =======================
+        const View = {
+            // DOM Elements
+            boardContainer: document.getElementById('kanban-board'),
+            projectSelect: document.getElementById('project-select'),
+            addProjectBtn: document.getElementById('add-project-btn'),
+            removeProjectBtn: document.getElementById('remove-project-btn'),
+            downloadCsvBtn: document.getElementById('download-csv-btn'),
+            modalContainer: document.getElementById('modal-container'),
+            modalContent: document.getElementById('modal-content'),
+
+            // Render the project dropdown menu
+            renderProjectsDropdown: () => {
+                View.projectSelect.innerHTML = '';
+                const projects = Model.data.projects;
+                
+                // Get project IDs and sort them alphabetically by project name
+                const sortedProjectIds = Object.keys(projects).sort((a, b) => {
+                    const nameA = projects[a].name.toLowerCase();
+                    const nameB = projects[b].name.toLowerCase();
+                    if (nameA < nameB) return -1;
+                    if (nameA > nameB) return 1;
+                    return 0;
+                });
+
+                sortedProjectIds.forEach(id => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = projects[id].name;
+                    if (id === Model.data.currentProjectId) {
+                        option.selected = true;
+                    }
+                    View.projectSelect.appendChild(option);
+                });
+            },
+
+            // Renders the entire Kanban board based on the current project data.
+            renderBoard: () => {
+                View.boardContainer.innerHTML = '';
+                const project = Model.data.projects[Model.data.currentProjectId];
+
+                ['todo', 'in-progress', 'done'].forEach(columnId => {
+                    const column = document.createElement('div');
+                    column.className = 'kanban-column p-4 rounded-xl shadow-lg bg-gray-800';
+                    column.id = `column-${columnId}`;
+
+                    // Get task count for the current column
+                    const taskCount = project.tasks[columnId].length;
+
+                    column.innerHTML = `
+                        <div class="flex items-center justify-center mb-4 space-x-2">
+                            <h2 class="text-xl font-semibold capitalize text-gray-300">${columnId.replace('-', ' ')}</h2>
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-700 text-xs font-bold text-gray-400">
+                                ${taskCount}
+                            </span>
+                        </div>
+                        <div id="tasks-${columnId}" class="flex-grow space-y-4"></div>
+                        <form class="mt-4 flex flex-col space-y-2" id="form-${columnId}">
+                            <input type="text" placeholder="Add a new task..." required class="task-input w-full p-2 rounded-md bg-gray-700 border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-300 text-gray-200">
+                            <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition duration-300 transform hover:scale-105">
+                                Add Task
+                            </button>
+                        </form>
+                    `;
+                    View.boardContainer.appendChild(column);
+
+                    const tasksContainer = column.querySelector(`#tasks-${columnId}`);
+                    project.tasks[columnId].forEach(task => {
+                        tasksContainer.appendChild(View.renderTask(task, columnId));
+                    });
+                });
+            },
+
+            // Renders a single task card.
+            renderTask: (task, columnId) => {
+                const card = document.createElement('div');
+                card.id = `task-${task.id}`;
+                card.draggable = true;
+                card.className = 'task-card bg-gray-700 p-4 rounded-lg shadow-md cursor-grab hover:bg-gray-600 transition duration-300';
+                card.textContent = task.name;
+                card.dataset.id = task.id;
+                card.dataset.column = columnId;
+
+                // Build the title attribute for the hover pop-up.
+                let titleText = `Created: ${new Date(task.timestamp).toLocaleString()}`;
+                if (task.lastEdited) {
+                    titleText += `\nLast Edited: ${new Date(task.lastEdited).toLocaleString()}`;
+                }
+                card.title = titleText;
+
+                return card;
+            },
+
+            // --- Modal and UI Feedback Methods ---
+
+            showModal: (content) => {
+                View.modalContent.innerHTML = content;
+                View.modalContainer.classList.remove('hidden');
+                View.modalContainer.classList.add('flex');
+                setTimeout(() => {
+                    View.modalContent.classList.remove('opacity-0', 'scale-95');
+                    View.modalContent.classList.add('opacity-100', 'scale-100');
+                }, 10);
+            },
+
+            hideModal: () => {
+                View.modalContent.classList.remove('opacity-100', 'scale-100');
+                View.modalContent.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    View.modalContainer.classList.remove('flex');
+                    View.modalContainer.classList.add('hidden');
+                }, 300);
+            },
+        };
+
+        // =======================
+        // MVC: CONTROLLER
+        // Connects the Model and the View, handling application logic.
+        // =======================
+        const Controller = {
+            // Initializes the application.
+            init: () => {
+                Model.loadData();
+                View.renderProjectsDropdown();
+                View.renderBoard();
+                Controller.setupEventListeners();
+            },
+
+            // Sets up all event listeners for user interactions.
+            setupEventListeners: () => {
+                // Project-related events
+                View.projectSelect.addEventListener('change', Controller.handleProjectChange);
+                View.addProjectBtn.addEventListener('click', Controller.handleAddProject);
+                View.removeProjectBtn.addEventListener('click', Controller.handleRemoveProject);
+                View.downloadCsvBtn.addEventListener('click', Controller.handleDownloadCsv);
+
+                // Task-related events (Delegation to handle dynamically added elements)
+                View.boardContainer.addEventListener('submit', Controller.handleFormSubmit);
+                View.boardContainer.addEventListener('click', Controller.handleTaskClick);
+                View.boardContainer.addEventListener('dragstart', Controller.handleDragStart);
+                View.boardContainer.addEventListener('dragover', Controller.handleDragOver);
+                View.boardContainer.addEventListener('dragleave', Controller.handleDragLeave);
+                View.boardContainer.addEventListener('drop', Controller.handleDrop);
+
+                // Modal close event
+                View.modalContainer.addEventListener('click', (e) => {
+                    if (e.target.id === 'modal-container') {
+                        View.hideModal();
+                    }
+                });
+            },
+
+            // --- Event Handlers ---
+
+            handleProjectChange: (event) => {
+                const newProjectId = event.target.value;
+                Model.data.currentProjectId = newProjectId;
+                Model.saveData();
+                View.renderBoard();
+            },
+
+            handleAddProject: () => {
+                View.showModal(`
+                    <h3 class="text-2xl font-bold mb-4 text-center">Add New Project</h3>
+                    <form id="add-project-form">
+                        <input type="text" id="new-project-name" placeholder="Enter project name..." required class="w-full p-2 rounded-md bg-gray-700 border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-300 text-gray-200">
+                        <div class="mt-4 flex justify-end space-x-2">
+                            <button type="button" id="cancel-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Add</button>
+                        </div>
+                    </form>
+                `);
+
+                document.getElementById('add-project-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const projectName = document.getElementById('new-project-name').value;
+                    if (projectName) {
+                        Model.addProject(projectName);
+                        View.renderProjectsDropdown();
+                        View.renderBoard();
+                        View.hideModal();
+                    }
+                });
+
+                document.getElementById('cancel-btn').addEventListener('click', () => View.hideModal());
+            },
+
+            handleRemoveProject: () => {
+                View.showModal(`
+                    <h3 class="text-2xl font-bold mb-4 text-center">Remove Project</h3>
+                    <p class="text-gray-300 text-center mb-4">Are you sure you want to remove the project "${Model.data.projects[Model.data.currentProjectId].name}"? This action cannot be undone.</p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="cancel-remove-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                        <button id="confirm-remove-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Remove</button>
+                    </div>
+                `);
+
+                document.getElementById('confirm-remove-btn').addEventListener('click', () => {
+                    if (Model.removeCurrentProject()) {
+                        View.renderProjectsDropdown();
+                        View.renderBoard();
+                        View.hideModal();
+                    }
+                });
+
+                document.getElementById('cancel-remove-btn').addEventListener('click', () => View.hideModal());
+            },
+
+            handleDownloadCsv: () => {
+                const projects = Model.data.projects;
+                let csvContent = "Project,Column,Task,Created On,Last Edited\n"; // Updated CSV Header
+
+                for (const projectId in projects) {
+                    if (projects.hasOwnProperty(projectId)) {
+                        const project = projects[projectId];
+                        const projectName = `"${project.name.replace(/"/g, '""')}"`; // Escape quotes
+
+                        for (const columnId in project.tasks) {
+                            if (project.tasks.hasOwnProperty(columnId)) {
+                                project.tasks[columnId].forEach(task => {
+                                    const taskName = `"${task.name.replace(/"/g, '""')}"`;
+                                    const timestamp = task.timestamp ? new Date(task.timestamp).toLocaleString() : '';
+                                    const lastEdited = task.lastEdited ? new Date(task.lastEdited).toLocaleString() : '';
+                                    csvContent += `${projectName},"${columnId}",${taskName},"${timestamp}","${lastEdited}"\n`;
+                                });
+                            }
+                        }
+                    }
+                }
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'kanban_data.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            },
+
+            handleFormSubmit: (event) => {
+                event.preventDefault();
+                const form = event.target;
+                if (form.matches('form')) {
+                    const input = form.querySelector('input[type="text"]');
+                    const columnId = form.id.replace('form-', '');
+                    const taskName = input.value;
+                    if (taskName) {
+                        Model.addTask(columnId, taskName);
+                        View.renderBoard();
+                    }
+                }
+            },
+
+            handleTaskClick: (event) => {
+                const taskCard = event.target.closest('.task-card');
+                if (taskCard) {
+                    const taskId = taskCard.dataset.id;
+                    const columnId = taskCard.dataset.column;
+                    const taskName = taskCard.textContent;
+
+                    View.showModal(`
+                        <h3 class="text-2xl font-bold mb-4 text-center">Manage Task</h3>
+                        <p class="text-gray-300 text-center mb-4">Task: ${taskName}</p>
+                        <div class="flex justify-center space-x-4">
+                            <button id="edit-task-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Edit</button>
+                            <button id="delete-task-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Delete</button>
+                            <button id="close-modal-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                        </div>
+                    `);
+
+                    document.getElementById('edit-task-btn').addEventListener('click', () => {
+                        View.showModal(`
+                            <h3 class="text-2xl font-bold mb-4 text-center">Edit Task</h3>
+                            <form id="edit-task-form">
+                                <input type="text" id="edit-task-name" value="${taskName}" required class="w-full p-2 rounded-md bg-gray-700 border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-300 text-gray-200">
+                                <div class="mt-4 flex justify-end space-x-2">
+                                    <button type="button" id="cancel-edit-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Save</button>
+                                </div>
+                            </form>
+                        `);
+
+                        document.getElementById('edit-task-form').addEventListener('submit', (e) => {
+                            e.preventDefault();
+                            const newName = document.getElementById('edit-task-name').value;
+                            if (newName) {
+                                Model.updateTask(columnId, taskId, newName);
+                                View.renderBoard();
+                                View.hideModal();
+                            }
+                        });
+
+                        document.getElementById('cancel-edit-btn').addEventListener('click', () => View.hideModal());
+                    });
+
+                    document.getElementById('delete-task-btn').addEventListener('click', () => {
+                         View.showModal(`
+                            <h3 class="text-2xl font-bold mb-4 text-center">Confirm Deletion</h3>
+                            <p class="text-gray-300 text-center mb-4">Are you sure you want to delete this task?</p>
+                            <div class="flex justify-center space-x-4">
+                                <button id="cancel-delete-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                                <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Delete</button>
+                            </div>
+                        `);
+                         document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+                            Model.deleteTask(columnId, taskId);
+                            View.renderBoard();
+                            View.hideModal();
+                        });
+                         document.getElementById('cancel-delete-btn').addEventListener('click', () => View.hideModal());
+                    });
+                    
+                    document.getElementById('close-modal-btn').addEventListener('click', () => View.hideModal());
+                }
+            },
+
+            // --- Drag and Drop Handlers ---
+            
+            handleDragStart: (event) => {
+                event.dataTransfer.setData('text/plain', event.target.dataset.id);
+                event.dataTransfer.effectAllowed = 'move';
+                event.target.classList.add('dragging');
+            },
+            
+            handleDragOver: (event) => {
+                event.preventDefault(); // Allows the drop
+                const targetColumn = event.target.closest('.kanban-column');
+                if (targetColumn) {
+                    targetColumn.classList.add('drag-over');
+                }
+            },
+
+            handleDragLeave: (event) => {
+                const targetColumn = event.target.closest('.kanban-column');
+                if (targetColumn) {
+                    targetColumn.classList.remove('drag-over');
+                }
+            },
+
+            handleDrop: (event) => {
+                event.preventDefault();
+                const taskId = event.dataTransfer.getData('text/plain');
+                const oldColumn = document.querySelector(`.task-card[data-id="${taskId}"]`).dataset.column;
+                const newColumnEl = event.target.closest('.kanban-column');
+                
+                if (newColumnEl) {
+                    const newColumn = newColumnEl.id.replace('column-', '');
+                    
+                    // Prevent dropping into the same column without reordering
+                    if (oldColumn !== newColumn) {
+                        Model.moveTask(taskId, oldColumn, newColumn);
+                        View.renderBoard();
+                    }
+                    
+                    newColumnEl.classList.remove('drag-over');
+                }
+
+                // Cleanup dragging class from the original element
+                const draggedElement = document.querySelector('.dragging');
+                if (draggedElement) {
+                    draggedElement.classList.remove('dragging');
+                }
+            }
+        };
+        
+        // Initialize the application when the page loads
+        window.onload = Controller.init;
+    </script>
+</body>
+</html>
