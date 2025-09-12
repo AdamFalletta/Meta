@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Optimization App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #1a202c;
+            --text-color: #e2e8f0;
+            --container-bg: #2d3748;
+            --border-color: #4a5568;
+            --input-bg: #4a5568;
+            --button-bg: #4c68d2;
+            --button-text: #ffffff;
+            --slider-thumb: #a0aec0;
+            --tab-active-bg: #4361ee;
+            --tab-inactive-bg: #2d3748;
+            --tab-active-text: #ffffff;
+            --tab-inactive-text: #e2e8f0;
+            --modal-bg: #2d3748;
+            --modal-border: #4a5568;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Slider styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 12px;
+            /* New darker gradient from dark red to orange to dark green */
+            background: linear-gradient(to right, #991b1b, #c2410c, #16a34a);
+            border-radius: 6px;
+            outline: none;
+            transition: background-color 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--slider-thumb);
+            border: 2px solid var(--container-bg);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: var(--slider-thumb);
+            border: 2px solid var(--container-bg);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .active-tab {
+            background-color: var(--tab-active-bg);
+            color: var(--tab-active-text);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .tab-button {
+            background-color: var(--tab-inactive-bg);
+            color: var(--tab-inactive-text);
+        }
+    </style>
+</head>
+<body class="p-8 flex items-center justify-center min-h-screen">
+    <div class="container-card w-full max-w-4xl mx-auto rounded-xl p-8 transition-colors duration-300">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold mb-2">Performance Optimization App</h1>
+            <p class="text-gray-400">Optimize your performance fields by reallocating points from lower-priority stats.</p>
+        </header>
+
+        <div class="flex justify-center mb-6">
+            <div class="flex space-x-2 bg-gray-600 rounded-lg p-1 transition-colors duration-300" id="tabs">
+                <button id="current-tab" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors duration-300 active-tab">Current Version</button>
+                <button id="new-tab" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors duration-300 tab-button">New Version</button>
+            </div>
+        </div>
+        
+        <div class="mt-4 flex justify-between items-center">
+            <h2 id="tab-title" class="text-2xl font-semibold">Current Version</h2>
+        </div>
+        
+        <!-- Moved button outside of the tab contents so it is always visible -->
+        <div class="flex justify-center space-x-4 mb-8">
+            <button id="save-button" class="px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white shadow-lg">Save & Optimize</button>
+        </div>
+
+        <div id="current-content" class="tab-content transition-opacity duration-300">
+            <div class="flex flex-col space-y-4 w-full" id="slider-container">
+                <!-- Sliders for current values -->
+            </div>
+        </div>
+
+        <div id="new-content" class="tab-content transition-opacity duration-300 hidden">
+            <div class="flex flex-col space-y-4 w-full" id="new-slider-container">
+                <!-- Sliders for new values -->
+            </div>
+            <div class="p-6 rounded-lg bg-gray-700 text-gray-200 mt-8">
+                <h3 class="font-semibold text-lg mb-2 text-white">Actionable Insights</h3>
+                <p id="optimization-text" class="whitespace-pre-line"></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Helper function to get a color based on a value (0-100)
+        function getColorForValue(value) {
+            let h, s, l;
+
+            if (value < 50) {
+                // Red to Yellow: Hue from 0 to 50, Saturation and Lightness
+                h = 50 * (value / 50);
+                s = 80;
+                l = 20 + 30 * (value / 50); // Lighter gradient
+            } else {
+                // Yellow to Green: Hue from 50 to 120, Saturation and Lightness
+                h = 50 + 70 * ((value - 50) / 50);
+                s = 80;
+                l = 50 - 30 * ((value - 50) / 50); // Darker gradient
+            }
+            return `hsl(${h}, ${s}%, ${l}%)`;
+        }
+
+        // --- Model ---
+        const appModel = {
+            priorityList: ['DUR', 'LHC', 'RHC', 'RHP', 'LHP', 'CLU', 'VIS', 'DIS', 'FLD', 'SPD', 'ACC', 'ARM', 'REA', 'BAS', 'BUN', 'DRG', 'AGG'],
+            currentValues: {},
+            newValues: {},
+            
+            loadValues() {
+                try {
+                    const savedValues = JSON.parse(localStorage.getItem('performanceAppOptimizedValues'));
+                    if (savedValues) {
+                        this.currentValues = savedValues;
+                    } else {
+                        // Initialize all values to 50 if no saved data
+                        this.priorityList.forEach(field => this.currentValues[field] = 50);
+                    }
+                } catch (e) {
+                    console.error("Could not load from localStorage:", e);
+                    this.priorityList.forEach(field => this.currentValues[field] = 50);
+                }
+            },
+
+            saveValues() {
+                try {
+                    localStorage.setItem('performanceAppOptimizedValues', JSON.stringify(this.currentValues));
+                } catch (e) {
+                    console.error("Could not save to localStorage:", e);
+                }
+            },
+
+            calculateNewValues() {
+                let pool = 0;
+                this.newValues = { ...this.currentValues }; // Start with a copy of current values
+                
+                let optimizationText = '';
+
+                // Step 1: Drain from the bottom of the priority list
+                const drainOrder = [...this.priorityList].reverse();
+                drainOrder.forEach(field => {
+                    if (this.newValues[field] > 0) {
+                        pool += this.newValues[field];
+                        optimizationText += `We've re-allocated ${this.newValues[field]} points from "${field}" to the pool.\n`;
+                        this.newValues[field] = 0;
+                    }
+                });
+
+                // Step 2: Distribute pooled points to the top of the priority list
+                this.priorityList.forEach(field => {
+                    if (pool > 0) {
+                        const currentVal = this.newValues[field];
+                        const needed = 100 - currentVal;
+                        const pointsToTransfer = Math.min(pool, needed);
+                        this.newValues[field] = currentVal + pointsToTransfer;
+                        pool -= pointsToTransfer;
+                        
+                        if (pointsToTransfer > 0) {
+                            optimizationText += `We have added ${pointsToTransfer} points to "${field}".\n`;
+                        }
+                    }
+                });
+
+                if (pool > 0) {
+                     optimizationText += `Excellent! All high-priority skills are at 100%. The remaining ${pool} points are a surplus.\n`;
+                }
+
+                if (optimizationText === '') {
+                    optimizationText = "No optimizations needed! All fields are in their optimal state.";
+                }
+
+                return optimizationText;
+            }
+        };
+
+        // --- View ---
+        const appView = {
+            elements: {},
+
+            initElements() {
+                this.elements.sliderContainer = document.getElementById('slider-container');
+                this.elements.newSliderContainer = document.getElementById('new-slider-container');
+                this.elements.saveButton = document.getElementById('save-button');
+                this.elements.tabsContainer = document.getElementById('tabs');
+                this.elements.tabTitle = document.getElementById('tab-title');
+                this.elements.currentContent = document.getElementById('current-content');
+                this.elements.newContent = document.getElementById('new-content');
+                this.elements.optimizationText = document.getElementById('optimization-text');
+                this.elements.currentTab = document.getElementById('current-tab');
+                this.elements.newTab = document.getElementById('new-tab');
+            },
+
+            renderSliders(values, container, isNew = false) {
+                if (!container) return;
+                container.innerHTML = ''; // Clear container
+                const allFields = appModel.priorityList;
+                
+                allFields.forEach(field => {
+                    const value = values[field];
+                    const fieldDiv = document.createElement('div');
+                    fieldDiv.className = `p-4 rounded-xl transition-all duration-300 hover:shadow-[0_0_15px_#ffffff20] ${isNew ? 'bg-gray-700' : 'bg-gray-800'}`;
+
+                    fieldDiv.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <span class="font-bold text-lg w-16">${field}</span>
+                            <input type="range" id="slider-${field}" min="0" max="100" value="${value}" class="flex-grow">
+                            <span class="text-xl font-mono px-3 py-1 rounded-full text-white font-bold w-14 text-center" id="value-${field}">${value}</span>
+                        </div>
+                    `;
+                    container.appendChild(fieldDiv);
+                    
+                    const valueBadge = fieldDiv.querySelector(`#value-${field}`);
+                    const slider = fieldDiv.querySelector(`#slider-${field}`);
+                    
+                    // Update initial color
+                    this.updateSliderColors(slider, valueBadge, value);
+                    
+                    if (!isNew) {
+                        slider.addEventListener('input', (e) => {
+                            const newValue = parseInt(e.target.value);
+                            appModel.currentValues[field] = newValue;
+                            this.updateSliderColors(e.target, valueBadge, newValue);
+                        });
+                    } else {
+                        // New sliders should not be interactive
+                        slider.disabled = true;
+                    }
+                });
+            },
+
+            updateSliderColors(slider, valueBadge, value) {
+                const color = getColorForValue(value);
+                valueBadge.textContent = value;
+                valueBadge.style.backgroundColor = color;
+                slider.style.background = `linear-gradient(to right, ${color} ${value}%, var(--container-bg) ${value}%)`;
+            },
+
+            renderOptimizationText(text) {
+                if (this.elements.optimizationText) {
+                    this.elements.optimizationText.textContent = text;
+                }
+            },
+
+            showTab(tabId) {
+                if (tabId === 'current-tab') {
+                    this.elements.currentContent.classList.remove('hidden');
+                    this.elements.newContent.classList.add('hidden');
+                    this.elements.tabTitle.textContent = 'Current Version';
+                    this.elements.currentTab.classList.add('active-tab');
+                    this.elements.newTab.classList.remove('active-tab');
+                    // Rerender the sliders for the current version to ensure they are interactive
+                    this.renderSliders(appModel.currentValues, this.elements.sliderContainer, false);
+                } else {
+                    this.elements.currentContent.classList.add('hidden');
+                    this.elements.newContent.classList.remove('hidden');
+                    this.elements.tabTitle.textContent = 'New Version';
+                    this.elements.newTab.classList.add('active-tab');
+                    this.elements.currentTab.classList.remove('active-tab');
+                }
+            }
+        };
+
+        // --- Controller ---
+        const appController = {
+            init() {
+                appView.initElements();
+                appModel.loadValues();
+                appView.renderSliders(appModel.currentValues, appView.elements.sliderContainer);
+                this.bindEvents();
+            },
+
+            bindEvents() {
+                appView.elements.saveButton.addEventListener('click', this.handleSave);
+                appView.elements.tabsContainer.addEventListener('click', this.handleTabClick);
+            },
+
+            handleSave() {
+                // Save the current state of the sliders
+                appModel.saveValues();
+
+                // Calculate the new, optimized values based on the current state
+                const optimizationText = appModel.calculateNewValues();
+                
+                // Render the new values to the "New Version" tab
+                appView.renderSliders(appModel.newValues, appView.elements.newSliderContainer, true);
+                appView.renderOptimizationText(optimizationText);
+                appView.showTab('new-tab');
+            },
+
+            handleTabClick(e) {
+                if (e.target.id === 'current-tab') {
+                    appView.showTab('current-tab');
+                } else if (e.target.id === 'new-tab') {
+                    appView.showTab('new-tab');
+                }
+            }
+        };
+
+        // Start the application after the document has loaded
+        window.addEventListener('load', appController.init.bind(appController));
+    </script>
+</body>
+</html>
