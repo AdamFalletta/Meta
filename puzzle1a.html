@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Puzzle Palooza</title>
+<style>
+:root{
+  --bg:#0b0f1a; --neon:#20f2ff; --accent:#ff66cc;
+}
+*{box-sizing:border-box;font-family: 'Segoe UI', Roboto, Arial, sans-serif}
+body{margin:0;background:linear-gradient(180deg,#071029 0%, #081222 60%);color:#eaf7ff;display:flex;min-height:100vh;align-items:center;justify-content:center}
+.app{width:1100px;padding:18px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.05));box-shadow:0 20px 50px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.title{font-size:28px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:12px}
+.logo{width:56px;height:56px;border-radius:8px;background:linear-gradient(45deg,var(--neon),var(--accent));display:flex;align-items:center;justify-content:center;color:#001; font-weight:800; box-shadow:0 6px 18px rgba(32,242,255,0.12);}
+.controls{display:flex;gap:8px;align-items:center}
+.select, .btn{background:transparent;border:2px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:inherit;cursor:pointer}
+.btn:hover{transform:translateY(-2px)}
+.top-row{display:flex;gap:12px}
+.left-column{width:760px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+.canvas-wrap{position:relative;background:#071428;padding:6px;border-radius:8px}
+#puzzleCanvas{background:#071428;display:block}
+.hud{display:flex;gap:8px;align-items:center;margin-top:10px}
+.candidates{display:flex;gap:8px}
+.candidate{width:88px;height:88px;border-radius:8px;overflow:hidden;border:3px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.candidate img{width:100%;height:100%;object-fit:cover}
+.candidate.disabled{opacity:0.35;pointer-events:none;}
+.candidate.correct{outline:4px solid rgba(0,255,128,0.35);box-shadow:0 6px 20px rgba(0,255,128,0.06)}
+.notice{margin-left:12px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02);min-width:260px}
+.timer{font-weight:700; font-size:18px;}
+.right-column{flex:1;min-width:300px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+.hi-scores{margin-top:8px}
+.score-item{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.0));margin-bottom:6px}
+.neo{padding:6px 10px;border-radius:10px;background:linear-gradient(90deg, rgba(32,242,255,0.06), rgba(255,102,204,0.03));border:1px solid rgba(255,255,255,0.02);box-shadow:0 8px 30px rgba(32,242,255,0.04) inset}
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.flash{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen}
+.hint{font-size:13px;opacity:0.9}
+.small{font-size:12px;color:rgba(255,255,255,0.6)}
+.instructions{font-size:13px;margin-bottom:8px}
+/* arcade razzle */
+.title::after{content:'';display:inline-block;width:40px;height:6px;margin-left:8px;border-radius:3px;background:linear-gradient(90deg,var(--neon),var(--accent));filter:drop-shadow(0 6px 14px rgba(32,242,255,0.08));transform:skewX(-15deg)}
+@keyframes pulseHue{0%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(45deg)}100%{filter:hue-rotate(0deg)}}
+.pulse{animation:pulseHue 3s infinite}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="title"><div class="logo">PP</div>Puzzle Palooza <span class="small">— neo-arcade jigsaw</span></div>
+    <div class="controls">
+      <label class="small">Pieces:</label>
+      <select id="sizeSelect" class="select">
+        <option value="25">25 (5×5)</option>
+      </select>
+      <select id="imageSelect" class="select"></select>
+      <button id="startBtn" class="btn">Start Game</button>
+    </div>
+  </div>
+
+  <div class="top-row">
+    <div class="left-column">
+      <div class="canvas-wrap">
+        <canvas id="puzzleCanvas" width="720" height="720"></canvas>
+        <div class="flash" id="flashLayer"></div>
+      </div>
+      <div class="hud">
+        <div class="candidates" id="candidates"></div>
+        <div class="notice">
+          <div class="timer">Time: <span id="timeDisplay">0.000</span>s</div>
+          <div id="message" class="hint">Choose the next piece: <span id="nextIndex">1</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="right-column">
+      <div class="instructions neo">
+        <strong>How to play</strong>
+        <div class="small">Choose the correct piece from five similar thumbnails. One shot only. Wrong choices will lock input for 5 seconds. Fastest completion wins.</div>
+      </div>
+      <div style="margin-top:8px">
+        <strong class="small">Puzzle Preview</strong>
+        <img id="puzzlePreview" src="https://via.placeholder.com/250x250?text=Loading..." style="width:250px;height:250px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;margin-top:4px;object-fit:cover">
+      </div>
+      <div class="hi-scores" style="margin-top:12px">
+        <h4 class="small">Top 5 High Scores</h4>
+        <div id="highScoresList"></div>
+      </div>
+      <div style="margin-top:10px">
+        <button id="clearHS" class="btn">Clear High Scores</button>
+      </div>
+    </div>
+  </div>
+  <div class="footer small">
+    <div>© Puzzle Palooza — drag to preview pieces | sample image from picsum.photos</div>
+    <div>Built with ❤️ — MVC + localStorage</div>
+  </div>
+</div>
+
+<script>
+// -------------------- MODEL --------------------
+const Model = (function(){
+  const storageKey='puzzle-palooza-highscores';
+  let state = { gridSize:5, total:25, pieces:[], placed:[], imageSrc:'', nextIndex:1,
+                running:false, startTime:0, elapsed:0, locked:false, currentBoard:'',
+                wrongAttempts:0 };
+  function makePieces(cols){return Array.from({length:cols*cols},(_,i)=>({id:i,placed:false}));}
+  function setBoard(imageSrc){
+    state.gridSize=5;
+    state.total=25;
+    state.pieces=makePieces(5);
+    state.placed=Array(25).fill(false);
+    state.placed[0]=true;
+    state.nextIndex=1;
+    state.imageSrc=imageSrc;
+    state.running=true;
+    state.elapsed=0;
+    state.locked=false;
+    state.startTime=performance.now();
+    state.wrongAttempts=0;
+    state.currentBoard=imageSrc;
+  }
+  function loadHighScores(){
+    try{const raw=localStorage.getItem(storageKey);return raw?JSON.parse(raw):{};}catch(e){return{};}
+  }
+  function saveHighScores(scores){localStorage.setItem(storageKey,JSON.stringify(scores));}
+  function addHighScore(initials,time){
+    const st=state;
+    const allScores = loadHighScores();
+    if(!allScores[st.currentBoard]) allScores[st.currentBoard]=[];
+    allScores[st.currentBoard].push({initials,time,wrongAttempts:st.wrongAttempts});
+    allScores[st.currentBoard].sort((a,b)=>{
+      if(a.wrongAttempts!==b.wrongAttempts) return a.wrongAttempts-b.wrongAttempts;
+      return a.time-b.time;
+    });
+    allScores[st.currentBoard] = allScores[st.currentBoard].slice(0,5);
+    saveHighScores(allScores);
+    return allScores[st.currentBoard];
+  }
+  function clearHighScores(){localStorage.removeItem(storageKey);}
+  return {state,setBoard,loadHighScores,addHighScore,clearHighScores};
+})();
+
+// -------------------- VIEW --------------------
+const View = (function(){
+  const canvas=document.getElementById('puzzleCanvas'), ctx=canvas.getContext('2d');
+  const candidatesEl=document.getElementById('candidates');
+  const timeDisplay=document.getElementById('timeDisplay');
+  const message=document.getElementById('message');
+  const nextIndexSpan=document.getElementById('nextIndex');
+  const hsList=document.getElementById('highScoresList');
+  const flashLayer=document.getElementById('flashLayer');
+  const preview=document.getElementById('puzzlePreview');
+
+  function drawBoard(image, cols){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const size=canvas.width, tile=size/cols;
+    for(let r=0;r<cols;r++){for(let c=0;c<cols;c++){
+      const idx=r*cols+c,x=c*tile,y=r*tile;
+      if(Model.state.placed[idx]) ctx.drawImage(image,c*tile,r*tile,tile,tile,x,y,tile,tile);
+      else {ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.strokeRect(x,y,tile,tile);}
+    }}
+  }
+
+  function renderCandidates(thumbnails){
+    candidatesEl.innerHTML='';
+    thumbnails.forEach(t=>{
+      const div=document.createElement('div');div.className='candidate';
+      const img=document.createElement('img');img.src=t.src;
+      div.appendChild(img);div.dataset.pieceIndex=t.pieceIndex;
+      candidatesEl.appendChild(div);
+    });
+  }
+
+  function updateTimer(t){timeDisplay.textContent = t.toFixed(3);}
+  function setMessage(txt){message.textContent=txt;}
+  function setNextIndex(i){nextIndexSpan.textContent=i;}
+  function flash(color='rgba(255,0,0,0.25)',duration=400){
+    const el=document.createElement('div');
+    el.style.position='absolute';el.style.inset='0';el.style.background=color;
+    el.style.pointerEvents='none';el.style.opacity='0.0';el.style.transition='opacity 120ms';
+    flashLayer.appendChild(el);
+    requestAnimationFrame(()=>{el.style.opacity='1.0'});
+    setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),150)},duration);
+  }
+  function updateHighScores(list){
+    hsList.innerHTML='';
+    if(!list||list.length===0){hsList.textContent='No high scores yet.';return;}
+    list.forEach((s,idx)=>{
+      const div=document.createElement('div');div.className='score-item';
+      div.innerHTML=`<div>#${idx+1} ${s.initials}</div><div>${s.time.toFixed(3)}s | ${s.wrongAttempts} wrong</div>`;
+      hsList.appendChild(div);
+    });
+  }
+  function setPreview(src){preview.src=src;}
+  return {drawBoard,renderCandidates,updateTimer,setMessage,setNextIndex,flash,updateHighScores,setPreview};
+})();
+
+// -------------------- CONTROLLER --------------------
+const Controller = (function(){
+  const sizeSelect=document.getElementById('sizeSelect');
+  const startBtn=document.getElementById('startBtn');
+  const imageSelect=document.getElementById('imageSelect');
+  const clearHSBtn=document.getElementById('clearHS');
+  const candidatesEl=document.getElementById('candidates');
+  const imageList=[
+    {name:'Puzzle 1',src:'https://picsum.photos/id/1015/720/720'},
+    {name:'Puzzle 2',src:'https://picsum.photos/id/1025/720/720'},
+    {name:'Puzzle 3',src:'https://picsum.photos/id/1035/720/720'},
+    {name:'Puzzle 4',src:'https://picsum.photos/id/1045/720/720'},
+    {name:'Puzzle 5',src:'https://picsum.photos/id/1055/720/720'},
+    {name:'Puzzle 6',src:'https://picsum.photos/id/1060/720/720'},
+    {name:'Puzzle 7',src:'https://picsum.photos/id/1062/720/720'},
+    {name:'Puzzle 8',src:'https://picsum.photos/id/1064/720/720'},
+    {name:'Puzzle 9',src:'https://picsum.photos/id/1067/720/720'},
+    {name:'Puzzle 10',src:'https://picsum.photos/id/1070/720/720'}
+  ];
+  let img=new Image(),cols=5,lastFrame=0,thumbnails=[];
+
+  function populateImageSelect(){
+    imageSelect.innerHTML='';
+    imageList.forEach(p=>{const opt=document.createElement('option');opt.value=p.src;opt.textContent=p.name;imageSelect.appendChild(opt);});
+  }
+
+  function init(){
+    populateImageSelect();
+    startBtn.addEventListener('click',onStart);
+    candidatesEl.addEventListener('click',onCandidateClick);
+    clearHSBtn.addEventListener('click',()=>{
+      Model.clearHighScores();
+      View.updateHighScores([]);
+    });
+    img.crossOrigin='anonymous';
+  }
+
+  function onStart(){
+    View.setPreview('https://via.placeholder.com/250x250?text=Loading...');
+    const choice=imageSelect.value||imageList[0].src;
+    Model.setBoard(choice);
+    img.src=choice;
+    img.onload=()=>{
+      View.setPreview(choice);
+      thumbnails=[];
+      View.drawBoard(img,cols);
+      generateThumbnails();
+      lastFrame=performance.now();
+      requestAnimationFrame(loop);
+    };
+  }
+
+  function generateThumbnails(){
+    thumbnails=[];
+    const st=Model.state;
+    const tmp=document.createElement('canvas');
+    const tctx=tmp.getContext('2d');
+    const tileSize=img.width/cols;
+    tmp.width=tileSize; tmp.height=tileSize;
+    const expected=st.nextIndex;
+    const wrongPool=[];
+    for(let i=0;i<st.pieces.length;i++) if(i!==expected) wrongPool.push(i);
+    shuffleArray(wrongPool);
+    const pick=[expected].concat(wrongPool.slice(0,4));
+    shuffleArray(pick);
+    pick.forEach(pi=>{
+      const r=Math.floor(pi/cols), c=pi%cols;
+      tctx.clearRect(0,0,tmp.width,tmp.height);
+      tctx.drawImage(img,c*tileSize,r*tileSize,tileSize,tileSize,0,0,tmp.width,tmp.height);
+      thumbnails.push({pieceIndex:pi,src:tmp.toDataURL()});
+    });
+    View.renderCandidates(thumbnails);
+  }
+
+  function onCandidateClick(e){
+    const n=e.target.closest('.candidate');
+    if(!n) return;
+    handleSelection(parseInt(n.dataset.pieceIndex,10),n);
+  }
+
+  function handleSelection(pieceIndex, element){
+    const st = Model.state;
+    if(!st.running || st.locked) return;
+    if(pieceIndex===st.nextIndex){
+      st.placed[pieceIndex]=true;
+      element.classList.add('correct');
+      View.setMessage('Correct!');
+      advanceToNext();
+    } else {
+      st.wrongAttempts++;
+      View.setMessage(`Wrong — wait 5 seconds (${st.wrongAttempts} wrong)`);
+      View.flash('rgba(255,0,0,0.32)',500);
+      st.locked=true;
+      setTimeout(()=>{
+        st.locked=false;
+        View.setMessage('Choose the next piece: '+(st.nextIndex+1));
+        generateThumbnails();
+        View.drawBoard(img,cols);
+      },5000);
+    }
+    View.drawBoard(img,cols);
+  }
+
+  function advanceToNext(){
+    const st=Model.state;
+    for(let i=st.nextIndex+1;i<st.total;i++){
+      if(!st.placed[i]){
+        st.nextIndex=i;
+        View.setNextIndex(i+1);
+        generateThumbnails();
+        View.drawBoard(img,cols);
+        return;
+      }
+    }
+    finishGame();
+  }
+
+  function finishGame(){
+    const st=Model.state; st.running=false;
+    const totalTime=st.elapsed;
+    View.setMessage('Completed! Time: '+totalTime.toFixed(3)+'s');
+    let initials=prompt('You finished in '+totalTime.toFixed(3)+'s — enter your initials (3 chars)');
+    if(initials){
+      initials=initials.trim().substring(0,3).toUpperCase();
+      const hs=Model.addHighScore(initials,totalTime);
+      View.updateHighScores(hs);
+    }
+  }
+
+  function loop(now){
+    const st=Model.state;
+    if(!st.running) return;
+    const dt=(now-lastFrame)/1000||0;
+    lastFrame=now;
+    st.elapsed+=dt;
+    View.updateTimer(st.elapsed);
+    requestAnimationFrame(loop);
+  }
+
+  function shuffleArray(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+
+  return {init};
+})();
+
+Controller.init();
+</script>
+</body>
+</html>
