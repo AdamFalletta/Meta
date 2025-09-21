@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Starfield</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starfield"></canvas>
+
+    <script>
+        // Get the canvas and its 2D rendering context
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+
+        // Define constants for the starfield layers
+        const NUM_STARS_SLOW = 200;
+        const NUM_STARS_MEDIUM = 100;
+        const NUM_STARS_FAST = 50;
+        // The speed of the color hue rotation
+        const HUE_ROTATION_SPEED = 8;
+
+        let stars = [];
+        let animationFrameId;
+        let hueOffset = 0;
+
+        // Function to create a new star object
+        function createStar(layer) {
+            let speed, size, initialHue;
+            switch (layer) {
+                case 'slow':
+                    speed = 0.5 + Math.random();
+                    size = 0.5 + Math.random() * 0.5;
+                    break;
+                case 'medium':
+                    speed = 2 + Math.random() * 1.5;
+                    size = 1 + Math.random();
+                    break;
+                case 'fast':
+                    speed = 4 + Math.random() * 2;
+                    size = 1.5 + Math.random() * 1.5;
+                    break;
+            }
+            
+            // Assign a random initial hue value for each star
+            initialHue = Math.random() * 360;
+
+            return {
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: size,
+                speed: speed,
+                initialHue: initialHue, // Store the initial hue
+                // Add a phase property for the sparkle effect
+                phase: Math.random() * Math.PI * 2
+            };
+        }
+
+        // Initialize the stars array
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < NUM_STARS_SLOW; i++) {
+                stars.push(createStar('slow'));
+            }
+            for (let i = 0; i < NUM_STARS_MEDIUM; i++) {
+                stars.push(createStar('medium'));
+            }
+            for (let i = 0; i < NUM_STARS_FAST; i++) {
+                stars.push(createStar('fast'));
+            }
+        }
+
+        // Function to update star positions and hue offset
+        function update() {
+            // Increment the global hue offset
+            hueOffset = (hueOffset + HUE_ROTATION_SPEED) % 360;
+
+            for (let i = 0; i < stars.length; i++) {
+                const star = stars[i];
+                star.y += star.speed;
+                // Update the phase for the sparkle effect
+                star.phase += 0.05;
+
+                // If a star moves off the bottom, reset it to the top
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                    // Reset phase and initial hue to create a continuous sparkle and color effect
+                    star.phase = Math.random() * Math.PI * 2;
+                    star.initialHue = Math.random() * 360;
+                }
+            }
+        }
+
+        // Function to draw the stars on the canvas
+        function draw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set the global opacity for all stars
+            ctx.globalAlpha = 0.4;
+
+            for (let i = 0; i < stars.length; i++) {
+                const star = stars[i];
+                ctx.beginPath();
+                // Use a sine wave to create a pulsing "sparkle" effect on the star's size
+                const sparkleSize = star.size + (Math.sin(star.phase) * 0.5);
+                
+                // Calculate the star's current hue with the global rotation
+                const currentHue = (star.initialHue + hueOffset) % 360;
+                // Use HSL to set the fill color with dynamic hue, and static saturation and lightness
+                ctx.fillStyle = `hsl(${currentHue}, 100%, 50%)`;
+
+                ctx.arc(star.x, star.y, sparkleSize, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.closePath();
+            }
+            // Reset globalAlpha to 1 to not affect other drawings if any
+            ctx.globalAlpha = 1;
+        }
+
+        // Main animation loop
+        function animate() {
+            update();
+            draw();
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Handle window resizing
+        function onResize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Re-initialize stars to distribute them across the new canvas size
+            initStars();
+        }
+
+        // Add event listener for window resize
+        window.addEventListener('resize', onResize);
+
+        // Start the animation on window load
+        window.onload = function() {
+            onResize(); // Initial setup
+            animate();
+        };
+
+        // Cleanup on window unload to prevent memory leaks
+        window.onbeforeunload = function() {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', onResize);
+        };
+    </script>
+</body>
+</html>
