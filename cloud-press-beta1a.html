@@ -550,7 +550,7 @@
 <div id="plugin-builder" class="py-20 sm:py-28 bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-xs font-semibold uppercase text-blue-400 tracking-wider mb-2">Build & Publish</h2>
-        <p class="text-4xl font-extrabold text-white mb-6">CloudPress is WordPress for the Cloud</p>
+        <p class="text-4xl font-extrabold text-white mb-6">The CloudPress Advantage</p>
         <p class="text-lg text-slate-300 max-w-4xl mx-auto mb-12">
             Developers and cloud professionals can log in, build infrastructure plugins, and publish them to the CloudPress Marketplace. Companies select, activate, and instantly deploy your plugin — creating a new .yaml stack in their environment.
         </p>
@@ -599,6 +599,157 @@
 
         </div>
 
+<!-- 🟦 Cloud Services Automation Section -->
+<div id="cloud-services" class="py-20 sm:py-28 bg-slate-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-xs font-semibold uppercase text-violet-400 tracking-wider mb-2">Cloud Services Automation</h2>
+            <p class="text-4xl font-extrabold text-white">Everything You Can Automate, One Unified Control Plane</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- Service Area 1: Identity, Security, Governance -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="shield" class="w-8 h-8 text-emerald-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Identity, Security & Governance</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>IAM Advanced: permission boundaries, SCPs, cross-account roles, external IdPs, policy evaluation</li>
+                    <li>Organizations: consolidated billing, OUs, delegated admins, SCP inheritance</li>
+                    <li>KMS / CloudHSM: CMK policies, grants, rotation, envelope encryption, multi-Region keys</li>
+                    <li>Secrets Manager vs SSM Parameter Store</li>
+                    <li>CloudTrail Org Trail, Lake integration</li>
+                    <li>Macie, GuardDuty, Inspector, Detective, Security Hub aggregation</li>
+                    <li>Shield Advanced, WAF advanced rules, Firewall Manager</li>
+                    <li>Control Tower, Artifact, Audit Manager</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 2: Compute & Application Hosting -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="cpu" class="w-8 h-8 text-blue-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Compute & Application Hosting</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>EC2 Advanced: dedicated hosts, placement groups, enhanced networking, Nitro</li>
+                    <li>Auto Scaling: predictive scaling, warm pools, lifecycle hooks</li>
+                    <li>ELB: ALB advanced routing, NLB cross-zone, TLS termination, authentication</li>
+                    <li>Serverless: Lambda VPC, provisioned concurrency, extensions</li>
+                    <li>API Gateway REST/HTTP/WebSocket, AppSync</li>
+                    <li>Containers: ECS capacity providers, Fargate Spot, EKS IAM for service accounts, CNI networking, App Mesh</li>
+                    <li>Batch, Outposts, Local Zones, Wavelength</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 3: Storage & Data Lifecycle -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="database" class="w-8 h-8 text-emerald-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Storage & Data Lifecycle</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>S3: CRR/SRR, Object Lock, Access Points, Event notifications, Multi-region access points</li>
+                    <li>EBS: multi-attach, fast snapshot restore, encryption by default</li>
+                    <li>EFS: regional/one-zone, lifecycle, access points, replication</li>
+                    <li>FSx: Windows DFS, Lustre/HPC, ONTAP snapshots, ZFS replication</li>
+                    <li>Storage Gateway, DataSync, Snowball/Snowcone/Snowmobile</li>
+                    <li>AWS Backup, cross-account copy, Elastic Disaster Recovery</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 4: Databases & Analytics -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="bar-chart-3" class="w-8 h-8 text-cyan-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Databases & Analytics</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>RDS: read replicas cross-region, failover, Proxy</li>
+                    <li>Aurora: Serverless v2, Global DB, write forwarding, backtrack</li>
+                    <li>DynamoDB: GSIs/LSIs, DAX, On-Demand backup, global tables</li>
+                    <li>ElastiCache: Redis clustering, replication, failover</li>
+                    <li>Neptune, DocumentDB, Redshift RA3/Spectrum/Federated Queries, concurrency scaling</li>
+                    <li>EMR clusters, Kinesis Data Streams/Firehose/Analytics, Glue ETL, DMS/SCT</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 5: Networking & Hybrid Connectivity -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="globe" class="w-8 h-8 text-yellow-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Networking & Hybrid Connectivity</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>VPC Advanced: routes, endpoints, flow logs, traffic mirroring</li>
+                    <li>Hybrid: VPN, Direct Connect w/ failover, Transit Gateway, Cloud WAN</li>
+                    <li>Route 53: Resolver endpoints, hybrid DNS, routing policies, health checks</li>
+                    <li>CloudFront: signed URLs/cookies, field-level encryption, Origin Shield</li>
+                    <li>Global Accelerator, Local Zones, Wavelength</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 6: Monitoring, Management & Automation -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="monitor" class="w-8 h-8 text-violet-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Monitoring, Management & Automation</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>CloudWatch: Contributor Insights, Logs Insights, anomaly detection, custom metrics, Container Insights</li>
+                    <li>CloudTrail: org-wide integration</li>
+                    <li>Config: conformance packs, aggregation</li>
+                    <li>Systems Manager: Automation docs, Patch Manager, State Manager, Session Manager, Parameter Store</li>
+                    <li>X-Ray: service maps, sampling rules</li>
+                    <li>Trusted Advisor, Well-Architected Tool</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 7: Application Integration -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="shuffle" class="w-8 h-8 text-orange-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Application Integration</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>SQS: FIFO with deduplication, DLQ</li>
+                    <li>SNS: fan-out, message filtering</li>
+                    <li>EventBridge: custom buses, schema discovery, SaaS integration</li>
+                    <li>Step Functions: service integrations, Express workflows</li>
+                    <li>AppFlow</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 8: Migration & Modernization -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="refresh-cw" class="w-8 h-8 text-indigo-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Migration & Modernization</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>Migration Hub: MGN, SMS</li>
+                    <li>Application Discovery Service</li>
+                    <li>Refactor: App2Container, Microservice Extractor</li>
+                    <li>Outposts, VMware Cloud on AWS</li>
+                    <li>Transfer Family: SFTP/FTPS/FTP</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 9: Cost Optimization & Governance -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="credit-card" class="w-8 h-8 text-rose-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">Cost Optimization & Governance</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>Billing: CUR, Cost Explorer, Budgets</li>
+                    <li>Pricing: On-Demand, RIs, Savings Plans</li>
+                    <li>Enterprise Billing, License Manager, Marketplace integration</li>
+                </ul>
+            </div>
+
+            <!-- Service Area 10: IoT & AI / ML -->
+            <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                <i data-lucide="cpu" class="w-8 h-8 text-pink-400 mb-4"></i>
+                <h4 class="text-xl font-semibold text-white mb-2">IoT & AI / ML</h4>
+                <ul class="text-slate-300 text-sm space-y-2">
+                    <li>IoT Core: device management, rules engine, secure communication</li>
+                    <li>IoT Greengrass, FreeRTOS, Analytics</li>
+                    <li>AI / ML: SageMaker (training, deployment, pipelines, monitoring)</li>
+                    <li>Comprehend, Rekognition, Polly, Lex, Transcribe, Translate</li>
+                    <li>Personalize, Forecast, Textract, Kendra</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+        
         <!-- CTA Buttons -->
         <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mt-12">
             <a href="#" class="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-xl text-white bg-violet-600 hover:bg-violet-700 md:py-4 md:text-lg md:px-10 cta-button">
@@ -620,7 +771,7 @@
                     CloudPress by AFI Solutions aims to democratize the cloud — empowering creators, developers, and businesses to build infrastructure as easily as they once built blogs.
                 </p>
                 <p class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-400">
-                    Activate a plugin. Launch a cloud.
+                    Activate a plugin. Launch a cloud service.
                 </p>
             </div>
         </div>
@@ -729,6 +880,7 @@
     </script>
 </body>
 </html>
+
 
 
 
