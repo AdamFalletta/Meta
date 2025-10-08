@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudPress by AFI Solutions | Universal Control Plane for Cloud</title>
+<!-- 🔥 CloudPress MAX SEO Meta Section -->
+<meta name="description" content="CloudPress by AFI Solutions — the universal control plane for cloud. Deploy, scale, and automate AWS, Azure, and DigitalOcean from a single dashboard. Activate plugins, launch clouds, and manage infrastructure like WordPress for the cloud.">
+
+<meta name="keywords" content="CloudPress, AFI Solutions, universal control plane, cloud automation, multi-cloud management, cloud dashboard, WordPress for cloud, cloud plugin marketplace, AI MetaBots, DevOps tools, infrastructure automation, cloud deployment, AWS, Azure, DigitalOcean, Kubernetes management, serverless orchestration, cloud migration tools">
+
+<meta name="author" content="AFI Solutions">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+<!-- ✅ Canonical URL -->
+<link rel="canonical" href="https://cloudpress.afi.solutions/">
+
+<!-- 📱 Mobile Web App -->
+<meta name="theme-color" content="#8B5CF6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CloudPress">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- 🧠 Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cloudpress.afi.solutions/">
+<meta property="og:title" content="CloudPress — Universal Control Plane for the Cloud | AFI Solutions">
+<meta property="og:description" content="Deploy, automate, and manage all your cloud providers from one unified dashboard. Activate plugins, launch infrastructure, and scale instantly — no code required.">
+<meta property="og:image" content="https://cloudpress.afi.solutions/assets/social-preview.jpg">
+<meta property="og:site_name" content="CloudPress by AFI Solutions">
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Load Lucide Icons for professional touch -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom Styles for Dark Mode, Gradients, and Aesthetics */
+        :root {
+            --color-primary: #8B5CF6; /* Violet-500 */
+            --color-secondary: #3B82F6; /* Blue-500 */
+            --color-background: #0F172A; /* Slate-900 */
+            --color-surface: #1E293B; /* Slate-800 */
+            --color-text-light: #F8FAFC; /* Slate-50 */
+            --color-text-muted: #94A3B8; /* Slate-400 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text-light);
+            overflow-x: hidden;
+        }
+        .hero-gradient-bg {
+            background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+        }
+        .cta-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        .cta-button:hover {
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+            transform: translateY(-2px);
+        }
+        .feature-card {
+            background-color: var(--color-surface);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.15);
+        }
+        /* Styling for the floating "cloud core" visual */
+        .cloud-core-visual {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .core {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.8) 0%, rgba(59, 130, 246, 0.4) 70%, transparent 100%);
+            border-radius: 50%;
+            animation: pulse 2.5s infinite alternate;
+        }
+        .plugin-icon {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--color-surface);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        }
+        .plugin-icon:nth-child(2) { transform: translate(150px, 0) rotate(0deg); animation: orbit-1 10s linear infinite; }
+        .plugin-icon:nth-child(3) { transform: translate(-100px, 100px) rotate(120deg); animation: orbit-2 10s linear infinite; }
+        .plugin-icon:nth-child(4) { transform: translate(-50px, -150px) rotate(240deg); animation: orbit-3 10s linear infinite; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+        @keyframes orbit-1 {
+            from { transform: rotate(0deg) translateX(150px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(150px) rotate(-360deg); }
+        }
+        @keyframes orbit-2 {
+            from { transform: rotate(120deg) translateX(150px) rotate(-120deg); }
+            to { transform: rotate(480deg) translateX(150px) rotate(-480deg); }
+        }
+        @keyframes orbit-3 {
+            from { transform: rotate(240deg) translateX(150px) rotate(-240deg); }
+            to { transform: rotate(600deg) translateX(150px) rotate(-600deg); }
+        }
+        /* Dropdown styles (simple menu for responsiveness) */
+        .dropdown-menu {
+            display: none;
+            right: 0;
+            top: 64px; /* Height of the fixed header */
+            background-color: var(--color-surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 50;
+        }
+        .dropdown-button:hover .dropdown-menu {
+            display: block;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header / Fixed Navigation Bar -->
+    <header class="fixed top-0 left-0 w-full bg-slate-900/95 backdrop-blur-sm z-50 shadow-lg border-b border-violet-500/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo/Brand -->
+                <div class="flex-shrink-0">
+                    <a href="#hero" class="text-xl font-extrabold tracking-tight text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 012 2v1h4a2 2 0 012 2v7a2 2 0 01-2 2h-4v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1h-4a2 2 0 01-2-2V9a2 2 0 012-2h4V6a2 2 0 012-2zM4 11h16M7 4v16M17 4v16"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14h.01M10 18h.01M14 14h.01M14 18h.01"></path></svg>
+                        Cloud<span class="text-violet-400">Press</span>
+                        <span class="text-xs ml-2 px-2 py-0.5 bg-violet-600 rounded-full font-medium text-white/80">Beta</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex md:space-x-8 items-center">
+                    <a href="#features" class="text-slate-300 hover:text-violet-400 transition-colors">Features</a>
+                    <a href="#marketplace" class="text-slate-300 hover:text-violet-400 transition-colors">Marketplace</a>
+                    <a href="#pricing" class="text-slate-300 hover:text-violet-400 transition-colors">Pricing</a>
+                    <a href="#developers" class="text-slate-300 hover:text-violet-400 transition-colors">Developers</a>
+                </nav>
+
+                <!-- CTA Buttons -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <button class="text-slate-300 hover:text-violet-400 transition-colors px-3 py-1">Login</button>
+                    <button class="bg-violet-600 hover:bg-violet-700 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-lg shadow-violet-500/30">
+                        Sign Up
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button (Dropdown) -->
+                <div class="md:hidden relative dropdown-button">
+                    <button id="menu-toggle" class="p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                    <div id="mobile-menu" class="dropdown-menu absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <a href="#features" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Features</a>
+                        <a href="#marketplace" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Marketplace</a>
+                        <a href="#pricing" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Pricing</a>
+                        <a href="#developers" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Developers</a>
+                        <div class="border-t border-slate-700 my-1"></div>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Login</a>
+                        <a href="#" class="block px-4 py-2 text-sm bg-violet-600/20 text-violet-400 hover:bg-violet-600 hover:text-white">Sign Up</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- End Header -->
+
+    <main>
+        <!-- 🟦 1. Hero Section -->
+        <div id="hero" class="hero-gradient-bg pt-28 pb-20 sm:pt-40 sm:pb-32 lg:pt-48 lg:pb-40 text-center relative overflow-hidden">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 z-10 relative">
+                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-violet-300 mb-6">
+                    Activate a Plugin.<br class="sm:hidden"> Launch a Cloud.
+                </h1>
+                <p class="mt-4 max-w-3xl mx-auto text-xl text-slate-300 mb-10">
+                    The world’s first Cloud Service Management System — build, deploy, and scale cloud infrastructure as easily as a WordPress site.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                    <a href="#" class="cta-button inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-xl text-white bg-violet-600 hover:bg-violet-700 md:py-4 md:text-lg md:px-10">
+                        Get Started
+                    </a>
+                    <a href="#marketplace" class="cta-button inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-xl text-violet-400 bg-slate-800 hover:bg-slate-700 ring-2 ring-violet-500/50 md:py-4 md:text-lg md:px-10">
+                        Explore Marketplace
+                    </a>
+                    <a href="#" class="cta-button inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-xl text-slate-300 bg-slate-800 hover:bg-slate-700 ring-2 ring-slate-600/50 md:py-4 md:text-lg md:px-10 hidden sm:inline-flex">
+                        Join the Beta
+                    </a>
+                </div>
+            </div>
+
+            <!-- Visuals: Animated cloud dashboard, plugin icons orbiting -->
+            <div class="cloud-core-visual h-96 mt-20 hidden md:flex">
+                <div class="core"></div>
+                <div class="plugin-icon" style="background-color: #fca5a5;"><i data-lucide="server" class="w-6 h-6 text-red-400"></i></div>
+                <div class="plugin-icon" style="background-color: #fde047;"><i data-lucide="cpu" class="w-6 h-6 text-yellow-400"></i></div>
+                <div class="plugin-icon" style="background-color: #a7f3d0;"><i data-lucide="database" class="w-6 h-6 text-emerald-400"></i></div>
+            </div>
+        </div>
+
+        <!-- 🟩 2. About CloudPress -->
+        <div id="about" class="py-20 sm:py-28 bg-slate-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+                    <!-- Left: Text Content -->
+                    <div class="mb-10 lg:mb-0">
+                        <h2 class="text-xs font-semibold uppercase text-violet-400 tracking-wider mb-2">The AFI Vision</h2>
+                        <h3 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-6">
+                            What WordPress did for content, <span class="text-blue-400">CloudPress does for the cloud.</span>
+                        </h3>
+                        <p class="mt-4 text-lg text-slate-300">
+                            CloudPress turns complex cloud infrastructure into a simple, visual experience. With CloudPress, developers, startups, and enterprises can launch virtual machines, AI accelerators, databases, IoT networks, and more — all from one unified dashboard.
+                        </p>
+                        <p class="mt-4 text-lg text-slate-300">
+                            Like WordPress revolutionized content publishing, CloudPress revolutionizes cloud management. **No coding required, no console confusion** — just click, activate, and scale.
+                        </p>
+                    </div>
+                    <!-- Right: Visual Mockup Placeholder (Simplified Dashboard SVG) -->
+                    <div class="p-8 rounded-2xl shadow-2xl bg-slate-800 border border-slate-700/50">
+                        <svg class="w-full h-auto text-violet-500" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="10" y="10" width="380" height="280" rx="15" fill="#1e293b" stroke="#4c1d95" stroke-width="2"/>
+                            <!-- Header bar -->
+                            <rect x="20" y="20" width="360" height="30" rx="5" fill="#334155"/>
+                            <circle cx="370" cy="35" r="5" fill="#a7f3d0"/>
+                            <text x="30" y="40" font-family="Inter" font-size="12" fill="#94a3b8">CloudPress Unified Dashboard</text>
+                            <!-- Main Metric Card 1 (AWS) -->
+                            <rect x="25" y="65" width="170" height="100" rx="10" fill="#4c1d9522" stroke="#4c1d95"/>
+                            <text x="35" y="85" font-family="Inter" font-size="14" font-weight="bold" fill="#f8fafc">AWS Connection</text>
+                            <text x="35" y="115" font-family="Inter" font-size="30" font-weight="extrabold" fill="#a7f3d0">37%</text>
+                            <text x="110" y="145" font-family="Inter" font-size="12" fill="#94a3b8">Cost Optimized</text>
+                            <!-- Main Metric Card 2 (DO) -->
+                            <rect x="205" y="65" width="170" height="100" rx="10" fill="#3b82f622" stroke="#3b82f6"/>
+                            <text x="215" y="85" font-family="Inter" font-size="14" font-weight="bold" fill="#f8fafc">DigitalOcean Services</text>
+                            <text x="215" y="115" font-family="Inter" font-size="30" font-weight="extrabold" fill="#a7f3d0">14</text>
+                            <text x="290" y="145" font-family="Inter" font-size="12" fill="#94a3b8">Active Instances</text>
+                            <!-- Plugin Activity Log -->
+                            <rect x="25" y="180" width="350" height="100" rx="10" fill="#334155"/>
+                            <text x="35" y="200" font-family="Inter" font-size="14" font-weight="bold" fill="#f8fafc">MetaBot Activity</text>
+                            <text x="35" y="225" font-family="Inter" font-size="12" fill="#a7f3d0">• ScaleBot: Auto-scaled DB cluster (+2 replicas)</text>
+                            <text x="35" y="245" font-family="Inter" font-size="12" fill="#ef4444">• CostBot: Flagged 2 unused storage buckets</text>
+                            <text x="35" y="265" font-family="Inter" font-size="12" fill="#a7f3d0">• MigrateBot: 80% complete on WP transfer</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟨 3. Key Features (Cards) -->
+        <div id="features" class="py-20 sm:py-28 bg-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-xs font-semibold uppercase text-blue-400 tracking-wider mb-2">Core Functionality</h2>
+                    <p class="text-4xl font-extrabold text-white">The Power of the Universal Control Plane</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                    <!-- Feature Card 1 -->
+                    <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                        <i data-lucide="layout-dashboard" class="w-8 h-8 text-violet-400 mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">Unified Dashboard</h4>
+                        <p class="text-slate-400">Manage AWS, DigitalOcean, Azure & more from one seamless, intuitive interface. Control all providers without context switching.</p>
+                    </div>
+
+                    <!-- Feature Card 2 -->
+                    <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                        <i data-lucide="bolt" class="w-8 h-8 text-blue-400 mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">One-Click Provisioning</h4>
+                        <p class="text-slate-400">Deploy complex services, container orchestrations, and high-availability clusters instantly with zero configuration hassle.</p>
+                    </div>
+
+                    <!-- Feature Card 3 -->
+                    <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                        <i data-lucide="shield" class="w-8 h-8 text-emerald-400 mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">IAM Role Integration</h4>
+                        <p class="text-slate-400">Securely connect your cloud accounts using established, enterprise-grade IAM roles and least-privilege principles.</p>
+                    </div>
+
+                    <!-- Feature Card 4 -->
+                    <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                        <i data-lucide="bot" class="w-8 h-8 text-rose-400 mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">MetaBots (Automation)</h4>
+                        <p class="text-slate-400">AI agents that autonomously optimize cost, scale resources, and auto-migrate workloads across providers for peak performance.</p>
+                    </div>
+
+                    <!-- Feature Card 5 -->
+                    <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                        <i data-lucide="shopping-bag" class="w-8 h-8 text-yellow-400 mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">Marketplace Ecosystem</h4>
+                        <p class="text-slate-400">Discover and install plugins and themes for AI, storage, networking, and analytics—instantly integrating powerful capabilities.</p>
+                    </div>
+
+                    <!-- Feature Card 6 -->
+                    <div class="feature-card p-6 rounded-2xl border border-slate-700">
+                        <i data-lucide="git-branch-plus" class="w-8 h-8 text-indigo-400 mb-4"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">Migration Assistant</h4>
+                        <p class="text-slate-400">Seamlessly move from traditional CMS platforms like WordPress to modern, scalable cloud-native architectures.</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟧 4. Tiers & Pricing -->
+        <div id="pricing" class="py-20 sm:py-28 bg-slate-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-xs font-semibold uppercase text-violet-400 tracking-wider mb-2">Flexible Scaling</h2>
+                    <p class="text-4xl font-extrabold text-white">Three Tiers to Scale with You</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-10">
+
+                    <!-- Tier 1: Starter -->
+                    <div class="p-8 rounded-2xl feature-card border border-slate-700 text-center flex flex-col">
+                        <h4 class="text-2xl font-bold text-white">CloudPress Starter</h4>
+                        <p class="mt-2 text-slate-400">Entry-level cloud automation.</p>
+                        <div class="my-6">
+                            <span class="text-5xl font-extrabold text-white">$19</span>
+                            <span class="text-slate-400">/mo</span>
+                        </div>
+                        <p class="text-violet-400 font-semibold mb-4">Ideal for Indie developers, small startups</p>
+                        <ul class="text-slate-300 space-y-3 text-left flex-grow">
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> 3 connected accounts</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> 5 active services</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> 10GB cloud monitoring logs</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> Access to free plugin marketplace</li>
+                        </ul>
+                        <button class="cta-button mt-8 w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-medium">
+                            Start Trial
+                        </button>
+                    </div>
+
+                    <!-- Tier 2: Pro (Featured) -->
+                    <div class="p-8 rounded-2xl feature-card border-2 border-violet-500 text-center flex flex-col bg-slate-800 shadow-xl shadow-violet-500/20">
+                        <div class="text-sm font-semibold text-white px-3 py-1 bg-violet-600 rounded-full inline-block mx-auto mb-3">Recommended</div>
+                        <h4 class="text-3xl font-bold text-white">CloudPress Pro</h4>
+                        <p class="mt-2 text-slate-400">Full suite with advanced automation & analytics.</p>
+                        <div class="my-6">
+                            <span class="text-6xl font-extrabold text-white">$99</span>
+                            <span class="text-slate-400">/mo</span>
+                        </div>
+                        <p class="text-violet-400 font-semibold mb-4">Ideal for SMEs, DevOps teams</p>
+                        <ul class="text-slate-300 space-y-3 text-left flex-grow">
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> Unlimited connected accounts</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> 100 active services</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> **AI MetaBots** (CostBot, ScaleBot)</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> Private plugin hosting</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> Custom role-based access</li>
+                        </ul>
+                        <button class="cta-button mt-8 w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-violet-500/40">
+                            Go Pro Now
+                        </button>
+                    </div>
+
+                    <!-- Tier 3: Enterprise -->
+                    <div class="p-8 rounded-2xl feature-card border border-slate-700 text-center flex flex-col">
+                        <h4 class="text-2xl font-bold text-white">CloudPress Enterprise</h4>
+                        <p class="mt-2 text-slate-400">Scalable infrastructure for global organizations.</p>
+                        <div class="my-6">
+                            <span class="text-5xl font-extrabold text-white">Custom Quote</span>
+                        </div>
+                        <p class="text-violet-400 font-semibold mb-4">Ideal for Enterprises, cloud resellers</p>
+                        <ul class="text-slate-300 space-y-3 text-left flex-grow">
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> White-label platform</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> Cross-provider orchestration</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> Advanced security compliance</li>
+                            <li class="flex items-center"><i data-lucide="check-circle" class="w-5 h-5 mr-2 text-emerald-400"></i> 24/7 dedicated support</li>
+                        </ul>
+                        <button class="cta-button mt-8 w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-medium">
+                            Contact Sales
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟪 5. Plugin Marketplace & Categories -->
+        <div id="marketplace" class="py-20 sm:py-28 bg-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-xs font-semibold uppercase text-blue-400 tracking-wider mb-2">Ecosystem</h2>
+                    <p class="text-4xl font-extrabold text-white mb-3">Expand your cloud — one plugin at a time.</p>
+                    <p class="text-lg text-slate-400 max-w-3xl mx-auto">The CloudPress Marketplace is a dynamic ecosystem of both official and community-built plugins. Add AI accelerators, analytics dashboards, or IoT frameworks with one click.</p>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+                    
+                    <!-- Plugin Category 1 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="container" class="w-6 h-6 text-violet-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">Compute & Containers</p>
+                    </div>
+                    
+                    <!-- Plugin Category 2 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="brain-circuit" class="w-6 h-6 text-blue-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">AI & Machine Learning</p>
+                    </div>
+
+                    <!-- Plugin Category 3 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="database-zap" class="w-6 h-6 text-emerald-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">Storage & Databases</p>
+                    </div>
+                    
+                    <!-- Plugin Category 4 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="lock" class="w-6 h-6 text-rose-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">Security & Compliance</p>
+                    </div>
+
+                    <!-- Plugin Category 5 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="globe" class="w-6 h-6 text-yellow-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">Networking & APIs</p>
+                    </div>
+
+                    <!-- Plugin Category 6 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="bar-chart-3" class="w-6 h-6 text-cyan-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">Monitoring & Analytics</p>
+                    </div>
+
+                    <!-- Plugin Category 7 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="route" class="w-6 h-6 text-orange-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">IoT & Edge Devices</p>
+                    </div>
+
+                    <!-- Plugin Category 8 -->
+                    <div class="p-4 rounded-xl feature-card border border-slate-700 text-center">
+                        <i data-lucide="building-2" class="w-6 h-6 text-indigo-400 mx-auto mb-2"></i>
+                        <p class="text-sm text-white font-medium">Industry Solutions</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟥 6. MetaBots Automation -->
+        <div id="metabots" class="py-20 sm:py-28 bg-slate-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+                    <!-- Left: Text Content -->
+                    <div class="mb-10 lg:mb-0">
+                        <h2 class="text-xs font-semibold uppercase text-violet-400 tracking-wider mb-2">AI Optimization</h2>
+                        <h3 class="text-4xl sm:text-5xl font-extrabold text-white mb-6">
+                            Your Cloud, <span class="text-violet-400">On Autopilot.</span>
+                        </h3>
+                        <p class="mt-4 text-lg text-slate-300">
+                            MetaBots are CloudPress’s built-in AI assistants that optimize infrastructure, balance costs, and handle migrations automatically. They learn usage patterns, suggest improvements, and can even provision new services before bottlenecks occur.
+                        </p>
+
+                        <div class="mt-8 space-y-4">
+                            <div class="flex items-start p-4 bg-slate-800 rounded-xl border border-slate-700">
+                                <i data-lucide="piggy-bank" class="w-6 h-6 mr-3 text-emerald-400 mt-1 flex-shrink-0"></i>
+                                <div>
+                                    <p class="font-semibold text-white">CostBot</p>
+                                    <p class="text-sm text-slate-400">Detects inefficiencies, suggests instance downgrades, and automatically reduces spend without service interruption.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start p-4 bg-slate-800 rounded-xl border border-slate-700">
+                                <i data-lucide="scale" class="w-6 h-6 mr-3 text-blue-400 mt-1 flex-shrink-0"></i>
+                                <div>
+                                    <p class="font-semibold text-white">ScaleBot</p>
+                                    <p class="text-sm text-slate-400">Proactively adjusts resource usage based on predictive traffic patterns, ensuring zero downtime during peak loads.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start p-4 bg-slate-800 rounded-xl border border-slate-700">
+                                <i data-lucide="truck" class="w-6 h-6 mr-3 text-yellow-400 mt-1 flex-shrink-0"></i>
+                                <div>
+                                    <p class="font-semibold text-white">MigrateBot</p>
+                                    <p class="text-sm text-slate-400">Converts legacy technology stacks into secure, scalable, and fully cloud-native environments, hassle-free.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right: MetaBot Mascot Image Placeholder -->
+                    <div class="flex justify-center items-center h-full">
+                        <i data-lucide="bot" class="w-48 h-48 text-violet-600/50 animate-bounce-slow"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ⚪ 7. WP → CloudPress Migration Path -->
+        <div id="migration" class="py-20 sm:py-28 bg-slate-800">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-xs font-semibold uppercase text-violet-400 tracking-wider mb-2">Evolve Your Platform</h2>
+                <p class="text-4xl font-extrabold text-white mb-6">From Blog to Cloud — Seamlessly.</p>
+                
+                <div class="flex justify-center items-center my-8 space-x-4">
+                    <!-- WordPress Icon Placeholder (Globe) -->
+                    <div class="p-4 rounded-full bg-yellow-500/20">
+                        <i data-lucide="globe" class="w-8 h-8 text-yellow-300"></i>
+                    </div>
+                    <!-- Arrow -->
+                    <i data-lucide="arrow-right" class="w-12 h-12 text-violet-500 animate-pulse"></i>
+                    <!-- CloudPress Icon (Cloud/Server) -->
+                    <div class="p-4 rounded-full bg-violet-500/20">
+                        <i data-lucide="cloud-cog" class="w-8 h-8 text-violet-300"></i>
+                    </div>
+                </div>
+
+                <p class="mt-4 text-lg text-slate-300">
+                    Migrate your WordPress site directly into the CloudPress ecosystem. Turn static websites into full-scale cloud apps with load balancing, API endpoints, and scalable compute. CloudPress provides guided migration tools to evolve your platform — step by step — into a fully cloud-native stack.
+                </p>
+            </div>
+        </div>
+
+        <!-- 🟫 8. Developer Ecosystem -->
+        <div id="developers" class="py-20 sm:py-28 bg-slate-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-xs font-semibold uppercase text-blue-400 tracking-wider mb-2">Build The Future</h2>
+                <p class="text-4xl font-extrabold text-white mb-6">Join the CloudPress Developer Ecosystem</p>
+                <p class="text-lg text-slate-300 max-w-4xl mx-auto mb-10">
+                    Developers can publish plugins, themes, and automation workflows in the CloudPress Marketplace. Earn revenue, get discovered, and contribute to the next evolution of cloud computing. We provide the APIs and tools; you provide the innovation.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <a href="#" class="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-xl text-white bg-violet-600 hover:bg-violet-700 md:py-4 md:text-lg md:px-10 cta-button">
+                        Become a Developer Partner
+                    </a>
+                    <a href="#" class="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-xl text-violet-400 bg-slate-800 hover:bg-slate-700 ring-2 ring-violet-500/50 md:py-4 md:text-lg md:px-10 cta-button">
+                        Submit Your Plugin
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ⚫ 9. Vision & Tagline -->
+        <div class="py-20 sm:py-32 bg-slate-800 text-center border-t border-b border-slate-700/50">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <blockquote class="text-3xl sm:text-4xl italic font-light text-slate-200 mb-6">
+                    “The universal control plane for the modern cloud.”
+                </blockquote>
+                <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-8">
+                    CloudPress by AFI Solutions aims to democratize the cloud — empowering creators, developers, and businesses to build infrastructure as easily as they once built blogs.
+                </p>
+                <p class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-400">
+                    Activate a plugin. Launch a cloud.
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 pt-16 pb-12 border-t border-violet-500/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
+                <!-- Column 1: Logo & Vision -->
+                <div class="col-span-2 md:col-span-1">
+                    <a href="#" class="text-2xl font-extrabold tracking-tight text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 012 2v1h4a2 2 0 012 2v7a2 2 0 01-2 2h-4v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1h-4a2 2 0 01-2-2V9a2 2 0 012-2h4V6a2 2 0 012-2zM4 11h16M7 4v16M17 4v16"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14h.01M10 18h.01M14 14h.01M14 18h.01"></path></svg>
+                        Cloud<span class="text-violet-400">Press</span>
+                    </a>
+                    <p class="mt-4 text-sm text-slate-400">
+                        The universal control plane for the modern cloud, powered by AFI Solutions, a division of Adam Falletta Inc.
+                    </p>
+                    <p class="mt-2 text-sm text-slate-500">&copy; 2025 Adam Falletta Inc.</p>
+                </div>
+
+                <!-- Column 2: Product -->
+                <div>
+                    <h5 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Product</h5>
+                    <ul class="space-y-3">
+                        <li><a href="#features" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Features</a></li>
+                        <li><a href="#marketplace" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Marketplace</a></li>
+                        <li><a href="#pricing" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Pricing</a></li>
+                        <li><a href="#metabots" class="text-base text-slate-400 hover:text-violet-400 transition-colors">MetaBots AI</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Company -->
+                <div>
+                    <h5 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h5>
+                    <ul class="space-y-3">
+                        <li><a href="#about" class="text-base text-slate-400 hover:text-violet-400 transition-colors">About CloudPress</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Careers (We're Hiring!)</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Security & Compliance</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Press & Media</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 4: Resources -->
+                <div>
+                    <h5 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Resources</h5>
+                    <ul class="space-y-3">
+                        <li><a href="#developers" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Developer Portal</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Documentation</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Support Center</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Community Forum</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 5: Legal -->
+                <div>
+                    <h5 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Legal</h5>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="text-base text-slate-400 hover:text-violet-400 transition-colors">Cookie Settings</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Social Links & Final CTA -->
+            <div class="mt-12 flex flex-col sm:flex-row items-center justify-between border-t border-slate-700 pt-8">
+                <div class="flex space-x-6">
+                    <a href="#" class="text-slate-400 hover:text-violet-400 transition-colors"><i data-lucide="twitter" class="w-6 h-6"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-violet-400 transition-colors"><i data-lucide="linkedin" class="w-6 h-6"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-violet-400 transition-colors"><i data-lucide="github" class="w-6 h-6"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-violet-400 transition-colors"><i data-lucide="mail" class="w-6 h-6"></i></a>
+                </div>
+                <div class="mt-6 sm:mt-0">
+                    <p class="text-sm text-slate-400">
+                        Need Cloud Enterprise Support?
+                        <a href="#" class="text-violet-400 hover:text-violet-300 font-medium ml-1">Contact Sales</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script to initialize Lucide icons and handle mobile menu toggle -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Mobile Menu Toggle Logic
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        });
+
+        // Hide mobile menu when a link is clicked
+        document.querySelectorAll('#mobile-menu a').forEach(item => {
+            item.addEventListener('click', () => {
+                document.getElementById('mobile-menu').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
