@@ -919,6 +919,190 @@
             </div>
         </div>
 
+<section class="bg-slate-900 text-white px-8 py-16 space-y-12 font-sans">
+
+  <!-- Plugin Header -->
+  <div class="text-center mb-12">
+    <h1 class="text-4xl font-extrabold text-white">Secure S3 CloudPress Plugin</h1>
+    <p class="text-slate-300 text-lg max-w-3xl mx-auto">
+      The <strong>Secure S3 CloudPress Plugin</strong> empowers developers and teams to create, manage, and secure AWS S3 buckets directly from CloudPress. Automate storage operations, enforce encryption policies, block public access, and integrate seamlessly into your CloudPress workflows — all without touching the AWS console.
+    </p>
+  </div>
+
+  <!-- Why Use This Plugin -->
+  <div id="plugin-benefits">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Why Use This Plugin?</h2>
+    <p class="text-slate-300 mb-4">
+      Managing S3 manually can be time-consuming and error-prone. This plugin streamlines the process, letting you focus on building your application while ensuring your data is safe and compliant.
+    </p>
+    <ul class="list-disc list-inside space-y-2 text-slate-300 mb-4">
+      <li>Create S3 buckets instantly without leaving CloudPress</li>
+      <li>Enable automatic server-side encryption (AES256) by default</li>
+      <li>Block public access to prevent accidental data exposure</li>
+      <li>Upload and download files securely via CloudPress APIs</li>
+      <li>Integrate with MetaBlocks to automate workflows and data pipelines</li>
+    </ul>
+  </div>
+
+  <!-- Who Should Use It -->
+  <div id="plugin-audience">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Who Should Use It?</h2>
+    <p class="text-slate-300 mb-4">
+      Perfect for developers, DevOps engineers, and startups who want secure, compliant S3 storage without managing AWS manually. Ideal for CloudPress plugin developers, SaaS teams, and IoT/edge projects that need automated storage management.
+    </p>
+  </div>
+
+</section>
+
+
+<section class="bg-slate-900 text-white px-8 py-16 space-y-16 font-sans">
+  <div class="text-center mb-12">
+    <h1 class="text-4xl font-extrabold text-white">CloudPress Plugin Development Guide</h1>
+    <p class="text-slate-300 text-lg">Step-by-step instructions to build and submit your first Node.js plugin</p>
+  </div>
+  <!-- Step 1 -->
+  <div id="step1">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Step 1: Understand Plugin Structure</h2>
+    <p class="text-slate-300 mb-4">
+      A CloudPress plugin typically contains:
+    </p>
+    <ul class="list-disc list-inside space-y-2 text-slate-400 mb-4">
+      <li><strong>package.json</strong> – metadata for your plugin</li>
+      <li><strong>index.js</strong> – main plugin logic</li>
+      <li><strong>manifest.json</strong> – plugin metadata & capabilities</li>
+      <li>Optional UI components</li>
+      <li>Exported functions callable by CloudPress</li>
+    </ul>
+    <span class="text-xs text-violet-400">Tip: Use CommonJS or ESM exports for Node.js plugins.</span>
+  </div>
+
+  <!-- Step 2 -->
+  <div id="step2">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Step 2: Folder Structure</h2>
+    <pre class="bg-slate-800 p-4 rounded-lg text-slate-200 overflow-x-auto font-mono">
+cloudpress-s3-plugin/
+│
+├─ package.json
+├─ manifest.json
+├─ index.js
+└─ README.md
+    </pre>
+  </div>
+
+  <!-- Step 3 -->
+  <div id="step3">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Step 3: package.json</h2>
+    <pre class="bg-slate-800 p-4 rounded-lg text-slate-200 overflow-x-auto font-mono">
+{
+  "name": "cloudpress-s3-plugin",
+  "version": "1.0.0",
+  "description": "Secure AWS S3 integration for CloudPress",
+  "main": "index.js",
+  "author": "Adam Falletta",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.500.0",
+    "dotenv": "^16.3.0"
+  }
+}
+    </pre>
+  </div>
+
+  <!-- Step 4 -->
+  <div id="step4">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Step 4: manifest.json</h2>
+    <pre class="bg-slate-800 p-4 rounded-lg text-slate-200 overflow-x-auto font-mono">
+{
+  "name": "Secure S3 Storage",
+  "version": "1.0.0",
+  "description": "Create and manage private, encrypted S3 buckets",
+  "author": "Adam Falletta",
+  "category": "Cloud Services",
+  "entry": "index.js",
+  "capabilities": ["createBucket", "uploadFile", "downloadFile"],
+  "ui": {
+    "forms": [
+      {"name": "Create Bucket", "fields": ["bucketName"]},
+      {"name": "Upload File", "fields": ["bucketName", "fileKey", "fileContent"]},
+      {"name": "Download File", "fields": ["bucketName", "fileKey"]}
+    ]
+  }
+}
+    </pre>
+  </div>
+
+  <!-- Step 5 -->
+  <div id="step5">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Step 5: index.js</h2>
+    <pre class="bg-slate-800 p-4 rounded-lg text-slate-200 overflow-x-auto font-mono">
+import 'dotenv/config';
+import { S3Client, CreateBucketCommand, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({ region: process.env.AWS_REGION });
+
+export async function createBucket(bucketName) {
+  await s3.send(new CreateBucketCommand({ Bucket: bucketName }));
+  return `Bucket ${bucketName} created`;
+}
+
+export async function uploadFile(bucketName, key, body) {
+  await s3.send(new PutObjectCommand({ Bucket: bucketName, Key: key, Body: body }));
+  return `File ${key} uploaded`;
+}
+
+export async function downloadFile(bucketName, key) {
+  const response = await s3.send(new GetObjectCommand({ Bucket: bucketName, Key: key }));
+  const streamToString = (stream) =>
+    new Promise((resolve, reject) => {
+      const chunks = [];
+      stream.on("data", (chunk) => chunks.push(chunk));
+      stream.on("error", reject);
+      stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    });
+  return await streamToString(response.Body);
+}
+    </pre>
+  </div>
+
+  <!-- Step 6 -->
+  <div id="step6">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Step 6: Testing</h2>
+    <p class="text-slate-300 mb-4">Run locally to test your exported functions:</p>
+    <pre class="bg-slate-800 p-4 rounded-lg text-slate-200 overflow-x-auto font-mono">
+node index.js
+# or with CloudPress dev CLI
+cloudpress plugin:dev ./cloudpress-s3-plugin
+    </pre>
+  </div>
+
+  <!-- Step 7 -->
+  <div id="step7">
+    <h2 class="text-3xl font-bold text-violet-400 mb-4">Step 7: Submission</h2>
+    <ul class="list-disc list-inside space-y-2 text-slate-400 mb-4">
+      <li>Login to CloudPress developer portal</li>
+      <li>Package your plugin (zip or Git repo)</li>
+      <li>Fill submission form: name, version, description, Node.js version, category, capabilities</li>
+      <li>Upload screenshots/demo UI (optional)</li>
+      <li>Submit for review (security & functionality will be tested)</li>
+    </ul>
+    <span class="text-xs text-violet-400 block">
+      💡 Tip: Never commit AWS keys. Use environment variables and a README.md with usage examples.
+    </span>
+  </div>
+
+</section>
+
+<style>
+  section pre {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+</style>
+
+
 
 
 <!-- 🟪 CloudPress MetaOps Toolkit Section -->
