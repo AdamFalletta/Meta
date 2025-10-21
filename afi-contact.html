@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact & Specification - Adam Falletta Inc.</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* Custom scrollbar for a sleek look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #f0abfc; /* Accent Pink */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background-color: #0f172a; /* Dark BG */
+        }
+        
+        /* Utility class for input focus */
+        .form-input-focus:focus {
+            outline: none;
+            border-color: #f0abfc; /* Accent Pink */
+            box-shadow: 0 0 0 3px rgba(240, 171, 252, 0.5);
+        }
+
+        /* Custom styling for large checkboxes/radio buttons */
+        input[type="checkbox"], input[type="radio"] {
+            width: 1.5rem;
+            height: 1.5rem;
+            accent-color: #f0abfc;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#3b82f6',
+                        'dark-bg': '#0f172a', /* Slate-900 */
+                        'card-bg': '#1e293b', /* Slate-800 */
+                        'accent-pink': '#f0abfc', /* Pink-300 */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-bg text-gray-200 min-h-screen">
+
+    <!-- Header & Navigation (Simplified for standalone page) -->
+    <header class="sticky top-0 z-50 bg-dark-bg/90 backdrop-blur-md shadow-lg shadow-accent-pink/10">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-white">
+                Adam <span class="text-primary-blue">Falletta</span> Inc.
+            </h1>
+            <nav class="text-xl font-medium text-accent-pink">
+                Specification Questionnaire
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section: Contact Focus -->
+    <section class="relative overflow-hidden pt-24 pb-16 bg-gray-900 border-b-8 border-primary-blue/50">
+        <div class="container mx-auto px-6 text-center z-10">
+            <span class="text-primary-blue font-semibold uppercase tracking-widest text-sm mb-3 block">INITIATE PARTNERSHIP</span>
+            <h2 class="text-5xl md:text-6xl font-extrabold text-white mb-4 leading-tight">
+                Highly Specified Inquiry
+            </h2>
+            <p class="text-xl max-w-4xl mx-auto text-gray-400">
+                To ensure we connect you with the right technical lead immediately, please complete this detailed questionnaire. The more information you provide, the faster we can move to deployment.
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Questionnaire Section -->
+    <section class="py-16 bg-dark-bg">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <form action="#" method="POST" class="space-y-12">
+
+                <!-- STEP 1: Core Contact Details -->
+                <div class="bg-card-bg p-8 rounded-2xl shadow-2xl border-l-8 border-primary-blue">
+                    <h3 class="text-3xl font-bold text-white mb-6 flex items-center">
+                        <span class="text-primary-blue text-5xl mr-4">1.</span>
+                        Your Information & Role
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="full_name" class="block text-lg font-medium text-gray-300">Full Name</label>
+                            <input type="text" id="full_name" name="full_name" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white form-input-focus transition">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="company_name" class="block text-lg font-medium text-gray-300">Company / Organization Name</label>
+                            <input type="text" id="company_name" name="company_name" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white form-input-focus transition">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="work_email" class="block text-lg font-medium text-gray-300">Work Email</label>
+                            <input type="email" id="work_email" name="work_email" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white form-input-focus transition">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="job_title" class="block text-lg font-medium text-gray-300">Your Title / Role</label>
+                            <input type="text" id="job_title" name="job_title" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white form-input-focus transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Inquiry Focus (Checkboxes) -->
+                <div class="bg-card-bg p-8 rounded-2xl shadow-2xl border-l-8 border-accent-pink">
+                    <h3 class="text-3xl font-bold text-white mb-6 flex items-center">
+                        <span class="text-accent-pink text-5xl mr-4">2.</span>
+                        Primary Area of Interest
+                    </h3>
+                    <p class="text-gray-400 mb-6">Select all platforms and services that apply to your project:</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Checkbox 1 -->
+                        <label class="flex items-start bg-gray-800 p-4 rounded-xl cursor-pointer hover:bg-gray-700 transition space-x-4 border border-gray-700">
+                            <input type="checkbox" name="interest" value="meta_ops" class="mt-1.5 focus:ring-accent-pink">
+                            <div>
+                                <span class="text-xl font-semibold text-white">MetaOps / Enterprise</span>
+                                <p class="text-sm text-gray-400">Infrastructure management, CloudPress AI Studio, security.</p>
+                            </div>
+                        </label>
+                        <!-- Checkbox 2 -->
+                        <label class="flex items-start bg-gray-800 p-4 rounded-xl cursor-pointer hover:bg-gray-700 transition space-x-4 border border-gray-700">
+                            <input type="checkbox" name="interest" value="neosports" class="mt-1.5 focus:ring-accent-pink">
+                            <div>
+                                <span class="text-xl font-semibold text-white">NeoSports Network / Gaming</span>
+                                <p class="text-sm text-gray-400">Interactive content, NeoGear integration, tournament APIs.</p>
+                            </div>
+                        </label>
+                        <!-- Checkbox 3 -->
+                        <label class="flex items-start bg-gray-800 p-4 rounded-xl cursor-pointer hover:bg-gray-700 transition space-x-4 border border-gray-700">
+                            <input type="checkbox" name="interest" value="blabbot" class="mt-1.5 focus:ring-accent-pink">
+                            <div>
+                                <span class="text-xl font-semibold text-white">BlabBot AI / Communications</span>
+                                <p class="text-sm text-gray-400">Custom LLM development, conversational AI deployment.</p>
+                            </div>
+                        </label>
+                        <!-- Checkbox 4 -->
+                        <label class="flex items-start bg-gray-800 p-4 rounded-xl cursor-pointer hover:bg-gray-700 transition space-x-4 border border-gray-700">
+                            <input type="checkbox" name="interest" value="investment" class="mt-1.5 focus:ring-accent-pink">
+                            <div>
+                                <span class="text-xl font-semibold text-white">Investment / Partnership</span>
+                                <p class="text-sm text-gray-400">Strategic alliances, funding rounds, corporate development.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Project Scale and Timeline -->
+                <div class="bg-card-bg p-8 rounded-2xl shadow-2xl border-l-8 border-primary-blue">
+                    <h3 class="text-3xl font-bold text-white mb-6 flex items-center">
+                        <span class="text-primary-blue text-5xl mr-4">3.</span>
+                        Scale & Deployment Parameters
+                    </h3>
+
+                    <!-- Question 3.1: Expected User Count (Radio) -->
+                    <div class="space-y-4 mb-8 border-b border-gray-700 pb-6">
+                        <p class="text-lg font-medium text-gray-300">3.1 What is your estimated user base or endpoint count?</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="scale" value="under_1k" class="focus:ring-primary-blue" required>
+                                <span class="ml-3 text-white">Under 1,000</span>
+                            </label>
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="scale" value="1k_10k" class="focus:ring-primary-blue">
+                                <span class="ml-3 text-white">1k - 10k</span>
+                            </label>
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="scale" value="10k_100k" class="focus:ring-primary-blue">
+                                <span class="ml-3 text-white">10k - 100k</span>
+                            </label>
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="scale" value="over_100k" class="focus:ring-primary-blue">
+                                <span class="ml-3 text-white">100k+ (Enterprise/Global)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Question 3.2: Desired Launch Timeline (Radio) -->
+                    <div class="space-y-4 mb-8">
+                        <p class="text-lg font-medium text-gray-300">3.2 What is your desired launch or proof-of-concept timeline?</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="timeline" value="0_3" class="focus:ring-primary-blue" required>
+                                <span class="ml-3 text-white">0-3 Months (Urgent)</span>
+                            </label>
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="timeline" value="3_6" class="focus:ring-primary-blue">
+                                <span class="ml-3 text-white">3-6 Months</span>
+                            </label>
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="timeline" value="6_12" class="focus:ring-primary-blue">
+                                <span class="ml-3 text-white">6-12 Months</span>
+                            </label>
+                            <label class="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition">
+                                <input type="radio" name="timeline" value="planning" class="focus:ring-primary-blue">
+                                <span class="ml-3 text-white">Long-term Planning</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- STEP 4: Detailed Specification (Text Area) -->
+                <div class="bg-card-bg p-8 rounded-2xl shadow-2xl border-l-8 border-accent-pink">
+                    <h3 class="text-3xl font-bold text-white mb-6 flex items-center">
+                        <span class="text-accent-pink text-5xl mr-4">4.</span>
+                        Detailed Project Summary
+                    </h3>
+                    <div class="space-y-2">
+                        <label for="project_summary" class="block text-lg font-medium text-gray-300">
+                            Describe your primary goal, required integrations, and any existing infrastructure (Min. 50 words).
+                        </label>
+                        <textarea id="project_summary" name="project_summary" rows="8" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white form-input-focus transition placeholder-gray-500" placeholder="Example: We need to integrate BlabBot into our existing CRM to automate level-1 customer support tickets for 50,000 monthly users. We use AWS ecosystem."></textarea>
+                    </div>
+                </div>
+
+                <!-- SUBMISSION -->
+                <div class="pt-8 text-center">
+                    <button type="submit" class="w-full md:w-auto px-10 py-4 text-xl font-bold rounded-full bg-accent-pink text-dark-bg hover:bg-primary-blue hover:text-white transition transform hover:scale-105 shadow-xl shadow-accent-pink/50">
+                        Submit Specification & Request Consultation
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer with Corporate Info -->
+    <footer class="bg-gray-900 text-white py-12 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-sm text-gray-400">© 2025 Adam Falletta Inc. | All specifications are treated as highly confidential.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

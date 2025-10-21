@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlabBot AI Platform - Adam Falletta Inc.</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* Custom scrollbar for a sleek look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #f0abfc; /* Accent Pink */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background-color: #0f172a; /* Dark BG */
+        }
+        
+        /* Utility class for subtle glass/blur effect on cards */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7); /* Slate-800 semi-transparent */
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(240, 171, 252, 0.2); /* Light Pink Border */
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(240, 171, 252, 0.3);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#3b82f6',
+                        'dark-bg': '#0f172a', /* Slate-900 */
+                        'card-bg': '#1e293b', /* Slate-800 */
+                        'accent-pink': '#f0abfc', /* Pink-300 */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-bg text-gray-200 min-h-screen">
+
+    <!-- Header & Navigation (Simplified for standalone page) -->
+    <header class="sticky top-0 z-50 bg-dark-bg/90 backdrop-blur-md shadow-lg shadow-accent-pink/10">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-white">
+                Adam <span class="text-primary-blue">Falletta</span> Inc.
+            </h1>
+            <nav class="text-xl font-medium text-accent-pink">
+                MetaCommunications & BlabBot
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section: BlabBot Focus -->
+    <section class="relative overflow-hidden pt-24 pb-32 bg-gray-900 border-b-8 border-accent-pink/50">
+        <div class="container mx-auto px-6 text-center z-10">
+            <div class="text-8xl mb-8 text-accent-pink select-none">🤖</div>
+            <span class="text-accent-pink font-semibold uppercase tracking-widest text-sm mb-3 block">INTEGRATED AI PLATFORM</span>
+            <h2 class="text-6xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
+                BlabBot: The <span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-300 to-purple-500">Synaptic Communicator</span>
+            </h2>
+            <p class="text-xl md:text-2xl max-w-4xl mx-auto text-gray-400 mb-10">
+                A unified conversational AI layer engineered to bridge enterprise operations (MetaOps) with hyper-personalized consumer experiences across the AFI ecosystem.
+            </p>
+        </div>
+    </section>
+
+    <!-- Section 1: Dual Role and Architecture -->
+    <section class="py-24 bg-dark-bg border-t border-gray-700">
+        <div class="container mx-auto px-6">
+            <h3 class="text-4xl font-extrabold text-white mb-12 text-center">Architecting Contextual Dialogue</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                
+                <!-- Enterprise Role -->
+                <div class="bg-card-bg p-8 rounded-2xl shadow-2xl border-t-4 border-primary-blue transition hover:bg-gray-800">
+                    <div class="text-primary-blue mb-4 text-4xl font-bold">MetaOps Assistant</div>
+                    <h4 class="text-2xl font-bold text-white mb-4">Enterprise Workflow Optimization</h4>
+                    <p class="text-gray-400 mb-4">
+                        BlabBot is deeply integrated into **CloudPress AI Studio**, serving as a natural language interface for system administrators. It handles complex queries regarding network status, resource allocation, predictive maintenance alerts, and automated ticket generation, drastically reducing operational latency.
+                    </p>
+                    <ul class="list-disc list-inside text-sm text-gray-500 space-y-1">
+                        <li>Real-time telemetry querying (MetaOS)</li>
+                        <li>Automated script deployment via voice command</li>
+                        <li>AI-driven outage prediction reporting</li>
+                    </ul>
+                </div>
+
+                <!-- Consumer Role -->
+                <div class="bg-card-bg p-8 rounded-2xl shadow-2xl border-t-4 border-accent-pink transition hover:bg-gray-800">
+                    <div class="text-accent-pink mb-4 text-4xl font-bold">Fan Engagement Layer</div>
+                    <h4 class="text-2xl font-bold text-white mb-4">Hyper-Personalized Interaction</h4>
+                    <p class="text-gray-400 mb-4">
+                        Deployed across **NeoSports Network** and **Knockout!** terminals, BlabBot acts as a personal commentator, guide, and support agent. It uses real-time NeoGear data to provide contextual commentary (e.g., analyzing a NeoBaseball pitch) and offers instant rewards and troubleshooting.
+                    </p>
+                    <ul class="list-disc list-inside text-sm text-gray-500 space-y-1">
+                        <li>Real-time contextual game commentary</li>
+                        <li>Personalized merchandise recommendations</li>
+                        <li>Immediate support for arcade cabinet issues</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Key Features & Metrics -->
+    <section class="py-24 bg-gray-900 border-t border-gray-700">
+        <div class="container mx-auto px-6 max-w-5xl">
+            <h3 class="text-4xl font-extrabold text-accent-pink mb-12 text-center">BlabBot Core Capabilities</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <!-- Feature 1: Context Window -->
+                <div class="glass-card p-6 rounded-xl">
+                    <div class="text-6xl font-extrabold text-accent-pink mb-3">128K+</div>
+                    <h4 class="text-xl font-bold text-white mb-2">Extended Context</h4>
+                    <p class="text-sm text-gray-400">Ability to maintain context across multi-hour gaming sessions or complex diagnostic sessions.</p>
+                </div>
+                <!-- Feature 2: Language -->
+                <div class="glass-card p-6 rounded-xl">
+                    <div class="text-6xl font-extrabold text-accent-pink mb-3">25</div>
+                    <h4 class="text-xl font-bold text-white mb-2">Multilingual Support</h4>
+                    <p class="text-sm text-gray-400">Native support for key global languages for arcade and sports league expansion.</p>
+                </div>
+                <!-- Feature 3: Security -->
+                <div class="glass-card p-6 rounded-xl">
+                    <div class="text-6xl font-extrabold text-accent-pink mb-3">ISO</div>
+                    <h4 class="text-xl font-bold text-white mb-2">Data Isolation</h4>
+                    <p class="text-sm text-gray-400">Ensuring zero data leakage between Enterprise (MetaOps) and Consumer instances.</p>
+                </div>
+            </div>
+
+            <div class="mt-16 text-center">
+                <a href="#architecture" class="inline-flex items-center justify-center px-6 py-3 border border-accent-pink text-base font-medium rounded-full text-accent-pink hover:bg-accent-pink hover:text-dark-bg transition">
+                    View Architecture Details
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Technical Architecture Focus -->
+    <section id="architecture" class="py-24 bg-dark-bg border-t border-accent-pink/30">
+        <div class="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            <!-- Visual/Conceptual Diagram Placeholder -->
+            <div class="bg-card-bg p-8 rounded-xl shadow-2xl border border-primary-blue/30 h-96 flex items-center justify-center">
+                <p class="text-4xl font-extrabold text-primary-blue text-center">
+                    MetaOS API Gateway 
+                </p>
+            </div>
+
+            <div class="space-y-6">
+                <span class="text-sm font-semibold uppercase tracking-widest text-primary-blue mb-2 block">Technical Deep Dive</span>
+                <h4 class="text-5xl font-extrabold text-white mb-6">BlabBot Core Architecture</h4>
+                <p class="text-lg text-gray-400 mb-6">
+                    BlabBot runs on a dedicated instance of the **RevV-X Cluster** within the CloudPress environment. This allows for near-instantaneous token generation and response processing, critical for real-time interactions in both gaming and infrastructure monitoring.
+                </p>
+                <div class="bg-card-bg p-6 rounded-xl shadow-lg border-l-4 border-accent-pink">
+                    <h5 class="font-bold text-white text-xl mb-2">Data Integrity & Feedback Loop</h5>
+                    <p class="text-gray-400 text-sm">Every interaction fuels the **MetaOS Knowledge Graph**, improving future BlabBot accuracy. This continuous feedback loop ensures the AI model stays current with real-time operational status and new IP content.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer with Sitemap and Corporate Info -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
+            
+            <!-- Corporate Info -->
+            <div class="space-y-1 mb-4 md:mb-0 text-center md:text-left">
+                <h5 class="text-xl font-extrabold text-white">Adam Falletta Inc.</h5>
+                <p class="text-sm text-gray-400">New York State C-Corp | TAX ID 46-4197149</p>
+                <p class="text-sm text-gray-400">MetaCommunications Division</p>
+            </div>
+
+            <!-- Social/Links -->
+            <div class="flex space-x-6 items-center">
+                <a href="https://www.linkedin.com/company/adam-falletta-inc" target="_blank" class="text-primary-blue hover:text-accent-pink transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </a>
+                <a href="#" class="text-sm font-medium text-gray-400 hover:text-accent-pink">Back to Main Report</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

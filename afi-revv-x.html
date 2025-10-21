@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RevV-X Chiplet Architecture - Adam Falletta Inc.</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* Custom scrollbar for a sleek look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #f0abfc; /* Accent Pink - Used for BlabBot/AI */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background-color: #0f172a; /* Dark BG */
+        }
+        
+        /* Utility class for subtle highlight on technical cards */
+        .tech-card {
+            background: rgba(30, 41, 59, 0.7); /* Slate-800 semi-transparent */
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(59, 130, 246, 0.2); /* Primary Blue Border */
+            transition: all 0.4s ease;
+        }
+        .tech-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
+        }
+        /* New color for a dedicated technical feel: Electric Teal */
+        .text-tech-teal {
+            color: #20c997; /* A bright, technical green/teal */
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#3b82f6',
+                        'dark-bg': '#0f172a', /* Slate-900 */
+                        'card-bg': '#1e293b', /* Slate-800 */
+                        'accent-pink': '#f0abfc', /* Pink-300 - AI/LLM Focus */
+                        'tech-teal': '#20c997', /* New chip/data focus color */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-bg text-gray-200 min-h-screen">
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-50 bg-dark-bg/90 backdrop-blur-md shadow-lg shadow-tech-teal/10">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-white">
+                Adam <span class="text-tech-teal">Falletta</span> Inc.
+            </h1>
+            <nav class="text-xl font-medium text-tech-teal">
+                RevV-X Chiplet Design
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section: RevV-X Focus -->
+    <section class="relative overflow-hidden pt-24 pb-32 bg-gray-900 border-b-8 border-tech-teal/50">
+        <div class="container mx-auto px-6 text-center z-10">
+            <div class="text-7xl mb-6 text-tech-teal select-none">⚙️</div>
+            <span class="text-tech-teal font-semibold uppercase tracking-widest text-sm mb-3 block">PERFORMANCE COMPONENT UNIT</span>
+            <h2 class="text-6xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
+                RevV-X: The <span class="bg-clip-text text-transparent bg-gradient-to-r from-tech-teal to-primary-blue">Asynchronous Chiplet</span>
+            </h2>
+            <p class="text-xl md:text-2xl max-w-4xl mx-auto text-gray-400 mb-10">
+                A heterogeneous compute architecture utilizing specialized processing units for low-latency, real-time sensor fusion and high-throughput AI acceleration.
+            </p>
+        </div>
+    </section>
+
+    <!-- Section 1: Core Chiplet Architecture -->
+    <section class="py-24 bg-dark-bg border-t border-gray-700">
+        <div class="container mx-auto px-6">
+            <h3 class="text-4xl font-extrabold text-white mb-12 text-center">Heterogeneous Compute Design</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Chiplet 1: NPU -->
+                <div class="tech-card p-8 rounded-2xl border-l-4 border-accent-pink">
+                    <h4 class="text-2xl font-bold text-accent-pink mb-2">Neural Processing Unit (NPU)</h4>
+                    <p class="text-gray-400 mb-4 text-sm">Dedicated silicon for accelerating transformer models, critical for low-latency **BlabBot** conversational responses and predictive AI routines (e.g., player fatigue). Optimized for sparse matrix multiplication.</p>
+                </div>
+
+                <!-- Chiplet 2: BPU -->
+                <div class="tech-card p-8 rounded-2xl border-l-4 border-primary-blue">
+                    <h4 class="text-2xl font-bold text-primary-blue mb-2">Baseball Processing Unit (BPU)</h4>
+                    <p class="text-gray-400 mb-4 text-sm">Specialized custom logic designed for the parallel ingestion, synchronization, and initial processing of high-frequency sensor data streams from **NeoGear** devices.</p>
+                </div>
+
+                <!-- Chiplet 3: General Compute -->
+                <div class="tech-card p-8 rounded-2xl border-l-4 border-tech-teal">
+                    <h4 class="text-2xl font-bold text-tech-teal mb-2">I/O & Fabric Controller</h4>
+                    <p class="text-gray-400 mb-4 text-sm">Manages the high-speed chiplet-to-chiplet interconnect fabric, ensuring deterministic latency for data transfer between the BPU and NPU, and interfaces with the **MetaOS** API Gateway.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: The BPU and Sensor Fusion -->
+    <section class="py-24 bg-gray-900 border-t border-tech-teal/30">
+        <div class="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            
+            <div class="space-y-6">
+                <span class="text-sm font-semibold uppercase tracking-widest text-primary-blue mb-2 block">Real-Time Data Processing</span>
+                <h4 class="text-5xl font-extrabold text-white mb-6">BPU: Sensor Fusion & NEOTransfusion</h4>
+                
+                <p class="text-lg text-gray-400">
+                    The **Baseball Processing Unit (BPU)** is the ingress point for all raw, high-rate data from the stadium's **IoT Stream**. Its primary function is **Sensor Fusion**: taking unsynchronized inputs from high-speed cameras, biomechanical sensors, and pitch trackers, and fusing them into a single, cohesive, time-stamped vector.
+                </p>
+
+                <div class="bg-card-bg p-6 rounded-xl shadow-lg border-l-4 border-primary-blue">
+                    <h5 class="font-bold text-white text-xl mb-2">NEOTransfusion Protocol</h5>
+                    <p class="text-gray-400 text-sm">This proprietary protocol, executed on the BPU, is responsible for losslessly transforming raw sensor vectors into the normalized, high-dimensional tensors required by the **NPU**'s predictive models. This transformation reduces the required model complexity and ensures data integrity across the AFI ecosystem.</p>
+                </div>
+            </div>
+            
+            <!-- Key Metrics/Diagram Placeholder -->
+            <div class="bg-card-bg p-8 rounded-xl shadow-2xl border border-tech-teal/30 h-96 flex items-center justify-center">
+                <p class="text-4xl font-extrabold text-tech-teal text-center">
+                    
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Data Flow and Edge-to-Cloud -->
+    <section class="py-24 bg-dark-bg border-t border-gray-700">
+        <div class="container mx-auto px-6 max-w-5xl">
+            <h3 class="text-4xl font-extrabold text-accent-pink mb-12 text-center">IoT Stream Integration & Model Serving</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                
+                <!-- IoT Stream -->
+                <div class="tech-card p-8 rounded-2xl border-b-4 border-tech-teal">
+                    <div class="text-tech-teal text-3xl mb-3 font-extrabold">Stream Ingestion</div>
+                    <h4 class="text-2xl font-bold text-white mb-4">High-Frequency IoT Input</h4>
+                    <ul class="list-disc list-inside text-sm text-gray-400 space-y-2">
+                        <li>Receives over **150,000 data points per second** per stadium deployment.</li>
+                        <li>Utilizes a custom zero-copy buffer architecture to minimize latency overhead.</li>
+                        <li>Raw sensor data is immediately partitioned and sent to the BPU for fusion.</li>
+                    </ul>
+                </div>
+
+                <!-- Model Serving -->
+                <div class="tech-card p-8 rounded-2xl border-b-4 border-accent-pink">
+                    <div class="text-accent-pink text-3xl mb-3 font-extrabold">NPU Inference</div>
+                    <h4 class="text-2xl font-bold text-white mb-4">Low-Latency AI Response</h4>
+                    <ul class="list-disc list-inside text-sm text-gray-400 space-y-2">
+                        <li>The NPU executes predictive models (e.g., trajectory, player readiness) in **sub-millisecond time**.</li>
+                        <li>Inference results are packaged into concise data objects for the **MetaOS**.</li>
+                        <li>Feeds real-time contextual data directly to the **BlabBot** LLM instances.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-12 text-center">
+                <p class="text-lg font-medium text-gray-300">
+                    The synergy between the BPU's data preparation and the NPU's accelerated inference is the foundation for all real-time features across the NeoSports Network.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer with Corporate Info -->
+    <footer class="bg-gray-900 text-white py-12 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-sm text-gray-400">© 2025 Adam Falletta Inc. | Advanced Compute Division | All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudGuard DR & Resilience Plugin - Adam Falletta Inc.</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* Custom scrollbar for a sleek look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #3b82f6; /* Primary Blue */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background-color: #0f172a; /* Dark BG */
+        }
+        
+        /* Utility class for primary cards */
+        .plugin-card {
+            background: rgba(30, 41, 59, 0.7); /* Slate-800 semi-transparent */
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(59, 130, 246, 0.2); /* Primary Blue Border */
+            transition: all 0.3s ease;
+        }
+        .plugin-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Styling for the terminal-like diagram display */
+        .terminal-display {
+            background-color: #1e293b; /* Card BG */
+            color: #20c997; /* Teal for ASCII art */
+            font-family: 'monospace', sans-serif;
+            white-space: pre;
+            overflow-x: auto;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 2px solid #3b82f6; /* Blue border */
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#3b82f6', /* Main Blue */
+                        'dark-bg': '#0f172a', /* Slate-900 */
+                        'card-bg': '#1e293b', /* Slate-800 */
+                        'accent-red': '#ef4444', /* Error/Outage Red */
+                        'accent-green': '#10b981', /* Success/Online Green */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-bg text-gray-200 min-h-screen">
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-50 bg-dark-bg/90 backdrop-blur-md shadow-lg shadow-primary-blue/20">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-white">
+                Adam <span class="text-primary-blue">Falletta</span> Inc.
+            </h1>
+            <nav class="text-xl font-medium text-primary-blue">
+                CloudGuard DR Plugin
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section: CloudGuard Focus -->
+    <section class="relative overflow-hidden pt-24 pb-32 bg-gray-900 border-b-8 border-primary-blue/50">
+        <div class="container mx-auto px-6 text-center z-10">
+            <div class="text-7xl mb-6 text-primary-blue select-none">🛡️</div>
+            <span class="text-primary-blue font-semibold uppercase tracking-widest text-sm mb-3 block">CLOUDPRESS ENTERPRISE SOLUTION</span>
+            <h2 class="text-6xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
+                CloudGuard DR & <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-primary-blue">Resilience</span>
+            </h2>
+            <p class="text-xl md:text-2xl max-w-4xl mx-auto text-gray-400 mb-10">
+                The fully integrated CloudPress plugin engineered to eliminate single points of failure, automate disaster recovery, and safeguard against catastrophic cloud region outages.
+            </p>
+        </div>
+    </section>
+
+    <!-- Section 1: The Catastrophe Scenario (Problem & Case Study) -->
+    <section class="py-24 bg-dark-bg border-t border-gray-700">
+        <div class="container mx-auto px-6">
+            <h3 class="text-4xl font-extrabold text-white mb-16 text-center">Case Study: Addressing the $500 BILLION Catastrophe</h3>
+            
+            <p class="text-center text-lg max-w-4xl mx-auto mb-10 text-gray-400">
+                The recent, prolonged AWS US-East outage demonstrated the massive systemic risk of centralized cloud dependency. Our analysis shows global losses approached **$500 Billion**. This scenario is exactly what CloudGuard DR & Resilience was engineered to prevent.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Card 1: The Event -->
+                <div class="plugin-card p-8 rounded-2xl border-l-4 border-accent-red">
+                    <div class="text-accent-red mb-3 text-5xl">🛑</div>
+                    <h4 class="text-2xl font-bold text-white mb-3">The AWS US-East Event</h4>
+                    <p class="text-gray-400">A major cloud region suffers a complete, **16-hour failure**. The centralized system design ensures total disruption for all connected companies.</p>
+                </div>
+
+                <!-- Card 2: The Impact (Updated) -->
+                <div class="plugin-card p-8 rounded-2xl border-l-4 border-yellow-500">
+                    <div class="text-yellow-500 mb-3 text-5xl">💸</div>
+                    <h4 class="text-2xl font-bold text-white mb-3">Global Financial Paralysis</h4>
+                    <p class="text-gray-400">The collective damage in lost revenue, productivity, and market capital reached an unprecedented **$500,000,000,000**. The cost of inadequate resilience is staggering.</p>
+                </div>
+
+                <!-- Card 3: The CloudGuard Solution -->
+                <div class="plugin-card p-8 rounded-2xl border-l-4 border-primary-blue">
+                    <div class="text-primary-blue mb-3 text-5xl">✅</div>
+                    <h4 class="text-2xl font-bold text-white mb-3">CloudGuard DR Mitigation</h4>
+                    <p class="text-gray-400">CloudGuard's **Predictive AI** would have initiated preemptive load shift, and upon confirmation of the outage, triggered **Autonomous Failover** in seconds.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Visualizing Resilience (Diagrams) -->
+    <section class="py-24 bg-gray-900 border-t border-primary-blue/30">
+        <div class="container mx-auto px-6">
+            <h3 class="text-4xl font-extrabold text-white mb-12 text-center">Architecture Visualization: Before vs. After CloudGuard</h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                
+                <!-- BEFORE Diagram -->
+                <div class="space-y-6">
+                    <h4 class="text-3xl font-bold text-accent-red flex items-center mb-4">
+                        <span class="mr-3 text-5xl">🔻</span>
+                        BEFORE: Single Region Dependency
+                    </h4>
+                    <pre class="terminal-display text-xs sm:text-sm md:text-base">
++--------------------+
+| 🏢 Company A       |
+| 💻 Critical Apps   |
++--------------------+
+          |
+          v
++--------------------+
+| ☁️ AWS US-East     |
+| 🔴 Single Region   |
++--------------------+
+          |
+          v
++--------------------+
+| 💾 Company Data    |
++--------------------+
+
+🚨 OUTAGE HITS AWS US-EAST REGION  
+⏱️ 16 HOURS DOWNTIME  
+💸 $500B LOST PRODUCTIVITY
+Problem: Single point of failure, no failover. Complete outage across all companies.
+                    </pre>
+                </div>
+
+                <!-- AFTER Diagram -->
+                <div class="space-y-6">
+                    <h4 class="text-3xl font-bold text-accent-green flex items-center mb-4">
+                        <span class="mr-3 text-5xl">✅</span>
+                        AFTER: CloudGuard Multi-Region Resilience
+                    </h4>
+                    <pre class="terminal-display text-xs sm:text-sm md:text-base">
++--------------------+
+| 🏢 Company B       |
+| 💻 Critical Apps   |
++--------------------+
+          |
+          v
++--------------------+
+| 🛡️ CloudGuard DR & |
+| ⚡ Resilience      |
++--------------------+
+   /         |         \
+  v          v          v
++-----------+  +-----------+  +-----------+
+| ☁️ AWS US-E |  | ☁️ AWS US-W |  | 🏠 On-Prem |
+| 🔴 Region  |  | 🟢 Region  |  | 💾 Backup |
++-----------+  +-----------+  +-----------+
+    \           |          /
+     \          |         /
+      v         v        v
+   +--------------------+
+   | 💾 Replicated Data  |
+   | 🔄 Auto-Failover    |
+   +--------------------+
+
+✅ OUTAGE HITS AWS US-EAST REGION  
+⚡ CloudGuard triggers automatic failover  
+💻 Apps stay online via US-West / On-Prem backups  
+💰 Minimal disruption, data safe, productivity maintained
+                    </pre>
+                </div>
+
+            </div>
+            
+            <p class="text-center text-xl max-w-4xl mx-auto mt-12 text-primary-blue font-semibold">
+                CloudGuard provides the immediate, autonomous bridge from a single point of failure (🔴) to true multi-region redundancy (🟢).
+            </p>
+        </div>
+    </section>
+
+    <!-- Section 3: 10 Key Features Grid (Reusing existing structure but with new colors) -->
+    <section class="py-24 bg-dark-bg border-t border-gray-700">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <h3 class="text-4xl font-extrabold text-primary-blue mb-12 text-center">CloudGuard's Integrated Feature Set</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <!-- Feature 1 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-cyan-400">
+                    <h4 class="text-xl font-bold text-cyan-400 mb-2">1. Multi-Region Monitoring</h4>
+                    <p class="text-sm text-gray-400">Real-time cloud health analysis across AWS, Azure, GCP, and private cloud partitions. Instantaneous alerts on latency or degradation.</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-primary-blue">
+                    <h4 class="text-xl font-bold text-primary-blue mb-2">2. Automated Failover</h4>
+                    <p class="text-sm text-gray-400">Autonomous DNS rerouting and workload shifting to secondary regions or hybrid systems upon confirmed outage detection.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-cyan-400">
+                    <h4 class="text-xl font-bold text-cyan-400 mb-2">3. Redundancy & Replication</h4>
+                    <p class="text-sm text-gray-400">Real-time replication of critical data and databases across diverse geographic zones with continuous data consistency checks.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-primary-blue">
+                    <h4 class="text-xl font-bold text-primary-blue mb-2">4. DR Playbooks & Workflow</h4>
+                    <p class="text-sm text-gray-400">Pre-built, customizable disaster recovery strategies with step-by-step automated workflow execution and internal IT notifications.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-cyan-400">
+                    <h4 class="text-xl font-bold text-cyan-400 mb-2">5. Financial & Risk Assessment</h4>
+                    <p class="text-sm text-gray-400">Real-time financial impact estimation during an event, plus historical outage analytics for predictive risk scoring.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-primary-blue">
+                    <h4 class="text-xl font-bold text-primary-blue mb-2">6. Simulation & Testing</h4>
+                    <p class="text-sm text-gray-400">Scheduled, non-disruptive "disaster drills" to validate failover efficiency and compliance reporting for audit purposes.</p>
+                </div>
+
+                <!-- Feature 7 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-cyan-400">
+                    <h4 class="text-xl font-bold text-cyan-400 mb-2">7. Multi-Cloud Integration</h4>
+                    <p class="text-sm text-gray-400">Unified control panel for orchestrating and automatically shifting workloads between competing cloud infrastructure providers.</p>
+                </div>
+
+                <!-- Feature 8 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-primary-blue">
+                    <h4 class="text-xl font-bold text-primary-blue mb-2">8. Security & Compliance</h4>
+                    <p class="text-sm text-gray-400">Guarantees that automated failover processes maintain encryption standards and regulatory compliance (HIPAA, GDPR, SOC2).</p>
+                </div>
+
+                <!-- Feature 9 -->
+                <div class="plugin-card p-6 rounded-xl border-t-4 border-cyan-400">
+                    <h4 class="text-xl font-bold text-cyan-400 mb-2">9. Predictive AI</h4>
+                    <p class="text-sm text-gray-400">Utilizes CloudPress AI to forecast likely outages based on network telemetry and suggests preemptive load redistribution to mitigate impact.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Prevention Strategy -->
+    <section class="py-24 bg-gray-900 border-t border-primary-blue/30">
+        <div class="container mx-auto px-6 max-w-5xl">
+            <h3 class="text-4xl font-extrabold text-white mb-12 text-center">How CloudGuard DR Guarantees Continuity</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-center">
+                
+                <div class="plugin-card p-6 rounded-xl border-b-4 border-primary-blue">
+                    <h4 class="text-2xl font-bold text-primary-blue mb-2">Eliminate SPOF</h4>
+                    <p class="text-gray-400 text-sm">By maintaining active-active or active-passive deployment across diverse infrastructure, the dependency on any one cloud region is nullified.</p>
+                </div>
+                
+                <div class="plugin-card p-6 rounded-xl border-b-4 border-primary-blue">
+                    <h4 class="text-2xl font-bold text-primary-blue mb-2">Minimize Downtime</h4>
+                    <p class="text-gray-400 text-sm">Automated systems react faster than human teams. **CloudGuard** restores critical services in minutes, not hours, saving billions in productivity loss.</p>
+                </div>
+
+                <div class="plugin-card p-6 rounded-xl border-b-4 border-primary-blue">
+                    <h4 class="text-2xl font-bold text-primary-blue mb-2">Validate Readiness</h4>
+                    <p class="text-gray-400 text-sm">Scheduled, mandatory disaster drills prove the system works. If the drill fails, CloudGuard generates an actionable report to fix the resilience gap.</p>
+                </div>
+                
+                <div class="plugin-card p-6 rounded-xl border-b-4 border-primary-blue">
+                    <h4 class="text-2xl font-bold text-primary-blue mb-2">Protect Data Integrity</h4>
+                    <p class="text-gray-400 text-sm">Continuous, verified data replication ensures that critical customer and business data is never compromised or lost during a failover event.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer with Corporate Info -->
+    <footer class="bg-gray-900 text-white py-12 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-sm text-gray-400">© 2025 Adam Falletta Inc. | CloudPress Division | All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
