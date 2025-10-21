@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adam's Journal</title>
+    <!-- Load VT323 font for that classic terminal look -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <!-- Load Tailwind CSS for simple utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /*
+        ------------------------------------------
+        BASE STYLES & CRT SIMULATION
+        ------------------------------------------
+        */
+        :root {
+         
+            --screen-bg: #000069;
+            /* Classic IBM White */
+            --text-color: #ffffff;
+            /* Thickness of the cursor (simulated) */
+            --cursor-thickness: 0.8em;
+            --cursor-color: var(--text-color);
+        }
+
+        body {
+            /* Inter is standard, but we'll override the text area */
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background to make the glow stand out */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* The main screen container */
+        .crt-screen {
+            background-color: var(--screen-bg);
+            color: var(--text-color);
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            line-height: 1.2;
+            padding: 3rem;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.4), /* Outer cyan glow */
+                        inset 0 0 20px rgba(0, 255, 255, 0.3); /* Inner screen glow */
+            border-radius: 10px;
+            width: 90%;
+            max-width: 1800px;
+            height: 80vh;
+            position: relative;
+            /* Bulge/Curvature Effect */
+            transform: scale(1.02) perspective(1000px) rotateX(0deg);
+            filter: blur(0.2px) brightness(1.1);
+            transition: transform 0.1s ease;
+        }
+
+        /* Scanline Overlay (The CRT "VGA" lines) */
+        .crt-screen::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Repeating gradient for scanlines */
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%,
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px; /* Adjust 4px for line density */
+            opacity: 0.5;
+            border-radius: 10px;
+        }
+
+        /* Flicker Animation */
+        .crt-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 16, 16, 0.1);
+            opacity: 0.05;
+            animation: crt-flicker 0.15s infinite alternate;
+            pointer-events: none;
+            border-radius: 10px;
+        }
+
+        @keyframes crt-flicker {
+            0% { opacity: 0.05; }
+            100% { opacity: 0.1; }
+        }
+
+        /*
+        ------------------------------------------
+        JOURNAL TEXT AREA & CURSOR
+        ------------------------------------------
+        */
+        #journal-entry {
+            background-color: transparent;
+            color: var(--text-color);
+            font-family: 'VT323', monospace;
+            width: 100%;
+            height: 100%;
+            resize: none;
+            border: none;
+            outline: none;
+            scrollbar-width: none;    /* Firefox */
+            padding: 0;
+            /* Hide the default caret to use the custom CSS one (or rely on browser support) */
+            caret-color: transparent;
+        }
+
+        /* Custom Blinking Cursor (This is the tricky part - targeting the caret) */
+        /* Note: Customizing caret appearance widely is inconsistent. This uses a block cursor effect where supported. */
+        #journal-entry {
+            /* Fallback/Modern block cursor effect */
+            caret-color: var(--text-color);
+        }
+
+        /* Blinking Animation for the cursor */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* We'll use JavaScript to place a visible blinking pipe character in the text area when idle */
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- Screen Container -->
+    <div class="crt-screen flex flex-col justify-between">
+     
+
+        <!-- Journal Text Area -->
+        <textarea
+    id="journal-entry"
+    placeholder="DATE: OCTOBER 11, 2025..."
+    class="flex-grow scroll-smooth"
+    style="overflow-y: auto; line-height: 18px;"
+    autofocus
+></textarea>
+
+        <footer class="text-base mt-4 pt-2 border-t border-opacity-50 border-white">
+            <span class="text-yellow-300 pr-4">STATUS: LOGGED IN</span>
+            <span id="save-status" class="text-green-400">STATUS: READY</span>
+        </footer>
+    </div>
+
+    <!-- JavaScript for Local Storage and Interaction -->
+    <script>
+        const STORAGE_KEY = 'doogieJournalEntry';
+        const journalEntry = document.getElementById('journal-entry');
+        const saveStatus = document.getElementById('save-status');
+        let saveTimer;
+
+        // Utility function to set status message
+        const setStatus = (message, colorClass = 'text-green-400') => {
+            saveStatus.textContent = `STATUS: ${message}`;
+            saveStatus.className = colorClass;
+        };
+
+        // 1. Load data from localStorage on start
+        const loadJournal = () => {
+            const savedContent = localStorage.getItem(STORAGE_KEY);
+            if (savedContent) {
+                journalEntry.value = savedContent;
+            } else {
+                // Initial load: Set focus and move cursor to the end
+                journalEntry.focus();
+                journalEntry.selectionStart = journalEntry.selectionEnd = journalEntry.value.length;
+            }
+            setStatus('ENTRY LOADED');
+        };
+
+        // 2. Save data to localStorage (debounced)
+        const saveJournal = () => {
+            clearTimeout(saveTimer);
+            setStatus('SAVING...');
+
+            saveTimer = setTimeout(() => {
+                try {
+                    localStorage.setItem(STORAGE_KEY, journalEntry.value);
+                    setStatus('SAVED', 'text-green-400');
+                    // Clear status after a short delay
+                    setTimeout(() => setStatus('READY'), 2000);
+                } catch (e) {
+                    console.error("Error saving to localStorage:", e);
+                    setStatus('SAVE FAILED!', 'text-red-500');
+                }
+            }, 500); // Wait 500ms after last keystroke before saving
+        };
+
+        // 3. Add Event Listener
+        journalEntry.addEventListener('input', saveJournal);
+
+        // 4. Initialize
+        window.onload = loadJournal;
+    </script>
+</body>
+</html>
