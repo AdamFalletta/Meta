@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CircuitPress - The Cloud Electronics Platform</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Three.js for the particle background effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Custom Configuration for Tailwind (Futuristic Dark Theme) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-bg': '#0D1117',
+                        'neon-cyan': '#22D3EE',
+                        'neon-purple': '#A78BFA',
+                        'dark-card': '#161B22',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Base styles */
+        body {
+            background-color: #0D1117;
+            color: #E2E8F0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+        /* Full screen canvas for particles in the hero */
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.2;
+        }
+        /* Z-index to bring content above the canvas */
+        .hero-content {
+            position: relative;
+            z-index: 10;
+        }
+        /* Custom scrollbar for a futuristic look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #161B22;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #22D3EE;
+            border-radius: 4px;
+        }
+        /* Utility for card hover effect */
+        .card-glow:hover {
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.5);
+            transform: translateY(-4px);
+        }
+        /* Ensure responsive menu visibility */
+        .dropdown-menu {
+            transition: max-height 0.3s ease-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .dropdown-menu.active {
+            max-height: 300px; /* Arbitrary large height */
+        }
+
+        /* Styling for the active Marketplace tab */
+        .marketplace-tab-btn.active {
+            background-color: #A78BFA; /* neon-purple */
+            color: #0D1117; /* dark-bg */
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+            /* Added min-height to prevent layout shift when switching tabs */
+            min-height: 800px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Custom Category Colors for Badges */
+        .badge-cyan { background-color: #22D3EE20; color: #22D3EE; }
+        .badge-purple { background-color: #A78BFA20; color: #A78BFA; }
+        .badge-green { background-color: #10B98120; color: #10B981; } /* Tailwind green-500 */
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navbar -->
+    <header class="sticky top-0 z-50 bg-dark-bg/95 backdrop-blur-sm shadow-xl shadow-dark-card/50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <a href="#hero" class="text-2xl font-extrabold tracking-widest text-neon-cyan transition duration-300 hover:text-white">
+                CIRCUITPRESS
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex space-x-8 items-center">
+                <a href="#concepts" class="text-sm font-medium hover:text-neon-cyan transition duration-200">Concepts</a>
+                <a href="#architecture" class="text-sm font-medium hover:text-neon-cyan transition duration-200">Architecture</a>
+                <a href="#workflow" class="text-sm font-medium hover:text-neon-cyan transition duration-200">Differentiators</a>
+                <a href="#monetization" class="text-sm font-medium hover:text-neon-cyan transition duration-200">Pricing & Market</a>
+                <a href="#" class="px-4 py-2 text-sm font-semibold rounded-full bg-neon-cyan text-dark-bg shadow-lg hover:bg-white transition duration-200">
+                    Get Started
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button (Hamburger) -->
+            <button id="menu-button" class="md:hidden p-2 rounded-lg text-neon-cyan hover:bg-dark-card transition duration-200">
+                <!-- SVG Icon: Menu -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
+            </button>
+        </nav>
+        
+        <!-- Mobile Dropdown Menu -->
+        <div id="dropdown-menu" class="dropdown-menu md:hidden bg-dark-bg/90 shadow-inner">
+            <div class="flex flex-col space-y-2 p-4">
+                <a href="#concepts" class="py-2 text-base hover:text-neon-cyan transition duration-200" onclick="document.getElementById('dropdown-menu').classList.remove('active');">Core Concepts</a>
+                <a href="#architecture" class="py-2 text-base hover:text-neon-cyan transition duration-200" onclick="document.getElementById('dropdown-menu').classList.remove('active');">Architecture</a>
+                <a href="#workflow" class="py-2 text-base hover:text-neon-cyan transition duration-200" onclick="document.getElementById('dropdown-menu').classList.remove('active');">Differentiators</a>
+                <a href="#monetization" class="py-2 text-base hover:text-neon-cyan transition duration-200" onclick="document.getElementById('dropdown-menu').classList.remove('active');">Pricing & Market</a>
+                <a href="#" class="mt-4 text-center py-2 text-base font-semibold rounded-lg bg-neon-purple/70 text-white hover:bg-neon-purple transition duration-200" onclick="document.getElementById('dropdown-menu').classList.remove('active');">
+                    Start Designing
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section: Vision & Mission (Full Height with Particle Background) -->
+        <section id="hero" class="relative min-h-screen flex items-center justify-center text-center p-4 overflow-hidden">
+            <!-- Three.js Canvas for Particle Animation -->
+            <canvas id="hero-canvas"></canvas>
+
+            <div class="hero-content max-w-4xl mx-auto space-y-6">
+                <p class="text-sm uppercase tracking-widest text-neon-cyan font-bold">The Next Evolution in Hardware Design</p>
+                <h1 class="text-5xl sm:text-7xl lg:text-8xl font-extrabold leading-tight">
+                    CircuitPress
+                    <span class="block text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-purple">Cloud Electronics Platform</span>
+                </h1>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Enable engineers, hobbyists, and teams worldwide to collaboratively design, simulate, and deploy electronic circuits entirely in the cloud, in real-time.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 pt-6">
+                    <a href="#concepts" class="px-8 py-3 text-lg font-semibold rounded-full bg-neon-purple hover:bg-neon-purple/80 text-white shadow-xl transition duration-300 transform hover:scale-[1.02]">
+                        Explore Features
+                    </a>
+                    <a href="#monetization" class="px-8 py-3 text-lg font-semibold rounded-full border border-neon-cyan text-neon-cyan hover:bg-neon-cyan/10 transition duration-300 transform hover:scale-[1.02]">
+                        View Pricing
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 1: Core Concepts (Metablocks & Plugins) -->
+        <section id="concepts" class="min-h-screen flex items-center p-8 lg:p-16 bg-dark-card/50">
+            <div class="container mx-auto max-w-6xl">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-white mb-12 border-b-4 border-neon-cyan/50 pb-2 inline-block">
+                    Core Concepts: Modular Design
+                </h2>
+
+                <div class="grid md:grid-cols-2 gap-10">
+                    <!-- Card: Metablocks -->
+                    <div class="bg-dark-card p-8 rounded-2xl shadow-2xl transition duration-300 card-glow border border-gray-700/50">
+                        <div class="text-neon-cyan mb-4">
+                            <!-- SVG Icon: Blocks / Cube -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v3"/><path d="M21 16v3c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-3"/><line x1="21" x2="3" y1="12" y2="12"/></svg>
+                        </div>
+                        <h3 class="text-3xl font-bold mb-4 text-neon-cyan">Metablocks</h3>
+                        <p class="text-gray-400 mb-6">
+                            **Self-contained, functional circuit blocks** with standardized interfaces. They are the core building blocks, enabling **plug-and-play compatibility** for rapid prototyping.
+                        </p>
+                        <ul class="space-y-2 text-gray-300">
+                            <li><span class="text-neon-purple font-medium">Example:</span> ESP32 WiFi Controller, 5V DC-DC Converter.</li>
+                            <li><span class="text-neon-purple font-medium">Benefit:</span> Global component reuse via the Marketplace.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Card: Plugins -->
+                    <div class="bg-dark-card p-8 rounded-2xl shadow-2xl transition duration-300 card-glow border border-gray-700/50">
+                        <div class="text-neon-cyan mb-4">
+                            <!-- SVG Icon: Plug -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a5 5 0 0 1-5-5V5a5 5 0 0 1 10 0v12a5 5 0 0 1-5 5z"/><path d="M12 17v4m-5-4l-3 3m10-3l3 3"/></svg>
+                        </div>
+                        <h3 class="text-3xl font-bold mb-4 text-neon-cyan">Plugins & Extensibility</h3>
+                        <p class="text-gray-400 mb-6">
+                            Dynamically **extend the platform's functionality** for specialized tasks, running as sandboxed Docker apps in the cloud or locally.
+                        </p>
+                        <ul class="space-y-2 text-gray-300">
+                            <li><span class="text-neon-purple font-medium">Simulation:</span> SPICE, FPGA, Thermal Analysis.</li>
+                            <li><span class="text-neon-purple font-medium">Deployment:</span> Auto-Gerber file generation, CI/CD pipelines.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Collaboration Callout -->
+                <div class="mt-12 p-6 bg-neon-purple/10 border-l-4 border-neon-purple rounded-lg shadow-inner">
+                    <p class="text-lg font-medium text-white flex items-center">
+                        <!-- SVG Icon: Users -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3 text-neon-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Cloud-Native Collaboration: Real-time editing and commenting, achieving Google Docs-like productivity for complex circuit designs.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: System Architecture -->
+        <section id="architecture" class="min-h-screen flex items-center p-8 lg:p-16 bg-dark-bg">
+            <div class="container mx-auto max-w-6xl">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-white mb-12 border-b-4 border-neon-purple/50 pb-2 inline-block">
+                    The Four-Layer Architecture
+                </h2>
+                <p class="text-xl text-gray-400 mb-12">
+                    A robust, containerized microservices infrastructure built for scale and real-time performance.
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Layer 1: User Layer -->
+                    <div class="p-6 bg-dark-card rounded-xl shadow-xl border border-gray-700/50">
+                        <h4 class="text-2xl font-semibold mb-2 text-neon-cyan flex items-center">
+                            <!-- SVG Icon: Laptop -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17v-4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v4"/><path d="M2 17h20"/><path d="M12 17v5"/></svg>
+                            User Layer
+                        </h4>
+                        <p class="text-gray-400 text-sm">Web client (React/Next.js) and optional desktop IDE. Features include Drag-and-Drop Editor and versioning.</p>
+                    </div>
+
+                    <!-- Layer 2: Application Layer -->
+                    <div class="p-6 bg-dark-card rounded-xl shadow-xl border border-gray-700/50">
+                        <h4 class="text-2xl font-semibold mb-2 text-neon-cyan flex items-center">
+                            <!-- SVG Icon: Server -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6" y1="6" y2="6"/><line x1="6" x2="6" y1="18" y2="18"/></svg>
+                            Application Layer
+                        </h4>
+                        <p class="text-gray-400 text-sm">The core logic: Project Manager, Metablock Engine, Plugin Manager, and the WebSockets-based Collaboration Engine.</p>
+                    </div>
+
+                    <!-- Layer 3: Data & Storage Layer -->
+                    <div class="p-6 bg-dark-card rounded-xl shadow-xl border border-gray-700/50">
+                        <h4 class="text-2xl font-semibold mb-2 text-neon-cyan flex items-center">
+                            <!-- SVG Icon: Database -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0-1.66-4-3-9-3s-9 1.34-9 3"/><path d="M21 19c0-1.66-4-3-9-3s-9 1.34-9 3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                            Data Layer
+                        </h4>
+                        <p class="text-gray-400 text-sm">PostgreSQL/CockroachDB for metadata. S3/GCS Object Storage for large artifacts like Gerbers and simulation results.</p>
+                    </div>
+
+                    <!-- Layer 4: Infrastructure Layer -->
+                    <div class="p-6 bg-dark-card rounded-xl shadow-xl border border-gray-700/50">
+                        <h4 class="text-2xl font-semibold mb-2 text-neon-cyan flex items-center">
+                            <!-- SVG Icon: Cloud -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5a3.5 3.5 0 0 1 7.6-1.5 3 3 0 0 1 5.4 1 3.5 3.5 0 0 1 1 6.5H4a4 4 0 0 1-4-4 4 4 0 0 1 3.4-3.9v-.1a4 4 0 0 1 7.6-1.5 3 3 0 0 1 5.4 1 3.5 3.5 0 0 1 1 6.5"/></svg>
+                            Infrastructure
+                        </h4>
+                        <p class="text-gray-400 text-sm">Scalable microservices via Docker/Kubernetes to handle heavy load from simulations and CI/CD pipelines.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Differentiators & Workflow -->
+        <section id="workflow" class="min-h-screen flex items-center p-8 lg:p-16 bg-dark-card/50">
+            <div class="container mx-auto max-w-6xl">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-white mb-16 text-center">
+                    Workflow & Key Differentiators
+                </h2>
+
+                <!-- Workflow Steps -->
+                <div class="grid md:grid-cols-5 gap-4 mb-16 relative">
+                    <!-- Connector Line (Desktop Only) -->
+                    <div class="absolute hidden md:block w-full h-1 bg-neon-purple/50 top-1/2 transform -translate-y-1/2 left-0 right-0"></div>
+
+                    <!-- Step 1 -->
+                    <div class="relative flex flex-col items-center p-4 z-10 bg-dark-card rounded-xl shadow-lg border border-neon-purple/50">
+                        <div class="w-8 h-8 rounded-full bg-neon-purple flex items-center justify-center text-sm font-bold mb-2">1</div>
+                        <p class="text-center text-sm font-medium">Create Project & Drag in Metablocks</p>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="relative flex flex-col items-center p-4 z-10 bg-dark-card rounded-xl shadow-lg border border-neon-purple/50">
+                        <div class="w-8 h-8 rounded-full bg-neon-purple flex items-center justify-center text-sm font-bold mb-2">2</div>
+                        <p class="text-center text-sm font-medium">Add Simulation & Deployment Plugins</p>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="relative flex flex-col items-center p-4 z-10 bg-dark-card rounded-xl shadow-lg border border-neon-purple/50">
+                        <div class="w-8 h-8 rounded-full bg-neon-purple flex items-center justify-center text-sm font-bold mb-2">3</div>
+                        <p class="text-center text-sm font-medium">Collaborate, Edit, and Simulate Real-Time</p>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="relative flex flex-col items-center p-4 z-10 bg-dark-card rounded-xl shadow-lg border border-neon-purple/50">
+                        <div class="w-8 h-8 rounded-full bg-neon-purple flex items-center justify-center text-sm font-bold mb-2">4</div>
+                        <p class="text-center text-sm font-medium">Snapshot, Branch, and Maintain Versions</p>
+                    </div>
+                    <!-- Step 5 -->
+                    <div class="relative flex flex-col items-center p-4 z-10 bg-dark-card rounded-xl shadow-lg border border-neon-purple/50">
+                        <div class="w-8 h-8 rounded-full bg-neon-purple flex items-center justify-center text-sm font-bold mb-2">5</div>
+                        <p class="text-center text-sm font-medium">Deploy, Export Gerbers, Run CI/CD</p>
+                    </div>
+                </div>
+
+                <!-- Differentiators -->
+                <div class="grid md:grid-cols-2 gap-8 pt-12">
+                    <div class="space-y-4">
+                        <h3 class="text-3xl font-bold text-neon-cyan mb-4">Metablock-First Design</h3>
+                        <p class="text-gray-400">
+                            CircuitPress prioritizes **Metablocks** for rapid assembly and standardization, drastically reducing development time and ensuring component quality across all projects.
+                        </p>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-3xl font-bold text-neon-cyan mb-4">Full Lifecycle Management</h3>
+                        <p class="text-gray-400">
+                            The platform manages the project from **prototyping** through **cloud simulation**, to **production** (Gerbers, CI/CD) and deployment, all within a unified interface.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Section 4: Monetization & Marketplace (Updated) -->
+        <section id="monetization" class="min-h-screen p-8 lg:p-16 bg-dark-bg">
+            <div class="container mx-auto max-w-6xl">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-white mb-16 text-center border-b-4 border-neon-purple/50 pb-2 inline-block">
+                    Monetization & Ecosystem
+                </h2>
+
+                <!-- Pricing Tiers -->
+                <div class="mb-20">
+                    <h3 class="text-3xl font-bold text-neon-cyan mb-8 text-center">Flexible Compute Packages</h3>
+                    <div class="grid md:grid-cols-3 gap-8">
+
+                        <!-- Tier 1: Freemium -->
+                        <div class="bg-dark-card p-8 rounded-2xl shadow-xl border-2 border-gray-700/50 hover:border-neon-cyan transition duration-300 transform hover:scale-[1.01]">
+                            <p class="text-2xl font-bold text-neon-cyan mb-2">Freemium</p>
+                            <p class="text-4xl font-extrabold text-white mb-6">$0 <span class="text-lg font-medium text-gray-500">/ month</span></p>
+                            <ul class="space-y-3 text-gray-300 mb-8">
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Basic Editor Access</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> 5 Core Metablocks</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> 10 Cloud Simulation Minutes / Mo</li>
+                                <li class="flex items-center"><span class="text-red-400 mr-2">✗</span> Premium Plugins</li>
+                                <li class="flex items-center"><span class="text-red-400 mr-2">✗</span> Enterprise Orchestration</li>
+                            </ul>
+                            <button class="w-full py-3 bg-neon-cyan text-dark-bg font-semibold rounded-lg hover:bg-white transition duration-200">Start Free</button>
+                        </div>
+
+                        <!-- Tier 2: Pro (Recommended) -->
+                        <div class="bg-dark-card p-8 rounded-2xl shadow-xl border-2 border-neon-purple transition duration-300 transform scale-[1.03] shadow-neon-purple/30">
+                            <div class="flex justify-between items-center mb-2">
+                                <p class="text-2xl font-bold text-neon-purple">Pro</p>
+                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-neon-purple text-dark-bg">RECOMMENDED</span>
+                            </div>
+                            <p class="text-4xl font-extrabold text-white mb-6">$49 <span class="text-lg font-medium text-gray-500">/ month</span></p>
+                            <ul class="space-y-3 text-gray-300 mb-8">
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Unlimited Core & Premium Metablocks</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> **500 Cloud Simulation Hours**</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Full Plugin Access (70% Revenue Share)</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Real-Time Collaboration Suite</li>
+                                <li class="flex items-center"><span class="text-red-400 mr-2">✗</span> Dedicated CI/CD Hosting</li>
+                            </ul>
+                            <button class="w-full py-3 bg-neon-purple text-white font-semibold rounded-lg hover:bg-neon-purple/80 transition duration-200">Upgrade to Pro</button>
+                        </div>
+
+                        <!-- Tier 3: Enterprise -->
+                        <div class="bg-dark-card p-8 rounded-2xl shadow-xl border-2 border-gray-700/50 hover:border-neon-cyan transition duration-300 transform hover:scale-[1.01]">
+                            <p class="text-2xl font-bold text-neon-cyan mb-2">Enterprise</p>
+                            <p class="text-4xl font-extrabold text-white mb-6">Custom <span class="text-lg font-medium text-gray-500">/ contact</span></p>
+                            <ul class="space-y-3 text-gray-300 mb-8">
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> All Pro Features</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> **Unlimited** Simulation Compute</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> Dedicated Kubernetes Orchestration</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> SSO / SAML Integration</li>
+                                <li class="flex items-center"><span class="text-green-400 mr-2">✓</span> 24/7 Priority Support & Onboarding</li>
+                            </ul>
+                            <button class="w-full py-3 border border-neon-cyan text-neon-cyan font-semibold rounded-lg hover:bg-neon-cyan/10 transition duration-200">Contact Sales</button>
+                        </div>
+
+                    </div>
+                </div>
+                
+                <!-- Marketplace Tabbed UI -->
+                <div>
+                    <h3 class="text-3xl font-bold text-neon-cyan mb-8 text-center">The Marketplace Ecosystem (80+ Components)</h3>
+
+                    <!-- Tab Buttons (Pill Menu) -->
+                    <div id="marketplace-tabs" class="flex flex-wrap justify-center space-x-2 sm:space-x-4 mb-8 p-1 bg-dark-card rounded-full border border-gray-700/50 max-w-4xl mx-auto">
+                        <button class="marketplace-tab-btn active px-5 py-2 text-sm rounded-full bg-neon-purple text-dark-bg font-semibold transition duration-200" data-tab="core-metablocks">Core Components (8 Categ.)</button>
+                        <button class="marketplace-tab-btn px-5 py-2 text-sm rounded-full text-gray-300 hover:bg-neon-purple/20 transition duration-200" data-tab="advanced-systems">Advanced Systems (6 Categ.)</button>
+                        <button class="marketplace-tab-btn px-5 py-2 text-sm rounded-full text-gray-300 hover:bg-neon-purple/20 transition duration-200" data-tab="cloud-plugins">Cloud & Software (6 Categ.)</button>
+                    </div>
+
+                    <!-- Tab Content Containers -->
+                    <div>
+                        
+                        <!-- Content 1: Core Components (8 Categories) -->
+                        <div id="core-metablocks" class="tab-content active">
+                            <h4 class="text-2xl font-bold text-white mb-6 border-l-4 border-neon-cyan pl-3">Standard Hardware Blocks (Cyan: **`badge-cyan`**)</h4>
+                            <div class="category-grid">
+                                
+                                <!-- Category 1: Microcontrollers -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 1: Microcontrollers</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**ESP32 WiFi Controller** – WiFi & Bluetooth MCU</li>
+                                        <li>**Arduino Nano Core** – Standard prototyping MCU</li>
+                                        <li>**STM32 Basic Core** – ARM Cortex-M starter MCU</li>
+                                        <li>**MCU Timer Module** – Adds timers/counters</li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- Category 2: Power & Voltage -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 2: Power & Voltage</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**5V DC-DC Converter** – Step-down voltage</li>
+                                        <li>**3.3V Regulator Module** – LDO regulator</li>
+                                        <li>**Battery Monitor** – Voltage & charge tracking</li>
+                                        <li>**Current Sensor** – Measures load current</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 3: Sensors -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 3: Sensors</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Temperature Sensor Module** – Digital/analog temp reading</li>
+                                        <li>**Humidity Sensor Plugin** – Environmental sensing</li>
+                                        <li>**Light Sensor** – Detects ambient light</li>
+                                        <li>**Motion Detector** – PIR-based motion sensing</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 4: Actuators & Outputs -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 4: Actuators & Outputs</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**LED Array Plugin** – Drive LEDs with PWM or logic</li>
+                                        <li>**RGB LED Controller** – Multicolor LED control</li>
+                                        <li>**Servo Motor Driver** – Control servo angles</li>
+                                        <li>**Buzzer / Speaker Output** – Sound generation</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 5: Communication -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 5: Communication</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**UART Serial Interface** – Serial communication</li>
+                                        <li>**I2C Bus Controller** – Multi-device communication</li>
+                                        <li>**SPI Bus Controller** – High-speed serial comms</li>
+                                        <li>**CAN Bus Module** – Automotive / industrial networking</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 6: Storage & Memory -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 6: Storage & Memory</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**EEPROM Module** – Non-volatile memory storage</li>
+                                        <li>**SD Card Interface** – External memory storage</li>
+                                        <li>**Flash Memory Plugin** – Embedded program storage</li>
+                                        <li>**RAM Module** – Simulated volatile memory</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 7: Display & Visualization -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 7: Display & Visualization</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**LCD Display Controller** – 16x2 character display</li>
+                                        <li>**OLED Display Plugin** – Graphic display output</li>
+                                        <li>**Seven-Segment Display** – Numeric readout</li>
+                                        <li>**LED Matrix Controller** – Grid-based visual output</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 8: User Input / Interface -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-cyan px-2 py-1 rounded-full mb-3 inline-block">Category 8: User Input / Interface</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Push Button Input** – Digital button</li>
+                                        <li>**Rotary Encoder** – Rotational input</li>
+                                        <li>**Potentiometer Input** – Analog input slider</li>
+                                        <li>**Touch Sensor** – Capacitive touch input</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content 2: Advanced Systems (6 Categories) -->
+                        <div id="advanced-systems" class="tab-content">
+                            <h4 class="text-2xl font-bold text-white mb-6 border-l-4 border-neon-purple pl-3">Advanced System Blocks (Purple: **`badge-purple`**)</h4>
+                            <div class="category-grid">
+                                
+                                <!-- Category 11: Wireless Communication -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-purple px-2 py-1 rounded-full mb-3 inline-block">Category 11: Wireless Communication</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**WiFi 6 Module** – High-speed WiFi connectivity</li>
+                                        <li>**Bluetooth LE Module** – Low-energy Bluetooth communication</li>
+                                        <li>**LoRaWAN Module** – Long-range IoT connectivity</li>
+                                        <li>**Zigbee Mesh Controller** – Smart device networking</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 12: Motor Control -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-purple px-2 py-1 rounded-full mb-3 inline-block">Category 12: Motor Control</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Stepper Motor Driver Advanced** – High-precision stepper control</li>
+                                        <li>**DC Motor H-Bridge** – Bidirectional DC motor driver</li>
+                                        <li>**Brushless Motor Controller** – BLDC control plugin</li>
+                                        <li>**Servo Array Controller** – Multi-servo simultaneous control</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 13: Sensors Advanced -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-purple px-2 py-1 rounded-full mb-3 inline-block">Category 13: Sensors Advanced</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Accelerometer Module** – 3D motion sensing</li>
+                                        <li>**Gyroscope Plugin** – Angular rotation detection</li>
+                                        <li>**Magnetometer Module** – Compass / magnetic field sensing</li>
+                                        <li>**Environmental Sensor Pack** – Temp, humidity, pressure combined</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 14: Audio / Sound -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-purple px-2 py-1 rounded-full mb-3 inline-block">Category 14: Audio / Sound</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Microphone Input** – Analog/digital audio capture</li>
+                                        <li>**Audio Amplifier** – Boosts microphone or music signals</li>
+                                        <li>**Speaker Array Controller** – Multi-channel audio output</li>
+                                        <li>**Tone Generator** – Beeps, alarms, musical notes</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 17: Robotics / Mechatronics -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-purple px-2 py-1 rounded-full mb-3 inline-block">Category 17: Robotics / Mechatronics</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Arm Controller Plugin** – Robotic arm position control</li>
+                                        <li>**Servo Gimbal Controller** – Stabilization plugin</li>
+                                        <li>**Omni-Wheel Drive Controller** – Multi-wheel movement</li>
+                                        <li>**Sensor Fusion Module** – Combines IMU + GPS + encoders</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 19: Safety / Protection -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-purple px-2 py-1 rounded-full mb-3 inline-block">Category 19: Safety / Protection</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Overvoltage Protector** – Shuts down if voltage spikes</li>
+                                        <li>**Overcurrent Protector** – Limits high current to circuits</li>
+                                        <li>**Thermal Shutdown Module** – Monitors temperature and protects</li>
+                                        <li>**EMI Filter Plugin** – Reduces electromagnetic interference</li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Content 3: Cloud & Software (6 Categories) -->
+                        <div id="cloud-plugins" class="tab-content">
+                            <h4 class="text-2xl font-bold text-white mb-6 border-l-4 border-green-500 pl-3">Cloud, Analysis, & Dev Tools (Green: **`badge-green`**)</h4>
+                            <div class="category-grid">
+                                
+                                <!-- Category 15: Power Management Advanced -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-green px-2 py-1 rounded-full mb-3 inline-block">Category 15: Power Management Advanced</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Solar Charge Controller** – Regulates solar input</li>
+                                        <li>**Battery Balancer** – Multi-cell Li-ion balancing</li>
+                                        <li>**Power Consumption Monitor** – Tracks wattage usage</li>
+                                        <li>**Energy Harvesting Module** – Converts small inputs to usable energy</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 9: Signal Processing -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-green px-2 py-1 rounded-full mb-3 inline-block">Category 9: Signal Processing</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Analog Filter Module** – Low-pass/high-pass filters</li>
+                                        <li>**ADC Interface** – Analog-to-digital conversion</li>
+                                        <li>**DAC Interface** – Digital-to-analog conversion</li>
+                                        <li>**Signal Amplifier** – Boosts analog signals</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 16: Networking / IoT -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-green px-2 py-1 rounded-full mb-3 inline-block">Category 16: Networking / IoT</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**MQTT Client Plugin** – Publish/subscribe IoT protocol</li>
+                                        <li>**HTTP REST Interface** – API endpoint for devices</li>
+                                        <li>**WebSocket Communication Module** – Real-time cloud integration</li>
+                                        <li>**Cloud Sync Plugin** – Auto-sync project telemetry to cloud</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 18: Machine Learning / AI -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-green px-2 py-1 rounded-full mb-3 inline-block">Category 18: Machine Learning / AI</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Edge AI Inference Module** – Run ML models on MCU</li>
+                                        <li>**Tensor Processing Unit Plugin** – Tiny AI accelerator</li>
+                                        <li>**Object Detection Sensor** – Camera + ML integration</li>
+                                        <li>**Predictive Sensor Module** – Forecast readings based on patterns</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 10: Development / CI-CD -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-green px-2 py-1 rounded-full mb-3 inline-block">Category 10: Development / CI-CD</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Simulation Runner** – Runs SPICE or HDL simulation</li>
+                                        <li>**Firmware Loader** – Deploy code to MCU/metablocks</li>
+                                        <li>**Testbench Plugin** – Automated testing of circuits</li>
+                                        <li>**Version Control Manager** – Tracks project history</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Category 20: Debugging / Development Tools -->
+                                <div class="p-4 bg-dark-card rounded-xl border border-gray-700/50 shadow-lg">
+                                    <span class="text-xs font-semibold badge-green px-2 py-1 rounded-full mb-3 inline-block">Category 20: Debugging / Development Tools</span>
+                                    <ul class="space-y-1 text-sm text-gray-300">
+                                        <li>**Logic Analyzer Plugin** – Monitor digital signals</li>
+                                        <li>**Oscilloscope Module** – View analog waveforms</li>
+                                        <li>**JTAG Debugger** – MCU debug interface</li>
+                                        <li>**Signal Logger Plugin** – Record and analyze signal data</li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer (Expanded) -->
+    <footer class="bg-dark-card border-t border-gray-700/50 py-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-8">
+                <!-- Logo & Intro -->
+                <div class="col-span-2 md:col-span-1 space-y-4">
+                    <a href="#hero" class="text-2xl font-extrabold tracking-widest text-neon-cyan">CIRCUITPRESS</a>
+                    <p class="text-sm text-gray-500">Cloud-native electronics design for the collaborative era.</p>
+                </div>
+
+                <!-- Section 1: Platform -->
+                <div>
+                    <h5 class="font-semibold text-white uppercase mb-4">Platform</h5>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#concepts" class="hover:text-neon-cyan transition duration-200">Metablocks</a></li>
+                        <li><a href="#concepts" class="hover:text-neon-cyan transition duration-200">Plugins</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Real-Time Editor</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Version Control</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Cloud Storage</a></li>
+                    </ul>
+                </div>
+
+                <!-- Section 2: Architecture & Compute -->
+                <div>
+                    <h5 class="font-semibold text-white uppercase mb-4">Compute & Infra</h5>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#architecture" class="hover:text-neon-cyan transition duration-200">Cloud CI/CD</a></li>
+                        <li><a href="#architecture" class="hover:text-neon-cyan transition duration-200">Kubernetes</a></li>
+                        <li><a href="#architecture" class="hover:text-neon-cyan transition duration-200">Simulation Engine</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Local Docker Apps</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Performance Metrics</a></li>
+                    </ul>
+                </div>
+
+                <!-- Section 3: Developers -->
+                <div>
+                    <h5 class="font-semibold text-white uppercase mb-4">Developers</h5>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Plugin API Docs</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Contribute Metablocks</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Open Source Projects</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">SDK Downloads</a></li>
+                    </ul>
+                </div>
+
+                <!-- Section 4: Resources -->
+                <div>
+                    <h5 class="font-semibold text-white uppercase mb-4">Resources</h5>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Tutorials & Guides</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Knowledge Base</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Roadmap</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Whitepapers</a></li>
+                    </ul>
+                </div>
+
+                <!-- Section 5: Company & Legal -->
+                <div>
+                    <h5 class="font-semibold text-white uppercase mb-4">Company</h5>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">About Us</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Careers</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-neon-cyan transition duration-200">Contact Sales</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Social Media & Copyright -->
+            <div class="mt-12 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <p class="text-sm text-gray-500">&copy; 2025 CircuitPress. All rights reserved.</p>
+                
+                <!-- Social Media Icons (Placeholder Links) -->
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-neon-cyan transition duration-200">
+                        <!-- SVG Icon: Twitter -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C4.3 14.5 2 11.4 3 8 5.7 10 9.2 11.2 12 11c2.1-3 3-7.2 2-10 4.1 1.4 7.9 4.4 9 8z"/></svg>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-neon-cyan transition duration-200">
+                        <!-- SVG Icon: Github -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22.1c0 1-1.3 1.4-2.2.8C10.2 21.6 5 21.7 5 15.6c0-4 3-7 7-7s7 3 7 7c0 6.1-5.2 6-7.8 6.5-.9.6-2.2.2-2.2-.8v-3.7c0-.2.2-.4.4-.5 2.1-1.4 3.7-5.5 3.7-6.5 0-1.8-1-2.9-2.2-3.4-.6-.2-1.3-.3-2-.3-.7 0-1.4.1-2 .3-1.2.5-2.2 1.6-2.2 3.4 0 1 .6 5 3.7 6.5.2.1.4.3.4.5v3.7zM12 2C6.5 2 2 6.5 2 12c0 4.4 3.2 8.1 7.5 9.1.5.1.7-.2.7-.4v-1.7c-3.1.7-3.7-1.4-3.7-1.4-.5-1.3-1.2-1.7-1.2-1.7-1-.7.1-.7.1-.7 1-.1 1.5 1 1.5 1 1.3 1.3 2 1 2.3 1.4.1.1.2.3.2.5s-.1.4-.2.5c-.3.2-.5.3-.7.3-2.1.2-4.2-1-4.2-1-2.4-.6-2.6-4.6-2.6-4.6V12c0-5.5 4.5-10 10-10z"/></svg>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-neon-cyan transition duration-200">
+                        <!-- SVG Icon: LinkedIn -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 0-6-6h-2a6 6 0 0 0-6 6v8a6 6 0 0 0 6 6h2a6 6 0 0 0 6-6V8z"/><path d="M12 12c.7-.6 1.4-.9 2-.9 1.1 0 2 .5 2 1.9V16a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8c0-2 1.5-3 3-3h2c2.5 0 4 1.5 4 4z"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Interactivity and Three.js Particle Effect -->
+    <script>
+        // --- 1. Three.js Particle Background Effect ---
+        let scene, camera, renderer, particles, particleCount;
+
+        function initParticles() {
+            // Setup Scene
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Setup Renderer
+            const canvas = document.getElementById('hero-canvas');
+            // Ensure canvas size is set to cover the container
+            const heroSection = document.getElementById('hero');
+            canvas.width = heroSection.clientWidth;
+            canvas.height = heroSection.clientHeight;
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+            // Create Particles
+            particleCount = 500;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            const color1 = new THREE.Color(0x22D3EE); // Neon Cyan
+            const color2 = new THREE.Color(0xA78BFA); // Neon Purple
+            
+            for (let i = 0; i < particleCount; i++) {
+                // Position particles randomly in a cube
+                positions[i * 3] = (Math.random() - 0.5) * 10;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+
+                // Alternate colors for a mixed effect
+                const color = i % 2 === 0 ? color1 : color2;
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            // Material
+            const material = new THREE.PointsMaterial({
+                size: 0.02,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+        }
+
+        function animateParticles() {
+            requestAnimationFrame(animateParticles);
+
+            // Rotate the particle system slowly
+            particles.rotation.x += 0.0002;
+            particles.rotation.y += 0.0005;
+
+            // Animate individual particle positions (subtle movement)
+            const positions = particles.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                // Simple sine wave movement for floating effect
+                positions[i * 3 + 1] += Math.sin(Date.now() * 0.0001 + i) * 0.0001;
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const canvas = document.getElementById('hero-canvas');
+            const heroSection = document.getElementById('hero');
+            
+            // Update canvas dimensions to match the section
+            canvas.width = heroSection.clientWidth;
+            canvas.height = heroSection.clientHeight;
+
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        }
+
+        // --- 2. Responsive Dropdown Menu Toggle ---
+        document.getElementById('menu-button').addEventListener('click', () => {
+            document.getElementById('dropdown-menu').classList.toggle('active');
+        });
+
+        // --- 3. Marketplace Tabbed UI Logic ---
+        function setupMarketplaceTabs() {
+            const tabs = document.querySelectorAll('.marketplace-tab-btn');
+            const contents = document.querySelectorAll('.tab-content');
+
+            // Function to handle tab activation
+            const activateTab = (tabElement) => {
+                const targetId = tabElement.getAttribute('data-tab');
+
+                // Deactivate all
+                tabs.forEach(t => {
+                    t.classList.remove('active', 'bg-neon-purple', 'text-dark-bg', 'font-semibold');
+                    t.classList.add('text-gray-300', 'hover:bg-neon-purple/20');
+                });
+                contents.forEach(c => c.classList.remove('active'));
+
+                // Activate selected tab and content
+                tabElement.classList.add('active', 'bg-neon-purple', 'text-dark-bg', 'font-semibold');
+                tabElement.classList.remove('text-gray-300', 'hover:bg-neon-purple/20');
+                document.getElementById(targetId).classList.add('active');
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => activateTab(tab));
+            });
+
+            // Activate the first tab on load
+            if (tabs.length > 0) {
+                activateTab(tabs[0]);
+            }
+        }
+        
+        // --- 4. Initialization on Load ---
+        window.onload = function() {
+            // Check for Three.js before initializing
+            if (typeof THREE !== 'undefined') {
+                initParticles();
+                animateParticles();
+                window.addEventListener('resize', onWindowResize);
+            } else {
+                console.error("Three.js not loaded. Particle background disabled.");
+            }
+            setupMarketplaceTabs();
+        };
+
+    </script>
+</body>
+</html>
