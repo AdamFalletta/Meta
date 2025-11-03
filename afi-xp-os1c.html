@@ -30,7 +30,9 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            background-color: #2e62a9; /* XP Desktop Background Color */
+          
+            background:url(img/xp-bg.png);
+            background-size:cover;
             overflow: hidden; /* Prevent body scroll bars from window movement */
         }
 
@@ -243,6 +245,20 @@
                 <i class="fa-solid fa-note-sticky text-green-500"></i>
                 <div class="desktop-icon-label">Notepad</div>
             </div>
+
+           <!-- NEW: Fireworks Icon -->
+            <div class="desktop-icon" ondblclick="launchFireworksApp()">
+                <i class="fa-solid fa-note-sticky text-pink-500"></i>
+                <div class="desktop-icon-label">Fireworks</div>
+            </div>
+
+                <!-- NEW:  Icon -->
+            <div class="desktop-icon" ondblclick="launchFitnessApp()">
+                <i class="fa-solid fa-note-sticky text-green-500"></i>
+                <div class="desktop-icon-label">Fitness Timer</div>
+            </div>
+
+
         </div>
         
     </div>
@@ -390,7 +406,7 @@
                     <rect x="55" y="55" width="40" height="40" fill="white"/>
                 </svg>
             </span>
-            <span class="text-white font-bold text-xl drop-shadow-md mr-1">start</span>
+            <span class="text-white font-bold text-xl drop-shadow-md mr-1">home</span>
         </button>
 
         <!-- 2. Main Taskbar Area (Open Windows) -->
@@ -660,6 +676,15 @@ Try maximizing this window using the button in the title bar!
         function launchAOL() {
             createWindow('AOL', 'https://adamfalletta.github.io/Meta/af-aol1d.html', true, 800, 600);
         }
+
+          function launchFireworksApp() {
+            createWindow('Fireworks', 'https://adamfalletta.github.io/Meta/fireworks1c.html', true, 800, 600);
+        }
+
+          function launchFitnessApp() {
+            createWindow('Fitness Timer', 'https://adamfalletta.github.io/Meta/FitnessApp1.html', true, 800, 600);
+        }
+
 
         function launchMyComputer() {
             createWindow('My Computer', myComputerContent, false, 550, 400);
