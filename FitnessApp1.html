@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabata Fitness App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        /* Fixed Dark Mode styles */
+        body {
+            background-color: #0d0d0d;
+            color: #d1d5db;
+        }
+
+        .card {
+            background-color: #1a1a1a;
+            border: 1px solid #374151;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn {
+            background-color: transparent;
+            color: #9ca3af;
+            border: 2px solid #9ca3af;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #374151;
+            color: #d1d5db;
+            border-color: #374151;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: #e5e7eb;
+            border-color: #2563eb;
+        }
+        .btn-primary:hover {
+            background-color: #1e40af;
+            color: #e5e7eb;
+            border-color: #1e40af;
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+        .btn-danger:hover {
+            background-color: #ef4444;
+            color: #1f2937;
+        }
+        
+        /* Fixed font size for timers */
+        .fixed-timer {
+            font-size: 5rem;
+            line-height: 1;
+            font-weight: 700;
+        }
+        @media (min-width: 768px) {
+            .fixed-timer {
+                font-size: 6rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            .fixed-timer {
+                font-size: 8rem;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 1rem;
+            background-color: #374151;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #22c55e;
+            width: 0%;
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+<body class="bg-[#0d0d0d] text-gray-300 transition-colors duration-300">
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold mb-2 text-white">Cardio & Tabata Timer</h1>
+            <p class="text-lg text-gray-400">Get ready to work out!</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Cardio Timer Section -->
+            <div id="cardio-section" class="card p-6 rounded-3xl shadow-lg flex flex-col items-center">
+                <h2 class="text-3xl font-semibold mb-4 text-center text-red-400">Cardio Timer</h2>
+
+                <!-- Duration Selector -->
+                <div class="mb-6 w-full text-center">
+                    <label for="cardio-duration" class="block text-xl font-medium mb-2">Select Duration</label>
+                    <select id="cardio-duration" class="w-full max-w-sm p-3 bg-transparent border border-gray-400 text-gray-300 rounded-xl shadow-sm text-lg text-center">
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                        <option value="15" selected>15 Minutes</option>
+                        <option value="20">20 Minutes</option>
+                        <option value="25">25 Minutes</option>
+                        <option value="30">30 Minutes</option>
+                        <option value="35">35 Minutes</option>
+                        <option value="40">40 Minutes</option>
+                        <option value="45">45 Minutes</option>
+                        <option value="50">50 Minutes</option>
+                        <option value="55">55 Minutes</option>
+                        <option value="60">60 Minutes</option>
+                    </select>
+                </div>
+
+                <!-- Timer Display -->
+                <div class="text-center mb-6">
+                    <div id="cardio-timer" class="fixed-timer tracking-tighter text-white">00:00</div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex space-x-4 w-full justify-center">
+                    <button id="start-cardio-btn" class="btn btn-primary font-bold py-3 px-6 rounded-full shadow-lg">Start</button>
+                    <button id="pause-cardio-btn" class="btn font-bold py-3 px-6 rounded-full shadow-lg hidden">Pause</button>
+                    <button id="reset-cardio-btn" class="btn btn-danger font-bold py-3 px-6 rounded-full shadow-lg hidden">Reset</button>
+                </div>
+            </div>
+
+            <!-- Tabata Workout Section -->
+            <div id="tabata-section" class="card p-6 rounded-3xl shadow-lg flex flex-col items-center">
+                <h2 class="text-3xl font-semibold mb-4 text-center text-red-400">Tabata Workout</h2>
+
+                <!-- Duration Selector -->
+                <div class="mb-6 w-full text-center">
+                    <label for="workout-duration" class="block text-xl font-medium mb-2">Select Duration</label>
+                    <select id="workout-duration" class="w-full max-w-sm p-3 bg-transparent border border-gray-400 text-gray-300 rounded-xl shadow-sm text-lg text-center">
+                        <option value="15">15 Minutes</option>
+                        <option value="30" selected>30 Minutes</option>
+                        <option value="45">45 Minutes</option>
+                        <option value="60">60 Minutes</option>
+                    </select>
+                </div>
+
+                <!-- Timer Display -->
+                <div class="text-center mb-6">
+                    <p id="round-title" class="text-3xl md:text-4xl font-semibold mb-2 text-blue-400">Ready</p>
+                    <p id="round-number" class="text-xl mb-4 text-gray-500">Round 0 of 12</p>
+                    <div id="countdown-timer" class="fixed-timer tracking-tighter text-white">00:00</div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full max-w-md mb-6">
+                    <p class="text-sm text-gray-400 mb-1">Round Progress</p>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex space-x-4 w-full justify-center">
+                    <button id="start-btn" class="btn btn-primary font-bold py-3 px-6 rounded-full shadow-lg">Start</button>
+                    <button id="pause-btn" class="btn font-bold py-3 px-6 rounded-full shadow-lg hidden">Pause</button>
+                    <button id="reset-btn" class="btn btn-danger font-bold py-3 px-6 rounded-full shadow-lg hidden">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Model
+        const model = {
+            exercises: [
+                "Abs", "Traps", "Delts", "Back", "Triceps", "Biceps",
+                "Chest", "Forearms", "Hand Grip", "Quads", "Hamstrings", "Calves"
+            ],
+            workoutDuration: 30, 
+            timePerExercise: 0,
+            currentRound: 0,
+            timeRemaining: 0,
+            workoutInterval: null,
+            isWorkoutRunning: false,
+            
+            cardioDuration: 15,
+            cardioTimeRemaining: 0,
+            cardioInterval: null,
+            isCardioRunning: false,
+        };
+
+        // View
+        const view = {
+            elements: {
+                roundTitle: document.getElementById('round-title'),
+                roundNumber: document.getElementById('round-number'),
+                countdownTimer: document.getElementById('countdown-timer'),
+                progressBar: document.getElementById('progress-fill'),
+                workoutDurationSelect: document.getElementById('workout-duration'),
+                startBtn: document.getElementById('start-btn'),
+                pauseBtn: document.getElementById('pause-btn'),
+                resetBtn: document.getElementById('reset-btn'),
+
+                cardioDurationSelect: document.getElementById('cardio-duration'),
+                cardioTimer: document.getElementById('cardio-timer'),
+                startCardioBtn: document.getElementById('start-cardio-btn'),
+                pauseCardioBtn: document.getElementById('pause-cardio-btn'),
+                resetCardioBtn: document.getElementById('reset-cardio-btn'),
+            },
+
+            updateTabataDisplay(time, round, roundTitle) {
+                this.elements.countdownTimer.textContent = this.formatTime(time);
+                this.elements.roundNumber.textContent = `Round ${round} of 12`;
+                this.elements.roundTitle.textContent = roundTitle;
+            },
+            
+            updateProgressBar(progress) {
+                this.elements.progressBar.style.width = `${progress}%`;
+            },
+
+            updateCardioDisplay(time) {
+                this.elements.cardioTimer.textContent = this.formatTime(time);
+            },
+
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+            },
+
+            toggleTabataButtons(state) {
+                if (state === 'running') {
+                    this.elements.startBtn.classList.add('hidden');
+                    this.elements.pauseBtn.classList.remove('hidden');
+                    this.elements.resetBtn.classList.remove('hidden');
+                } else if (state === 'paused') {
+                    this.elements.startBtn.classList.remove('hidden');
+                    this.elements.pauseBtn.classList.add('hidden');
+                } else {
+                    this.elements.startBtn.classList.remove('hidden');
+                    this.elements.pauseBtn.classList.add('hidden');
+                    this.elements.resetBtn.classList.add('hidden');
+                }
+            },
+
+            toggleCardioButtons(state) {
+                 if (state === 'running') {
+                    this.elements.startCardioBtn.classList.add('hidden');
+                    this.elements.pauseCardioBtn.classList.remove('hidden');
+                    this.elements.resetCardioBtn.classList.remove('hidden');
+                } else if (state === 'paused') {
+                    this.elements.startCardioBtn.classList.remove('hidden');
+                    this.elements.pauseCardioBtn.classList.add('hidden');
+                } else {
+                    this.elements.startCardioBtn.classList.remove('hidden');
+                    this.elements.pauseCardioBtn.classList.add('hidden');
+                    this.elements.resetCardioBtn.classList.add('hidden');
+                }
+            },
+        };
+
+        // Controller
+        const controller = {
+            init() {
+                this.setupEventListeners();
+                this.calculateTimePerExercise();
+                this.resetTabataWorkout();
+                this.resetCardioTimer();
+            },
+
+            setupEventListeners() {
+                view.elements.workoutDurationSelect.addEventListener('change', this.handleDurationChange.bind(this));
+                view.elements.startBtn.addEventListener('click', this.startTabataWorkout.bind(this));
+                view.elements.pauseBtn.addEventListener('click', this.pauseTabataWorkout.bind(this));
+                view.elements.resetBtn.addEventListener('click', this.resetTabataWorkout.bind(this));
+                
+                view.elements.cardioDurationSelect.addEventListener('change', this.handleCardioDurationChange.bind(this));
+                view.elements.startCardioBtn.addEventListener('click', this.startCardioTimer.bind(this));
+                view.elements.pauseCardioBtn.addEventListener('click', this.pauseCardioTimer.bind(this));
+                view.elements.resetCardioBtn.addEventListener('click', this.resetCardioTimer.bind(this));
+            },
+
+            handleDurationChange(event) {
+                model.workoutDuration = parseInt(event.target.value, 10);
+                this.calculateTimePerExercise();
+                this.resetTabataWorkout();
+            },
+
+            calculateTimePerExercise() {
+                const totalSeconds = model.workoutDuration * 60;
+                model.timePerExercise = Math.floor(totalSeconds / 12);
+            },
+
+            startTabataWorkout() {
+                if (model.isWorkoutRunning) return;
+                model.isWorkoutRunning = true;
+                view.toggleTabataButtons('running');
+
+                if (model.currentRound === 0) {
+                    model.currentRound = 1;
+                    model.timeRemaining = model.timePerExercise;
+                }
+
+                view.updateTabataDisplay(model.timeRemaining, model.currentRound, model.exercises[model.currentRound - 1]);
+                this.startWorkoutInterval();
+            },
+
+            startWorkoutInterval() {
+                model.workoutInterval = setInterval(() => {
+                    model.timeRemaining--;
+                    
+                    const progress = ((model.timePerExercise - model.timeRemaining) / model.timePerExercise) * 100;
+                    view.updateProgressBar(progress);
+
+                    if (model.timeRemaining <= 0) {
+                        this.nextRound();
+                    } else {
+                        view.updateTabataDisplay(model.timeRemaining, model.currentRound, model.exercises[model.currentRound - 1]);
+                    }
+                }, 1000);
+            },
+
+            pauseTabataWorkout() {
+                model.isWorkoutRunning = false;
+                clearInterval(model.workoutInterval);
+                view.toggleTabataButtons('paused');
+            },
+
+            resetTabataWorkout() {
+                clearInterval(model.workoutInterval);
+                model.isWorkoutRunning = false;
+                model.currentRound = 0;
+                model.timeRemaining = model.timePerExercise;
+                view.updateTabataDisplay(model.timeRemaining, 0, "Ready");
+                view.updateProgressBar(0);
+                view.toggleTabataButtons('stopped');
+                view.elements.startBtn.textContent = 'Start';
+            },
+
+            nextRound() {
+                model.currentRound++;
+                if (model.currentRound > model.exercises.length) {
+                    this.completeWorkout();
+                } else {
+                    model.timeRemaining = model.timePerExercise;
+                    view.updateTabataDisplay(model.timeRemaining, model.currentRound, model.exercises[model.currentRound - 1]);
+                    view.updateProgressBar(0);
+                }
+            },
+
+            completeWorkout() {
+                clearInterval(model.workoutInterval);
+                model.isWorkoutRunning = false;
+                view.updateTabataDisplay(0, model.exercises.length, "Workout Complete!");
+                view.updateProgressBar(100);
+                view.toggleTabataButtons('stopped');
+                view.elements.startBtn.textContent = 'Restart';
+            },
+
+            handleCardioDurationChange(event) {
+                model.cardioDuration = parseInt(event.target.value, 10);
+                this.resetCardioTimer();
+            },
+
+            startCardioTimer() {
+                if (model.isCardioRunning) return;
+                model.isCardioRunning = true;
+                view.toggleCardioButtons('running');
+
+                if (model.cardioTimeRemaining <= 0) {
+                    model.cardioTimeRemaining = model.cardioDuration * 60;
+                }
+                
+                this.startCardioInterval();
+            },
+            
+            startCardioInterval() {
+                model.cardioInterval = setInterval(() => {
+                    model.cardioTimeRemaining--;
+                    if (model.cardioTimeRemaining < 0) {
+                        this.completeCardioTimer();
+                    } else {
+                        view.updateCardioDisplay(model.cardioTimeRemaining);
+                    }
+                }, 1000);
+            },
+
+            pauseCardioTimer() {
+                model.isCardioRunning = false;
+                clearInterval(model.cardioInterval);
+                view.toggleCardioButtons('paused');
+            },
+
+            resetCardioTimer() {
+                clearInterval(model.cardioInterval);
+                model.isCardioRunning = false;
+                model.cardioTimeRemaining = model.cardioDuration * 60;
+                view.updateCardioDisplay(model.cardioTimeRemaining);
+                view.toggleCardioButtons('stopped');
+                view.elements.startCardioBtn.textContent = 'Start';
+            },
+
+            completeCardioTimer() {
+                clearInterval(model.cardioInterval);
+                model.isCardioRunning = false;
+                view.updateCardioDisplay(0);
+                view.toggleCardioButtons('stopped');
+                view.elements.startCardioBtn.textContent = 'Restart';
+            },
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            controller.init();
+        });
+    </script>
+</body>
+</html>
