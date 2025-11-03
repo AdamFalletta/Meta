@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro AOL Desktop</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Define the custom AOL-inspired colors */
+        :root {
+            --primary-dark: #3A475A; /* Dark gray/blue - used for text/accents */
+            --secondary-bar: #E3E3E3; /* Light gray/blue for toolbars background */
+            --deep-blue-accent: #003399; /* Deep blue for links/titles */
+            --light-blue: #E6F0FF; /* Soft background blue */
+            --content-white: #FFFFFF;
+            --gray-neutral: #C0C0C0; /* Classic Windows 95 gray */
+            --shadow-gray: #808080; /* Darker shadow for 3D effect */
+            
+            /* Custom Section Colors */
+            --blue-section: #006699;
+            --green-section: #00676e;
+            --purple-section: #666796;
+            --teal-section: #649894;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #808080;
+            /* Important: Add padding top to offset the fixed header */
+            padding-top: 190px!important;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        
+        /* Set main flex container to fill screen height (after padding) */
+        .app-container {
+            min-height: calc(100vh - 180px)!important;
+            display: flex;
+            width: 100vw;
+        }
+
+        /* Custom 3D Button Style for Toolbar */
+        .aol-button {
+       
+            transition: all 0.05s ease-out;
+            cursor: pointer;
+          color:#eeeeee;
+          font-size: 14px !important;
+    text-shadow: 0px 0px 4px #000000; 
+            line-height: 1;
+            width:80px;
+        }
+        .aol-button:hover {
+        
+        }
+
+        /* Custom 3D Search Button */
+        .aol-search-button {
+            background-color: var(--gray-neutral);
+            border-top: 2px solid var(--content-white);
+            border-left: 2px solid var(--content-white);
+            border-right: 2px solid var(--shadow-gray); 
+            border-bottom: 2px solid var(--shadow-gray); 
+            transition: all 0.05s ease-out;
+           
+        }
+        .aol-search-button:active {
+            border-top: 2px solid var(--shadow-gray);
+            border-left: 2px solid var(--shadow-gray);
+            border-right: 2px solid var(--content-white);
+            border-bottom: 2px solid var(--content-white);
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        /* Custom scrollbar for Buddy List and Main Content */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: var(--deep-blue-accent);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: var(--light-blue);
+        }
+
+        /* Menu Dropdown Styles */
+        .menu-item:hover .dropdown-content {
+            display: block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--content-white);
+            min-width: 160px;
+            box-shadow: 4px 4px 0 var(--shadow-gray);
+            z-index: 20;
+            border: 1px solid var(--shadow-gray);
+            top: 100%; 
+            left: 0;
+        }
+        .dropdown-content a {
+            color: black;
+            padding: 8px 12px;
+            text-decoration: none;
+            display: block;
+            white-space: nowrap;
+        }
+        .dropdown-content a:hover {
+            background-color: var(--deep-blue-accent);
+            color: white;
+        }
+
+        /* Tooltip styling for icon bar */
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            padding: 4px 8px;
+            background-color: var(--primary-dark);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            z-index: 100;
+        }
+
+        /* Custom width for the navigation sidebar */
+        .nav-sidebar {
+            width: 300px; 
+            padding: 1rem; /* Added whitespace */
+            margin: 1rem; /* Get it off the hard edge */
+            border-radius: 0.5rem;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Ensures the main content area has room on the right */
+        .center-content-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1rem 0; /* Vertical padding */
+        }
+
+        /* The max-w-4xl limits the main content window size */
+        #center-content-wrapper {
+            max-width: 1024px; /* w-full max-w-4xl equivalent */
+            width: 100%;
+            margin-right: 200px; /* Offset for the right-side gap/buddy list */
+            flex-shrink: 0;
+        }
+
+        /* Buddy List specific styling */
+        #buddy-list {
+            position: fixed;
+            top: 150px;
+            right: 50px;
+            z-index: 50; 
+            width: 280px;
+            height: 450px;
+            background-color: var(--content-white);
+            border: 2px solid var(--deep-blue-accent);
+            border-radius: 0.75rem;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            resize: vertical; 
+            min-height: 200px;
+            max-height: 90vh;
+        }
+        #buddy-list-header {
+            cursor: grab;
+            /* Retro blue title bar */
+            background: linear-gradient(90deg, #003399 0%, #0066CC 100%);
+            border-bottom: 2px solid var(--shadow-gray);
+        }
+        
+        /* Buddy Highlighting Styles */
+        .buddy-list-item {
+            transition: background-color 0.15s, border-left-color 0.15s;
+            border-left: 5px solid transparent; 
+        }
+        .buddy-list-item.highlighted {
+            background-color: #dbeafe; /* Tailwind blue-100 */
+            border-left-color: #3b82f6; /* Tailwind blue-500 (The requested blue highlight) */
+        }
+
+        /* Ensures the whole flex container fills the space below the header */
+        .main-app-content {
+            flex-grow: 1;
+        }
+
+.w-5{width: 2.25rem!important;margin-bottom: 4px;}
+.h-5{height: 2.25rem!important;}
+.p-1{padding: 0.5rem!important;}
+.rounded-lg { border-radius: .5rem!important;}
+    </style>
+</head>
+<body class="p-0 md:p-0 flex flex-col">
+
+    <!-- Fixed Header Bar (OS Style) -->
+    <header class="fixed top-0 left-0 right-0 z-10 shadow-lg bg-white overflow-hidden" style="padding: 0;">
+        
+        <!-- 1. Menu Bar (File, Edit, View, Go) -->
+        <nav class="flex items-center text-sm border-b border-gray-300" style="background:#dddddd!important;">
+            <!-- File Menu -->
+            <div class="relative menu-item">
+                <div class="px-3 py-1 cursor-pointer hover:bg-gray-200">File</div>
+                <div class="dropdown-content">
+                    <a href="#">New Window</a>
+                    <a href="#">Open...</a>
+                    <a href="#">Print</a>
+                    <div class="border-t my-1"></div>
+                    <a href="#">Exit</a>
+                </div>
+            </div>
+            
+            <!-- Edit Menu -->
+            <div class="relative menu-item">
+                <div class="px-3 py-1 cursor-pointer hover:bg-gray-200">Edit</div>
+                <div class="dropdown-content">
+                    <a href="#">Cut</a>
+                    <a href="#">Copy</a>
+                    <a href="#">Paste</a>
+                </div>
+            </div>
+            
+            <!-- View Menu -->
+            <div class="relative menu-item">
+                <div class="px-3 py-1 cursor-pointer hover:bg-gray-200">View</div>
+                <div class="dropdown-content">
+                    <a href="#">Channel Guide</a>
+                    <a href="#">Refresh</a>
+                    <a href="#">Toolbar Setup</a>
+                </div>
+            </div>
+
+            <!-- Go Menu -->
+            <div class="relative menu-item">
+                <div class="px-3 py-1 cursor-pointer hover:bg-gray-200">Go</div>
+                <div class="dropdown-content">
+                    <a href="#">Keyword...</a>
+                    <a href="#">Search</a>
+                    <a href="#">Home Page</a>
+                </div>
+            </div>
+
+            <!-- Help Menu -->
+            <div class="px-3 py-1 cursor-pointer hover:bg-gray-200">Help</div>
+        </nav>
+
+        <!-- 2. Color-Coded Icon Toolbar -->
+        <div class="p-2 flex flex-col" style="background-color: #470b4b;">
+            
+            <!-- Icon Row (Color Sections) -->
+            <div class="flex items-center space-x-2 overflow-x-auto mb-2">
+                
+                <!-- 2a. Blue Section: Mail & Print -->
+                <div class="flex items-center space-x-0.5 p-1 rounded-lg" style="background-color: var(--blue-section); margin-left:0px!important;border-radius: 0rem!important;">
+                    <button data-tooltip="Read Mail" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        Read
+                    </button>
+                    <button data-tooltip="Write Mail" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5l4 4L7.5 19.5 3 21l1.5-4.5 9-9z"/></svg>
+                        Write
+                    </button>
+                    <button data-tooltip="Print Document" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 001 1h4M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>
+                        Print
+                    </button>
+                </div>
+
+                <!-- 2b. Green Section: My Files, My AOL, Favorites -->
+                <div class="flex items-center space-x-0.5 p-1 rounded-lg" style="background-color: var(--green-section); margin-left:0px!important;border-radius: 0rem!important;">
+                    <button data-tooltip="My Files" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7z"/><path d="M14 2v6a2 2 0 002 2h6"/></svg>
+                        Files
+                    </button>
+                    <button data-tooltip="My AOL" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 5v6c0 5.5 4 10 8 11s8-5.5 8-11V5zM12 11h.01M12 15h.01M12 7h.01"/></svg>
+                        My AOL
+                    </button>
+                    <button data-tooltip="My Favorites" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <!-- Classic Heart Icon -->
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        Favs
+                    </button>
+                </div>
+
+                <!-- 2c. Purple Section: Internet & Channels -->
+                <div class="flex items-center space-x-0.5 p-1 rounded-lg" style="background-color: var(--purple-section); margin-left:0px!important;border-radius: 0rem!important;">
+                    <button data-tooltip="Internet (Go to Web)" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                        Internet
+                    </button>
+                    <button data-tooltip="Channels" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 009-9H3a9 9 0 009 9z"/><path d="M12 3a9 9 0 019 9H3a9 9 0 019-9z"/></svg>
+                        Channels
+                    </button>
+                </div>
+
+                <!-- 2d. Teal Section: People & Buddies -->
+                <div class="flex items-center space-x-0.5 p-1 rounded-lg" style="background-color: var(--teal-section); margin-left:0px!important;border-radius: 0rem!important;">
+                    <button data-tooltip="People" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-1.29a4 4 0 010-6.84"/></svg>
+                        People
+                    </button>
+                    <button data-tooltip="Show/Hide Buddy List" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold" onclick="toggleBuddyList(false)">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M12 2a10 10 0 0110 10c0 5.523-4.477 10-10 10S2 17.523 2 12A10 10 0 0112 2zM6 18c.5-1.5 2-3 6-3s5.5 1.5 6 3"/></svg>
+                        Buddies
+                    </button>
+                </div>
+                
+
+                <!-- 2c. Purple Section: Internet & Channels -->
+                <div class="flex items-center space-x-0.5 p-1 rounded-lg" style="background-color: #89679b; margin-left:0px!important;border-radius: 0rem!important;">
+                    <button data-tooltip="Internet (Go to Web)" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                        Internet
+                    </button>
+                    <button data-tooltip="Channels" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 009-9H3a9 9 0 009 9z"/><path d="M12 3a9 9 0 019 9H3a9 9 0 019-9z"/></svg>
+                        Channels
+                    </button>
+                </div>
+
+
+
+
+        
+
+                <!-- 2d. Settings Section: -->
+                <div class="flex items-center space-x-0.5 p-1 rounded-lg" style="background-color: #aaaaaa; margin-left:0px!important;border-radius: 0rem!important;">
+                    <button data-tooltip="People" class="aol-button flex-shrink-0 flex flex-col items-center p-1 rounded-lg text-xs font-semibold">
+                        <svg class="w-5 h-5" style="color: var(--deep-blue-accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-1.29a4 4 0 010-6.84"/></svg>
+                        Settings
+                    </button>
+          
+                </div>
+
+
+
+
+
+
+            </div>
+            
+            <!-- 3. Search/Go Bar (UPDATED with Browser Buttons) -->
+            <div class="bg-white flex items-center space-x-2 p-1.5 border border-gray-400 rounded-lg shadow-inner">
+                <!-- Navigation Buttons -->
+                <div class="flex space-x-1">
+                    <button class="aol-search-button flex items-center justify-center w-8 h-7 text-gray-800 text-sm" title="Back" onclick="handleBrowserNav('back')">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <button class="aol-search-button flex items-center justify-center w-8 h-7 text-gray-800 text-sm" title="Forward" onclick="handleBrowserNav('forward')">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <button class="aol-search-button flex items-center justify-center w-8 h-7 text-gray-800 text-sm" title="Reload" onclick="handleBrowserNav('reload')">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.646 4.646a.5.5 0 01.708 0L7 6.293l1.646-1.647a.5.5 0 01.708.708L7.707 7l1.647 1.646a.5.5 0 01-.708.708L7 7.707l-1.646 1.647a.5.5 0 01-.708-.708L6.293 7 4.646 5.354a.5.5 0 010-.708zM17 10a7 7 0 11-1.42 4.195l-.894-.447A6 6 0 1017 10zm-1.89-6.94l.894.447A7 7 0 0117 10h-1a6 6 0 00-11.785-1.805z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+                
+                <input type="text" id="search-input" placeholder="Enter Keyword or Web Address" class="flex-grow p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm" style="background-color: var(--light-blue);">
+                
+                <button class="aol-search-button p-1.5 text-gray-800 font-semibold text-sm" onclick="handleSearch('search')">Search</button>
+                <button class="aol-search-button p-1.5 text-gray-800 font-semibold text-sm" onclick="handleSearch('go')">Go</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Container below fixed header -->
+    <div class="app-container main-app-content">
+        <!-- Main Content Area (Three-Column Layout) -->
+        <main class="flex flex-grow w-full overflow-hidden">
+
+            <!-- Column 1: Left Navigation Sidebar (Dedicated Div with Whitespace) -->
+            <nav class="flex-shrink-0 nav-sidebar overflow-y-auto custom-scrollbar" style="background-color: var(--content-white); border: 1px solid var(--gray-neutral);">
+                <h2 class="text-lg font-bold mb-3" style="color: var(--deep-blue-accent);">Channels</h2>
+                <ul class="space-y-1 text-sm">
+                    <!-- Nav Items -->
+                    <li><a href="#" class="nav-item block p-2 rounded-lg transition-colors bg-blue-50 font-bold" data-id="welcome" onclick="handleNavClick('welcome')">🏠 Welcome</a></li>
+                    <li><a href="#" class="nav-item block p-2 rounded-lg hover:bg-blue-50 transition-colors" data-id="money" onclick="handleNavClick('money')">💰 Money</a></li>
+                    <li><a href="#" class="nav-item block p-2 rounded-lg hover:bg-blue-50 transition-colors" data-id="sports" onclick="handleNavClick('sports')">🏈 Sports</a></li>
+                    <li><a href="#" class="nav-item block p-2 rounded-lg hover:bg-blue-50 transition-colors" data-id="computing" onclick="handleNavClick('computing')">💻 Computing</a></li>
+                    <li><a href="#" class="nav-item block p-2 rounded-lg hover:bg-blue-50 transition-colors" data-id="entertainment" onclick="handleNavClick('entertainment')">🎬 Entertainment</a></li>
+                    <li><a href="#" class="nav-item block p-2 rounded-lg hover:bg-blue-50 transition-colors" data-id="shopping" onclick="handleNavClick('shopping')">🛍️ Shopping</a></li>
+                    <!-- Add more links as needed -->
+                </ul>
+
+                <h2 class="text-lg font-bold mt-6 mb-3 border-t pt-3" style="color: var(--deep-blue-accent); border-color: var(--gray-neutral);">My Tools</h2>
+                <ul class="space-y-1 text-sm">
+                    <li><button class="w-full text-left flex items-center p-2 rounded-lg hover:bg-blue-50 transition-colors" onclick="toggleBuddyList()">💬 Buddy List</button></li>
+                    <li><a href="#" class="w-full text-left flex items-center p-2 rounded-lg hover:bg-blue-50 transition-colors">📧 Mail</a></li>
+                </ul>
+            </nav>
+
+            <!-- Column 2: Center Content Container (Centered and Max-Width) -->
+            <div class="center-content-container">
+                <!-- Main Content Panel (The actual "page" area) -->
+                <section id="center-content-wrapper" class="flex flex-col flex-shrink-0">
+                    <!-- Content Status Bar -->
+                    <div id="content-status" class="flex-shrink-0 p-2 mb-4 text-sm font-semibold border rounded-lg"
+                        style="background-color: #DDEEFF; border-color: var(--deep-blue-accent); color: var(--deep-blue-accent);">
+                        Welcome to Modern AOL! The internet is at your fingertips.
+                    </div>
+
+                    <!-- Main Content Grid -->
+                    <div id="main-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-y-auto custom-scrollbar flex-grow p-4" style="background-color: var(--content-white); border-radius: 0.75rem; border: 1px solid var(--gray-neutral);">
+                        <!-- Content cards rendered by JS -->
+                    </div>
+                </section>
+            </div>
+            
+            <!-- Column 3: Right Sidebar Placeholder (Ensures content centering) -->
+            <div class="flex-shrink-0 w-48 hidden lg:block">
+                <!-- This space is reserved visually for the floating buddy list -->
+            </div>
+        </main>
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- Buddy List Window (Draggable and Fixed Position) -->
+    <div id="buddy-list" class="hidden">
+        <!-- Header (Drag Handle) -->
+        <div id="buddy-list-header" class="flex-shrink-0 flex items-center justify-between p-2 rounded-t-[0.6rem] text-white font-bold">
+            <span>Modern AFI Buddy List</span>
+            <button class="p-1 rounded-full hover:bg-red-600 transition" onclick="toggleBuddyList(true)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Content (Scrollable) -->
+        <div class="p-4 space-y-3 overflow-y-auto flex-grow custom-scrollbar" id="buddy-list-content" style="background-color: var(--light-blue);">
+            <!-- Buddy list items rendered by JS -->
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <!-- Fixed Footer Bar (Icons) -->
+        <div class="flex-shrink-0 flex items-center justify-around p-2 border-t" style="background-color: var(--secondary-bar); border-color: var(--gray-neutral);">
+            <!-- Locate -->
+            <button class="aol-search-button p-2 rounded-lg text-gray-800 hover:bg-gray-200" title="Locate Buddy">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7c-3.7-3.9-6-8.5-6-11.7A6 6 0 0112 4a6 6 0 016 6c0 3.2-2.3 7.8-6 11.7z"/></svg>
+            </button>
+            <!-- DM / Instant Message -->
+            <button class="aol-search-button p-2 rounded-lg text-gray-800 hover:bg-gray-200" title="Instant Message">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </button>
+            <!-- Buddy Chat -->
+            <button class="aol-search-button p-2 rounded-lg text-gray-800 hover:bg-gray-200" title="Buddy Chat">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9H7a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2zM7 9v11M17 4v5"/></svg>
+            </button>
+            <!-- Settings -->
+            <button class="aol-search-button p-2 rounded-lg text-gray-800 hover:bg-gray-200" title="Settings">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009.4 19a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33 1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82 1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </button>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <script>
+        // --- Mock Data ---
+        const MOCK_DATA = {
+            'welcome': {
+                status: 'Welcome to Modern AOL! The internet is at your fingertips.',
+                cards: [
+                    { title: "Today's Feature: New Horizons", content: "Explore the latest in virtual reality and future tech.", highlight: true, icon: '🚀', color: 'pink', colSpan: 'lg:col-span-2 md:col-span-2' },
+                    { title: "You've Got Mail!", content: "Check your inbox for 5 new messages from friends.", icon: '📧', color: 'blue', colSpan: 'lg:col-span-1 md:col-span-1' },
+                    { title: "My Weather", content: "Partly Cloudy, 83°F in your area. Click for 5-day forecast.", icon: '🌤️', color: 'yellow', colSpan: 'lg:col-span-1 md:col-span-1' },
+                    { title: "Top News Stories", content: "GOP Crafts $792 Billion Tax Plan (from reference image).", icon: '📰', color: 'red', colSpan: 'lg:col-span-2 md:col-span-2' },
+                    { title: "Love Grows", content: "Design your own special bouquet for your Mom.", icon: '🌼', color: 'green', colSpan: 'lg:col-span-1 md:col-span-1' },
+                    { title: "Pet of the Day", content: "Meet Lily, the 8-week-old Himalayan cat.", icon: '🐈', color: 'orange', colSpan: 'lg:col-span-1 md:col-span-1' },
+                    { title: "AOL Shopping", content: "Easy Car-Buying Steps. Plus, new car reviews.", icon: '🚗', color: 'teal', colSpan: 'lg:col-span-1 md:col-span-1' },
+                    { title: "Fun & Games", content: "Play the latest free online titles.", icon: '🕹️', color: 'purple', colSpan: 'lg:col-span-1 md:col-span-1' },
+                    { title: "Local Events", content: "Concerts, farmers markets, and community gatherings near you.", icon: '🗓️', color: 'brown', colSpan: 'lg:col-span-2 md:col-span-2' },
+                ]
+            },
+            'money': {
+                status: 'Your financial future starts here.',
+                cards: [
+                    { title: "Stock Market Surge", content: "Tech stocks see highest gains in a decade.", icon: '📈', color: 'green' },
+                    { title: "Investment Tips", content: "Diversify your portfolio for better returns.", icon: '💡', color: 'yellow' },
+                ]
+            },
+            'sports': {
+                status: 'The latest scores and analysis.',
+                cards: [
+                    { title: "Game Highlights", content: "Watch the winning touchdown catch.", icon: '🏆', color: 'red' },
+                    { title: "Fantasy League Update", content: "Check your team's standings.", icon: '🏈', color: 'indigo' },
+                ]
+            },
+            'computing': {
+                status: 'Tech news and software reviews.',
+                cards: [
+                    { title: "AI Breakthrough", content: "New model achieves human-level reasoning.", icon: '🤖', color: 'purple' },
+                    { title: "Best Gadgets of 2025", content: "Our picks for phones, laptops, and wearables.", icon: '📱', color: 'teal' },
+                ]
+            },
+            'entertainment': {
+                status: 'Movies, music, and celebrity gossip.',
+                cards: [
+                    { title: "Blockbuster Review", content: "Spicy takes on the summer's biggest hit.", icon: '🍿', color: 'red' },
+                    { title: "New Music Releases", content: "Must-hear albums this week.", icon: '🎧', color: 'blue' },
+                ]
+            },
+            'shopping': {
+                status: 'The best deals and online stores.',
+                cards: [
+                    { title: "Sale Alert", content: "50% off all clothing at StyleShop.", icon: '🏷️', color: 'green' },
+                    { title: "Home Decor Trends", content: "Minimalism is out, maximalism is in.", icon: '🛋️', color: 'brown' },
+                ]
+            }
+        };
+
+        const BUDDY_LIST_PALS = [
+            { name: 'Admin_Star', online: true, icon: '✨' },
+            { name: 'GamerDude99', online: true, icon: '🎮' },
+            { name: 'ChatMaster', online: true, icon: '💬' },
+            { name: 'WebSurfer', online: true, icon: '🌐' },
+            { name: 'ThePilot', online: true, icon: '✈️' },
+            { name: 'CoolMom', online: false, icon: '👩' },
+            { name: 'OldSchooler', online: false, icon: '💾' },
+            { name: 'Dreamer', online: false, icon: '🌙' },
+        ];
+        let pals = BUDDY_LIST_PALS;
+        let buddyListClosedByUser = false; 
+        
+        // Browser history stack (mock navigation)
+        let historyStack = ['welcome'];
+        let historyIndex = 0;
+
+
+        // --- Core UI Functions ---
+
+        /**
+         * Renders the mock content cards for the main panel.
+         * @param {string} channelId - The ID of the currently selected channel.
+         */
+        const renderMainContent = (channelId) => {
+            const container = document.getElementById('main-content');
+            const statusDiv = document.getElementById('content-status');
+            const data = MOCK_DATA[channelId] || MOCK_DATA['welcome'];
+
+            statusDiv.textContent = `Current Channel: ${data.status}`;
+            container.innerHTML = ''; // Clear previous content
+
+            // Main Content Cards
+            const contentHTML = data.cards.map(card => `
+                <div class="p-4 rounded-lg shadow-md transition transform hover:scale-[1.01] duration-200 cursor-pointer ${card.colSpan || ''}"
+                    style="background-color: var(--content-white); border: 1px solid var(--gray-neutral);">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <span class="text-3xl">${card.icon}</span>
+                        <h3 class="text-xl font-bold" style="color: var(--deep-blue-accent);">${card.title}</h3>
+                    </div>
+                    <p class="text-gray-700 text-sm">${card.content}</p>
+                    ${card.highlight ? `<div class="mt-3 p-1 rounded text-center text-white text-xs font-semibold" style="background-color: #E60000;">FEATURED STORY</div>` : ''}
+                </div>
+            `).join('');
+
+            container.innerHTML = contentHTML;
+        };
+
+        /**
+         * Handles navigation click, updates the active link style, and renders new content.
+         * @param {string} channelId - The ID of the clicked channel.
+         */
+        window.handleNavClick = (channelId, isHistory = false) => {
+            // Update active state in navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('bg-blue-50', 'font-bold');
+                item.style.border = 'none';
+                if (item.getAttribute('data-id') === channelId) {
+                    item.classList.add('bg-blue-50', 'font-bold');
+                    item.style.border = '1px solid var(--gray-neutral)';
+                }
+            });
+
+            renderMainContent(channelId);
+            
+            // Update history only if it's a new navigation event (not a history button click)
+            if (!isHistory) {
+                // Remove future entries if navigating from the middle of history
+                historyStack = historyStack.slice(0, historyIndex + 1);
+                historyStack.push(channelId);
+                historyIndex = historyStack.length - 1;
+            }
+        };
+
+        /**
+         * Handles the search bar button clicks.
+         * @param {string} type - 'search' or 'go'
+         */
+        window.handleSearch = (type) => {
+            const input = document.getElementById('search-input').value.trim();
+            if (!input) {
+                console.error("Search input is empty.");
+                return;
+            }
+
+            const action = type === 'search' ? `AOL Search initiated for: ${input}` : `Attempting GoTo URL: ${input}`;
+            
+            const statusDiv = document.getElementById('content-status');
+            statusDiv.textContent = `AOL Status: ${action}`;
+            setTimeout(() => {
+                statusDiv.textContent = MOCK_DATA['welcome'].status;
+            }, 3000);
+
+            document.getElementById('search-input').value = '';
+        };
+
+        /**
+         * Handles the browser navigation buttons (Back, Forward, Reload). (NEW)
+         * @param {string} action - 'back', 'forward', or 'reload'
+         */
+        window.handleBrowserNav = (action) => {
+            let newIndex = historyIndex;
+            
+            if (action === 'back' && historyIndex > 0) {
+                newIndex--;
+            } else if (action === 'forward' && historyIndex < historyStack.length - 1) {
+                newIndex++;
+            } else if (action === 'reload') {
+                // Reload current page without changing history index
+                handleNavClick(historyStack[historyIndex], true); 
+                document.getElementById('content-status').textContent = `Channel reloaded: ${historyStack[historyIndex]}`;
+                return;
+            } else {
+                // No action if back/forward button is pressed at boundary
+                document.getElementById('content-status').textContent = `Cannot ${action} further.`;
+                return;
+            }
+
+            if (newIndex !== historyIndex) {
+                historyIndex = newIndex;
+                const channelId = historyStack[historyIndex];
+                handleNavClick(channelId, true); // Pass true to avoid pushing to history
+            }
+        };
+
+
+        // --- Buddy List Functions ---
+
+        /**
+         * Helper function to create a buddy list item element.
+         */
+        const createBuddyListItem = (pal, isOnline) => {
+            const item = document.createElement('div');
+            item.className = `buddy-list-item flex items-center space-x-2 p-1 rounded-md transition-colors cursor-pointer ${isOnline ? 'hover:bg-blue-50 text-gray-800' : 'text-gray-400 opacity-70 hover:bg-gray-50'}`;
+            item.title = `Buddy is ${isOnline ? 'Online' : 'Offline'}`;
+            item.innerHTML = `
+                <span class="text-xl ${!isOnline ? 'grayscale' : ''}">${pal.icon}</span>
+                <span>${pal.name}</span>
+            `;
+            // Attach the highlighting click handler
+            item.addEventListener('click', () => highlightBuddy(item));
+            return item;
+        };
+        
+        /**
+         * Applies the requested blue highlight to the clicked buddy and removes it from others. (UPDATED)
+         * @param {HTMLElement} selectedItem - The DOM element of the buddy item clicked.
+         */
+        const highlightBuddy = (selectedItem) => {
+            // Remove highlighting from all other items
+            document.querySelectorAll('.buddy-list-item').forEach(item => {
+                item.classList.remove('highlighted');
+            });
+
+            // Add the blue highlight to the selected item
+            selectedItem.classList.add('highlighted');
+        };
+        
+        /**
+         * Renders the buddy list content (online/offline) and attaches click handlers for highlighting.
+         */
+        const renderBuddyList = () => {
+            const content = document.getElementById('buddy-list-content');
+            content.innerHTML = ''; // Clear previous content
+
+            // Sort pals: Online first
+            pals.sort((a, b) => (b.online === a.online ? 0 : b.online ? -1 : 1));
+
+            const onlinePals = pals.filter(p => p.online);
+            const offlinePals = pals.filter(p => !p.online);
+
+            // 1. Online Header
+            const onlineHeader = document.createElement('div');
+            onlineHeader.className = "font-semibold text-lg border-b pb-1";
+            onlineHeader.style.color = "var(--deep-blue-accent)";
+            onlineHeader.textContent = `Online (${onlinePals.length})`;
+            content.appendChild(onlineHeader);
+
+            // 2. Online Pals
+            const onlineContainer = document.createElement('div');
+            onlineContainer.className = "space-y-1 my-3";
+            onlinePals.forEach(pal => {
+                const item = createBuddyListItem(pal, true);
+                onlineContainer.appendChild(item);
+            });
+            content.appendChild(onlineContainer);
+            
+            // 3. Offline Header
+            const offlineHeader = document.createElement('div');
+            offlineHeader.className = "border-t border-gray-200 pt-3";
+            offlineHeader.innerHTML = `<div class="font-semibold text-lg text-gray-500 border-b pb-1">Offline (${offlinePals.length})</div>`;
+            content.appendChild(offlineHeader);
+
+            // 4. Offline Pals
+            const offlineContainer = document.createElement('div');
+            offlineContainer.className = "space-y-1 mt-3";
+            offlinePals.forEach(pal => {
+                const item = createBuddyListItem(pal, false);
+                offlineContainer.appendChild(item);
+            });
+            content.appendChild(offlineContainer);
+        };
+
+        /**
+         * Hides or shows the Buddy List window.
+         * @param {boolean} [closing=false] - True if closing via the 'X' button.
+         */
+        window.toggleBuddyList = (closing = false) => {
+            const buddyList = document.getElementById('buddy-list');
+            const isHidden = buddyList.classList.toggle('hidden');
+            
+            if (closing && isHidden) {
+                buddyListClosedByUser = true;
+            } else if (!isHidden) {
+                buddyListClosedByUser = false;
+            }
+        };
+
+        // --- Draggable Window Logic (FIXED) ---
+
+        const setupBuddyListDrag = () => {
+            const buddyList = document.getElementById('buddy-list');
+            const header = document.getElementById('buddy-list-header');
+            
+            let isDragging = false;
+            let initialMouseX, initialMouseY;
+            let initialElemX, initialElemY;
+
+            buddyList.style.position = 'fixed'; 
+
+            const dragStart = (e) => {
+                // Only start drag if it originates from the header
+                if (e.target.closest('#buddy-list-header') !== header) return;
+
+                e.preventDefault(); 
+
+                if (e.type === "touchstart") {
+                    initialMouseX = e.touches[0].clientX;
+                    initialMouseY = e.touches[0].clientY;
+                } else {
+                    initialMouseX = e.clientX;
+                    initialMouseY = e.clientY;
+                }
+                
+                // Get the current position relative to the viewport
+                const rect = buddyList.getBoundingClientRect();
+                initialElemX = rect.left;
+                initialElemY = rect.top;
+
+                isDragging = true;
+                header.style.cursor = 'grabbing';
+            };
+
+            const drag = (e) => {
+                if (!isDragging) return;
+
+                let currentMouseX, currentMouseY;
+                if (e.type === "touchmove") {
+                    currentMouseX = e.touches[0].clientX;
+                    currentMouseY = e.touches[0].clientY;
+                } else {
+                    currentMouseX = e.clientX;
+                    currentMouseY = e.clientY;
+                }
+
+                const deltaX = currentMouseX - initialMouseX;
+                const deltaY = currentMouseY - initialMouseY;
+
+                let newLeft = initialElemX + deltaX;
+                let newTop = initialElemY + deltaY;
+                
+                // Apply boundary clamping
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const buddyWidth = buddyList.offsetWidth;
+                const buddyHeight = buddyList.offsetHeight;
+
+                // Clamp X (min 10px from left, max screen width - element width - 10px from right)
+                newLeft = Math.max(10, Math.min(newLeft, viewportWidth - buddyWidth - 10));
+                // Clamp Y (min 100px from top, max screen height - element height - 10px from bottom)
+                newTop = Math.max(100, Math.min(newTop, viewportHeight - buddyHeight - 10)); // Min 100px from top to clear the fixed header
+
+                buddyList.style.left = `${newLeft}px`;
+                buddyList.style.top = `${newTop}px`;
+            };
+
+            const dragEnd = () => {
+                isDragging = false;
+                header.style.cursor = 'grab';
+                // Update initial position for the next drag (optional, but good practice)
+                const rect = buddyList.getBoundingClientRect();
+                initialElemX = rect.left;
+                initialElemY = rect.top;
+            };
+
+            // Mouse Events
+            header.addEventListener("mousedown", dragStart, false);
+            document.addEventListener("mouseup", dragEnd, false);
+            document.addEventListener("mousemove", drag, false);
+            
+            // Touch Events
+            header.addEventListener("touchstart", dragStart, false);
+            document.addEventListener("touchend", dragEnd, false);
+            document.addEventListener("touchmove", drag, false);
+
+
+            // Initial positioning (setting initial style props)
+            const setInitialPosition = () => {
+                 // Only reposition if the user hasn't closed it
+                if (!buddyListClosedByUser) {
+                    buddyList.style.left = `${window.innerWidth - buddyList.offsetWidth - 50}px`;
+                    buddyList.style.top = '150px';
+                }
+            };
+            setInitialPosition();
+        };
+
+        // --- Initialization ---
+        window.onload = () => {
+            handleNavClick('welcome'); // Load initial content (also handles initial history)
+            renderBuddyList(); // Load initial buddy list
+            setupBuddyListDrag(); // Set up dragging functionality
+
+            // Show buddy list initially
+            document.getElementById('buddy-list').classList.remove('hidden');
+        };
+
+    </script>
+</body>
+</html>
