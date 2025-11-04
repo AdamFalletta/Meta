@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Windows XP Desktop</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for System Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        /* --- XP Color and Bevel Definitions --- */
+        :root {
+            --xp-taskbar-bg: #2779ff; /* Blue Taskbar */
+            --xp-start-green-dark: #3a7d0d;
+            --xp-start-green-light: #8dc138;
+            --xp-menu-bg: #ece9d8; /* Menu Background */
+            --xp-menu-sidebar: #4682b4; /* User Panel Blue */
+            --xp-menu-shadow: #7f7f7f; /* Dark shadow for 3D effect */
+            --xp-menu-highlight: #ffffff; /* Light highlight for 3D effect */
+            --xp-classic-gray: #c0c0c0; /* Window/Element Gray */
+            --xp-blue-title: #2b54d6; /* Active window title bar blue */
+            --xp-taskbar-app-bg: #a6cbf6; /* Default app button color */
+            --xp-taskbar-app-active: #ffffff; /* Active app button color */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+          
+            background:url(img/xp-bg.png);
+            background-size:cover;
+            overflow: hidden; /* Prevent body scroll bars from window movement */
+        }
+
+        /* 3D Bevel for UI elements 
+        .xp-bevel-out {
+            border-top: 1px solid var(--xp-menu-highlight);
+            border-left: 1px solid var(--xp-menu-highlight);
+            border-right: 1px solid var(--xp-menu-shadow);
+            border-bottom: 1px solid var(--xp-menu-shadow);
+        }*/
+
+        .xp-bevel-in {
+            border-top: 1px solid var(--xp-menu-shadow);
+            border-left: 1px solid var(--xp-menu-shadow);
+            border-right: 1px solid var(--xp-menu-highlight);
+            border-bottom: 1px solid var(--xp-menu-highlight);
+        }
+
+        /* --- Desktop Icon Styles --- */
+        .desktop-icon {
+            width: 70px;
+            height: 70px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .desktop-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .desktop-icon-label {
+            font-size: 10px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            padding: 2px 0;
+        }
+        .desktop-icon i {
+            font-size: 64px;
+        }
+
+        /* --- Window Styles --- */
+        .window {
+            min-width: 200px;
+            min-height: 100px;
+            box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.5);
+            /* Ensure smooth resizing/transition */
+            transition: width 0.1s, height 0.1s, top 0.1s, left 0.1s; 
+        }
+        /* Maximize state disables cursor changes from dragging/resizing */
+        .window.maximized {
+            cursor: default !important; 
+        }
+        .title-bar {
+            background: linear-gradient(to right, var(--xp-blue-title), #4d86f7);
+            user-select: none;
+        }
+        .window-content {
+            border-top: 1px solid var(--xp-menu-shadow);
+        }
+
+        /* --- Resizing Handles (Simplified) --- */
+        .resize-handle {
+            position: absolute;
+            z-index: 1;
+        }
+        /* Hide handles when maximized */
+        .window.maximized .resize-handle {
+            display: none;
+        }
+        .resize-handle.bottom {
+            height: 5px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            cursor: ns-resize;
+        }
+        .resize-handle.right {
+            width: 5px;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            cursor: ew-resize;
+        }
+        .resize-handle.bottom-right {
+            width: 10px;
+            height: 10px;
+            right: 0;
+            bottom: 0;
+            z-index: 2;
+            cursor: nwse-resize; 
+        }
+
+        /* --- Context Menu Styles --- */
+        .context-menu {
+            position: fixed;
+            z-index: 900;
+        }
+        .menu-item-container {
+            position: relative;
+        }
+        .menu-item {
+            padding: 4px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .menu-item.hovered, .menu-item:hover {
+             background-color: var(--xp-taskbar-bg);
+             color: white;
+        }
+        .cascading-menu {
+            position: absolute;
+            left: 100%; 
+            min-width: 200px;
+            z-index: 901; 
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+            background-color: white;
+            border: 1px solid #7f7f7f;
+        }
+
+        /* --- Taskbar App Button Styles --- */
+        .taskbar-app-btn {
+            background-color: var(--xp-taskbar-app-bg);
+            border-top: 1px solid var(--xp-menu-highlight);
+            border-left: 1px solid var(--xp-menu-highlight);
+            border-right: 1px solid var(--xp-menu-shadow);
+            border-bottom: 1px solid var(--xp-menu-shadow);
+            box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+            transition: all 0.1s;
+        }
+        .taskbar-app-btn.active {
+            background-color: var(--xp-taskbar-app-active);
+            border-top: 1px solid var(--xp-menu-shadow);
+            border-left: 1px solid var(--xp-menu-shadow);
+            border-right: 1px solid var(--xp-menu-highlight);
+            border-bottom: 1px solid var(--xp-menu-highlight);
+            box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .taskbar-app-btn.minimized {
+            opacity: 0.7;
+        }
+
+        /* --- Existing Start Menu Styles --- */
+        #start-menu {
+            position: absolute;
+            bottom: 40px; 
+            left: 0;
+            width: 300px;
+            z-index: 800; 
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+            overflow: visible; 
+        }
+        #start-button {
+            background: linear-gradient(to top, var(--xp-start-green-dark), var(--xp-start-green-light));
+            border-radius: 0 8px 0 0;
+            padding: 4px 10px;
+            box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--xp-start-green-dark);
+            transition: all 0.1s;
+        }
+        #start-button.active {
+            background: var(--xp-start-green-dark);
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+            transform: translateY(1px);
+        }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- Main Desktop Area -->
+    <div id="desktop-area" class="h-screen w-screen p-4" oncontextmenu="handleDesktopRightClick(event)">
+        
+        <!-- Desktop Icons Grid (top left corner) -->
+        <div class="grid grid-cols-[70px] auto-rows-min gap-y-4">
+            
+            <!-- My Computer Icon -->
+            <div class="desktop-icon" ondblclick="launchMyComputer()">
+                <i class="fa-solid fa-computer text-yellow-300"></i>
+                <div class="desktop-icon-label">My Computer</div>
+            </div>
+
+            <!-- My Documents Icon -->
+            <div class="desktop-icon" ondblclick="launchMyDocuments()">
+                <i class="fa-solid fa-folder text-blue-400"></i>
+                <div class="desktop-icon-label">My Documents</div>
+            </div>
+
+            <!-- Recycle Bin Icon -->
+            <div class="desktop-icon" ondblclick="launchRecycleBin()">
+                <i class="fa-solid fa-trash-can text-gray-500"></i>
+                <div class="desktop-icon-label">Recycle Bin</div>
+            </div>
+            
+            <!-- DoogieTube Icon -->
+            <div class="desktop-icon" ondblclick="launchDoogieTube()">
+                <i class="fa-solid fa-video text-red-600"></i>
+                <div class="desktop-icon-label">DoogieTube</div>
+            </div>
+
+    <!-- AOL Icon -->
+            <div class="desktop-icon" ondblclick="launchAOL()">
+                <i class="fa-solid fa-globe text-blue-400"></i>
+                <div class="desktop-icon-label">AFI</div>
+            </div>
+
+            <!-- NEW: Notepad Icon -->
+            <div class="desktop-icon" ondblclick="launchNotepad()">
+                <i class="fa-solid fa-note-sticky text-green-500"></i>
+                <div class="desktop-icon-label">Notepad</div>
+            </div>
+
+           <!-- NEW: Fireworks Icon -->
+            <div class="desktop-icon" ondblclick="launchFireworksApp()">
+                <i class="fa-solid fa-note-sticky text-pink-500"></i>
+                <div class="desktop-icon-label">Fireworks</div>
+            </div>
+
+                <!-- NEW:  Icon -->
+            <div class="desktop-icon" ondblclick="launchFitnessApp()">
+                <i class="fa-solid fa-note-sticky text-green-500"></i>
+                <div class="desktop-icon-label">Fitness Timer</div>
+            </div>
+
+
+        </div>
+        
+    </div>
+
+    <!-- START MENU POPUP -->
+    <div id="start-menu" class="hidden xp-bevel-out">
+        <div class="flex h-[400px]">
+            <!-- Left Side: User Panel (omitted for brevity, assume content is present) -->
+            <div id="menu-sidebar" class="w-2/5 p-4 flex flex-col justify-between rounded-tl-lg" style="background-color: var(--xp-menu-sidebar);">
+                <div class="text-white">
+                    <img src="https://placehold.co/60x60/f0f0f0/333333?text=👤" alt="User Avatar" class="rounded-full mb-2 border-2 border-white">
+                    <p class="text-lg font-bold">The User</p>
+                </div>
+                <div class="flex justify-between">
+                    <div class="text-white text-xs text-center cursor-pointer hover:underline">
+                        <i class="fa-solid fa-right-from-bracket text-lg mb-1"></i><br>Log Off
+                    </div>
+                    <div class="text-white text-xs text-center cursor-pointer hover:underline">
+                        <i class="fa-solid fa-power-off text-lg mb-1"></i><br>Turn Off
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Program Links -->
+            <div class="w-3/5 bg-white p-2 flex flex-col justify-between rounded-br-lg">
+                <div class="flex flex-col space-y-1 text-sm">
+                    <div class="menu-link-item">
+                        <i class="fa-solid fa-globe text-xl mr-2 text-blue-600"></i><span class="font-semibold">Internet Explorer</span>
+                    </div>
+                    <div class="menu-link-item">
+                        <i class="fa-solid fa-envelope text-xl mr-2 text-red-600"></i><span class="font-semibold">E-mail</span>
+                    </div>
+                    <hr class="my-1 border-gray-300">
+                    <div id="all-programs-link-container" class="menu-item-container">
+                        <div id="all-programs-link" 
+                             class="menu-item justify-between"
+                             onmouseover="showSubMenu('all-programs-menu')"
+                             onmouseleave="hideSubMenu('all-programs-menu')">
+                            <!-- CHEVRON MOVED BACK TO RIGHT OF TEXT -->
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-folder-open text-xl text-yellow-500"></i>
+                                <span class="font-semibold">All Programs</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs"></i> 
+                        </div>
+
+                        <!-- TIER 2: ALL PROGRAMS SUBMENU -->
+                        <div id="all-programs-menu" 
+                             class="hidden cascading-menu rounded-lg p-1"
+                             onmouseover="clearSubMenuTimeout('all-programs-menu')"
+                             onmouseleave="hideSubMenu('all-programs-menu')"
+                             style="top: -2px; left: 100%;"> 
+                            
+                            <div class="flex flex-col space-y-1 w-full text-sm">
+                                <div id="accessories-link-container" class="menu-item-container">
+                                    <div class="menu-item justify-between"
+                                         onmouseover="showSubMenu('accessories-menu')"
+                                         onmouseleave="hideSubMenu('accessories-menu')">
+                                        <!-- CHEVRON MOVED BACK TO RIGHT OF TEXT -->
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fa-solid fa-toolbox text-xl text-gray-700"></i>
+                                            <span>Accessories</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                                    </div>
+
+                                    <!-- TIER 3: Accessories Submenu -->
+                                    <div id="accessories-menu" 
+                                         class="hidden cascading-menu rounded-lg p-1"
+                                         onmouseover="clearSubMenuTimeout('accessories-menu')"
+                                         onmouseleave="hideSubMenu('accessories-menu')"
+                                         style="top: 0; left: 100%;">
+                                        <div class="flex flex-col space-y-1 w-full text-sm">
+                                            <div class="menu-item">
+                                                <i class="fa-solid fa-calculator text-xl mr-2 text-red-500"></i>
+                                                Calculator
+                                            </div>
+                                            <div class="menu-item">
+                                                <i class="fa-solid fa-pencil text-xl mr-2 text-blue-500"></i>
+                                                Paint
+                                            </div>
+                                            <!-- NEW: Notepad link in Start Menu -->
+                                            <div class="menu-item" onclick="launchNotepad(); hideStartMenu();">
+                                                <i class="fa-solid fa-note-sticky text-xl mr-2 text-green-500"></i>
+                                                Notepad
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="menu-item-container">
+                                    <div class="menu-item justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fa-solid fa-file-word text-xl mr-2 text-red-700"></i>
+                                            AFI Office Suite
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="menu-item">
+                                    <i class="fa-solid fa-bug text-xl mr-2 text-green-600"></i>
+                                    System Utility
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menu-item" onclick="launchMyDocuments(); hideStartMenu();">
+                        <i class="fa-solid fa-folder text-xl mr-2 text-yellow-600"></i>
+                        My Documents
+                    </div>
+                    <div class="menu-item" onclick="launchMyComputer(); hideStartMenu();">
+                        <i class="fa-solid fa-computer text-xl mr-2 text-gray-700"></i>
+                        My Computer
+                    </div>
+                    <div class="menu-item">
+                        <i class="fa-solid fa-gear text-xl mr-2 text-gray-700"></i>
+                        Control Panel
+                    </div>
+                    <div class="menu-item">
+                        <i class="fa-solid fa-magnifying-glass text-xl mr-2 text-blue-600"></i>
+                        Search
+                    </div>
+                    <div class="menu-item">
+                        <i class="fa-solid fa-circle-question text-xl mr-2 text-green-600"></i>
+                        Help and Support
+                    </div>
+                </div>
+                <div class="h-px bg-gray-300 mx-2"></div>
+                <div class="menu-item">
+                    <i class="fa-solid fa-terminal text-xl mr-2 text-gray-600"></i>
+                    Run...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TASKBAR (Fixed at Bottom) -->
+    <footer class="fixed bottom-0 left-0 right-0 h-10 flex items-center justify-between z-[850] p-1 px-2" style="background-color: var(--xp-taskbar-bg);">
+        
+        <!-- 1. Start Button -->
+        <button id="start-button" class="flex items-center space-x-1 h-8 rounded-full shadow-lg" onclick="toggleStartMenu()">
+            <span class="text-white font-black text-xl ml-1">
+                <svg viewBox="0 0 100 100" class="w-6 h-6" fill="currentColor">
+                    <rect x="5" y="5" width="40" height="40" fill="white"/>
+                    <rect x="55" y="5" width="40" height="40" fill="white"/>
+                    <rect x="5" y="55" width="40" height="40" fill="white"/>
+                    <rect x="55" y="55" width="40" height="40" fill="white"/>
+                </svg>
+            </span>
+            <span class="text-white font-bold text-xl drop-shadow-md mr-1">home</span>
+        </button>
+
+        <!-- 2. Main Taskbar Area (Open Windows) -->
+        <div class="flex-grow flex items-center mx-4 h-full space-x-2 overflow-hidden">
+            <!-- Quick Launch Icons -->
+            <div class="flex space-x-1">
+                <button class="w-8 h-8 flex items-center justify-center p-1 rounded-sm hover:bg-white hover:bg-opacity-20 transition" title="Show Desktop">
+                    <i class="fa-solid fa-desktop text-white text-lg"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center p-1 rounded-sm hover:bg-white hover:bg-opacity-20 transition" title="Launch Browser">
+                    <i class="fa-solid fa-earth-americas text-white text-lg"></i>
+                </button>
+                 <!-- NEW ICONS -->
+                <button class="w-8 h-8 flex items-center justify-center p-1 rounded-sm hover:bg-white hover:bg-opacity-20 transition" title="Mail">
+                    <i class="fa-solid fa-envelope text-white text-lg"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center p-1 rounded-sm hover:bg-white hover:bg-opacity-20 transition" title="Settings">
+                    <i class="fa-solid fa-gear text-white text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Dynamic Active Window Buttons -->
+            <div id="taskbar-apps" class="flex space-x-2 h-full">
+                <!-- Active window buttons will be appended here -->
+            </div>
+        </div>
+
+        <!-- 3. System Tray (Clock and Icons) -->
+        <div class="flex items-center h-full xp-bevel-in bg-white bg-opacity-10 text-white text-sm px-2">
+            <div class="flex space-x-1 mr-3">
+                <i class="fa-solid fa-volume-high text-base" title="Volume"></i>
+                <i class="fa-solid fa-bell text-base" title="Notifications"></i>
+            </div>
+            <div id="xp-clock" class="w-16 font-semibold text-xs text-right">00:00 AM</div>
+        </div>
+    </footer>
+
+
+    <script>
+        // --- Global State and Constants ---
+        const startButton = document.getElementById('start-button');
+        const startMenu = document.getElementById('start-menu');
+        const xpClock = document.getElementById('xp-clock');
+        const desktop = document.getElementById('desktop-area');
+        const taskbarApps = document.getElementById('taskbar-apps');
+        
+        let zIndexCounter = 100; // Base Z-index for windows
+        let windowCounter = 0;
+        const submenuTimeouts = {};
+
+        // Track active and minimized windows
+        const activeWindows = {}; 
+
+        // --- Mock Content Data (Simplified for brevity) ---
+        const myComputerContent = `
+            <div class="toolbar flex items-center p-1 bg-gray-200 border-b border-gray-400 xp-bevel-in">
+                <button class="px-2 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs mr-2">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <button class="px-2 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+            </div>
+            <div class="p-3">
+                <h2 class="text-lg font-semibold text-gray-700 mb-2">Hard Disk Drives</h2>
+                <div class="flex items-center space-x-4 mb-4">
+                    <i class="fa-solid fa-hard-drive text-4xl text-blue-500"></i>
+                    <span class="text-sm">Local Disk (C:) - 120 GB Free of 150 GB</span>
+                </div>
+            </div>
+        `;
+        const myDocumentsContent = `
+            <div class="toolbar flex items-center p-1 bg-gray-200 border-b border-gray-400 xp-bevel-in">
+                <button class="px-2 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs mr-2">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <button class="px-2 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs">
+                    <i class="fa-solid fa-square-plus"></i> New Folder
+                </button>
+            </div>
+            <div class="p-3">
+                <h2 class="text-lg font-semibold text-gray-700 mb-2">My Documents</h2>
+                <div class="flex flex-col items-start text-sm space-y-2">
+                    <div class="flex items-center hover:bg-blue-100 p-1 w-full rounded cursor-pointer">
+                        <i class="fa-solid fa-folder text-2xl text-yellow-500 mr-2"></i>
+                        Work Files
+                    </div>
+                    <div class="flex items-center hover:bg-blue-100 p-1 w-full rounded cursor-pointer">
+                        <i class="fa-solid fa-file-word text-2xl text-blue-700 mr-2"></i>
+                        Report.doc
+                    </div>
+                </div>
+            </div>
+        `;
+        const recycleBinContent = `
+            <div class="p-4">
+                <h2 class="text-xl font-bold text-gray-700 mb-4">Recycle Bin</h2>
+                <p class="text-sm text-gray-500">The Recycle Bin is empty.</p>
+                <hr class="my-4">
+                <div class="flex justify-end space-x-2">
+                    <button class="px-3 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs">
+                        Empty Recycle Bin
+                    </button>
+                </div>
+            </div>
+        `;
+        // NEW: Notepad Content
+        const notepadContent = `
+            <div class="toolbar flex items-center p-1 bg-gray-200 border-b border-gray-400 xp-bevel-in">
+                <button class="px-2 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs mr-2">
+                    File
+                </button>
+                <button class="px-2 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs mr-2">
+                    Edit
+                </button>
+                <button class="px-2 py-1 bg-gray-300 rounded xp-bevel-out hover:bg-gray-400 text-xs">
+                    Format
+                </button>
+            </div>
+            <!-- Standard fixed-width font for Notepad/Terminal feel -->
+            <textarea class="w-full h-full p-2 text-sm resize-none focus:outline-none" style="font-family: 'Consolas', monospace; font-size: 14px;">
+Welcome to Notepad!
+
+This is a very simple text editor.
+Try maximizing this window using the button in the title bar!
+            </textarea>
+        `;
+
+
+        // --- Taskbar Management ---
+        function createTaskbarButton(id, title) {
+            const btn = document.createElement('button');
+            btn.id = `taskbar-btn-${id}`;
+            btn.className = 'taskbar-app-btn w-36 h-full text-sm font-semibold text-gray-900 px-2 rounded-sm truncate flex items-center shadow-lg';
+            btn.textContent = title;
+            btn.onclick = () => toggleWindow(id);
+            taskbarApps.appendChild(btn);
+        }
+
+        function removeTaskbarButton(id) {
+            document.getElementById(`taskbar-btn-${id}`)?.remove();
+        }
+        
+        function activateTaskbarButton(id) {
+            document.querySelectorAll('.taskbar-app-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.getElementById(`taskbar-btn-${id}`);
+            if (btn) {
+                btn.classList.add('active');
+                btn.classList.remove('minimized');
+            }
+        }
+        
+        function minimizeTaskbarButton(id) {
+            const btn = document.getElementById(`taskbar-btn-${id}`);
+            if (btn) {
+                btn.classList.remove('active');
+                btn.classList.add('minimized');
+            }
+        }
+        
+        function toggleWindow(id) {
+            const windowEl = document.getElementById(id);
+            if (!windowEl) return;
+
+            if (activeWindows[id].minimized) {
+                // Restore window
+                windowEl.classList.remove('hidden');
+                activeWindows[id].minimized = false;
+                activateWindow(windowEl); 
+            } else {
+                // Minimize window
+                minimizeWindow(id);
+            }
+        }
+
+
+        // --- Window Management Functions ---
+
+        /**
+         * Creates and launches a new OS window instance.
+         */
+        function createWindow(title, content, isIframe = false, width = 600, height = 400) {
+            windowCounter++;
+            const windowId = `window-${windowCounter}`;
+
+            const windowEl = document.createElement('div');
+            windowEl.id = windowId;
+            windowEl.className = 'window xp-bevel-out fixed bg-white rounded-md flex flex-col shadow-2xl';
+            windowEl.style.width = `${width}px`;
+            windowEl.style.height = `${height}px`;
+            // Stagger windows slightly
+            windowEl.style.left = `${50 + (windowCounter * 15) % 150}px`;
+            windowEl.style.top = `${50 + (windowCounter * 15) % 150}px`;
+            windowEl.setAttribute('tabindex', '-1'); 
+
+            // Initialize state tracker
+            activeWindows[windowId] = {
+                id: windowId,
+                title: title,
+                minimized: false,
+                isMaximized: false, // NEW: Track maximization state
+                originalState: { 
+                    x: windowEl.style.left, 
+                    y: windowEl.style.top, 
+                    width: windowEl.style.width, 
+                    height: windowEl.style.height 
+                },
+                el: windowEl
+            };
+
+            // Title Bar (Draggable handle)
+            const titleBar = `
+                <div class="title-bar w-full flex items-center justify-between p-1 cursor-move" data-handle="true" ondblclick="toggleMaximize('${windowId}', this.querySelector('.maximize-btn'))">
+                    <span class="text-white text-sm font-bold truncate px-1">${title}</span>
+                    <div class="flex space-x-1">
+                        <button class="w-5 h-5 flex items-center justify-center bg-gray-300 rounded-sm hover:bg-gray-400 xp-bevel-out" onclick="minimizeWindow('${windowId}')">
+                            <i class="fa-solid fa-minus text-xs text-black"></i>
+                        </button>
+                        <button class="maximize-btn w-5 h-5 flex items-center justify-center bg-gray-300 rounded-sm hover:bg-gray-400 xp-bevel-out" 
+                            onclick="toggleMaximize('${windowId}', this)">
+                            <i class="fa-regular fa-window-maximize text-xs text-black"></i>
+                        </button>
+                        <button class="w-5 h-5 flex items-center justify-center bg-red-500 rounded-sm hover:bg-red-600 xp-bevel-out" onclick="closeWindow('${windowId}')">
+                            <i class="fa-solid fa-xmark text-xs text-white"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Content Area
+            let contentContainer;
+            if (isIframe) {
+                contentContainer = `<iframe src="${content}" class="w-full h-full border-none bg-white"></iframe>`;
+            } else {
+                // Ensure text areas in mock content get the height/width of their parent
+                contentContainer = `<div class="p-0 overflow-auto flex-grow h-full flex flex-col">${content}</div>`; 
+            }
+            
+            windowEl.innerHTML = `
+                ${titleBar}
+                <div class="window-content flex-grow h-full relative overflow-hidden bg-white">
+                    ${contentContainer}
+                </div>
+                <!-- Resizing handles (bottom and right only) -->
+                <div class="resize-handle bottom"></div>
+                <div class="resize-handle right"></div>
+                <div class="resize-handle bottom-right"></div>
+            `;
+
+            desktop.appendChild(windowEl);
+            activateWindow(windowEl);
+            makeDraggable(windowEl, windowEl.querySelector('[data-handle="true"]'));
+            makeResizable(windowEl);
+            createTaskbarButton(windowId, title);
+            
+            // Close Start Menu if open
+            if (!startMenu.classList.contains('hidden')) {
+                hideStartMenu();
+            }
+        }
+        
+        // --- Icon Click Handlers ---
+        function launchDoogieTube() {
+            createWindow('DoogieTube - Video Player', 'https://adamfalletta.github.io/Meta/doogie-tube1a.html', true, 800, 600);
+        }
+
+        function launchAOL() {
+            createWindow('🌐 AFI', 'https://adamfalletta.github.io/Meta/af-aol1d.html', true, 800, 600);
+        }
+
+          function launchFireworksApp() {
+            createWindow('Fireworks', 'https://adamfalletta.github.io/Meta/fireworks1c.html', true, 800, 600);
+        }
+
+          function launchFitnessApp() {
+            createWindow('Fitness Timer', 'https://adamfalletta.github.io/Meta/FitnessApp1.html', true, 800, 600);
+        }
+
+
+        function launchMyComputer() {
+            createWindow('My Computer', myComputerContent, false, 550, 400);
+        }
+
+        function launchMyDocuments() {
+            createWindow('My Documents', myDocumentsContent, false, 700, 500);
+        }
+
+        function launchRecycleBin() {
+            createWindow('Recycle Bin', recycleBinContent, false, 450, 300);
+        }
+        
+        // NEW: Notepad Launcher
+        function launchNotepad() {
+            createWindow('Untitled - Notepad', notepadContent, false, 600, 500);
+        }
+
+
+        // --- Window Control ---
+        function closeWindow(id) { 
+            document.getElementById(id)?.remove(); 
+            removeTaskbarButton(id);
+            delete activeWindows[id];
+        }
+
+        function minimizeWindow(id) { 
+            const windowEl = document.getElementById(id);
+            if (!windowEl) return;
+            
+            windowEl.classList.add('hidden');
+            activeWindows[id].minimized = true;
+            minimizeTaskbarButton(id);
+        }
+        
+        // NEW: Maximize/Restore Toggle
+        function toggleMaximize(id, buttonEl) {
+            const windowState = activeWindows[id];
+            if (!windowState) return;
+            
+            // Check if window is minimized (and if so, restore first)
+            if (windowState.minimized) {
+                toggleWindow(id);
+            }
+
+            if (windowState.isMaximized) {
+                restoreWindow(id, buttonEl);
+            } else {
+                maximizeWindow(id, buttonEl);
+            }
+        }
+
+        function maximizeWindow(id, buttonEl) {
+            const windowState = activeWindows[id];
+            const windowEl = windowState.el;
+            
+            // 1. Store current state (position and size)
+            windowState.originalState = { 
+                x: windowEl.style.left, 
+                y: windowEl.style.top, 
+                width: windowEl.style.width, 
+                height: windowEl.style.height 
+            };
+            
+            // 2. Maximize dimensions (full screen minus 40px taskbar height)
+            windowEl.style.left = '0px';
+            windowEl.style.top = '0px';
+            windowEl.style.width = `${window.innerWidth}px`; 
+            windowEl.style.height = `${window.innerHeight - 40}px`; 
+            
+            // 3. Update state and UI
+            windowState.isMaximized = true;
+            windowEl.classList.add('maximized'); 
+            
+            // 4. Update button icon to Restore Down
+            buttonEl.querySelector('i').className = 'fa-regular fa-window-restore text-xs text-black';
+        }
+
+        function restoreWindow(id, buttonEl) {
+            const windowState = activeWindows[id];
+            const windowEl = windowState.el;
+
+            // 1. Restore previous state
+            const original = windowState.originalState;
+            windowEl.style.left = original.x;
+            windowEl.style.top = original.y;
+            windowEl.style.width = original.width;
+            windowEl.style.height = original.height;
+
+            // 2. Update state and UI
+            windowState.isMaximized = false;
+            windowEl.classList.remove('maximized'); 
+
+            // 3. Update button icon to Maximize
+            buttonEl.querySelector('i').className = 'fa-regular fa-window-maximize text-xs text-black';
+        }
+
+        
+        /**
+         * Sets the Z-index of a window to the top.
+         */
+        function activateWindow(windowEl) {
+            zIndexCounter++;
+            windowEl.style.zIndex = zIndexCounter;
+            
+            // Remove active style from all windows
+            document.querySelectorAll('.window').forEach(w => {
+                w.classList.remove('active');
+                w.querySelector('.title-bar').style.background = '#808080'; // Inactive title bar color
+            });
+            // Add active style to this window
+            windowEl.classList.add('active');
+            windowEl.querySelector('.title-bar').style.background = 'linear-gradient(to right, var(--xp-blue-title), #4d86f7)';
+            
+            activateTaskbarButton(windowEl.id);
+        }
+
+        /**
+         * Adds dragging functionality to a window.
+         */
+/**
+ * Adds dragging functionality to a window.
+ */
+function makeDraggable(windowEl, handle) {
+    let isDragging = false;
+    let offsetX = 0, offsetY = 0;
+    let currentX = 0, currentY = 0;
+    let frameRequested = false;
+
+    // Keep track of iframes' original pointerEvents so we can restore them
+    let iframeOriginals = [];
+
+    function disableIframesPointerEvents() {
+        iframeOriginals = [];
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach((f) => {
+            iframeOriginals.push({ el: f, val: f.style.pointerEvents || '' });
+            f.style.pointerEvents = 'none';
+        });
+    }
+
+    function restoreIframesPointerEvents() {
+        iframeOriginals.forEach(item => {
+            // restore exactly what was there before
+            item.el.style.pointerEvents = item.val;
+        });
+        iframeOriginals = [];
+    }
+
+    // Optional: single reusable overlay (kept but not required)
+    let dragOverlay = null;
+    function ensureOverlay() {
+        if (dragOverlay) return;
+        dragOverlay = document.createElement('div');
+        Object.assign(dragOverlay.style, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100vw',
+            height: '100vh',
+            background: 'transparent',
+            zIndex: '999999',         // very high if you decide to use it
+            cursor: 'grabbing',
+            pointerEvents: 'none'
+        });
+        document.body.appendChild(dragOverlay);
+    }
+
+    // Start drag
+    handle.addEventListener('mousedown', (e) => {
+        if (e.button !== 0 || windowEl.classList.contains('maximized')) return;
+
+        // compute offset using current left/top (fallback to bounding rect)
+        const left = parseFloat(windowEl.style.left);
+        const top = parseFloat(windowEl.style.top);
+        const rect = windowEl.getBoundingClientRect();
+        offsetX = e.clientX - (Number.isFinite(left) ? left : rect.left);
+        offsetY = e.clientY - (Number.isFinite(top) ? top : rect.top);
+
+        isDragging = true;
+        activateWindow(windowEl);
+
+        // prevent text selection and change cursor
+        document.body.style.userSelect = 'none';
+        windowEl.style.cursor = 'grabbing';
+
+        // === THE KEY FIX: disable pointer events on iframes ===
+        disableIframesPointerEvents();
+
+        // Optional extra: enable overlay if you still want an overlay fallback
+        // ensureOverlay();
+        // dragOverlay.style.pointerEvents = 'auto';
+
+        e.preventDefault();
+    });
+
+    // rAF update function
+    function updateWindowPosition() {
+        if (!isDragging) {
+            frameRequested = false;
+            return;
+        }
+
+        const newX = Math.max(0, Math.min(currentX, window.innerWidth - windowEl.offsetWidth));
+        const newY = Math.max(0, Math.min(currentY, window.innerHeight - windowEl.offsetHeight - 40));
+
+        windowEl.style.left = `${newX}px`;
+        windowEl.style.top = `${newY}px`;
+
+        requestAnimationFrame(updateWindowPosition);
+    }
+
+    // Track mouse
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        currentX = e.clientX - offsetX;
+        currentY = e.clientY - offsetY;
+
+        if (!frameRequested) {
+            frameRequested = true;
+            requestAnimationFrame(updateWindowPosition);
+        }
+    });
+
+    // End drag
+    document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+
+        isDragging = false;
+        frameRequested = false;
+
+        // restore UI state
+        document.body.style.userSelect = '';
+        windowEl.style.cursor = 'default';
+
+        // restore iframes' pointer events
+        restoreIframesPointerEvents();
+
+        // Optional overlay cleanup
+        if (dragOverlay) {
+            dragOverlay.style.pointerEvents = 'none';
+        }
+    });
+
+    // Activate on non-handle clicks (unchanged)
+    windowEl.addEventListener('mousedown', (e) => {
+        if (!e.target.closest('[data-handle="true"]') && !e.target.closest('.resize-handle')) {
+            activateWindow(windowEl);
+        }
+    });
+}
+
+
+        /**
+         * Adds resizing functionality (bottom and right only).
+         */
+   function makeResizable(windowEl) {
+    const handles = windowEl.querySelectorAll('.resize-handle');
+    const MIN_W = 200;
+    const MIN_H = 100;
+
+    let isResizing = false;
+    let startX = 0, startY = 0, startW = 0, startH = 0;
+    let handleType = '';
+    let currentW = 0, currentH = 0;
+    let frameRequested = false;
+
+    // Keep track of iframes to disable pointer events during resize
+    let iframeOriginals = [];
+    function disableIframesPointerEvents() {
+        iframeOriginals = [];
+        document.querySelectorAll('iframe').forEach(f => {
+            iframeOriginals.push({ el: f, val: f.style.pointerEvents || '' });
+            f.style.pointerEvents = 'none';
+        });
+    }
+    function restoreIframesPointerEvents() {
+        iframeOriginals.forEach(item => item.el.style.pointerEvents = item.val);
+        iframeOriginals = [];
+    }
+
+    function updateWindowSize() {
+        if (!isResizing) {
+            frameRequested = false;
+            return;
+        }
+
+        let newW = Math.max(MIN_W, currentW);
+        let newH = Math.max(MIN_H, currentH);
+
+        // Apply limits to prevent resizing past taskbar
+        const desktopHeight = window.innerHeight - 40;
+        const windowY = windowEl.offsetTop;
+        if (newH > desktopHeight - windowY) newH = desktopHeight - windowY;
+
+        windowEl.style.width = `${newW}px`;
+        windowEl.style.height = `${newH}px`;
+
+        requestAnimationFrame(updateWindowSize);
+    }
+
+    handles.forEach(handle => {
+        handle.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || windowEl.classList.contains('maximized')) return;
+
+            isResizing = true;
+            activateWindow(windowEl);
+
+            startX = e.clientX;
+            startY = e.clientY;
+            startW = windowEl.offsetWidth;
+            startH = windowEl.offsetHeight;
+            handleType = handle.className.split(' ').pop();
+
+            // Disable iframes while resizing (prevents lost mouse events)
+            disableIframesPointerEvents();
+
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+
+        currentW = startW;
+        currentH = startH;
+
+        if (handleType.includes('right')) currentW = startW + deltaX;
+        if (handleType.includes('bottom')) currentH = startH + deltaY;
+
+        if (!frameRequested) {
+            frameRequested = true;
+            requestAnimationFrame(updateWindowSize);
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isResizing) return;
+        isResizing = false;
+        frameRequested = false;
+
+        restoreIframesPointerEvents();
+        document.body.style.userSelect = '';
+    });
+}
+
+        // --- Clock and Start Menu Functions ---
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+            xpClock.textContent = timeString;
+        }
+
+        function hideStartMenu() {
+            if (startMenu.classList.contains('hidden')) return; 
+
+            startMenu.classList.add('hidden');
+            startButton.classList.remove('active');
+
+            // Hide all submenus
+            document.querySelectorAll('.cascading-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+            document.querySelectorAll('.menu-item.hovered').forEach(link => {
+                link.classList.remove('hovered');
+            });
+        }
+
+        function toggleStartMenu() {
+            if (startMenu.classList.contains('hidden')) {
+                startMenu.classList.remove('hidden');
+                startButton.classList.add('active');
+            } else {
+                hideStartMenu();
+            }
+        }
+
+        function showSubMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            if (menu) {
+                clearTimeout(submenuTimeouts[menuId]);
+                
+                if (menu.parentElement.classList.contains('menu-item-container')) {
+                    const siblingContainers = menu.parentElement.parentElement.querySelectorAll('.menu-item-container');
+                    siblingContainers.forEach(container => {
+                        const siblingMenu = container.querySelector('.cascading-menu');
+                        if (siblingMenu && siblingMenu.id !== menuId) {
+                            siblingMenu.classList.add('hidden');
+                            siblingMenu.previousElementSibling.classList.remove('hovered');
+                        }
+                    });
+                }
+                
+                menu.classList.remove('hidden');
+                const parentLink = menu.previousElementSibling;
+                if (parentLink) {
+                    parentLink.classList.add('hovered');
+                }
+            }
+        }
+
+        function hideSubMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            if (menu) {
+                submenuTimeouts[menuId] = setTimeout(() => {
+                    menu.classList.add('hidden');
+                    const parentLink = menu.previousElementSibling;
+                    if (parentLink) {
+                        parentLink.classList.remove('hovered');
+                    }
+                }, 200);
+            }
+        }
+
+        function clearSubMenuTimeout(menuId) {
+            clearTimeout(submenuTimeouts[menuId]);
+        }
+
+        // --- Context Menu Logic ---
+
+        function handleDesktopRightClick(event) {
+            event.preventDefault(); 
+            
+            // Remove any existing context menu
+            document.getElementById('context-menu')?.remove();
+            
+            // Check if the click occurred on an icon or window, and if so, don't show desktop menu
+            if (event.target.closest('.desktop-icon') || event.target.closest('.window')) {
+                return;
+            }
+
+            const menu = document.createElement('div');
+            menu.id = 'context-menu';
+            menu.className = 'context-menu xp-bevel-out bg-white p-1 text-sm rounded shadow-xl min-w-[150px] z-[900]';
+            
+            // Position near the mouse click
+            menu.style.left = `${event.clientX}px`;
+            menu.style.top = `${event.clientY}px`;
+
+            const desktopItems = `
+                <div class="menu-item">
+                    Arrange Icons By
+                </div>
+                <div class="menu-item">
+                    Refresh
+                </div>
+                <hr class="my-1 border-gray-300">
+                <!-- New Menu Item with Cascading Submenu -->
+                <div class="menu-item-container relative">
+                    <div id="new-submenu-link" class="menu-item flex justify-between items-center"
+                         onmouseover="showSubMenu('context-new-submenu')" onmouseleave="hideSubMenu('context-new-submenu')">
+                        <div class="flex items-center space-x-2">
+                             <span>New</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs"></i> <!-- MOVED BACK TO RIGHT -->
+                    </div>
+                    <!-- Submenu for New -->
+                    <div id="context-new-submenu" class="hidden cascading-menu bg-white p-1 rounded shadow-xl min-w-[180px] z-[901]"
+                         onmouseover="clearSubMenuTimeout('context-new-submenu')" onmouseleave="hideSubMenu('context-new-submenu')"
+                         style="top: 0; left: 100%;">
+                        <div class="menu-item">
+                            <i class="fa-solid fa-folder text-yellow-500 w-4 mr-2"></i> Folder
+                        </div>
+                        <div class="menu-item">
+                            <i class="fa-solid fa-file-lines text-blue-500 w-4 mr-2"></i> Text Document
+                        </div>
+                        <div class="menu-item">
+                            <i class="fa-solid fa-file-excel text-green-500 w-4 mr-2"></i> Spreadsheet
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-1 border-gray-300">
+                <div class="menu-item" onclick="alert('Display Properties opens here.')">
+                    Properties
+                </div>
+            `;
+            
+            menu.innerHTML = desktopItems;
+            document.body.appendChild(menu);
+        }
+
+        // Global click listener to hide start menu and context menu
+        document.addEventListener('click', (event) => {
+            // Hide Start Menu if visible and click is outside
+            if (!startMenu.classList.contains('hidden')) {
+                if (!startMenu.contains(event.target) && !startButton.contains(event.target)) {
+                    hideStartMenu();
+                }
+            }
+            
+            // Hide Context Menu on any click
+            document.getElementById('context-menu')?.remove();
+        });
+
+
+        // Initialize clock and set interval
+        updateClock();
+        setInterval(updateClock, 1000);
+
+    </script>
+</body>
+</html>
