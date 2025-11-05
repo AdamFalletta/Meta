@@ -193,6 +193,7 @@
             box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
             border: 1px solid var(--xp-start-green-dark);
             transition: all 0.1s;
+            
         }
         #start-button.active {
             background: var(--xp-start-green-dark);
@@ -200,6 +201,9 @@
             transform: translateY(1px);
         }
 
+        .text-xl {
+    font-size: 1.1rem!important;
+}
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -238,6 +242,12 @@
             <div class="desktop-icon" ondblclick="launchAOL()">
                 <i class="fa-solid fa-globe text-blue-400"></i>
                 <div class="desktop-icon-label">AFI</div>
+            </div>
+
+             <!-- Broswer Icon -->
+            <div class="desktop-icon" ondblclick="launchBrowser()">
+                <i class="fa-solid fa-globe text-blue-400"></i>
+                <div class="desktop-icon-label">Web Browser</div>
             </div>
 
             <!-- NEW: Notepad Icon -->
@@ -675,6 +685,10 @@ Try maximizing this window using the button in the title bar!
 
         function launchAOL() {
             createWindow('🌐 AFI', 'https://adamfalletta.github.io/Meta/af-aol1d.html', true, 800, 600);
+        }
+
+        function launchBrowser() {
+            createWindow('🌐 Browser', 'https://adamfalletta.github.io/Meta/browserb.html', true, 800, 600);
         }
 
           function launchFireworksApp() {
