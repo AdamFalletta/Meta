@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Browser — Persistent Tabs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    html,body,#app{height:100%}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+    body{margin:0}
+    iframe{border:0}
+    input:focus{outline:none}
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div id="app" class="flex flex-col h-full">
+
+    <!-- Header + Tabs -->
+    <header class="flex items-center gap-3 px-2 py-1 bg-transparent">
+      <div class="relative">
+        <button id="quickBtn" class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-800 focus:outline-none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="text-gray-700 dark:text-gray-200"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
+        <div id="quickMenu" class="hidden absolute left-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded shadow z-50 ring-1 ring-black/5">
+          <div class="p-2 text-sm">
+            <button id="newTabFromQuick" class="w-full text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">New Tab</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex-1 overflow-x-auto scrollbar-hide">
+        <div id="tabs" class="flex gap-1 items-center px-2"></div>
+      </div>
+
+      <div class="ml-2 flex items-center">
+        <div id="profile" class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-semibold">AF</div>
+      </div>
+    </header>
+
+    <!-- Address bar -->
+    <div class="flex items-center gap-2 px-2 py-2 bg-white dark:bg-gray-800 shadow-sm">
+      <div class="flex items-center gap-1">
+        <button id="backBtn" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50">◀</button>
+        <button id="forwardBtn" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50">▶</button>
+        <button id="reloadBtn" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">⟳</button>
+      </div>
+      <div class="flex items-center flex-1 min-w-0">
+        <input id="address" type="text" placeholder="Enter URL (include https://)" class="flex-1 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 placeholder-gray-500 text-sm focus:ring-2 focus:ring-indigo-400" />
+        <button id="goBtn" class="ml-2 px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Go</button>
+      </div>
+    </div>
+
+    <!-- Main area -->
+    <main id="viewerContainer" class="flex-1 relative bg-white dark:bg-gray-900 overflow-hidden"></main>
+  </div>
+
+  <script>
+  const STORAGE_TABS = 'miniBrowser.tabs';
+  let state = { tabs: [], activeTabId: null };
+
+  const $ = (id) => document.getElementById(id);
+  const tabsEl = $('tabs');
+  const address = $('address');
+  const backBtn = $('backBtn');
+  const forwardBtn = $('forwardBtn');
+  const reloadBtn = $('reloadBtn');
+  const goBtn = $('goBtn');
+  const viewerContainer = $('viewerContainer');
+
+  function uid(){return 't_'+Math.random().toString(36).slice(2,9);}
+
+  function save(){ localStorage.setItem(STORAGE_TABS, JSON.stringify(state)); }
+  function load(){
+    try{
+      const s = JSON.parse(localStorage.getItem(STORAGE_TABS));
+      if(s && Array.isArray(s.tabs)) state = s;
+    }catch(e){ console.warn('Load failed', e); }
+  }
+
+  function createTab(title,url){
+    const id = uid();
+    const tab = { id, title: title || url, url: url || 'about:blank', back:[], forward:[] };
+    state.tabs.push(tab);
+    state.activeTabId = id;
+
+    // Create iframe for this tab
+    const iframe = document.createElement('iframe');
+    iframe.id = 'iframe_' + id;
+    iframe.src = tab.url;
+    iframe.className = 'absolute inset-0 w-full h-full hidden';
+    viewerContainer.appendChild(iframe);
+
+    save();
+    renderTabs();
+    switchToTab(id);
+    return id;
+  }
+
+  function closeTab(id){
+    const idx = state.tabs.findIndex(t=>t.id===id);
+    if(idx===-1) return;
+    const iframe = $('iframe_' + id);
+    if(iframe) iframe.remove();
+    state.tabs.splice(idx,1);
+
+    if(state.activeTabId===id){
+      const newActive = state.tabs[idx] || state.tabs[idx-1];
+      state.activeTabId = newActive ? newActive.id : null;
+    }
+    save();
+    renderTabs();
+    if(state.activeTabId) switchToTab(state.activeTabId);
+  }
+
+  function renderTabs(){
+    tabsEl.innerHTML = '';
+    state.tabs.forEach(tab => {
+      const btn = document.createElement('div');
+      btn.className = 'flex items-center gap-2 px-3 py-1 rounded-md cursor-pointer select-none ' + 
+        (state.activeTabId === tab.id ? 'bg-indigo-100 dark:bg-indigo-800' : 'hover:bg-gray-100 dark:hover:bg-gray-800');
+      btn.innerHTML = `
+        <span class="truncate max-w-[160px] text-sm">${tab.title || tab.url}</span>
+        <button data-close="${tab.id}" class="ml-1 px-1 text-xs">✕</button>
+      `;
+      btn.onclick = (e)=>{
+        if(e.target.dataset.close) closeTab(e.target.dataset.close);
+        else switchToTab(tab.id);
+      };
+      tabsEl.appendChild(btn);
+    });
+    const newBtn = document.createElement('button');
+    newBtn.className = 'ml-2 px-3 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800';
+    newBtn.textContent = '+ New';
+    newBtn.onclick = ()=>createTab('New Tab','about:blank');
+    tabsEl.appendChild(newBtn);
+  }
+
+  function switchToTab(id){
+    const tab = state.tabs.find(t=>t.id===id);
+    if(!tab) return;
+    state.activeTabId = id;
+    address.value = tab.url === 'about:blank' ? '' : tab.url;
+
+    // Hide all iframes and show only active
+    state.tabs.forEach(t=>{
+      const iframe = $('iframe_' + t.id);
+      if(iframe) iframe.style.display = (t.id===id)?'block':'none';
+    });
+    renderTabs();
+    updateNavButtons();
+  }
+
+  function navigate(url){
+    if(!url) return;
+    if(!url.startsWith('http') && !url.startsWith('about:')) url = 'https://' + url;
+    const tab = state.tabs.find(t=>t.id===state.activeTabId);
+    if(!tab) return;
+    tab.url = url;
+    const iframe = $('iframe_' + tab.id);
+    if(iframe) iframe.src = url;
+    address.value = url;
+    save();
+  }
+
+  function goBack(){ const tab = state.tabs.find(t=>t.id===state.activeTabId); if(tab) $('iframe_' + tab.id).contentWindow.history.back(); }
+  function goForward(){ const tab = state.tabs.find(t=>t.id===state.activeTabId); if(tab) $('iframe_' + tab.id).contentWindow.history.forward(); }
+  function reload(){ const tab = state.tabs.find(t=>t.id===state.activeTabId); if(tab) $('iframe_' + tab.id).contentWindow.location.reload(); }
+
+  function updateNavButtons(){ /* optional future state check */ }
+
+  function attachEvents(){
+    goBtn.onclick = ()=>navigate(address.value.trim());
+    address.onkeydown = e=>{ if(e.key==='Enter') navigate(address.value.trim()); };
+    backBtn.onclick = goBack;
+    forwardBtn.onclick = goForward;
+    reloadBtn.onclick = reload;
+  }
+
+  function init(){
+    load();
+    if(!state.tabs.length) createTab('New Tab','about:blank');
+    else {
+      state.tabs.forEach(tab=>{
+        const iframe = document.createElement('iframe');
+        iframe.id = 'iframe_' + tab.id;
+        iframe.src = tab.url;
+        iframe.className = 'absolute inset-0 w-full h-full hidden';
+        viewerContainer.appendChild(iframe);
+      });
+      if(state.activeTabId) switchToTab(state.activeTabId);
+    }
+    renderTabs();
+    attachEvents();
+  }
+
+  init();
+  </script>
+</body>
+</html>
