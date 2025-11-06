@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Flipbook - Antique Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js removed as per request -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Merriweather', serif;
+        }
+        
+        .book-container {
+            perspective: 2500px;
+        }
+
+        .book {
+            width: 90vw;
+            height: 75vh; /* Increased Book Height */
+            max-width: 1200px; 
+            max-height: 800px; 
+            aspect-ratio: 16/10;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            border-radius: 0.75rem; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+            background-color: #5a3e2b; /* Brown leather look for the book casing */
+        }
+
+        .page {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform-origin: left center;
+        }
+
+        .page.flipped {
+            transform: rotateY(-180deg);
+        }
+
+        /* Base styles for the physical page halves (front/back covers) */
+        .page-front,
+        .page-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 2.5rem;
+            overflow: hidden;
+            background-color: #fffbeb; 
+            color: #3b2f27; 
+            border: 1px solid rgba(0,0,0,0.05); 
+            box-sizing: border-box;
+        }
+
+        .page-front {
+            border-top-left-radius: 0.5rem;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .page-back {
+            transform: rotateY(180deg);
+            border-top-right-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+        
+        /* Ensure book halves are correctly positioned */
+        .book-half {
+            width: 50%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            transform-style: preserve-3d;
+            background-color: #fffbeb; /* Cream color for inside covers */
+            box-sizing: border-box; /* Ensures width includes padding/border calculation */
+        }
+
+        .left-half {
+            left: 0;
+            border-top-left-radius: 0.5rem;
+            border-bottom-left-radius: 0.5rem;
+            /* Removed inner border: border-right: 1px solid rgba(0,0,0,0.05); */
+        }
+        
+        .right-half {
+            /* FIX: Use left: 50% for perfect abutment against left-half */
+            left: 50%; 
+            transform-origin: left center;
+            transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
+            border-top-right-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+            /* Removed inner border: border-left: 1px solid rgba(0,0,0,0.05); */
+        }
+        
+        .right-half.flipped {
+             transform: rotateY(-180deg);
+        }
+
+        /* Wrapper for page content (prevents scrollbars) */
+        .page-content-wrapper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 2.5rem;
+            overflow-y: hidden; /* HIDDEN SCROLLBARS */
+            color: #3b2f27; 
+            background-color: #fffbeb; 
+            box-sizing: border-box;
+        }
+        
+        .front-content {
+             border-top-right-radius: 0.5rem;
+             border-bottom-right-radius: 0.5rem;
+             /* Removed inner border for cleaner seam: border-left: 1px solid rgba(0,0,0,0.05); */
+        }
+
+        .back-content {
+            transform: rotateY(180deg);
+             border-top-left-radius: 0.5rem;
+             border-bottom-left-radius: 0.5rem;
+             /* Removed inner border for cleaner seam: border-right: 1px solid rgba(0,0,0,0.05); */
+        }
+
+        /* Page Number Centering FIX */
+        .page-number {
+            position: absolute;
+            bottom: 1.5rem; 
+            font-size: 1.5rem; 
+            color: #6d5b4e; 
+            /* Fix: Constrain the element by padding value */
+            left: 2.5rem;
+            right: 2.5rem;
+            width: auto; 
+            text-align: center; /* Ensures perfect horizontal centering within the content area */
+            z-index: 1; 
+        }
+        
+        /* Navigation Overlays */
+        .nav-overlay {
+            position: absolute;
+            top: 0;
+            width: 20%; 
+            height: 100%;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .nav-overlay:hover {
+            opacity: 0.08; 
+            background: rgba(0,0,0,0.1); 
+        }
+        .nav-overlay-left {
+            left: 0;
+        }
+        .nav-overlay-right {
+            right: 0;
+        }
+        
+        /* Title specific styling */
+        .page-title {
+            font-family: 'Merriweather', serif; 
+            font-size: 2.8rem; 
+            font-weight: 700;
+            color: #5a3e2b; 
+            margin-bottom: 1.5rem;
+        }
+
+        .page-author {
+            font-size: 1.1rem;
+            color: #6d5b4e;
+            margin-top: auto;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 1rem;
+        }
+
+        .page-content-text {
+            line-height: 1.7; 
+            font-size: 1.05rem; 
+        }
+
+        .page-image {
+            object-fit: contain; 
+            padding: 1rem; 
+        }
+        
+    </style>
+</head>
+<body class="bg-stone-900 text-amber-100 flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
+
+    <main class="flex flex-col items-center justify-center w-full">
+        <div class="book-container">
+            <div id="book" class="book relative">
+                
+                <!-- Left static cover part --><div class="book-half left-half rounded-l-xl" style="z-index: 1;">
+                     <div class="page-front shadow-inner">
+                        <!-- This is the static inside of the front cover --><div class="flex flex-col h-full justify-center items-center text-center p-4">
+                            <h1 class="page-title text-5xl">Front Cover Inside</h1>
+                            <p class="page-content-text text-xl text-stone-700">A place for an inscription or opening message.</p>
+                        </div>
+                     </div>
+                </div>
+                
+                <!-- Pages will be injected here by JS -->
+                
+                <!-- Right static cover part (Back Cover) --><div class="book-half right-half rounded-r-xl" id="back-cover" style="z-index: 5;">
+                     <div class="page-front shadow-inner">
+                        <!-- This is the static inside of the back cover --><div class="flex flex-col h-full justify-center items-center text-center p-4">
+                            <h1 class="page-title text-5xl">Back Cover Inside</h1>
+                            <p class="page-content-text text-xl text-stone-700">Concluding thoughts or publisher's notes.</p>
+                        </div>
+                     </div>
+                </div>
+
+                <!-- Navigation Overlays --><div id="nav-overlay-left" class="nav-overlay nav-overlay-left rounded-l-xl"></div>
+                <div id="nav-overlay-right" class="nav-overlay nav-overlay-right rounded-r-xl"></div>
+            </div>
+        </div>
+
+        <!-- Controls --><div class="flex items-center space-x-4 mt-8 w-full max-w-lg justify-center">
+            <button id="prev-btn" class="bg-amber-700 hover:bg-amber-800 text-white font-bold py-2 px-6 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+                Previous
+            </button>
+            
+            <div id="page-display" class="text-xl font-medium text-amber-100 w-32 text-center">
+                Page 1 of 4
+            </div>
+
+            <button id="next-btn" class="bg-amber-700 hover:bg-amber-800 text-white font-bold py-2 px-6 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+                Next
+            </button>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Content is minimal to ensure no scrollbars appear
+            const pagesData = [
+                { type: 'title', title: 'The Digital Almanac', content: 'Welcome to the interactive Flipbook Demo. Start flipping to explore!', author: 'Gemini' },
+                { type: 'text', content: 'This is page 2. This content has been carefully sized to fit the page perfectly. The book features a responsive design for optimal viewing on any device without scrollbars, maintaining a fixed page feel.' }, 
+                { type: 'image', content: 'https://placehold.co/800x600/5a3e2b/fffbeb?text=Antique+Map+Illustration', alt: 'An antique map illustration for demonstration.' },
+                { type: 'text', content: 'This is the final page (Page 4). The back of the page shows the author name as a footnote, adding to the authenticity of this digital artifact. Final thoughts on the completion of this edition.' } 
+            ];
+
+            const book = document.getElementById('book');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const pageDisplay = document.getElementById('page-display');
+            const navOverlayLeft = document.getElementById('nav-overlay-left');
+            const navOverlayRight = document.getElementById('nav-overlay-right');
+            const backCover = document.getElementById('back-cover');
+
+            const totalPages = pagesData.length;
+            const numSheets = Math.ceil(totalPages / 2); 
+            let pageElements = []; 
+            let currentSheet = 0; 
+            
+            // Sound functions removed
+            
+            function renderPageContent(pageData, pageNum) {
+                if (!pageData) return '<div class="p-2"></div>'; // Handle blank pages
+                
+                let content = '';
+                const author = pagesData[0].author || 'Unknown'; 
+
+                switch(pageData.type) {
+                    case 'title':
+                        content = `
+                            <div class="flex flex-col h-full justify-center items-center text-center px-4 py-8">
+                                <h1 class="page-title">${pageData.title}</h1>
+                                <p class="page-content-text mb-auto text-lg">${pageData.content}</p>
+                                <p class="page-author mt-auto">${pageData.author}</p>
+                            </div>`;
+                        break;
+                    case 'text':
+                         content = `
+                            <div class="flex flex-col h-full px-2 py-4">
+                                <p class="page-content-text">${pageData.content}</p>
+                                ${pageNum === totalPages && totalPages % 2 === 0 ? `<p class="page-author mt-auto pt-4">${author}</p>` : ''}
+                            </div>`;
+                        break;
+                    case 'image':
+                        const imageUrl = pageData.content;
+                        content = `<div class="flex flex-grow justify-center items-center h-full">
+                                    <img src="${imageUrl}" alt="${pageData.alt}" class="page-image max-w-full max-h-full">
+                                   </div>`;
+                        break;
+                    default:
+                        content = '<div class="p-2"></div>';
+                }
+                
+                // Page number is rendered with the CSS fix applied
+                return `${content}<div class="page-number">${pageNum}</div>`;
+            }
+
+            function initBook() {
+                
+                // Add the content sheets dynamically
+                for (let i = 0; i < numSheets; i++) {
+                    const sheet = document.createElement('div');
+                    sheet.classList.add('book-half', 'right-half');
+                    
+                    // Removed Z-index setting here, it is now handled dynamically in goToSheet
+                    
+                    sheet.id = `sheet-${i}`;
+
+                    // Front of the current physical sheet (e.g., page 1, 3, 5...)
+                    const frontPageData = pagesData[i * 2]; 
+                    const front = document.createElement('div');
+                    front.classList.add('page-content-wrapper', 'front-content');
+                    front.innerHTML = renderPageContent(frontPageData, i * 2 + 1);
+                    
+                    // Back of the current physical sheet (e.g., page 2, 4, 6...)
+                    const backPageData = pagesData[i * 2 + 1]; 
+                    const back = document.createElement('div');
+                    back.classList.add('page-content-wrapper', 'back-content');
+                    back.innerHTML = renderPageContent(backPageData, i * 2 + 2);
+                    
+                    sheet.appendChild(front);
+                    sheet.appendChild(back);
+                    book.insertBefore(sheet, backCover); 
+                    pageElements.push(sheet);
+                }
+                goToSheet(0); // Call goToSheet to set initial state and Z-indices
+            }
+
+            function updateDisplay() {
+                // Determine the currently visible page number
+                let currentPageNumber = (currentSheet * 2) + 1; 
+                if (currentSheet === numSheets) { 
+                    // When all sheets are flipped, the last visible page is the last content page
+                    currentPageNumber = totalPages;
+                } else if (currentSheet > 0) {
+                     // When viewing pages 3, 5, 7, etc., show the odd page number
+                     currentPageNumber = (currentSheet * 2) + 1;
+                } else {
+                    currentPageNumber = 1;
+                }
+                
+                pageDisplay.textContent = `Page ${currentPageNumber} of ${totalPages}`;
+                
+                prevBtn.disabled = currentSheet === 0; 
+                nextBtn.disabled = currentSheet === numSheets; 
+            }
+
+            function goToSheet(sheetIndex) {
+                if (sheetIndex < 0 || sheetIndex > numSheets) return;
+                
+                const baseZIndex = 10;
+                
+                for(let i = 0; i < numSheets; i++) {
+                    const sheet = pageElements[i];
+                    
+                    if (i < sheetIndex) {
+                        // Sheets that are already flipped (on the left side)
+                        sheet.classList.add('flipped');
+                        // Flipped sheets stack low, with later sheets having a higher zIndex to cover earlier sheets (Page 4 covers Page 2)
+                        sheet.style.zIndex = baseZIndex + i; 
+                    } else {
+                        // Sheets that are unflipped (on the right side)
+                        sheet.classList.remove('flipped');
+                        // Unflipped sheets stack high, with earlier sheets having a higher zIndex to cover later sheets (Page 1 covers Page 3)
+                        sheet.style.zIndex = baseZIndex + (numSheets - i); 
+                    }
+                }
+                
+                currentSheet = sheetIndex;
+                updateDisplay();
+            }
+
+            function goNext() {
+                goToSheet(currentSheet + 1);
+            }
+
+            function goPrev() {
+                goToSheet(currentSheet - 1);
+            }
+            
+            // Event Listeners
+            prevBtn.addEventListener('click', goPrev);
+            nextBtn.addEventListener('click', goNext);
+            
+            navOverlayLeft.addEventListener('click', goPrev);
+            navOverlayRight.addEventListener('click', goNext);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') goPrev();
+                if (e.key === 'ArrowRight') goNext();
+            });
+
+            // Touch Swipe Logic
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            book.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            book.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, { passive: true });
+
+            function handleSwipe() {
+                const deltaX = touchEndX - touchStartX;
+                if (deltaX < -50) { // Swiped left
+                    goNext();
+                } else if (deltaX > 50) { // Swiped right
+                    goPrev();
+                }
+            }
+
+            // Init
+            initBook();
+        });
+    </script>
+</body>
+</html>
