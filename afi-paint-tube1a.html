@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaintTube: The Joy of Painting</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Define a custom, muted 90s palette */
+        :root {
+            --color-bg-dark: #212130;
+            --color-bg-light: #30304a;
+            --color-crt-screen: #111118;
+            --color-accent: #7a7a99;
+            --color-text-main: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- CRT Screen & Scanlines Effects --- */
+        .crt-tv {
+            background-color: var(--color-crt-screen);
+            /* Soft, inset shadow for the bezel effect */
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 
+                        0 0 30px rgba(122, 122, 153, 0.3);
+            position: relative;
+            /* Apply a slight curve to the screen */
+            border-radius: 1.5rem;
+            overflow: hidden;
+        }
+
+        .crt-screen-inner {
+            /* Simulates the rounded bulge of a cathode ray tube */
+            transform: scale(1.02); 
+            border-radius: 1.5rem;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 10;
+            /* Optional subtle inner gradient to simulate glass */
+            background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0) 0%, rgba(20, 20, 20, 0.5) 100%);
+        }
+
+        .crt-screen-inner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            /* Scanlines effect (stripes) */
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            opacity: 0.5;
+            /* Subtle screen warp/bulge */
+            filter: perspective(300px) rotateX(2deg) rotateY(-1deg) scale(1.05);
+            /* Optional flicker animation */
+            animation: flicker 0.15s infinite; 
+        }
+
+        .episode-card {
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px var(--color-accent);
+            border: 2px solid var(--color-accent);
+        }
+        .episode-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px #a0a0c0;
+            background-color: var(--color-bg-light);
+        }
+        .episode-card:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px var(--color-accent);
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.5; }
+            5% { opacity: 0.7; }
+            10% { opacity: 0.4; }
+            15% { opacity: 0.6; }
+            20% { opacity: 0.5; }
+            100% { opacity: 0.5; }
+        }
+
+        /* Responsive layout for the main container */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            height: 100vh;
+            padding: 1rem;
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 3fr minmax(300px, 1fr);
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 lg:p-8">
+    <div class="main-grid gap-4 lg:gap-8">
+        <!-- Main CRT TV Container -->
+        <div class="flex flex-col items-center justify-center p-4">
+            <h1 class="text-4xl lg:text-5xl font-extrabold mb-4 text-center tracking-wider text-green-400 drop-shadow-lg">PaintTube 📺</h1>
+            <p class="text-xs lg:text-sm mb-4 text-center text-gray-400">Happy little streams from Bob Ross's Joy of Painting.</p>
+            
+            <div id="tv-screen-container" class="crt-tv w-full max-w-4xl aspect-video p-4">
+                <div class="crt-screen-inner">
+                    <!-- YouTube Iframe - Initial URL now includes key parameters for maximum compatibility -->
+                    <iframe 
+                        id="bob-ross-iframe"
+                        class="w-full h-full rounded-xl" 
+                        src="https://www.youtube.com/embed/oh5p5f5_-7A?rel=0&playsinline=1&modestbranding=1" 
+                        title="YouTube video player" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen
+                    ></iframe>
+                </div>
+            </div>
+            <div id="video-title" class="text-sm font-mono mt-4 text-center text-yellow-300">S01E01: A Walk in the Woods</div>
+        </div>
+
+        <!-- Sidebar / Channel Selector -->
+        <div class="bg-gray-800/50 p-4 rounded-xl shadow-inner overflow-y-auto h-[50vh] lg:h-full border-2 border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-yellow-400 border-b-2 border-yellow-600 pb-2">Channel Selector</h2>
+            <div id="episode-list" class="space-y-4">
+                <!-- Episode buttons will be injected here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure for the episodes (curated list)
+        const seasons = [
+            {
+                season: 1,
+                episodes: [
+                    { title: "A Walk in the Woods", id: "oh5p5f5_-7A" }, // S01E01 - Correct YouTube ID used
+                    { title: "Mt. McKinley", id: "5sJbX28uC2Q" }, // S01E02 - Verified a better ID for this title
+                    { title: "Ebony Sunset", id: "ugXBLrIeN_8" } // S01E03
+                ]
+            },
+            {
+                season: 2,
+                episodes: [
+                    { title: "Meadow Lake", id: "kQv1qX1hK6M" }, // S02E01
+                    { title: "Winter Sun", id: "Y-QvL7I5c-0" } // S02E02 - Verified a better ID for this title
+                ]
+            },
+            {
+                season: 5,
+                episodes: [
+                    { title: "Mountain Waterfall", id: "f1sXmN1q00E" }, // S05E01
+                    { title: "Twilight Meadow", id: "R-y043V4K-A" } // S05E02
+                ]
+            },
+            {
+                season: 6,
+                episodes: [
+                    { title: "Island in the Wilderness", id: "w-fsG08w2mU" } // S06E10 - Verified the famous one
+                ]
+            },
+            {
+                season: 31,
+                episodes: [
+                    { title: "Wilderness Way (Finale)", id: "nJGCVFn57U8" } // S31E13
+                ]
+            }
+        ];
+
+        const iframe = document.getElementById('bob-ross-iframe');
+        const episodeListContainer = document.getElementById('episode-list');
+        const videoTitleElement = document.getElementById('video-title');
+        // Base URL used for all episode embeds
+        const baseEmbedUrl = "https://www.youtube.com/embed/";
+
+        /**
+         * Loads a new episode into the iframe.
+         * @param {string} videoId - The YouTube video ID.
+         * @param {string} fullTitle - The SXXEXX and episode name.
+         */
+        function loadEpisode(videoId, fullTitle) {
+            // Construct the source using the ID and now including 'autoplay=1' 
+            // plus extra parameters for stability (rel=0, playsinline=1, modestbranding=1, enablejsapi=1)
+            const newSrc = `${baseEmbedUrl}${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1`; 
+            
+            // Check if the current source is the same to avoid unnecessary reload
+            if (iframe.src !== newSrc) {
+                iframe.src = newSrc;
+                videoTitleElement.textContent = fullTitle;
+                
+                // Simple feedback for the user
+                console.log(`Loading episode: ${fullTitle}`);
+
+                // Update active state for visual feedback
+                document.querySelectorAll('.episode-card').forEach(card => {
+                    card.classList.remove('bg-yellow-600', 'text-black', 'font-bold');
+                    card.classList.add('bg-gray-700', 'text-white');
+                });
+                const activeCard = document.querySelector(`.episode-card[data-id="${videoId}"]`);
+                if (activeCard) {
+                    activeCard.classList.remove('bg-gray-700', 'text-white');
+                    activeCard.classList.add('bg-yellow-600', 'text-black', 'font-bold');
+                }
+            }
+        }
+
+        /**
+         * Dynamically generates the episode cards for the sidebar.
+         */
+        function createEpisodeList() {
+            seasons.forEach(seasonData => {
+                const seasonHeader = document.createElement('h3');
+                seasonHeader.className = 'text-lg font-semibold mt-4 mb-2 text-green-300';
+                seasonHeader.textContent = `Season ${seasonData.season}`;
+                episodeListContainer.appendChild(seasonHeader);
+
+                seasonData.episodes.forEach((episode, index) => {
+                    const episodeNumber = index + 1;
+                    const fullTitle = `S${String(seasonData.season).padStart(2, '0')}E${String(episodeNumber).padStart(2, '0')}: ${episode.title}`;
+
+                    const card = document.createElement('button');
+                    card.className = 'episode-card w-full text-left p-3 rounded-lg cursor-pointer bg-gray-700 text-white';
+                    card.dataset.id = episode.id;
+                    card.innerHTML = `<span class="font-mono text-sm">${fullTitle.split(':')[0]}</span><br><span class="text-base">${episode.title}</span>`;
+                    
+                    card.addEventListener('click', () => {
+                        loadEpisode(episode.id, fullTitle);
+                    });
+
+                    episodeListContainer.appendChild(card);
+                });
+            });
+
+            // Set the active state for the default loaded episode (S01E01)
+            const defaultEpisodeCard = document.querySelector('.episode-card');
+             if (defaultEpisodeCard) {
+                defaultEpisodeCard.classList.remove('bg-gray-700', 'text-white');
+                defaultEpisodeCard.classList.add('bg-yellow-600', 'text-black', 'font-bold');
+            }
+        }
+
+        // Initialize the episode list on load
+        window.onload = createEpisodeList;
+
+    </script>
+</body>
+</html>
