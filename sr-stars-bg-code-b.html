@@ -42,16 +42,16 @@
             let speed, size, initialHue;
             switch (layer) {
                 case 'slow':
-                    speed = 0.5 + Math.random();
-                    size = 0.5 + Math.random() * 0.5;
+                    speed = 1 + Math.random();
+                    size = 1 + Math.random() * 0.5;
                     break;
                 case 'medium':
-                    speed = 2 + Math.random() * 1.5;
-                    size = 1 + Math.random();
+                    speed = 4 + Math.random() * 1.5;
+                    size = 2 + Math.random();
                     break;
                 case 'fast':
-                    speed = 4 + Math.random() * 2;
-                    size = 1.5 + Math.random() * 1.5;
+                    speed = 8 + Math.random() * 2;
+                    size = 3 + Math.random() * 1.5;
                     break;
             }
             
