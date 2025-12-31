@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>RevV Radio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --accent: #1DB954;
+            --bg-dark: #050505;
+            --bg-card: #121212;
+            --header-h: 70px;
+            --footer-h: 80px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Fixed Header */
+        header {
+            height: var(--header-h);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            z-index: 60;
+            background: var(--bg-dark);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Fixed Footer/Nav */
+        nav {
+            height: var(--footer-h);
+            background: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 60;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Page Container */
+        main {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            z-index: 10;
+            background: var(--bg-dark);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .page-hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Specific Player Layout Adjustments */
+        #page-player {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .player-art-container {
+            width: 65%;
+            max-width: 300px;
+            aspect-ratio: 1/1;
+            margin-bottom: 2rem;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .playing-pulse {
+            transform: scale(1.05);
+        }
+
+        /* Visualizer Overlay */
+        #visualizer-view {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: #000;
+            transform: translateY(100%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #visualizer-view.active {
+            transform: translateY(0%);
+        }
+
+        input[type='range'] {
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+            width: 100%;
+        }
+
+        input[type='range']::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .active-tab-icon { color: var(--accent); }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        
+        <!-- Fixed Header -->
+        <header id="app-header">
+            <h1 class="text-xl font-bold tracking-tight">RevV Radio</h1>
+            <button id="visualizer-toggle" class="w-10 h-10 flex items-center justify-center text-white/40 hover:text-white transition-colors">
+                <i class="fas fa-wand-magic-sparkles"></i>
+            </button>
+        </header>
+
+        <main>
+            <!-- Home Page -->
+            <section id="page-home" class="page p-6">
+                <div class="mb-8">
+                    <h2 class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Good Evening</h2>
+                    <h3 class="text-2xl font-bold">Pick up where you left</h3>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-8" id="home-grid">
+                    <!-- Injected JS -->
+                </div>
+
+                <h2 class="text-lg font-bold mb-4">Discover New</h2>
+                <div class="flex space-x-4 overflow-x-auto pb-4 no-scrollbar" id="discover-list">
+                    <!-- Injected JS -->
+                </div>
+            </section>
+
+            <!-- Browse/Library Page -->
+            <section id="page-library" class="page page-hidden p-6">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold">Your Library</h1>
+                </div>
+                <div class="space-y-2" id="library-list">
+                    <!-- Injected JS -->
+                </div>
+            </section>
+
+            <!-- Focused Player Page -->
+            <section id="page-player" class="page page-hidden">
+                <div class="player-art-container" id="art-box">
+                    <img id="main-art" src="" class="w-full h-full object-cover">
+                </div>
+                
+                <div class="w-full max-w-sm mb-8">
+                    <h2 id="main-title" class="text-2xl font-bold truncate px-4">Title</h2>
+                    <p id="main-artist" class="text-lg text-white/50 truncate px-4">Artist</p>
+                </div>
+
+                <div class="w-full max-w-sm px-4 mb-8">
+                    <input type="range" id="seek-bar" value="0" step="0.1" class="appearance-none mb-2">
+                    <div class="flex justify-between text-[10px] font-medium text-white/30 px-1">
+                        <span id="cur-time">0:00</span>
+                        <span id="dur-time">0:00</span>
+                    </div>
+                </div>
+
+                <div class="w-full max-w-sm flex justify-between items-center px-8">
+                    <button class="text-white/20 text-lg hover:text-white"><i class="fas fa-shuffle"></i></button>
+                    <button onclick="radio.prev()" class="text-2xl active:scale-90 transition-transform"><i class="fas fa-step-backward"></i></button>
+                    <button id="play-btn" onclick="radio.toggle()" class="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center text-2xl shadow-xl active:scale-90 transition-transform">
+                        <i class="fas fa-play ml-1"></i>
+                    </button>
+                    <button onclick="radio.next()" class="text-2xl active:scale-90 transition-transform"><i class="fas fa-step-forward"></i></button>
+                    <button class="text-white/20 text-lg hover:text-white"><i class="fas fa-repeat"></i></button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Mini Player (Floating above nav) -->
+        <div id="mini-player" class="fixed bottom-24 left-4 right-4 h-14 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl z-50 flex items-center px-3 cursor-pointer hidden shadow-2xl active:scale-[0.98] transition-all" onclick="changeTab('player')">
+            <img id="mini-img" src="" class="w-9 h-9 rounded-lg object-cover mr-3">
+            <div class="flex-1 min-w-0">
+                <p id="mini-t" class="text-xs font-bold truncate">Title</p>
+                <p id="mini-a" class="text-[10px] text-white/40 uppercase tracking-tighter">Artist</p>
+            </div>
+            <button onclick="event.stopPropagation(); radio.toggle();" class="w-10 h-10 flex items-center justify-center text-lg">
+                <i id="mini-play-icon" class="fas fa-play"></i>
+            </button>
+        </div>
+
+        <!-- Fixed Navigation -->
+        <nav>
+            <button onclick="changeTab('home')" class="nav-btn flex flex-col items-center space-y-1 active-tab-icon" data-tab="home">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-[9px] font-bold uppercase">Home</span>
+            </button>
+            <button onclick="changeTab('library')" class="nav-btn flex flex-col items-center space-y-1 text-white/40" data-tab="library">
+                <i class="fas fa-search text-lg"></i>
+                <span class="text-[9px] font-bold uppercase">Browse</span>
+            </button>
+            <button onclick="changeTab('player')" class="nav-btn flex flex-col items-center space-y-1 text-white/40" data-tab="player">
+                <i class="fas fa-music text-lg"></i>
+                <span class="text-[9px] font-bold uppercase">Player</span>
+            </button>
+        </nav>
+
+        <!-- Visualizer Overlay -->
+        <div id="visualizer-view">
+            <canvas id="viz-canvas" class="absolute inset-0 w-full h-full"></canvas>
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+            <div class="absolute bottom-10 left-0 right-0 p-8 flex flex-col pointer-events-none">
+                <h2 id="viz-t" class="text-4xl font-black mb-1 truncate">Title</h2>
+                <p id="viz-a" class="text-lg text-white/50 mb-8">Artist</p>
+                <div class="flex items-center space-x-4 pointer-events-auto">
+                    <button onclick="radio.toggle()" class="w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white">
+                        <i id="viz-play-icon" class="fas fa-play"></i>
+                    </button>
+                    <button id="exit-viz" class="px-5 py-2.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-widest">Close</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const SONGS = [
+            { id: 1, title: "Deep Night", artist: "Synth RevV", color: "#1DB954", cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=800", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+            { id: 2, title: "Ocean Breeze", artist: "RevV Lo-Fi", color: "#0891b2", cover: "https://images.unsplash.com/photo-1557683316-973673baf926?w=800", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+            { id: 3, title: "Neon City", artist: "Retro Runner", color: "#db2777", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
+        ];
+
+        class RevVRadio {
+            constructor() {
+                this.audio = new Audio();
+                this.audio.crossOrigin = "anonymous";
+                this.index = 0;
+                this.isPlaying = false;
+                this.ctx = null;
+                this.analyser = null;
+                this.data = null;
+                this.initListeners();
+            }
+
+            initContext() {
+                if (this.ctx) return;
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.analyser = this.ctx.createAnalyser();
+                    const source = this.ctx.createMediaElementSource(this.audio);
+                    source.connect(this.analyser);
+                    this.analyser.connect(this.ctx.destination);
+                    this.analyser.fftSize = 256;
+                    this.data = new Uint8Array(this.analyser.frequencyBinCount);
+                } catch(e) { console.error("Web Audio fail", e); }
+            }
+
+            initListeners() {
+                this.audio.addEventListener('timeupdate', () => {
+                    if(!isNaN(this.audio.duration)) {
+                        const prog = (this.audio.currentTime / this.audio.duration) * 100;
+                        document.getElementById('seek-bar').value = prog;
+                        document.getElementById('cur-time').innerText = this.fmt(this.audio.currentTime);
+                        document.getElementById('dur-time').innerText = this.fmt(this.audio.duration);
+                    }
+                });
+                this.audio.addEventListener('play', () => { this.isPlaying = true; this.sync(); });
+                this.audio.addEventListener('pause', () => { this.isPlaying = false; this.sync(); });
+                this.audio.addEventListener('ended', () => this.next());
+                this.audio.addEventListener('error', (e) => { 
+                    console.error("Audio Error:", e);
+                    const current = this.audio.src;
+                    this.audio.src = '';
+                    this.audio.src = current;
+                });
+            }
+
+            fmt(s) { return Math.floor(s/60) + ":" + Math.floor(s%60).toString().padStart(2, '0'); }
+
+            load(idx) {
+                this.index = idx;
+                const s = SONGS[this.index];
+                this.audio.src = s.url;
+                this.audio.load();
+                this.sync();
+            }
+
+            async toggle() {
+                this.initContext();
+                if (this.ctx && this.ctx.state === 'suspended') await this.ctx.resume();
+                
+                if (this.isPlaying) this.audio.pause();
+                else {
+                    try {
+                        await this.audio.play();
+                    } catch(e) { console.warn("Play blocked", e); }
+                }
+            }
+
+            next() { this.load((this.index + 1) % SONGS.length); this.toggle(); }
+            prev() { this.load((this.index - 1 + SONGS.length) % SONGS.length); this.toggle(); }
+
+            sync() {
+                const s = SONGS[this.index];
+                const icon = this.isPlaying ? 'fa-pause' : 'fa-play';
+                
+                document.getElementById('main-title').innerText = s.title;
+                document.getElementById('main-artist').innerText = s.artist;
+                document.getElementById('main-art').src = s.cover;
+                document.getElementById('play-btn').innerHTML = `<i class="fas ${icon} ${this.isPlaying ? '' : 'ml-1'}"></i>`;
+                
+                document.getElementById('mini-player').classList.remove('hidden');
+                document.getElementById('mini-t').innerText = s.title;
+                document.getElementById('mini-a').innerText = s.artist;
+                document.getElementById('mini-img').src = s.cover;
+                document.getElementById('mini-play-icon').className = `fas ${icon}`;
+
+                document.getElementById('viz-t').innerText = s.title;
+                document.getElementById('viz-a').innerText = s.artist;
+                document.getElementById('viz-play-icon').className = `fas ${icon}`;
+
+                const box = document.getElementById('art-box');
+                if(this.isPlaying) box.classList.add('playing-pulse');
+                else box.classList.remove('playing-pulse');
+            }
+        }
+
+        const radio = new RevVRadio();
+
+        function changeTab(tabId) {
+            document.querySelectorAll('.page').forEach(p => {
+                if(p.id === `page-${tabId}`) p.classList.remove('page-hidden');
+                else p.classList.add('page-hidden');
+            });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.tab === tabId) btn.classList.add('active-tab-icon');
+                else btn.classList.remove('active-tab-icon');
+            });
+            // Hide header on player page for immersive feel, or keep it consistent
+            document.getElementById('app-header').style.display = tabId === 'player' ? 'none' : 'flex';
+        }
+
+        const canvas = document.getElementById('viz-canvas');
+        const vctx = canvas.getContext('2d');
+        let vFrame;
+
+        function render() {
+            vFrame = requestAnimationFrame(render);
+            if(!radio.analyser) return;
+            radio.analyser.getByteFrequencyData(radio.data);
+            
+            vctx.fillStyle = 'rgba(0,0,0,0.2)';
+            vctx.fillRect(0,0,canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const s = SONGS[radio.index];
+
+            for(let i=0; i<radio.data.length; i++) {
+                const val = radio.data[i];
+                const angle = (i / radio.data.length) * Math.PI * 2;
+                const r = (canvas.width * 0.2) + (val * 0.7);
+                const x = centerX + Math.cos(angle) * r;
+                const y = centerY + Math.sin(angle) * r;
+
+                vctx.strokeStyle = s.color;
+                vctx.globalAlpha = (val / 255) * 0.8;
+                vctx.lineWidth = 2.5;
+                vctx.beginPath();
+                vctx.moveTo(centerX, centerY);
+                vctx.lineTo(x, y);
+                vctx.stroke();
+            }
+        }
+
+        document.getElementById('visualizer-toggle').onclick = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            document.getElementById('visualizer-view').classList.add('active');
+            render();
+        };
+
+        document.getElementById('exit-viz').onclick = () => {
+            document.getElementById('visualizer-view').classList.remove('active');
+            cancelAnimationFrame(vFrame);
+        };
+
+        document.getElementById('seek-bar').oninput = (e) => {
+            if(radio.audio.duration) {
+                radio.audio.currentTime = (e.target.value / 100) * radio.audio.duration;
+            }
+        };
+
+        window.onload = () => {
+            const hg = document.getElementById('home-grid');
+            const dl = document.getElementById('discover-list');
+            const ll = document.getElementById('library-list');
+
+            SONGS.forEach((s, i) => {
+                hg.innerHTML += `<div onclick="radio.load(${i}); radio.toggle();" class="bg-white/5 p-2 rounded-lg flex items-center space-x-3 active:bg-white/10 cursor-pointer transition-colors"><img src="${s.cover}" class="w-10 h-10 rounded object-cover shadow-md"><span class="text-[10px] font-bold truncate uppercase tracking-tight">${s.title}</span></div>`;
+                
+                dl.innerHTML += `<div onclick="radio.load(${i}); radio.toggle();" class="min-w-[140px] cursor-pointer"><img src="${s.cover}" class="w-full aspect-square rounded-xl object-cover mb-2 shadow-lg"><p class="text-xs font-bold truncate">${s.title}</p><p class="text-[10px] text-white/40 font-medium">${s.artist}</p></div>`;
+                
+                ll.innerHTML += `<div onclick="radio.load(${i}); radio.toggle();" class="flex items-center p-3 rounded-xl active:bg-white/5 cursor-pointer"><img src="${s.cover}" class="w-12 h-12 rounded-lg mr-4 object-cover shadow-sm"><div class="flex-1 min-w-0"><p class="font-bold text-sm truncate">${s.title}</p><p class="text-[10px] text-white/40 uppercase font-semibold">${s.artist}</p></div><i class="fas fa-play text-[10px] text-white/20"></i></div>`;
+            });
+            radio.load(0);
+        };
+    </script>
+</body>
+</html>
