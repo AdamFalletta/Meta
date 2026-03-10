@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS - Local Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .column-divider { border-right: 1px solid #e5e7eb; }
+        .active-item { background-color: #3b82f6; color: white !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Strict Validation UI */
+        input:invalid, select:invalid, textarea:invalid { border: 2px solid #fca5a5 !important; }
+        input:focus:invalid { outline: none; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
+        .error-msg { color: #ef4444; font-size: 10px; margin-top: 2px; display: none; font-weight: 600; }
+        input:invalid + .error-msg, textarea:invalid + .error-msg { display: block; }
+        
+        /* Specific Label Colors */
+        .status-lead { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; } /* Blue */
+        .status-hot { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }  /* Red */
+        .status-verified { background-color: #fef3c7; color: #92400e; border-color: #fde68a; } /* Gold */
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b px-6 py-3 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-6">
+            <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                ClientManager
+            </h1>
+            
+            <div class="relative w-96">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="text" id="global-search" oninput="handleSearch()" placeholder="Search clients..." class="w-full bg-gray-100 border-none rounded-md py-1.5 pl-10 pr-4 text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+        </div>
+        <button onclick="resetData()" class="text-xs text-red-500 hover:underline">Reset Database</button>
+    </header>
+
+    <main class="flex flex-1 overflow-hidden">
+        <section class="w-64 column-divider bg-gray-50 flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-100/50">
+                <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Industries</h2>
+                <button onclick="showNewIndustryModal()" class="p-1 hover:bg-gray-200 rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            <div id="industry-list" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1"></div>
+        </section>
+
+        <section class="w-80 column-divider bg-white flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h2 id="listings-header" class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Listings</h2>
+                <button id="add-listing-btn" onclick="showListingModal()" class="hidden p-1 hover:bg-gray-100 rounded text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            <div id="listing-list" class="flex-1 overflow-y-auto custom-scrollbar"></div>
+        </section>
+
+        <section id="detail-area" class="flex-1 bg-white overflow-y-auto custom-scrollbar"></section>
+    </main>
+
+    <!-- MODAL: NEW INDUSTRY -->
+    <div id="industry-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <form onsubmit="event.preventDefault(); saveIndustry();" class="bg-white rounded-lg shadow-xl w-96 p-6">
+            <h3 class="text-lg font-bold mb-4">Add New Industry</h3>
+            <div class="mb-4">
+                <input type="text" id="industry-name-input" required placeholder="e.g. Real Estate" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                <span class="error-msg">Please enter an industry name.</span>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeModals()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- MODAL: LISTING -->
+    <div id="listing-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4">
+        <form onsubmit="event.preventDefault(); saveListing();" id="listing-form" class="bg-white rounded-lg shadow-xl w-full max-w-3xl p-6 my-auto">
+            <h3 id="modal-title" class="text-xl font-bold mb-4">Business Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Business Name *</label>
+                        <input type="text" id="list-name" required class="w-full border p-2 rounded">
+                        <span class="error-msg">Required field.</span>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Client Type</label>
+                        <select id="list-client-type" class="w-full border p-2 rounded">
+                            <option value="Lead">Lead</option>
+                            <option value="Hot Lead">Hot Lead</option>
+                            <option value="Verified Client">Verified Client</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Rating (1-5)</label>
+                            <input type="number" id="list-rating" step="0.1" min="1" max="5" value="4.0" class="w-full border p-2 rounded">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Status</label>
+                            <select id="list-status" class="w-full border p-2 rounded">
+                                <option>Open</option>
+                                <option>Closed</option>
+                                <option>By Appointment</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Address *</label>
+                        <input type="text" id="list-address" required class="w-full border p-2 rounded">
+                        <span class="error-msg">Valid address required.</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Phone (XXX-XXX-XXXX) *</label>
+                            <input type="tel" id="list-phone" required pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" class="w-full border p-2 rounded" placeholder="555-012-3456">
+                            <span class="error-msg">Format: 555-012-3456</span>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Website</label>
+                            <input type="url" id="list-web" class="w-full border p-2 rounded" placeholder="https://example.com">
+                            <span class="error-msg">Invalid URL (include https://)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Image URL</label>
+                        <input type="url" id="list-image" class="w-full border p-2 rounded" placeholder="https://site.com/img.jpg">
+                        <span class="error-msg">Invalid image URL.</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-4">Daily Operating Hours</h4>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="text-sm text-gray-600 capitalize">Monday</label>
+                            <input type="text" id="h-mon" required class="col-span-2 border p-1 rounded text-sm" placeholder="e.g. 9am-5pm">
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="text-sm text-gray-600 capitalize">Tuesday</label>
+                            <input type="text" id="h-tue" required class="col-span-2 border p-1 rounded text-sm" placeholder="e.g. 9am-5pm">
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="text-sm text-gray-600 capitalize">Wednesday</label>
+                            <input type="text" id="h-wed" required class="col-span-2 border p-1 rounded text-sm" placeholder="e.g. 9am-5pm">
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="text-sm text-gray-600 capitalize">Thursday</label>
+                            <input type="text" id="h-thu" required class="col-span-2 border p-1 rounded text-sm" placeholder="e.g. 9am-5pm">
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="text-sm text-gray-600 capitalize">Friday</label>
+                            <input type="text" id="h-fri" required class="col-span-2 border p-1 rounded text-sm" placeholder="e.g. 9am-5pm">
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="text-sm text-gray-600 capitalize">Saturday</label>
+                            <input type="text" id="h-sat" required class="col-span-2 border p-1 rounded text-sm" placeholder="e.g. 9am-5pm">
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="text-sm text-gray-600 capitalize">Sunday</label>
+                            <input type="text" id="h-sun" required class="col-span-2 border p-1 rounded text-sm" placeholder="e.g. 9am-5pm">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Project Scope</label>
+                        <textarea id="list-project" rows="3" class="w-full border p-2 rounded mt-1 bg-blue-50/50"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t">
+                <button type="button" onclick="closeModals()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold shadow">Save Business Profile</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'cms_vanilla_data_v5';
+        let state = {
+            industries: [
+                { id: '1', name: 'Real Estate' },
+                { id: '2', name: 'Food & Beverage' }
+            ],
+            listings: [
+                { 
+                    id: '101', industryId: '2', name: 'The Golden Whisk', clientType: 'Verified Client',
+                    rating: 4.5, address: '123 Culinary Ave, San Francisco, CA', phone: '555-123-4567',
+                    website: 'https://www.goldenwhisk.com', hours: { mon: '8am-6pm', tue: '8am-6pm', wed: '8am-6pm', thu: '8am-6pm', fri: '8am-8pm', sat: '9am-2pm', sun: 'Closed' },
+                    imageUrl: 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=1200'
+                }
+            ],
+            selectedIndustryId: 'all',
+            selectedListingId: null,
+            searchQuery: ''
+        };
+
+        function init() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) state = JSON.parse(saved);
+            renderIndustries();
+            renderListings();
+            renderDetail();
+        }
+
+        function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+        function getTypeStyle(type) {
+            if (type === 'Hot Lead') return 'status-hot';
+            if (type === 'Verified Client') return 'status-verified';
+            return 'status-lead';
+        }
+
+        function renderIndustries() {
+            const list = document.getElementById('industry-list');
+            list.innerHTML = '';
+            
+            // Add "All" option
+            const allDiv = document.createElement('div');
+            allDiv.className = `px-3 py-2 rounded-md cursor-pointer text-sm font-medium transition-colors ${state.selectedIndustryId === 'all' ? 'active-item' : 'text-gray-700 hover:bg-gray-200'}`;
+            allDiv.onclick = () => { state.selectedIndustryId = 'all'; state.selectedListingId = null; renderIndustries(); renderListings(); renderDetail(); };
+            allDiv.innerText = "All Industries";
+            list.appendChild(allDiv);
+
+            state.industries.forEach(ind => {
+                const div = document.createElement('div');
+                div.className = `px-3 py-2 rounded-md cursor-pointer text-sm font-medium transition-colors ${state.selectedIndustryId === ind.id ? 'active-item' : 'text-gray-700 hover:bg-gray-200'}`;
+                div.onclick = () => { state.selectedIndustryId = ind.id; state.selectedListingId = null; renderIndustries(); renderListings(); renderDetail(); };
+                div.innerText = ind.name;
+                list.appendChild(div);
+            });
+        }
+
+        function renderListings() {
+            const list = document.getElementById('listing-list');
+            let filtered = [...state.listings];
+
+            // Filter logic: Search takes precedence, then Industry
+            if (state.searchQuery) {
+                filtered = filtered.filter(l => 
+                    l.name.toLowerCase().includes(state.searchQuery) || 
+                    l.address.toLowerCase().includes(state.searchQuery)
+                );
+            } else if (state.selectedIndustryId && state.selectedIndustryId !== 'all') {
+                filtered = filtered.filter(l => l.industryId === state.selectedIndustryId);
+            }
+
+            // UI: Show "Add" button only when an industry is selected (not "all")
+            document.getElementById('add-listing-btn').classList.toggle('hidden', state.selectedIndustryId === 'all');
+            
+            list.innerHTML = '';
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="p-8 text-center text-gray-400 text-sm italic">No listings found</div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `p-4 border-b cursor-pointer transition-all ${state.selectedListingId === item.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : 'hover:bg-gray-50'}`;
+                div.onclick = () => { state.selectedListingId = item.id; renderListings(); renderDetail(); };
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="font-bold text-gray-800 truncate pr-2">${item.name}</h4>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-tight ${getTypeStyle(item.clientType)}">${item.clientType}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 truncate">${item.address}</p>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renderDetail() {
+            const area = document.getElementById('detail-area');
+            const item = state.listings.find(l => l.id === state.selectedListingId);
+            if (!item) {
+                area.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 italic"><p>Select a business to view details</p></div>`;
+                return;
+            }
+
+            const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            area.innerHTML = `
+                <div class="h-64 bg-gray-200 relative">
+                    <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200'}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                    <div class="absolute bottom-0 p-8 text-white w-full flex justify-between items-end">
+                        <div>
+                            <span class="text-xs uppercase font-bold tracking-widest px-2 py-1 bg-black/30 rounded mb-2 inline-block border border-white/20">${item.clientType}</span>
+                            <h2 class="text-4xl font-bold">${item.name}</h2>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="showListingModal('${item.id}')" class="px-4 py-2 bg-white text-gray-900 rounded font-bold hover:bg-gray-100">Edit</button>
+                            <button onclick="deleteListing('${item.id}')" class="p-2 bg-red-600 rounded hover:bg-red-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-8 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="md:col-span-2 space-y-6">
+                        <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl">
+                            <h3 class="text-xs font-bold text-blue-800 uppercase mb-2">Current Project Details</h3>
+                            <p class="text-blue-900">${item.projectDetails || 'No project notes.'}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 border rounded-lg bg-gray-50">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase">Address</span>
+                                <p class="text-sm font-medium text-gray-800">${item.address}</p>
+                            </div>
+                            <div class="p-4 border rounded-lg bg-gray-50">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase">Contact</span>
+                                <p class="text-sm font-medium text-gray-800">${item.phone}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border rounded-xl p-6 bg-white shadow-sm">
+                        <h3 class="text-sm font-bold text-gray-800 mb-4 border-b pb-2">Business Hours</h3>
+                        <div class="space-y-2">
+                            ${dayKeys.map((k, i) => `
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-500">${dayLabels[i]}</span>
+                                    <span class="font-medium text-gray-800">${item.hours ? item.hours[k] : 'N/A'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        let editingListingId = null;
+        function showListingModal(id = null) {
+            editingListingId = id;
+            const item = id ? state.listings.find(l => l.id === id) : null;
+            document.getElementById('list-name').value = item?.name || '';
+            document.getElementById('list-client-type').value = item?.clientType || 'Lead';
+            document.getElementById('list-rating').value = item?.rating || 4.0;
+            document.getElementById('list-address').value = item?.address || '';
+            document.getElementById('list-phone').value = item?.phone || '';
+            document.getElementById('list-web').value = item?.website || '';
+            document.getElementById('list-image').value = item?.imageUrl || '';
+            document.getElementById('list-project').value = item?.projectDetails || '';
+            
+            ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].forEach(d => {
+                document.getElementById('h-' + d).value = item?.hours?.[d] || '9am-5pm';
+            });
+            document.getElementById('listing-modal').classList.remove('hidden');
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.fixed').forEach(m => m.classList.add('hidden'));
+        }
+
+        function saveIndustry() {
+            const val = document.getElementById('industry-name-input').value.trim();
+            if (val) {
+                state.industries.push({ id: Date.now().toString(), name: val });
+                persist(); closeModals(); renderIndustries();
+            }
+        }
+
+        function saveListing() {
+            const form = document.getElementById('listing-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const data = {
+                name: document.getElementById('list-name').value,
+                clientType: document.getElementById('list-client-type').value,
+                rating: parseFloat(document.getElementById('list-rating').value),
+                address: document.getElementById('list-address').value,
+                phone: document.getElementById('list-phone').value,
+                website: document.getElementById('list-web').value,
+                imageUrl: document.getElementById('list-image').value,
+                projectDetails: document.getElementById('list-project').value,
+                hours: {
+                    mon: document.getElementById('h-mon').value,
+                    tue: document.getElementById('h-tue').value,
+                    wed: document.getElementById('h-wed').value,
+                    thu: document.getElementById('h-thu').value,
+                    fri: document.getElementById('h-fri').value,
+                    sat: document.getElementById('h-sat').value,
+                    sun: document.getElementById('h-sun').value,
+                }
+            };
+
+            if (editingListingId) {
+                const idx = state.listings.findIndex(l => l.id === editingListingId);
+                state.listings[idx] = { ...state.listings[idx], ...data };
+            } else {
+                state.listings.push({ id: Date.now().toString(), industryId: state.selectedIndustryId, ...data });
+            }
+            
+            persist(); closeModals(); renderListings(); renderDetail();
+        }
+
+        function deleteListing(id) {
+            if (confirm("Delete this profile?")) {
+                state.listings = state.listings.filter(l => l.id !== id);
+                if (state.selectedListingId === id) state.selectedListingId = null;
+                persist(); renderListings(); renderDetail();
+            }
+        }
+
+        function handleSearch() {
+            state.searchQuery = document.getElementById('global-search').value.toLowerCase();
+            renderListings();
+        }
+
+        function showNewIndustryModal() { document.getElementById('industry-modal').classList.remove('hidden'); }
+        function resetData() { if (confirm("Clear all data?")) { localStorage.removeItem(STORAGE_KEY); location.reload(); } }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
