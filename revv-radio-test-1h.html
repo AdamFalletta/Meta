@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>RevV Radio</title>
+    
+    <!-- Ionic Framework -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
+    
+    <style>
+        :root {
+            /* Gradient Blue Theme */
+            --revv-blue-start: #00d2ff;
+            --revv-blue-end: #3a7bd5;
+            --revv-gold: #ffd700;
+            --revv-white: #eeeeee;
+            
+            --ion-color-primary: #3a7bd5;
+            --ion-background-color: #000000;
+            --ion-text-color: var(--revv-white);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            /* EQ Color - Charcoal Black at 40% Opacity */
+            --viz-charcoal: rgba(18, 18, 18, 0.4);
+        }
+
+        body {
+            background-color: #000;
+            color: var(--revv-white);
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        #dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at top right, #001f3f, #000 70%),
+                        radial-gradient(circle at bottom left, #003366, #000 70%);
+            opacity: 1;
+        }
+
+        /* Fixed Centered Logo Styling */
+        ion-header ion-toolbar {
+            --background: #000000;
+            --color: var(--revv-white);
+            --border-style: none;
+            padding-top: env(safe-area-inset-top);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+
+        .logo-container {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .logo-text {
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 1rem;
+            color: var(--revv-white);
+            margin: 0;
+        }
+
+        ion-buttons {
+            position: relative;
+            z-index: 10;
+        }
+
+        ion-content {
+            --background: transparent;
+            --overflow: auto;
+        }
+
+        .glass-list-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            margin: 10px 5px;
+            overflow: hidden;
+        }
+
+        ion-list {
+            background: transparent !important;
+            padding: 0;
+        }
+
+        ion-item {
+            --background: transparent;
+            --color: var(--revv-white);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --padding-start: 16px;
+            --inner-padding-end: 16px;
+        }
+
+        ion-item:last-child {
+            --border-style: none;
+        }
+
+        ion-thumbnail {
+            --border-radius: 6px;
+            width: 50px;
+            height: 50px;
+        }
+
+        .player-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100%;
+            padding: 10px 0 30px 0;
+        }
+
+        .artwork-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 15px 0;
+        }
+
+        .artwork-container {
+            position: relative;
+            width: 55%;
+            max-width: 200px;
+            aspect-ratio: 1/1;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            background: #111;
+        }
+
+        .artwork-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .visualizer {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 45px;
+            pointer-events: none;
+            background: transparent;
+            padding: 4px;
+            z-index: 5;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .bar {
+            width: 5px;
+            background: var(--viz-charcoal);
+            height: 6px;
+            border-radius: 3px;
+            transition: height 0.1s ease;
+        }
+
+        .song-info {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 0 20px;
+        }
+
+        .song-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+            color: var(--revv-white);
+        }
+
+        .artist-name {
+            font-size: 0.95rem;
+            color: rgba(238,238,238,0.6);
+        }
+
+        .controls-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            width: 92%;
+            max-width: 400px;
+            padding: 24px 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .player-main-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .play-btn {
+            --border-radius: 50%;
+            width: 64px !important;
+            height: 64px !important;
+            --background: linear-gradient(135deg, var(--revv-blue-start), var(--revv-blue-end));
+            --box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            margin: 0;
+        }
+
+        .action-btn-small {
+            width: 48px;
+            height: 48px;
+            --color: var(--revv-white);
+            --padding-start: 0;
+            --padding-end: 0;
+            margin: 0;
+        }
+
+        .seek-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 5px;
+        }
+
+        .time-label {
+            font-size: 0.75rem;
+            color: rgba(238,238,238,0.5);
+            min-width: 40px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        ion-range {
+            flex-grow: 1;
+            --bar-background: rgba(255, 255, 255, 0.1);
+            --bar-background-active: var(--revv-blue-start);
+            --knob-background: var(--revv-white);
+            --knob-size: 18px;
+            padding: 0;
+            height: 40px;
+        }
+
+        ion-tab-bar {
+            --background: #000;
+            height: 65px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        ion-tab-button {
+            --color: rgba(238, 238, 238, 0.5);
+            --color-selected: var(--revv-blue-start);
+        }
+
+        .star-fav {
+            color: var(--revv-gold);
+            font-size: 1.4rem;
+            padding: 10px;
+        }
+        
+        .metadata-badge {
+            background: rgba(0, 210, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin: 4px;
+            display: inline-block;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            color: var(--revv-blue-start);
+        }
+
+        /* Merch Grid Update: 2x2 Layout */
+        .merch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 10px 5px;
+        }
+
+        .merch-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .merch-image {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            background: #111;
+        }
+
+        .merch-info {
+            padding: 10px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .merch-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--revv-white);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.2;
+        }
+
+        .merch-price {
+            font-size: 0.9rem;
+            color: var(--revv-blue-start);
+            font-weight: 700;
+            margin: 4px 0 8px 0;
+        }
+
+        .paypal-btn {
+            --background: #ffc439;
+            --color: #111;
+            --border-radius: 12px;
+            font-weight: 800;
+            margin: 0;
+            width: 100%;
+            height: 34px;
+            font-size: 0.75rem;
+            text-transform: none;
+        }
+
+        ion-menu-button, #back-nav-btn {
+            --color: var(--revv-white);
+        }
+    </style>
+</head>
+<body>
+
+    <ion-app>
+        <div id="dynamic-bg"></div>
+
+        <ion-menu content-id="main-content" side="end">
+            <ion-header>
+                <ion-toolbar><ion-title>Menu</ion-title></ion-toolbar>
+            </ion-header>
+            <ion-content class="ion-padding" style="--background: #000;">
+                <ion-list lines="none">
+                    <ion-item button onclick="goToTab('tab-home')">
+                        <ion-icon slot="start" name="musical-notes" style="color: var(--revv-blue-start)"></ion-icon>
+                        <ion-label>Library</ion-label>
+                    </ion-item>
+                    <ion-item button onclick="goToTab('tab-merch')">
+                        <ion-icon slot="start" name="cart" style="color: var(--revv-blue-start)"></ion-icon>
+                        <ion-label>Shop Merch</ion-label>
+                    </ion-item>
+                    <ion-item button onclick="closeMenu()">
+                        <ion-icon slot="start" name="settings" style="color: var(--revv-blue-start)"></ion-icon>
+                        <ion-label>Settings</ion-label>
+                    </ion-item>
+                </ion-list>
+            </ion-content>
+        </ion-menu>
+
+        <div class="ion-page" id="main-content">
+            <ion-header class="ion-no-border">
+                <ion-toolbar>
+                    <ion-buttons slot="start">
+                        <ion-button id="back-nav-btn" onclick="goToTab('tab-home')" style="visibility: hidden;">
+                            <ion-icon slot="icon-only" name="chevron-back"></ion-icon>
+                        </ion-button>
+                    </ion-buttons>
+                    
+                    <div class="logo-container">
+                        <h1 class="logo-text">RevV Radio</h1>
+                    </div>
+
+                    <ion-buttons slot="end">
+                        <ion-menu-button></ion-menu-button>
+                    </ion-buttons>
+                </ion-toolbar>
+            </ion-header>
+
+            <ion-content>
+                <ion-tabs id="app-tabs">
+                    <!-- Tab: Browse -->
+                    <ion-tab tab="tab-home">
+                        <div class="ion-padding">
+                            <h2 style="font-weight: 800; margin-top: 0; margin-left: 5px; color: var(--revv-white)">Library</h2>
+                            <div class="glass-list-container">
+                                <ion-list id="song-list-container"></ion-list>
+                            </div>
+                        </div>
+                    </ion-tab>
+
+                    <!-- Tab: Player -->
+                    <ion-tab tab="tab-player">
+                        <div class="player-content">
+                            <div class="artwork-wrapper">
+                                <div id="art-container" class="artwork-container">
+                                    <img id="player-art" src="https://via.placeholder.com/400" alt="Art">
+                                    <div class="visualizer" id="eq-container"></div>
+                                </div>
+                            </div>
+
+                            <div class="song-info">
+                                <div id="player-title" class="song-title">Select Track</div>
+                                <div id="player-artist" class="artist-name">Ready to play</div>
+                            </div>
+
+                            <div class="controls-card">
+                                <div class="player-main-actions">
+                                    <ion-button fill="clear" id="loop-btn" class="action-btn-small" onclick="toggleLoop()">
+                                        <ion-icon slot="icon-only" name="repeat"></ion-icon>
+                                    </ion-button>
+                                    
+                                    <ion-button fill="clear" class="action-btn-small" onclick="prevSong()">
+                                        <ion-icon slot="icon-only" name="play-skip-back"></ion-icon>
+                                    </ion-button>
+                                    
+                                    <ion-button fill="solid" class="play-btn" onclick="togglePlay()">
+                                        <ion-icon slot="icon-only" id="play-icon" size="large" name="play" style="color: var(--revv-white);"></ion-icon>
+                                    </ion-button>
+                                    
+                                    <ion-button fill="clear" class="action-btn-small" onclick="nextSong()">
+                                        <ion-icon slot="icon-only" name="play-skip-forward"></ion-icon>
+                                    </ion-button>
+
+                                    <ion-button fill="clear" id="player-fav-btn" class="action-btn-small" onclick="toggleFavorite()">
+                                        <ion-icon slot="icon-only" name="star-outline"></ion-icon>
+                                    </ion-button>
+                                </div>
+
+                                <div class="seek-row">
+                                    <span id="current-time" class="time-label">0:00</span>
+                                    <ion-range id="seek-bar" min="0" max="100" step="0.1" debounce="0"></ion-range>
+                                    <span id="remaining-time" class="time-label">-0:00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </ion-tab>
+
+                    <!-- Tab: Info (Details) -->
+                    <ion-tab tab="tab-details">
+                        <div class="ion-padding">
+                            <h3 id="details-header" style="font-weight: 800; color: var(--revv-white)">Track Info</h3>
+                            <div id="metadata-container"></div>
+                            <h4 style="margin-top: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; color: var(--revv-white)">Lyrics</h4>
+                            <div id="lyrics-content" style="text-align: center; line-height: 1.6; color: #ccc; font-size: 1rem; padding: 15px 0;"></div>
+                        </div>
+                    </ion-tab>
+
+                    <!-- Tab: Merch (2x2 Grid) -->
+                    <ion-tab tab="tab-merch">
+                        <div class="ion-padding">
+                            <h2 style="font-weight: 800; margin-top: 0; margin-left: 5px; color: var(--revv-white)">Shop Merch</h2>
+                            <div class="merch-grid" id="merch-container">
+                                <!-- Merch Items will be injected here -->
+                            </div>
+                        </div>
+                    </ion-tab>
+
+                    <!-- Tab: Stars (Favorites) -->
+                    <ion-tab tab="tab-favorites">
+                        <div class="ion-padding">
+                            <h2 style="font-weight: 800; margin-top: 0; margin-left: 5px; color: var(--revv-white)">Starred</h2>
+                            <div class="glass-list-container">
+                                <ion-list id="favorites-list-container"></ion-list>
+                            </div>
+                        </div>
+                    </ion-tab>
+
+                    <ion-tab-bar slot="bottom">
+                        <ion-tab-button tab="tab-home">
+                            <ion-icon name="musical-notes"></ion-icon>
+                            <ion-label>Browse</ion-label>
+                        </ion-tab-button>
+                       <ion-tab-button tab="tab-details">
+                            <ion-icon name="information-circle"></ion-icon>
+                            <ion-label>Info</ion-label>
+                        </ion-tab-button>
+                        <ion-tab-button tab="tab-player">
+                            <ion-icon name="play-circle"></ion-icon>
+                            <ion-label>Player</ion-label>
+                        </ion-tab-button>
+                        <ion-tab-button tab="tab-merch">
+                            <ion-icon name="cart"></ion-icon>
+                            <ion-label>Merch</ion-label>
+                        </ion-tab-button>
+                        <ion-tab-button tab="tab-favorites">
+                            <ion-icon name="star"></ion-icon>
+                            <ion-label>Stars</ion-label>
+                        </ion-tab-button>
+                    </ion-tab-bar>
+                </ion-tabs>
+            </ion-content>
+        </div>
+    </ion-app>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        const SONG_DATA = [
+            {
+                id: 1,
+                title: "Electric Dreams",
+                artist: "RevV Synth",
+                src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                art: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&h=400&fit=crop",
+                lyrics: "Voltage in the air tonight...\nChasing shadows in the neon light.\nCircuit heart and wire soul,\nLost within the main control.",
+                meta: { Genre: "Electronic", BPM: "124", Year: "2024" }
+            },
+            {
+                id: 2,
+                title: "Midnight Drive",
+                artist: "Night Walker",
+                src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+                art: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=400&h=400&fit=crop",
+                lyrics: "Empty streets and golden lines,\nPassing through the hands of time.\nThe engine hums a lonely tune.",
+                meta: { Genre: "Retrowave", BPM: "105", Year: "2023" }
+            },
+            {
+                id: 3,
+                title: "Cloud Nine",
+                artist: "Vapor Wave",
+                src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+                art: "https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=400&fit=crop",
+                lyrics: "Higher than the birds can fly,\nCotton candy in the sky.",
+                meta: { Genre: "Chill", BPM: "90", Year: "2024" }
+            }
+        ];
+
+        const MERCH_DATA = [
+            {
+                id: "m1",
+                name: "RevV Neon Hoodie",
+                price: "45.00",
+                img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop",
+                paypalUrl: "#"
+            },
+            {
+                id: "m2",
+                name: "Synthwave T-Shirt",
+                price: "25.00",
+                img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&h=400&fit=crop",
+                paypalUrl: "#"
+            },
+            {
+                id: "m3",
+                name: "Limited Edition Vinyl",
+                price: "32.00",
+                img: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=400&h=400&fit=crop",
+                paypalUrl: "#"
+            },
+            {
+                id: "m4",
+                name: "Studio Snapback",
+                price: "28.00",
+                img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&h=400&fit=crop",
+                paypalUrl: "#"
+            }
+        ];
+
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        let isLooping = true;
+        let isSeeking = false;
+        let favorites = JSON.parse(localStorage.getItem('revv_starred')) || [];
+
+        const audio = document.getElementById('audio-player');
+        const playIcon = document.getElementById('play-icon');
+        const tabsEl = document.getElementById('app-tabs');
+        const backBtn = document.getElementById('back-nav-btn');
+        const seekBar = document.getElementById('seek-bar');
+        const currentTimeText = document.getElementById('current-time');
+        const remainingTimeText = document.getElementById('remaining-time');
+
+        window.onload = () => {
+            renderSongList();
+            renderFavorites();
+            renderMerch();
+            initVisualizer();
+            setupAudioListeners();
+            setupTabListeners();
+            setupSeekListeners();
+        };
+
+        function setupTabListeners() {
+            tabsEl.addEventListener('ionTabsDidChange', (e) => {
+                backBtn.style.visibility = e.detail.tab === 'tab-home' ? 'hidden' : 'visible';
+                updatePlayerUI();
+            });
+        }
+
+        function setupSeekListeners() {
+            seekBar.addEventListener('ionInput', (ev) => {
+                isSeeking = true;
+                if (audio.duration) {
+                    const newTime = (ev.detail.value / 100) * audio.duration;
+                    currentTimeText.innerText = formatTime(newTime);
+                    remainingTimeText.innerText = "-" + formatTime(audio.duration - newTime);
+                }
+            });
+
+            seekBar.addEventListener('ionChange', (ev) => {
+                if (audio.duration) {
+                    audio.currentTime = (ev.detail.value / 100) * audio.duration;
+                }
+                isSeeking = false;
+            });
+        }
+
+        function setupAudioListeners() {
+            audio.onended = () => { 
+                if (isLooping) {
+                    nextSong(); 
+                } else { 
+                    isPlaying = false; 
+                    updatePlayerUI(); 
+                } 
+            };
+            
+            audio.ontimeupdate = () => {
+                if (!isSeeking && audio.duration) {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    seekBar.value = progress;
+                    currentTimeText.innerText = formatTime(audio.currentTime);
+                    remainingTimeText.innerText = "-" + formatTime(audio.duration - audio.currentTime);
+                }
+            };
+
+            audio.onplay = () => {
+                isPlaying = true;
+                updatePlayerUI();
+            };
+
+            audio.onpause = () => {
+                isPlaying = false;
+                updatePlayerUI();
+            };
+
+            audio.onloadedmetadata = () => {
+                if (!isSeeking) {
+                    seekBar.value = 0;
+                    currentTimeText.innerText = "0:00";
+                    remainingTimeText.innerText = "-" + formatTime(audio.duration);
+                }
+            };
+        }
+
+        function formatTime(s) {
+            if (isNaN(s) || s < 0) return "0:00";
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        function playSong(idx) {
+            // Reset UI for the new song immediately
+            resetPlayerUI();
+            
+            currentSongIndex = idx;
+            const song = SONG_DATA[idx];
+            
+            // Check if it's already the current src
+            if (audio.src !== song.src) {
+                audio.src = song.src;
+                audio.load(); // Force reset of duration/metadata
+            }
+            
+            audio.play().catch(e => console.log("Playback interaction required"));
+            updatePlayerUI();
+            tabsEl.select('tab-player');
+        }
+
+        function resetPlayerUI() {
+            seekBar.value = 0;
+            currentTimeText.innerText = "0:00";
+            remainingTimeText.innerText = "-0:00";
+        }
+
+        function togglePlay() {
+            if (!audio.src) { playSong(0); return; }
+            audio.paused ? audio.play() : audio.pause();
+        }
+
+        function nextSong() { playSong((currentSongIndex + 1) % SONG_DATA.length); }
+        function prevSong() { playSong((currentSongIndex - 1 + SONG_DATA.length) % SONG_DATA.length); }
+        
+        function toggleLoop() {
+            isLooping = !isLooping;
+            updatePlayerUI();
+        }
+
+        function toggleFavoriteInList(event, songId) {
+            event.stopPropagation();
+            toggleFavoriteAction(songId);
+        }
+
+        function toggleFavorite() {
+            const id = SONG_DATA[currentSongIndex].id;
+            toggleFavoriteAction(id);
+        }
+
+        function toggleFavoriteAction(id) {
+            favorites.includes(id) ? favorites = favorites.filter(f => f !== id) : favorites.push(id);
+            localStorage.setItem('revv_starred', JSON.stringify(favorites));
+            renderSongList();
+            renderFavorites();
+            updatePlayerUI();
+        }
+
+        function updatePlayerUI() {
+            const song = SONG_DATA[currentSongIndex];
+            if (!song) return;
+            document.getElementById('player-title').innerText = song.title;
+            document.getElementById('player-artist').innerText = song.artist;
+            document.getElementById('player-art').src = song.art;
+            document.getElementById('details-header').innerText = song.title;
+            document.getElementById('lyrics-content').innerText = song.lyrics || "Lyrics unavailable";
+            
+            playIcon.name = isPlaying ? 'pause' : 'play';
+            
+            const favBtn = document.getElementById('player-fav-btn');
+            const isFav = favorites.includes(song.id);
+            favBtn.innerHTML = `<ion-icon slot="icon-only" name="${isFav ? 'star' : 'star-outline'}"></ion-icon>`;
+            favBtn.style.color = isFav ? 'var(--revv-gold)' : 'var(--revv-white)';
+            
+            const loopBtn = document.getElementById('loop-btn');
+            loopBtn.style.color = isLooping ? 'var(--revv-blue-start)' : 'rgba(238,238,238,0.4)';
+
+            const metaBox = document.getElementById('metadata-container');
+            if (metaBox) {
+                metaBox.innerHTML = Object.entries(song.meta).map(([k,v]) => `<span class="metadata-badge">${k}: ${v}</span>`).join('');
+            }
+        }
+
+        function renderSongList() {
+            document.getElementById('song-list-container').innerHTML = SONG_DATA.map((s, i) => `
+                <ion-item button onclick="playSong(${i})">
+                    <ion-thumbnail slot="start"><img src="${s.art}"></ion-thumbnail>
+                    <ion-label><h2>${s.title}</h2><p>${s.artist}</p></ion-label>
+                    <ion-icon slot="end" name="${favorites.includes(s.id) ? 'star' : 'star-outline'}"
+                        class="star-fav"
+                        onclick="toggleFavoriteInList(event, ${s.id})">
+                    </ion-icon>
+                </ion-item>
+            `).join('');
+        }
+
+        function renderFavorites() {
+            const starred = SONG_DATA.filter(s => favorites.includes(s.id));
+            const container = document.getElementById('favorites-list-container');
+            if (starred.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 30px; opacity:0.5;"><ion-icon name="star-outline" style="font-size: 2rem;"></ion-icon><p>No favorites yet.</p></div>`;
+                return;
+            }
+            container.innerHTML = starred.map(s => `
+                <ion-item button onclick="playSong(${SONG_DATA.indexOf(s)})">
+                    <ion-thumbnail slot="start"><img src="${s.art}"></ion-thumbnail>
+                    <ion-label><h2>${s.title}</h2><p>${s.artist}</p></ion-label>
+                    <ion-icon slot="end" name="star"
+                        class="star-fav"
+                        onclick="toggleFavoriteInList(event, ${s.id})">
+                    </ion-icon>
+                </ion-item>
+            `).join('');
+        }
+
+        function renderMerch() {
+            const container = document.getElementById('merch-container');
+            container.innerHTML = MERCH_DATA.map(item => `
+                <div class="merch-card">
+                    <img src="${item.img}" class="merch-image" alt="${item.name}">
+                    <div class="merch-info">
+                        <div>
+                            <h3 class="merch-name">${item.name}</h3>
+                            <p class="merch-price">$${item.price}</p>
+                        </div>
+                        <ion-button class="paypal-btn" onclick="window.open('${item.paypalUrl}', '_blank')">
+                            Buy
+                        </ion-button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function initVisualizer() {
+            const container = document.getElementById('eq-container');
+            for (let i = 0; i < 9; i++) {
+                const b = document.createElement('div');
+                b.className = 'bar';
+                container.appendChild(b);
+            }
+            setInterval(() => {
+                const bars = document.querySelectorAll('.bar');
+                bars.forEach(b => {
+                    b.style.height = isPlaying ? (Math.random() * 32 + 6) + 'px' : '6px';
+                });
+            }, 100);
+        }
+
+        function goToTab(t) { tabsEl.select(t); closeMenu(); }
+        function closeMenu() { document.querySelector('ion-menu').close(); }
+    </script>
+</body>
+</html>
