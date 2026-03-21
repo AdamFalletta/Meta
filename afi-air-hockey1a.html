@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Air Hockey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #050505;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background: #0a0a0a;
+            cursor: none;
+            max-width: 100vw;
+            max-height: 80vh;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 2rem;
+            border: 2px solid #ffffff22;
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            min-width: 320px;
+        }
+
+        .color-option {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 3px solid transparent;
+            display: inline-block;
+            margin: 0 5px;
+        }
+
+        .color-option.selected {
+            border-color: white;
+            transform: scale(1.1);
+        }
+
+        #score-board {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            padding: 1rem;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="score-board">
+        <div id="cpu-score-label" style="color: #ff00ff;">CPU: <span id="cpu-score">0</span></div>
+        <div id="player-score-label" style="color: #00ffff;">YOU: <span id="player-score">0</span></div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="hockeyCanvas"></canvas>
+        
+        <div id="menu" class="ui-overlay">
+            <h1 class="text-4xl font-bold mb-2 tracking-tighter text-white">NEON HOCKEY</h1>
+            
+            <div class="mb-6">
+                <p class="mb-2 opacity-60 text-xs uppercase tracking-widest">Your Color</p>
+                <div id="player-colors" class="flex justify-center">
+                    <div class="color-option selected" style="background: #00ffff; box-shadow: 0 0 10px #00ffff;" onclick="selectColor('player', '#00ffff', this)"></div>
+                    <div class="color-option" style="background: #39ff14; box-shadow: 0 0 10px #39ff14;" onclick="selectColor('player', '#39ff14', this)"></div>
+                    <div class="color-option" style="background: #ffff00; box-shadow: 0 0 10px #ffff00;" onclick="selectColor('player', '#ffff00', this)"></div>
+                    <div class="color-option" style="background: #ff00ff; box-shadow: 0 0 10px #ff00ff;" onclick="selectColor('player', '#ff00ff', this)"></div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <p class="mb-2 opacity-60 text-xs uppercase tracking-widest">CPU Color</p>
+                <div id="cpu-colors" class="flex justify-center">
+                    <div class="color-option" style="background: #00ffff; box-shadow: 0 0 10px #00ffff;" onclick="selectColor('cpu', '#00ffff', this)"></div>
+                    <div class="color-option" style="background: #39ff14; box-shadow: 0 0 10px #39ff14;" onclick="selectColor('cpu', '#39ff14', this)"></div>
+                    <div class="color-option" style="background: #ffff00; box-shadow: 0 0 10px #ffff00;" onclick="selectColor('cpu', '#ffff00', this)"></div>
+                    <div class="color-option selected" style="background: #ff00ff; box-shadow: 0 0 10px #ff00ff;" onclick="selectColor('cpu', '#ff00ff', this)"></div>
+                </div>
+            </div>
+
+            <button class="w-full py-3 bg-white text-black font-bold rounded uppercase tracking-widest hover:bg-opacity-80 transition" onclick="startGame()">Start Game</button>
+        </div>
+
+        <div id="game-over" class="ui-overlay" style="display: none;">
+            <h2 id="win-message" class="text-3xl font-bold mb-4"></h2>
+            <button class="px-6 py-2 border-2 border-white rounded uppercase tracking-widest hover:bg-white hover:text-black transition" onclick="showMenu()">Main Menu</button>
+        </div>
+    </div>
+
+    <div class="mt-4 text-xs opacity-50 uppercase tracking-widest">
+        Mouse/Touch to Move • First to 7 Wins
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBlip(freq = 440, type = 'sine', duration = 0.1, vol = 0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // Positive Eb Major Arpeggio (Eb, G, Bb, Eb high)
+        function playVictoryArpeggio() {
+            const now = audioCtx.currentTime;
+            const freqs = [311.13, 392.00, 466.16, 622.25]; 
+            freqs.forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(f, now + (i * 0.15));
+                gain.gain.setValueAtTime(0, now + (i * 0.15));
+                gain.gain.linearRampToValueAtTime(0.15, now + (i * 0.15) + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + (i * 0.15) + 0.6);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + (i * 0.15));
+                osc.stop(now + (i * 0.15) + 0.7);
+            });
+        }
+
+        // Doomsday C Diminished Arpeggio (C, Eb, Gb, A/Bbb)
+        function playDefeatArpeggio() {
+            const now = audioCtx.currentTime;
+            const freqs = [261.63, 311.13, 369.99, 440.00]; 
+            freqs.forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(f, now + (i * 0.15));
+                gain.gain.setValueAtTime(0, now + (i * 0.15));
+                gain.gain.linearRampToValueAtTime(0.1, now + (i * 0.15) + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + (i * 0.15) + 0.8);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + (i * 0.15));
+                osc.stop(now + (i * 0.15) + 0.9);
+            });
+        }
+
+        // Bright Eb Major Triad for scoring
+        function playScoreTriad() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            const freqs = [311.13, 392.00, 466.16];
+            freqs.forEach((f) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 0.5);
+            });
+        }
+
+        // Standard goal sound for CPU score
+        function playCpuGoalSound() {
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(now + 0.3);
+        }
+
+        const canvas = document.getElementById('hockeyCanvas');
+        const ctx = canvas.getContext('2d');
+        const menu = document.getElementById('menu');
+        const gameOverDiv = document.getElementById('game-over');
+        const winMessage = document.getElementById('win-message');
+        const playerScoreEl = document.getElementById('player-score');
+        const cpuScoreEl = document.getElementById('cpu-score');
+
+        const WIDTH = 450;
+        const HEIGHT = 700;
+        const PADDLE_RADIUS = 25;
+        const PUCK_RADIUS = 15;
+        const GOAL_WIDTH = 160;
+
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
+
+        let gameState = 'MENU';
+        let playerScore = 0;
+        let cpuScore = 0;
+        
+        let puckStuckTimer = 0;
+        let lastPuckPos = { x: 0, y: 0 };
+
+        const player = { x: WIDTH / 2, y: HEIGHT - 100, color: '#00ffff' };
+        const cpu = { x: WIDTH / 2, y: 100, color: '#ff00ff', speed: 4.5 };
+        const puck = { x: WIDTH / 2, y: HEIGHT / 2, dx: 0, dy: 0, color: '#fff' };
+
+        function selectColor(target, color, el) {
+            const parent = el.parentElement;
+            [...parent.children].forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            if (target === 'player') {
+                player.color = color;
+                document.getElementById('player-score-label').style.color = color;
+            } else {
+                cpu.color = color;
+                document.getElementById('cpu-score-label').style.color = color;
+            }
+        }
+
+        let rect = canvas.getBoundingClientRect();
+        window.addEventListener('resize', () => { rect = canvas.getBoundingClientRect(); });
+
+        function handleInput(e) {
+            if (gameState !== 'PLAYING') return;
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            const mouseX = (clientX - rect.left) * (WIDTH / rect.width);
+            const mouseY = (clientY - rect.top) * (HEIGHT / rect.height);
+            player.x = Math.max(PADDLE_RADIUS, Math.min(WIDTH - PADDLE_RADIUS, mouseX));
+            player.y = Math.max(HEIGHT / 2 + PADDLE_RADIUS, Math.min(HEIGHT - PADDLE_RADIUS, mouseY));
+        }
+
+        canvas.addEventListener('mousemove', handleInput);
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleInput(e); }, { passive: false });
+
+        function showMenu() {
+            gameState = 'MENU';
+            menu.style.display = 'block';
+            gameOverDiv.style.display = 'none';
+        }
+
+        function startGame() {
+            playerScore = 0;
+            cpuScore = 0;
+            updateScoresUI();
+            resetPuck();
+            gameState = 'PLAYING';
+            menu.style.display = 'none';
+            gameOverDiv.style.display = 'none';
+            audioCtx.resume();
+            playBlip(600, 'square', 0.1);
+        }
+
+        function resetPuck() {
+            puck.x = WIDTH / 2;
+            puck.y = HEIGHT / 2;
+            puck.dx = (Math.random() - 0.5) * 6;
+            puck.dy = Math.random() > 0.5 ? 5 : -5;
+            puckStuckTimer = 0;
+        }
+
+        function updateScoresUI() {
+            playerScoreEl.innerText = playerScore;
+            cpuScoreEl.innerText = cpuScore;
+            
+            if (playerScore >= 7 || cpuScore >= 7) {
+                gameState = 'GAMEOVER';
+                gameOverDiv.style.display = 'block';
+                if (playerScore >= 7) {
+                    winMessage.innerText = "VICTORY";
+                    winMessage.style.color = player.color;
+                    playVictoryArpeggio();
+                } else {
+                    winMessage.innerText = "DEFEAT";
+                    winMessage.style.color = cpu.color;
+                    playDefeatArpeggio();
+                }
+            }
+        }
+
+        function drawCircle(x, y, radius, color, glow = false) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            if (glow) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = color;
+            }
+            ctx.fill();
+            ctx.closePath();
+            ctx.restore();
+        }
+
+        function drawTable() {
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(0, 0, WIDTH, HEIGHT);
+
+            ctx.beginPath();
+            ctx.moveTo(0, HEIGHT / 2);
+            ctx.lineTo(WIDTH, HEIGHT / 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(WIDTH / 2, HEIGHT / 2, 60, 0, Math.PI * 2);
+            ctx.stroke();
+
+            const goalThickness = 8;
+            
+            ctx.save();
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = cpu.color;
+            ctx.strokeStyle = cpu.color;
+            ctx.lineWidth = goalThickness;
+            ctx.beginPath();
+            ctx.moveTo((WIDTH - GOAL_WIDTH) / 2, goalThickness / 2);
+            ctx.lineTo((WIDTH + GOAL_WIDTH) / 2, goalThickness / 2);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.save();
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = player.color;
+            ctx.strokeStyle = player.color;
+            ctx.lineWidth = goalThickness;
+            ctx.beginPath();
+            ctx.moveTo((WIDTH - GOAL_WIDTH) / 2, HEIGHT - (goalThickness / 2));
+            ctx.lineTo((WIDTH + GOAL_WIDTH) / 2, HEIGHT - (goalThickness / 2));
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            const targetX = puck.y < HEIGHT / 2 ? puck.x : WIDTH / 2;
+            const diff = targetX - cpu.x;
+            cpu.x += Math.max(-cpu.speed, Math.min(cpu.speed, diff));
+            
+            const targetY = (puck.y < HEIGHT / 2 && puck.y > 50) ? puck.y - 40 : 80;
+            cpu.y += Math.max(-cpu.speed, Math.min(cpu.speed, targetY - cpu.y));
+            
+            cpu.y = Math.max(PADDLE_RADIUS, Math.min(HEIGHT/2 - PADDLE_RADIUS - 20, cpu.y));
+            cpu.x = Math.max(PADDLE_RADIUS, Math.min(WIDTH - PADDLE_RADIUS, cpu.x));
+
+            puck.x += puck.dx;
+            puck.y += puck.dy;
+
+            const movedDist = Math.hypot(puck.x - lastPuckPos.x, puck.y - lastPuckPos.y);
+            if (movedDist < 0.5) {
+                puckStuckTimer++;
+            } else {
+                puckStuckTimer = 0;
+            }
+            lastPuckPos = { x: puck.x, y: puck.y };
+
+            if (puckStuckTimer > 120) {
+                puck.dx = (Math.random() - 0.5) * 10;
+                puck.dy = (Math.random() - 0.5) * 10;
+                puckStuckTimer = 0;
+                if (puck.y < HEIGHT / 2) {
+                    cpu.speed = 10;
+                    setTimeout(() => cpu.speed = 4.5, 500);
+                }
+            }
+
+            if (puck.x + PUCK_RADIUS > WIDTH || puck.x - PUCK_RADIUS < 0) {
+                puck.dx *= -1;
+                puck.x = puck.x < WIDTH / 2 ? PUCK_RADIUS : WIDTH - PUCK_RADIUS;
+                playBlip(300, 'sine', 0.05, 0.05);
+            }
+
+            if (puck.y < 0) {
+                if (puck.x > (WIDTH - GOAL_WIDTH) / 2 && puck.x < (WIDTH + GOAL_WIDTH) / 2) {
+                    playerScore++;
+                    playScoreTriad();
+                    updateScoresUI();
+                    resetPuck();
+                } else {
+                    puck.dy *= -1;
+                    puck.y = PUCK_RADIUS;
+                    playBlip(300);
+                }
+            }
+            
+            if (puck.y > HEIGHT) {
+                if (puck.x > (WIDTH - GOAL_WIDTH) / 2 && puck.x < (WIDTH + GOAL_WIDTH) / 2) {
+                    cpuScore++;
+                    playCpuGoalSound(); // Restored scoring sound
+                    updateScoresUI();
+                    resetPuck();
+                } else {
+                    puck.dy *= -1;
+                    puck.y = HEIGHT - PUCK_RADIUS;
+                    playBlip(300);
+                }
+            }
+
+            handleCollision(player, 800);
+            handleCollision(cpu, 400);
+
+            puck.dx *= 0.992;
+            puck.dy *= 0.992;
+            
+            if (Math.hypot(puck.dx, puck.dy) < 0.2 && gameState === 'PLAYING') {
+                puck.dx += (Math.random() - 0.5) * 0.5;
+                puck.dy += (Math.random() - 0.5) * 0.5;
+            }
+        }
+
+        function handleCollision(paddle, soundFreq) {
+            const dist = Math.hypot(puck.x - paddle.x, puck.y - paddle.y);
+            if (dist < PADDLE_RADIUS + PUCK_RADIUS) {
+                const angle = Math.atan2(puck.y - paddle.y, puck.x - paddle.x);
+                const speed = Math.hypot(puck.dx, puck.dy) + 3;
+                puck.dx = Math.cos(angle) * Math.max(speed, 7);
+                puck.dy = Math.sin(angle) * Math.max(speed, 7);
+                
+                const overlap = PADDLE_RADIUS + PUCK_RADIUS - dist;
+                puck.x += Math.cos(angle) * overlap;
+                puck.y += Math.sin(angle) * overlap;
+                
+                playBlip(soundFreq, 'triangle', 0.1, 0.15);
+                puckStuckTimer = 0;
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+            drawTable();
+
+            if (gameState === 'PLAYING' || gameState === 'GAMEOVER') {
+                drawCircle(cpu.x, cpu.y, PADDLE_RADIUS, cpu.color, true);
+                drawCircle(player.x, player.y, PADDLE_RADIUS, player.color, true);
+                drawCircle(puck.x, puck.y, PUCK_RADIUS, puck.color, true);
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = () => {
+            rect = canvas.getBoundingClientRect();
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
