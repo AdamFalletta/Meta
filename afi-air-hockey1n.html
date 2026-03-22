@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Air Hockey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #040404;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background: #0a0a0a;
+            cursor: none;
+            max-width: 100vw;
+            max-height: 80vh;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.97);
+            padding: 1.5rem 2rem;
+            border: 2px solid #ffffff22;
+            border-radius: 1rem;
+            backdrop-filter: blur(20px);
+            z-index: 10;
+            width: 460px;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+            color: rgba(255, 255, 255, 0.6);
+            display: block;
+        }
+
+        .color-option {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 3px solid transparent;
+            display: inline-block;
+            margin: 0 4px;
+        }
+
+        .color-option.selected {
+            border-color: white;
+            transform: scale(1.15);
+        }
+
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 550px;
+            padding: 0.5rem 1rem;
+        }
+
+        .score-display {
+            font-size: 1.75rem;
+            font-weight: 900;
+        }
+
+        #timer-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mode-btn {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 4px;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: black;
+            border-color: white;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            margin: 1rem 0;
+            width: 100%;
+        }
+
+        .lb-grid {
+            display: grid;
+            grid-template-columns: 40px 80px 1fr 1fr 1fr 80px;
+            align-items: center;
+            text-align: center;
+        }
+
+        .lb-header {
+            font-size: 0.65rem;
+            font-weight: 900;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 8px;
+        }
+
+        .lb-row {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .color-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        #goal-flash {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            font-size: 6rem;
+            font-weight: 900;
+            font-style: italic;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 5;
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        #goal-flash.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div id="cpu-score-label" class="score-display" style="color: #ff00ff;">CPU: <span id="cpu-score">0</span></div>
+        <div class="flex flex-col items-center gap-2">
+            <div id="timer-display">00:00</div>
+            <button id="pause-btn" class="text-xs uppercase font-bold opacity-50 hover:opacity-100" onclick="togglePause()">Pause</button>
+        </div>
+        <div id="player-score-label" class="score-display" style="color: #ffffff;">YOU: <span id="player-score">0</span></div>
+    </div>
+
+    <div id="game-container">
+        <div id="goal-flash">GOAL!</div>
+        <canvas id="hockeyCanvas"></canvas>
+        
+        <!-- Main Menu -->
+        <div id="menu" class="ui-overlay">
+            <h1 class="text-3xl font-black mt-2 mb-4 tracking-tighter text-white italic">NEON HOCKEY</h1>
+            
+            <div class="mb-4">
+                <span class="section-label">Game Mode</span>
+                <div class="flex">
+                    <button id="btn-1v1" class="mode-btn active" onclick="setMode('1v1')">Classic 1v1</button>
+                    <button id="btn-2v2" class="mode-btn" onclick="setMode('2v2')">Team 2v2</button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <span class="section-label">Your Color</span>
+                <div class="flex justify-center">
+                    <div class="color-option selected" style="background: #ffffff; box-shadow: 0 0 10px #ffffff;" onclick="selectColor('player', '#ffffff', this)"></div>
+                    <div class="color-option" style="background: #00ffff; box-shadow: 0 0 10px #00ffff;" onclick="selectColor('player', '#00ffff', this)"></div>
+                    <div class="color-option" style="background: #ff00ff; box-shadow: 0 0 10px #ff00ff;" onclick="selectColor('player', '#ff00ff', this)"></div>
+                    <div class="color-option" style="background: #a855f7; box-shadow: 0 0 10px #a855f7;" onclick="selectColor('player', '#a855f7', this)"></div>
+                    <div class="color-option" style="background: #39ff14; box-shadow: 0 0 10px #39ff14;" onclick="selectColor('player', '#39ff14', this)"></div>
+                    <div class="color-option" style="background: #ffd700; box-shadow: 0 0 10px #ffd700;" onclick="selectColor('player', '#ffd700', this)"></div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <span class="section-label">CPU Color</span>
+                <div class="flex justify-center">
+                    <div class="color-option" style="background: #ffffff; box-shadow: 0 0 10px #ffffff;" onclick="selectColor('cpu', '#ffffff', this)"></div>
+                    <div class="color-option" style="background: #00ffff; box-shadow: 0 0 10px #00ffff;" onclick="selectColor('cpu', '#00ffff', this)"></div>
+                    <div class="color-option selected" style="background: #ff00ff; box-shadow: 0 0 10px #ff00ff;" onclick="selectColor('cpu', '#ff00ff', this)"></div>
+                    <div class="color-option" style="background: #a855f7; box-shadow: 0 0 10px #a855f7;" onclick="selectColor('cpu', '#a855f7', this)"></div>
+                    <div class="color-option" style="background: #39ff14; box-shadow: 0 0 10px #39ff14;" onclick="selectColor('cpu', '#39ff14', this)"></div>
+                    <div class="color-option" style="background: #ffd700; box-shadow: 0 0 10px #ffd700;" onclick="selectColor('cpu', '#ffd700', this)"></div>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <span class="section-label">Puck Color</span>
+                <div class="flex justify-center">
+                    <div class="color-option selected" style="background: #ffffff; box-shadow: 0 0 10px #ffffff;" onclick="selectColor('puck', '#ffffff', this)"></div>
+                    <div class="color-option" style="background: #00ffff; box-shadow: 0 0 10px #00ffff;" onclick="selectColor('puck', '#00ffff', this)"></div>
+                    <div class="color-option" style="background: #ff00ff; box-shadow: 0 0 10px #ff00ff;" onclick="selectColor('puck', '#ff00ff', this)"></div>
+                    <div class="color-option" style="background: #a855f7; box-shadow: 0 0 10px #a855f7;" onclick="selectColor('puck', '#a855f7', this)"></div>
+                    <div class="color-option" style="background: #39ff14; box-shadow: 0 0 10px #39ff14;" onclick="selectColor('puck', '#39ff14', this)"></div>
+                    <div class="color-option" style="background: #ffd700; box-shadow: 0 0 10px #ffd700;" onclick="selectColor('puck', '#ffd700', this)"></div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <button class="w-full py-4 mb-3 bg-white text-black font-black rounded-lg uppercase tracking-widest hover:scale-105 active:scale-95 transition-transform text-base" onclick="startGame()">Start Game</button>
+            <button class="w-full py-3 border border-white/20 text-white/70 font-bold rounded-lg uppercase tracking-widest hover:bg-white/5 transition-all text-sm" onclick="showLeaderboard()">Leaderboard</button>
+        </div>
+
+        <div id="leaderboard-modal" class="ui-overlay" style="display: none;">
+            <h2 class="text-2xl font-black mb-4 italic">FASTEST WINS</h2>
+            <div class="flex mb-6 gap-2">
+                <button id="lb-tab-1v1" class="mode-btn active" onclick="switchLeaderboardTab('1v1')">1v1</button>
+                <button id="lb-tab-2v2" class="mode-btn" onclick="switchLeaderboardTab('2v2')">2v2</button>
+            </div>
+            <div class="lb-grid lb-header">
+                <div>#</div>
+                <div style="text-align: left;">Name</div>
+                <div>Player</div>
+                <div>CPU</div>
+                <div>Puck</div>
+                <div style="text-align: right;">Time</div>
+            </div>
+            <div id="leaderboard-list" class="min-h-[220px] mb-6"></div>
+            <button class="w-full py-4 border border-white/30 text-white font-bold rounded-lg uppercase tracking-widest hover:bg-white/10 transition-colors" onclick="showMenu()">Back to Menu</button>
+        </div>
+
+        <div id="initials-modal" class="ui-overlay" style="display: none;">
+            <h2 class="text-2xl font-black mb-2 italic">NEW RECORD!</h2>
+            <p class="text-white/60 text-sm mb-4">Top 5 for <span id="mode-type"></span></p>
+            <input type="text" id="initials-input" maxlength="3" class="w-32 bg-white/10 border border-white/30 text-center text-3xl font-black py-2 mb-6 uppercase outline-none focus:border-white tracking-widest" placeholder="---">
+            <button class="w-full py-4 bg-white text-black font-black rounded-lg uppercase tracking-widest" onclick="saveHighScore()">Save Record</button>
+        </div>
+
+        <div id="pause-menu" class="ui-overlay" style="display: none;">
+            <h2 class="text-3xl font-black mb-8 italic">GAME PAUSED</h2>
+            <button class="w-full py-4 bg-white text-black font-black rounded-lg uppercase tracking-widest hover:scale-105 active:scale-95 transition-transform mb-4" onclick="togglePause()">Resume</button>
+            <button class="w-full py-4 border border-white/30 text-white font-bold rounded-lg uppercase tracking-widest hover:bg-white/10 transition-colors" onclick="showMenu()">Quit to Menu</button>
+        </div>
+
+        <div id="game-over" class="ui-overlay" style="display: none;">
+            <h2 id="win-message" class="text-4xl font-black mb-2 italic"></h2>
+            <p id="final-time" class="mb-6 text-white/60 font-mono"></p>
+            <button class="w-full py-4 bg-white text-black font-black rounded-lg uppercase tracking-widest hover:scale-105 transition-transform" onclick="checkHighScore()">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO ENGINE ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBlip(freq = 440, type = 'sine', duration = 0.1, vol = 0.1, delay = 0) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const startTime = audioCtx.currentTime + delay;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(vol, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(startTime); osc.stop(startTime + duration);
+        }
+
+        // GOAL: Crowd Cheer
+        function playCrowdCheer() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const duration = 1.2;
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'lowpass';
+            noiseFilter.frequency.setValueAtTime(600, audioCtx.currentTime);
+            noiseFilter.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + duration);
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
+            noise.start();
+            playBlip(311.13, 'triangle', 0.6, 0.08); // Eb3 tone
+        }
+
+        // GOAL: Negative Pulse
+        function playNegativeSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(180, now);
+            osc.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(now + 0.6);
+        }
+
+        // WIN: Eb Major Arpeggio
+        function playVictoryArpeggio() {
+            const notes = [311.13, 392.00, 466.16, 622.25]; // Eb4, G4, Bb4, Eb5
+            notes.forEach((freq, i) => {
+                playBlip(freq, 'sine', 0.8, 0.1, i * 0.15);
+            });
+        }
+
+        // LOSS: Diminished Sound
+        function playDefeatChord() {
+            const now = audioCtx.currentTime;
+            // Dissonant diminished triad: C, Eb, Gb
+            const notes = [130.81, 155.56, 185.00]; 
+            notes.forEach(freq => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.linearRampToValueAtTime(freq * 0.8, now + 1.5);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(now + 1.5);
+            });
+        }
+
+        // --- GAME ENGINE ---
+        const particles = [];
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = (Math.random() - 0.5) * 14;
+                this.speedY = (Math.random() - 0.5) * 14;
+                this.life = 1.0; this.decay = Math.random() * 0.02 + 0.012;
+            }
+            update() { this.x += this.speedX; this.y += this.speedY; this.life -= this.decay; }
+            draw(ctx) {
+                ctx.save(); ctx.globalAlpha = this.life; ctx.shadowBlur = 15; ctx.shadowColor = this.color; 
+                ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+            }
+        }
+
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 45; i++) particles.push(new Particle(x, y, color));
+        }
+
+        const canvas = document.getElementById('hockeyCanvas');
+        const ctx = canvas.getContext('2d');
+        const menu = document.getElementById('menu'), pauseMenu = document.getElementById('pause-menu');
+        const leaderboardModal = document.getElementById('leaderboard-modal'), gameOverDiv = document.getElementById('game-over');
+        const winMessage = document.getElementById('win-message'), finalTimeEl = document.getElementById('final-time');
+        const playerScoreEl = document.getElementById('player-score'), cpuScoreEl = document.getElementById('cpu-score');
+        const timerEl = document.getElementById('timer-display'), pauseBtn = document.getElementById('pause-btn');
+        const goalFlash = document.getElementById('goal-flash'), gameContainer = document.getElementById('game-container');
+        const initialsModal = document.getElementById('initials-modal');
+
+        const WIDTH = 450, HEIGHT = 700, PADDLE_RADIUS = 25, PUCK_RADIUS = 15, GOAL_WIDTH = 160, CREASE_SIZE = 120, WALL_THICKNESS = 10, MAX_PUCK_SPEED = 25;
+        canvas.width = WIDTH; canvas.height = HEIGHT;
+
+        let gameState = 'MENU', gameMode = '1v1', playerScore = 0, cpuScore = 0, gameTime = 0, lastTime = 0, shakeAmount = 0;
+        let borderPulseTimer = 0, borderPulseColor = '#222', persistentWinnerColor = null;
+
+        let leaderboards = {
+            '1v1': JSON.parse(localStorage.getItem('hockey_1v1_v8')) || [],
+            '2v2': JSON.parse(localStorage.getItem('hockey_2v2_v8')) || []
+        };
+
+        const player = { team: 'player', x: WIDTH / 2, y: HEIGHT - 100, dx: 0, dy: 0, color: '#ffffff', collisionCooldown: 0 };
+        const teammate = { team: 'player', x: WIDTH / 2, y: HEIGHT - 60, dx: 0, dy: 0, color: '#ffffff', speed: 6.5, role: 'defender', collisionCooldown: 0 };
+        const cpu1 = { team: 'cpu', x: WIDTH / 2, y: 150, dx: 0, dy: 0, color: '#ff00ff', speed: 8.5, role: 'attacker', collisionCooldown: 0 };
+        const cpu2 = { team: 'cpu', x: WIDTH / 2, y: 60, dx: 0, dy: 0, color: '#ff00ff', speed: 6.0, role: 'defender', collisionCooldown: 0 };
+        const puck = { x: WIDTH / 2, y: HEIGHT / 2, dx: 0, dy: 0, color: '#ffffff', trail: [], energy: 0 };
+
+        function setMode(mode) {
+            gameMode = mode;
+            document.getElementById('btn-1v1').classList.toggle('active', mode === '1v1');
+            document.getElementById('btn-2v2').classList.toggle('active', mode === '2v2');
+        }
+
+        function triggerFlash(color) {
+            goalFlash.style.color = color; goalFlash.classList.add('active'); shakeAmount = 15;
+            borderPulseColor = color; borderPulseTimer = 180; 
+            setTimeout(() => goalFlash.classList.remove('active'), 800);
+        }
+
+        function selectColor(target, color, el) {
+            [...el.parentElement.children].forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            if (target === 'player') { player.color = teammate.color = color; document.getElementById('player-score-label').style.color = color; }
+            else if (target === 'cpu') { cpu1.color = cpu2.color = color; document.getElementById('cpu-score-label').style.color = color; }
+            else if (target === 'puck') { puck.color = color; }
+        }
+
+        let rect = canvas.getBoundingClientRect();
+        window.addEventListener('resize', () => rect = canvas.getBoundingClientRect());
+
+        function handleInput(e) {
+            if (gameState !== 'PLAYING') return;
+            let cx, cy;
+            if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+            else { cx = e.clientX; cy = e.clientY; }
+            const mouseX = (cx - rect.left) * (WIDTH / rect.width);
+            const mouseY = (cy - rect.top) * (HEIGHT / rect.height);
+            player.dx = mouseX - player.x; player.dy = mouseY - player.y;
+            player.x = Math.max(PADDLE_RADIUS + WALL_THICKNESS, Math.min(WIDTH - PADDLE_RADIUS - WALL_THICKNESS, mouseX));
+            player.y = Math.max(HEIGHT / 2 + PADDLE_RADIUS, Math.min(HEIGHT - PADDLE_RADIUS - WALL_THICKNESS, mouseY));
+        }
+
+        canvas.addEventListener('mousemove', handleInput);
+        canvas.addEventListener('touchstart', (e) => { if (audioCtx.state === 'suspended') audioCtx.resume(); }, {passive: true});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleInput(e); }, { passive: false });
+
+        function togglePause() {
+            if (gameState === 'PLAYING') { gameState = 'PAUSED'; pauseMenu.style.display = 'block'; pauseBtn.innerText = 'Resume'; }
+            else if (gameState === 'PAUSED') { gameState = 'PLAYING'; pauseMenu.style.display = 'none'; pauseBtn.innerText = 'Pause'; lastTime = performance.now(); }
+        }
+
+        function showLeaderboard() {
+            gameState = 'LEADERBOARD'; menu.style.display = 'none'; leaderboardModal.style.display = 'block';
+            switchLeaderboardTab(gameMode);
+        }
+
+        function switchLeaderboardTab(mode) {
+            document.getElementById('lb-tab-1v1').classList.toggle('active', mode === '1v1');
+            document.getElementById('lb-tab-2v2').classList.toggle('active', mode === '2v2');
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+            if (leaderboards[mode].length === 0) {
+                list.innerHTML = '<div class="text-white/20 text-center py-12 italic text-sm">No records yet</div>';
+            } else {
+                leaderboards[mode].forEach((entry, i) => {
+                    const row = document.createElement('div');
+                    row.className = 'lb-grid lb-row';
+                    row.innerHTML = `
+                        <div class="text-white/30 text-xs">#${i+1}</div>
+                        <div style="text-align: left;" class="font-black text-white text-sm tracking-widest">${entry.initials}</div>
+                        <div class="color-cell"><div class="color-dot" style="color: ${entry.colors.player}; background: ${entry.colors.player}"></div></div>
+                        <div class="color-cell"><div class="color-dot" style="color: ${entry.colors.cpu}; background: ${entry.colors.cpu}"></div></div>
+                        <div class="color-cell"><div class="color-dot" style="color: ${entry.colors.puck}; background: ${entry.colors.puck}"></div></div>
+                        <div style="text-align: right;" class="text-white/80 font-mono text-xs">${formatTime(entry.time)}</div>
+                    `;
+                    list.appendChild(row);
+                });
+            }
+        }
+
+        function checkHighScore() {
+            gameOverDiv.style.display = 'none';
+            const lb = leaderboards[gameMode];
+            if (playerScore >= 7 && (lb.length < 5 || gameTime < lb[lb.length - 1].time)) {
+                initialsModal.style.display = 'block'; document.getElementById('mode-type').innerText = gameMode;
+                const input = document.getElementById('initials-input'); input.value = ''; setTimeout(() => input.focus(), 100);
+            } else { showMenu(); }
+        }
+
+        function saveHighScore() {
+            const input = document.getElementById('initials-input').value.trim();
+            const initials = input.toUpperCase().slice(0, 3) || 'YOU';
+            const lb = leaderboards[gameMode];
+            lb.push({ initials, time: gameTime, colors: { player: player.color, cpu: cpu1.color, puck: puck.color } });
+            lb.sort((a, b) => a.time - b.time); if (lb.length > 5) lb.pop();
+            localStorage.setItem(`hockey_${gameMode}_v8`, JSON.stringify(lb));
+            initialsModal.style.display = 'none'; showLeaderboard();
+        }
+
+        function showMenu() {
+            gameState = 'MENU'; menu.style.display = 'block'; pauseMenu.style.display = 'none';
+            gameOverDiv.style.display = 'none'; initialsModal.style.display = 'none';
+            leaderboardModal.style.display = 'none'; pauseBtn.style.display = 'none';
+            timerEl.style.display = 'none'; persistentWinnerColor = null;
+        }
+
+        function startGame() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            playerScore = cpuScore = gameTime = borderPulseTimer = 0; persistentWinnerColor = null;
+            updateScoresUI(); updateTimerUI(); resetPuck(); resetPositions();
+            gameState = 'PLAYING'; menu.style.display = 'none'; pauseMenu.style.display = 'none';
+            gameOverDiv.style.display = 'none'; initialsModal.style.display = 'none';
+            leaderboardModal.style.display = 'none'; pauseBtn.style.display = 'block';
+            timerEl.style.display = 'block'; pauseBtn.innerText = 'Pause';
+            particles.length = 0; lastTime = performance.now();
+            playBlip(622.25, 'sine', 0.1); // Eb5 start blip
+        }
+
+        function resetPositions() {
+            if (gameMode === '2v2') {
+                cpu1.x = WIDTH / 2; cpu1.y = 150; cpu2.x = WIDTH / 2; cpu2.y = 60;
+                teammate.x = WIDTH / 2; teammate.y = HEIGHT - 60;
+            } else { cpu1.x = WIDTH / 2; cpu1.y = 100; }
+        }
+
+        function resetPuck() {
+            puck.x = WIDTH / 2; puck.y = HEIGHT / 2;
+            puck.dx = (Math.random() - 0.5) * 12; puck.dy = Math.random() > 0.5 ? 8 : -8;
+            puck.trail = []; puck.energy = 0;
+        }
+
+        function updateScoresUI() {
+            playerScoreEl.innerText = playerScore; cpuScoreEl.innerText = cpuScore;
+            if (playerScore >= 7 || cpuScore >= 7) {
+                gameState = 'GAMEOVER'; gameOverDiv.style.display = 'block'; pauseBtn.style.display = 'none';
+                winMessage.innerText = playerScore >= 7 ? "VICTORY" : "DEFEAT";
+                winMessage.style.color = playerScore >= 7 ? player.color : cpu1.color;
+                persistentWinnerColor = playerScore >= 7 ? player.color : cpu1.color;
+                finalTimeEl.innerText = "Match Duration: " + formatTime(gameTime);
+                
+                // FINAL GAME SOUNDS
+                if (playerScore >= 7) playVictoryArpeggio();
+                else playDefeatChord();
+            }
+        }
+
+        function updateTimerUI() { timerEl.innerText = formatTime(gameTime); }
+        function formatTime(ms) {
+            const totalSecs = Math.floor(ms / 1000);
+            return `${Math.floor(totalSecs / 60).toString().padStart(2, '0')}:${(totalSecs % 60).toString().padStart(2, '0')}`;
+        }
+
+        function hexToRgba(hex, alpha) {
+            let r = 0, g = 0, b = 0;
+            if (hex.length == 4) { r = parseInt(hex[1] + hex[1], 16); g = parseInt(hex[2] + hex[2], 16); b = parseInt(hex[3] + hex[3], 16); }
+            else if (hex.length == 7) { r = parseInt(hex.substring(1, 3), 16); g = parseInt(hex.substring(3, 5), 16); b = parseInt(hex.substring(5, 7), 16); }
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+
+        function drawCircle(x, y, radius, color, glow = false) {
+            ctx.save(); ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fillStyle = color;
+            if (glow) { ctx.shadowBlur = 20; ctx.shadowColor = color; }
+            ctx.fill(); ctx.restore();
+        }
+
+        function drawTable() {
+            let borderColor = '#222'; let lineWidth = WALL_THICKNESS;
+            if (persistentWinnerColor) {
+                const pulseIntensity = (Math.sin(Date.now() / 150) + 1) / 2;
+                borderColor = hexToRgba(persistentWinnerColor, 0.4 + (pulseIntensity * 0.6));
+                lineWidth = WALL_THICKNESS + (pulseIntensity * 6);
+            } else if (borderPulseTimer > 0) {
+                const pulseIntensity = (Math.sin(borderPulseTimer * 1.5) + 1) / 2;
+                borderColor = hexToRgba(borderPulseColor, 0.4 + (pulseIntensity * 0.6));
+                lineWidth = WALL_THICKNESS + (pulseIntensity * 4); borderPulseTimer--;
+            }
+            ctx.save(); ctx.strokeStyle = borderColor; ctx.lineWidth = lineWidth; 
+            if (borderPulseTimer > 0 || persistentWinnerColor) { ctx.shadowBlur = 15; ctx.shadowColor = persistentWinnerColor || borderPulseColor; }
+            ctx.strokeRect(0, 0, WIDTH, HEIGHT); ctx.restore();
+            ctx.fillStyle = hexToRgba(cpu1.color, 0.05); ctx.fillRect(WIDTH/2-100, 0, 200, CREASE_SIZE);
+            ctx.fillStyle = hexToRgba(player.color, 0.05); ctx.fillRect(WIDTH/2-100, HEIGHT-CREASE_SIZE, 200, CREASE_SIZE);
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, HEIGHT/2); ctx.lineTo(WIDTH, HEIGHT/2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(WIDTH/2, HEIGHT/2, 60, 0, Math.PI*2); ctx.stroke();
+            const gt = 8;
+            ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = cpu1.color; ctx.strokeStyle = cpu1.color; ctx.lineWidth = gt;
+            ctx.beginPath(); ctx.moveTo((WIDTH-GOAL_WIDTH)/2, gt/2); ctx.lineTo((WIDTH+GOAL_WIDTH)/2, gt/2); ctx.stroke();
+            ctx.shadowColor = player.color; ctx.strokeStyle = player.color;
+            ctx.beginPath(); ctx.moveTo((WIDTH-GOAL_WIDTH)/2, HEIGHT-gt/2); ctx.lineTo((WIDTH+GOAL_WIDTH)/2, HEIGHT-gt/2); ctx.stroke();
+            ctx.restore();
+        }
+
+        function moveAI(paddle, isCpuTeam, role) {
+            let minX = PADDLE_RADIUS + WALL_THICKNESS + 2, maxX = WIDTH - PADDLE_RADIUS - WALL_THICKNESS - 2, minY, maxY;
+            if (role === 'defender') {
+                const horizontalBuffer = 75; minX += horizontalBuffer; maxX -= horizontalBuffer;
+                if (isCpuTeam) { minY = PADDLE_RADIUS + WALL_THICKNESS + 5; maxY = CREASE_SIZE - 15; }
+                else { minY = HEIGHT - CREASE_SIZE + 15; maxY = HEIGHT - PADDLE_RADIUS - WALL_THICKNESS - 5; }
+            } else {
+                if (isCpuTeam) { minY = PADDLE_RADIUS + WALL_THICKNESS; maxY = HEIGHT / 2 - PADDLE_RADIUS - 10; }
+                else { minY = HEIGHT / 2 + PADDLE_RADIUS + 10; maxY = HEIGHT - PADDLE_RADIUS - WALL_THICKNESS; }
+            }
+            let tx = puck.x, ty = puck.y;
+            if (role === 'attacker') {
+                const isPuckInHalf = isCpuTeam ? puck.y < HEIGHT / 2 : puck.y > HEIGHT / 2;
+                if (!isPuckInHalf) ty = isCpuTeam ? HEIGHT / 3 : (2 * HEIGHT) / 3;
+            } else {
+                const trackRange = 250; const isPuckClose = isCpuTeam ? (puck.y < trackRange) : (puck.y > HEIGHT - trackRange);
+                if (!isPuckClose) { tx = WIDTH / 2; ty = isCpuTeam ? (PADDLE_RADIUS + WALL_THICKNESS + 15) : (HEIGHT - PADDLE_RADIUS - WALL_THICKNESS - 15); }
+                else { if (isCpuTeam) ty = Math.min(maxY, puck.y); else ty = Math.max(minY, puck.y); }
+            }
+            const dist = Math.hypot(tx - paddle.x, ty - paddle.y);
+            if (dist > 2) {
+                const angle = Math.atan2(ty - paddle.y, tx - paddle.x);
+                const currentSpeed = role === 'defender' ? paddle.speed * 0.75 : paddle.speed;
+                paddle.dx = Math.cos(angle) * currentSpeed; paddle.dy = Math.sin(angle) * currentSpeed;
+                paddle.x += paddle.dx; paddle.y += paddle.dy;
+            }
+            paddle.x = Math.max(minX, Math.min(maxX, paddle.x)); paddle.y = Math.max(minY, Math.min(maxY, paddle.y));
+        }
+
+        function handleCollision(paddle, soundFreq) {
+            if (paddle.collisionCooldown > 0) { paddle.collisionCooldown--; return; }
+            const dist = Math.hypot(puck.x - paddle.x, puck.y - paddle.y);
+            const minDist = PADDLE_RADIUS + PUCK_RADIUS;
+            if (dist < minDist) {
+                const angle = Math.atan2(puck.y - paddle.y, puck.x - paddle.x);
+                const impactDx = paddle.dx * 2.2; const impactDy = paddle.dy * 2.2;
+                let newSpeed = Math.hypot(puck.dx + impactDx, puck.dy + impactDy);
+                if (newSpeed < 12) newSpeed = 12; if (newSpeed > MAX_PUCK_SPEED) newSpeed = MAX_PUCK_SPEED;
+                puck.dx = Math.cos(angle) * newSpeed; puck.dy = Math.sin(angle) * newSpeed; puck.energy = 1.0; 
+                puck.x += Math.cos(angle) * (minDist - dist + 2); puck.y += Math.sin(angle) * (minDist - dist + 2);
+                paddle.collisionCooldown = 5; playBlip(soundFreq, 'triangle', 0.1, 0.15);
+            }
+        }
+
+        function update(currentTime) {
+            if (gameState === 'PLAYING') { gameTime += currentTime - lastTime; updateTimerUI(); }
+            lastTime = currentTime;
+            if (shakeAmount > 0) {
+                const sx = (Math.random() - 0.5) * shakeAmount, sy = (Math.random() - 0.5) * shakeAmount;
+                gameContainer.style.transform = `translate(${sx}px, ${sy}px)`;
+                shakeAmount *= 0.9; if (shakeAmount < 0.5) { shakeAmount = 0; gameContainer.style.transform = 'translate(0,0)'; }
+            }
+            for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); if (particles[i].life <= 0) particles.splice(i, 1); }
+            if (gameState !== 'PLAYING') return;
+            puck.trail.push({ x: puck.x, y: puck.y, energy: puck.energy });
+            if (puck.trail.length > 15) puck.trail.shift(); puck.energy = Math.max(0, puck.energy - 0.015);
+            moveAI(cpu1, true, 'attacker'); if (gameMode === '2v2') { moveAI(cpu2, true, 'defender'); moveAI(teammate, false, 'defender'); }
+            puck.x += puck.dx; puck.y += puck.dy;
+            const sideLimit = PUCK_RADIUS + WALL_THICKNESS / 2 + 1;
+            if (puck.x < sideLimit) { puck.x = sideLimit; puck.dx *= -0.9; puck.energy = Math.min(1, puck.energy + 0.3); playBlip(200, 'sine', 0.05, 0.02); }
+            else if (puck.x > WIDTH - sideLimit) { puck.x = WIDTH - sideLimit; puck.dx *= -0.9; puck.energy = Math.min(1, puck.energy + 0.3); playBlip(200, 'sine', 0.05, 0.02); }
+            const isInGoalX = puck.x > (WIDTH - GOAL_WIDTH) / 2 && puck.x < (WIDTH + GOAL_WIDTH) / 2;
+            
+            if (puck.y < sideLimit) {
+                if (isInGoalX) { 
+                    playerScore++; createExplosion(puck.x, 0, player.color); triggerFlash(player.color); 
+                    playCrowdCheer(); resetPuck(); updateScoresUI(); return; 
+                } else { puck.y = sideLimit; puck.dy *= -0.9; puck.energy = Math.min(1, puck.energy + 0.3); }
+            } else if (puck.y > HEIGHT - sideLimit) {
+                if (isInGoalX) { 
+                    cpuScore++; createExplosion(puck.x, HEIGHT, cpu1.color); triggerFlash(cpu1.color); 
+                    playNegativeSound(); resetPuck(); updateScoresUI(); return; 
+                } else { puck.y = HEIGHT - sideLimit; puck.dy *= -0.9; puck.energy = Math.min(1, puck.energy + 0.3); }
+            }
+            handleCollision(player, 800); handleCollision(cpu1, 400);
+            if (gameMode === '2v2') { handleCollision(cpu2, 400); handleCollision(teammate, 800); }
+            puck.dx *= 0.995; puck.dy *= 0.995;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, WIDTH, HEIGHT); drawTable();
+            if (['PLAYING', 'PAUSED', 'GAMEOVER'].includes(gameState)) {
+                if (puck.trail.length > 1) {
+                    ctx.save(); ctx.lineCap = 'round';
+                    for (let i = 1; i < puck.trail.length; i++) {
+                        const ratio = i / puck.trail.length; const pt = puck.trail[i]; if (pt.energy <= 0.01) continue;
+                        ctx.beginPath(); ctx.moveTo(puck.trail[i-1].x, puck.trail[i-1].y); ctx.lineTo(pt.x, pt.y);
+                        ctx.strokeStyle = hexToRgba(puck.color, 0.5 * ratio * pt.energy); ctx.lineWidth = PUCK_RADIUS * 1.8 * ratio;
+                        ctx.shadowBlur = 15 * pt.energy; ctx.shadowColor = puck.color; ctx.stroke();
+                    } ctx.restore();
+                }
+            }
+            particles.forEach(p => p.draw(ctx));
+            if (gameState !== 'MENU' && gameState !== 'LEADERBOARD') {
+                drawCircle(cpu1.x, cpu1.y, PADDLE_RADIUS, cpu1.color, true); drawCircle(player.x, player.y, PADDLE_RADIUS, player.color, true);
+                if (gameMode === '2v2') { drawCircle(cpu2.x, cpu2.y, PADDLE_RADIUS, cpu2.color, true); drawCircle(teammate.x, teammate.y, PADDLE_RADIUS, teammate.color, true); }
+                drawCircle(puck.x, puck.y, PUCK_RADIUS, puck.color, true);
+            }
+        }
+
+        function gameLoop(time) { update(time); draw(); requestAnimationFrame(gameLoop); }
+        window.onload = () => { rect = canvas.getBoundingClientRect(); requestAnimationFrame(gameLoop); };
+    </script>
+</body>
+</html>
