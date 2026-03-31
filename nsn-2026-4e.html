@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSN | Pro Baseball Broadcast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --apple-bg: #000000;
+            --glass: rgba(20, 20, 22, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --accent: #007AFF;
+            --inning-gold: #facc15;
+            --live-red: #bb2124;
+            --off-white: #eeeeee;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: var(--apple-bg);
+            background-image: radial-gradient(circle at top right, #001a33 0%, #000000 70%);
+            color: var(--off-white);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            font-size: 20px;
+        }
+
+        .broadcast-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+        }
+
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            padding: 24px;
+            gap: 24px;
+            overflow: hidden;
+        }
+
+        .video-viewport {
+            flex: 1;
+            position: relative;
+            border-radius: 28px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+        }
+
+        /* YouTube Container for scaling */
+        .video-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: auto;
+            filter: contrast(1.25);
+        }
+
+        .video-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            /* Scale slightly to hide black bars if aspect ratio differs */
+            transform: scale(1.01);
+        }
+
+        .sidebar {
+            width: 420px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar.hidden {
+            width: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(80px);
+            margin-left: -24px;
+        }
+
+        .bottom-marquee {
+            height: 100px;
+            margin: 0 24px 24px 24px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            transition: all 0.4s ease;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .bottom-marquee.hidden {
+            height: 0;
+            margin-bottom: 0;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .logo-section {
+            padding: 0 35px;
+            font-weight: 900;
+            font-size: 2.5rem;
+            letter-spacing: -1.5px;
+            background: rgba(0,0,0,0.3);
+            color: var(--off-white);
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .logo-section span { color: var(--accent); }
+
+        .score-ticker {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            position: relative;
+        }
+
+        @keyframes fadeInOutOnly {
+            0% { opacity: 0; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes statSlideIn {
+            0% { opacity: 0; transform: translateX(10px); }
+            10% { opacity: 1; transform: translateX(0); }
+            90% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(-10px); }
+        }
+
+        .ticker-group {
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            display: none;
+            width: calc(100% - 40px);
+            height: 100%;
+            align-items: center;
+        }
+
+        .ticker-group.active {
+            display: flex;
+            animation: fadeInOutOnly 8.5s ease-in-out forwards;
+        }
+
+        .fixed-score {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-right: 30px;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            white-space: nowrap;
+        }
+
+        .status-container {
+            width: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .team-badge {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            min-width: 85px;
+            text-align: center;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .rotating-stats {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            margin-left: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-line {
+            position: absolute;
+            width: 100%;
+            display: none;
+            align-items: center;
+            opacity: 0;
+            white-space: nowrap;
+        }
+
+        .stat-line.active {
+            display: flex;
+            animation: statSlideIn 4s ease-in-out forwards;
+        }
+
+        .stat-label { font-size: 1.3rem; color: #aaa; font-weight: 800; margin-right: 8px; }
+        .stat-val { font-size: 1.3rem; color: var(--off-white); font-weight: 700; margin-right: 25px; }
+        .stat-sub { font-size: 1.0rem; color: #888; font-weight: 600; margin-left: 6px; }
+
+        .score-winner { color: var(--inning-gold); font-size: 2.2rem; }
+        .score-neutral { color: var(--off-white); font-size: 2.2rem; }
+        
+        .live-badge {
+            background: var(--live-red);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(187, 33, 36, 0.4);
+        }
+
+        .clock-display {
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            opacity: 0.8;
+            min-width: 130px;
+        }
+
+        .bases-wrapper { display: flex; justify-content: center; align-items: center; width: 100%; height: 70px; position: relative; }
+        .bases-container { position: relative; width: 90px; height: 60px; }
+        .base-diamond { position: absolute; width: 30px; height: 30px; border: 2.5px solid rgba(255,255,255,0.25); transform: rotate(45deg); transition: all 0.3s ease; }
+        .base-first { top: 24px; right: 4px; }
+        .base-second { top: -1px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+        .base-third { top: 24px; left: 4px; }
+        .base-occupied { background-color: var(--inning-gold); border-color: var(--inning-gold); box-shadow: 0 0 15px rgba(250, 204, 21, 0.6); }
+
+        .pitch-count-badge {
+            background-color: rgba(0,0,0,0.5) !important;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .strike-zone {
+            position: absolute;
+            width: 48%;
+            height: 52%;
+            top: 24%;
+            left: 26%;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .pitch-dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+        }
+
+        /* HUD elements need higher z-index to stay above YouTube */
+        .hud-overlay {
+            position: absolute;
+            pointer-events: none;
+            z-index: 20;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        .hud-overlay > div {
+            pointer-events: auto;
+        }
+
+        /* Typography sizing overrides */
+        .text-3xl { font-size: 3rem !important; }
+        .text-xl { font-size: 1.8rem !important; }
+        .gap-10 {gap: .75rem !important;}
+        .py-6 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important;}
+        .px-8 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+        .mb-2 { margin-bottom: 0.2rem !important; }
+    </style>
+</head>
+<body>
+
+    <div class="broadcast-container" id="app">
+        <div class="main-layout">
+            <div class="video-viewport" id="viewport">
+                <!-- YouTube Embed Integration -->
+                <div class="video-wrapper">
+             <iframe width="560" height="315" src="https://www.youtube.com/embed/BCFRT2LSmzs?si=CtUDcqFCXnKzuLd8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                
+                <!-- HUD Content Overlay -->
+                <div class="hud-overlay">
+                    <div class="absolute bottom-8 right-8 flex flex-col items-end gap-3">
+                        <div class="glass px-8 py-6 flex items-center gap-10">
+                            <div class="flex flex-col items-center">
+                                <div class="text-sm font-black opacity-70 tracking-widest mb-1">NYY</div>
+                                <div class="text-3xl font-black leading-none">4</div>
+                            </div>
+
+                            <div class="flex flex-col items-center min-w-[100px]">
+                                <div class="bases-wrapper">
+                                    <div class="bases-container">
+                                        <div class="base-diamond base-second"></div> 
+                                        <div class="base-diamond base-third base-occupied"></div> 
+                                        <div class="base-diamond base-first"></div> 
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <i class="fas fa-caret-up text-sm" style="color: var(--inning-gold);"></i>
+                                    <span class="text-sm font-black leading-none">7</span>
+                                </div>
+                                <div class="flex gap-4 mb-2">
+                                    <div class="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(0,122,255,0.9)]"></div>
+                                    <div class="w-3.5 h-3.5 rounded-full bg-white/20"></div>
+                                </div>
+                                <div class="text-xl font-black tracking-[0.2em] leading-none">2-1</div>
+                            </div>
+
+                            <div class="flex flex-col items-center">
+                                <div class="text-sm font-black opacity-70 tracking-widest mb-1">LAD</div>
+                                <div class="text-3xl font-black leading-none">2</div>
+                            </div>
+                        </div>
+                        
+                        <div class="glass px-6 py-3 flex items-center justify-between w-full">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-black uppercase tracking-wide">Ohtani</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-mono pitch-count-badge">P: 92</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar" id="sidebar">
+                <div class="glass p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-800 p-0.5 shadow-lg">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aaron" alt="Player" class="w-full h-full rounded-full bg-slate-900">
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg leading-tight">Aaron Judge</h3>
+                            <p class="text-xs opacity-50 font-bold uppercase tracking-wider">NYY | Center Field</p>
+                        </div>
+                        <div class="ml-auto">
+                            <span class="text-xl font-black text-blue-500">99</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 py-3 border-y border-white/10 text-center">
+                        <span class="text-xs opacity-50 uppercase tracking-widest font-black mr-2">At Bat</span>
+                        <span class="text-sm font-bold text-blue-400">Today: 0-2 w/ 2 SO's</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-white/5 p-3 rounded-xl border border-white/5"><div class="text-[10px] opacity-40 font-black uppercase">AVG</div><div class="font-black text-lg">.284</div></div>
+                        <div class="bg-white/5 p-3 rounded-xl border border-white/5"><div class="text-[10px] opacity-40 font-black uppercase">HR</div><div class="font-black text-lg">32</div></div>
+                        <div class="bg-white/5 p-3 rounded-xl border border-white/5"><div class="text-[10px] opacity-40 font-black uppercase">RBI</div><div class="font-black text-lg">84</div></div>
+                    </div>
+                </div>
+
+                <div class="glass p-6 flex-1 flex flex-col">
+                    <h3 class="text-[11px] font-black mb-4 uppercase opacity-40 tracking-widest">Live Pitch Tracker</h3>
+                    <div class="flex-1 bg-black/40 rounded-2xl relative border border-white/10 overflow-hidden shadow-inner">
+                        <div class="strike-zone"></div>
+                        <div class="pitch-dot bg-red-500 shadow-[0_0_12px_red]" style="top:45%; left:52%"></div>
+                        <div class="pitch-dot bg-red-500 shadow-[0_0_12px_red]" style="top:55%; left:42%"></div>
+                        <div class="pitch-dot bg-red-500 shadow-[0_0_12px_red]" style="top:65%; left:65%"></div>
+                        <div class="pitch-dot bg-green-500 shadow-[0_0_12px_green]" style="top:85%; left:48%"></div>
+                        <div class="pitch-dot bg-green-500 shadow-[0_0_12px_green]" style="top:30%; left:20%"></div>
+                        <div class="pitch-dot bg-red-500 shadow-[0_0_12px_red]" style="top:25%; left:35%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-marquee glass" id="marquee">
+            <div class="logo-section">NSN<span>.</span></div>
+            <div class="score-ticker" id="ticker-container"></div>
+            <div class="px-8 flex items-center gap-8 bg-black/20 h-full">
+                <span class="live-badge">Live</span>
+                <span id="clock" class="clock-display">12:00 PM</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const teamColors = {
+            "NYM": "#002D72", "ATL": "#CE1141",
+            "HOU": "#002D62", "SEA": "#005C5C",
+            "CHC": "#0E3386", "CIN": "#C6011F",
+            "BOS": "#BD3039", "TOR": "#134A8E",
+            "NYY": "#132448", "LAD": "#005A9C"
+        };
+
+        const scores = [
+            { 
+                home: "NYM", homeScore: 3, away: "ATL", awayScore: 5, status: "FINAL",
+                pitching: { W: "Fried", WStats: "(11-7, 3.20)", L: "Manaea", LStats: "(12-6, 3.35)", S: "Iglesias", SStats: "(31, 1.22)" },
+                batting: { player: "Ozuna (ATL)", line: "2-4, HR, 3 RBI", season: ".302 AVG, 37 HR" }
+            },
+            { 
+                home: "HOU", homeScore: 1, away: "SEA", awayScore: 0, status: "BOT 4",
+                pitching: { SP: "Verlander (HOU)", SPStats: "4.0 IP, 2 K, 0 ER", Opp: "Kirby (SEA)", OppStats: "3.2 IP, 4 K, 1 ER" },
+                batting: { player: "Alvarez (HOU)", line: "1-1, BB", season: ".308 AVG, 34 HR" }
+            },
+            { 
+                home: "CHC", homeScore: 8, away: "CIN", awayScore: 7, status: "TOP 9",
+                pitching: { SP: "Steele (CHC)", SPStats: "6.1 IP, 8 K, 4 ER", Opp: "Greene (CIN)", OppStats: "5.0 IP, 6 K, 5 ER" },
+                batting: { player: "Happ (CHC)", line: "3-5, 2 HR, 5 RBI", season: ".244 AVG, 25 HR" }
+            },
+            { 
+                home: "BOS", homeScore: 4, away: "TOR", awayScore: 1, status: "FINAL",
+                pitching: { W: "Houck", WStats: "(14-9, 3.12)", L: "Bassitt", LStats: "(10-14, 4.16)", S: "Jansen", SStats: "(28, 3.45)" },
+                batting: { player: "Devers (BOS)", line: "2-3, HR, 2 RBI", season: ".275 AVG, 28 HR" }
+            }
+        ];
+
+        let currentGroupIndex = 0;
+
+        function getStatusHtml(status) {
+            if (status === "FINAL") {
+                return `<span class="text-2xl font-black" style="color: var(--inning-gold)">F</span>`;
+            }
+            const parts = status.split(' ');
+            const side = parts[0];
+            const num = parts[1];
+            const arrowClass = side === 'TOP' ? 'fa-caret-up' : 'fa-caret-down';
+            return `
+                <div class="flex items-center gap-1.5 leading-none">
+                    <i class="fas ${arrowClass} text-xs" style="color: var(--inning-gold)"></i>
+                    <span class="text-lg font-black">${num}</span>
+                </div>
+            `;
+        }
+
+        function initTicker() {
+            const container = document.getElementById('ticker-container');
+            container.innerHTML = ''; 
+            scores.forEach((score, idx) => {
+                const group = document.createElement('div');
+                group.className = 'ticker-group';
+                group.id = `game-${idx}`;
+
+                const awayColor = teamColors[score.away] || '#333';
+                const homeColor = teamColors[score.home] || '#333';
+
+                const fixedScore = `
+                    <div class="fixed-score">
+                        <div class="status-container">
+                            ${getStatusHtml(score.status)}
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="team-badge" style="background-color: ${awayColor}">${score.away}</span>
+                            <span class="${score.awayScore > score.homeScore ? 'score-winner' : 'score-neutral'} font-black">${score.awayScore}</span>
+                        </div>
+                        <span class="opacity-20 mx-1 font-bold">@</span>
+                        <div class="flex items-center gap-4">
+                            <span class="team-badge" style="background-color: ${homeColor}">${score.home}</span>
+                            <span class="${score.homeScore > score.awayScore ? 'score-winner' : 'score-neutral'} font-black">${score.homeScore}</span>
+                        </div>
+                    </div>
+                `;
+
+                let pitchHtml = "";
+                if (score.status === 'FINAL') {
+                    pitchHtml = `
+                        <span class="stat-label">W:</span><span class="stat-val">${score.pitching.W}<span class="stat-sub">${score.pitching.WStats}</span></span>
+                        <span class="stat-label">L:</span><span class="stat-val">${score.pitching.L}<span class="stat-sub">${score.pitching.LStats}</span></span>
+                        ${score.pitching.S ? `<span class="stat-label">S:</span><span class="stat-val">${score.pitching.S}<span class="stat-sub">${score.pitching.SStats}</span></span>` : ''}
+                    `;
+                } else {
+                    pitchHtml = `
+                        <span class="stat-label">P:</span><span class="stat-val">${score.pitching.SP}<span class="stat-sub">${score.pitching.SPStats}</span></span>
+                        <span class="stat-label">VS:</span><span class="stat-val">${score.pitching.Opp}<span class="stat-sub">${score.pitching.OppStats}</span></span>
+                    `;
+                }
+
+                group.innerHTML = `
+                    ${fixedScore}
+                    <div class="rotating-stats">
+                        <div class="stat-line" data-index="0">${pitchHtml}</div>
+                        <div class="stat-line" data-index="1">
+                            <span class="stat-label">BAT:</span><span class="stat-val">${score.batting.player}</span>
+                            <span class="stat-label">LINE:</span><span class="stat-val">${score.batting.line}</span>
+                            <span class="stat-label">SEASON:</span><span class="stat-val">${score.batting.season}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(group);
+            });
+            startCycle();
+        }
+
+        function startCycle() {
+            const groups = document.querySelectorAll('.ticker-group');
+            if (groups.length === 0) return;
+            
+            function showNextGame() {
+                groups.forEach(g => {
+                    g.classList.remove('active');
+                    g.style.display = 'none';
+                    g.querySelectorAll('.stat-line').forEach(l => {
+                        l.classList.remove('active');
+                        l.style.display = 'none';
+                    });
+                });
+
+                const activeGroup = groups[currentGroupIndex];
+                if (!activeGroup) return;
+
+                activeGroup.style.display = 'flex';
+                activeGroup.classList.add('active');
+                
+                const stats = activeGroup.querySelectorAll('.stat-line');
+                stats[0].style.display = 'flex';
+                stats[0].classList.add('active');
+
+                setTimeout(() => {
+                    stats[0].classList.remove('active');
+                    setTimeout(() => {
+                        stats[0].style.display = 'none';
+                        stats[1].style.display = 'flex';
+                        stats[1].classList.add('active');
+                    }, 500); 
+                }, 4000);
+
+                setTimeout(() => {
+                    currentGroupIndex = (currentGroupIndex + 1) % scores.length;
+                    showNextGame();
+                }, 8500);
+            }
+            
+            showNextGame();
+        }
+
+        function updateClock() {
+            const clockEl = document.getElementById('clock');
+            if (clockEl) {
+                clockEl.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+
+        window.onload = () => {
+            initTicker();
+            updateClock();
+            setInterval(updateClock, 1000);
+        };
+
+        window.addEventListener('keydown', (e) => {
+            if(e.key.toLowerCase() === 'h') {
+                document.getElementById('sidebar').classList.toggle('hidden');
+                document.getElementById('marquee').classList.toggle('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
