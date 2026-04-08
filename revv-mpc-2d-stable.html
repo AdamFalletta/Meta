@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon MPC 808 Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
+        :root {
+            --neon-purple: #9d00ff;
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff00de;
+            --neon-green: #39ff14;
+            --bg-dark: #050508;
+            --panel-bg: rgba(18, 18, 28, 0.9);
+            --knob-size: 32px;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            user-select: none;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .mpc-container {
+            width: 95%;
+            max-width: 1100px;
+            background: var(--panel-bg);
+            border-radius: 32px;
+            padding: 1.5rem;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(157, 0, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            margin: 1rem;
+        }
+
+        /* Pad Styles */
+        .pad {
+            aspect-ratio: 1/1;
+            background: linear-gradient(145deg, #1e1e2e, #0f0f1a);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.1s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.6);
+        }
+
+        .pad::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--pad-color);
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1;
+        }
+
+        .pad.active {
+            transform: scale(0.94);
+            box-shadow: 0 0 40px var(--pad-color);
+            border-color: var(--pad-color);
+        }
+
+        .pad.active::after { opacity: 0.4; }
+
+        .pad-emoji {
+            position: absolute;
+            font-size: 3.5rem;
+            opacity: 0.12;
+            mix-blend-mode: overlay;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .pad-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; z-index: 2; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .pad-note { font-size: 0.6rem; opacity: 0.5; position: absolute; top: 10px; left: 10px; z-index: 2; }
+
+        .display-screen {
+            background: #000;
+            border-radius: 20px;
+            border: 1px solid #222;
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0,0,0,1);
+        }
+
+        canvas { width: 100%; height: 100%; }
+
+        /* General Sliders */
+        .knob-container { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+        .knob-label { font-size: 0.55rem; font-weight: 800; color: #555; text-transform: uppercase; letter-spacing: 0.05em; min-height: 12px; }
+        
+        input[type=range] {
+            appearance: none;
+            width: 100%;
+            background: #222;
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .glow-text-purple { text-shadow: 0 0 15px var(--neon-purple); color: var(--neon-purple); }
+
+        .pad-kick { --pad-color: var(--neon-purple); }
+        .pad-snare { --pad-color: var(--neon-pink); }
+        .pad-hat { --pad-color: var(--neon-blue); }
+        .pad-fx { --pad-color: var(--neon-green); }
+
+        /* EQ UI Styles */
+        .eq-panel {
+            background: rgba(0,0,0,0.85);
+            border-radius: 20px;
+            padding: 1.5rem 1rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .eq-panel.visible { display: block; }
+
+        .eq-visualizer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 80px;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .eq-knob-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .eq-band-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Custom Twist Knob CSS */
+        .twist-knob {
+            width: var(--knob-size);
+            height: var(--knob-size);
+            background: radial-gradient(circle at 30% 30%, #444, #111);
+            border-radius: 50%;
+            position: relative;
+            cursor: ns-resize;
+            border: 2px solid #222;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+            transform: rotate(0deg);
+            transition: transform 0.05s linear;
+        }
+
+        .twist-knob::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 8px;
+            background: var(--neon-blue);
+            border-radius: 2px;
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        .eq-fft-bar {
+            width: 80%;
+            background: linear-gradient(to top, var(--neon-purple), var(--neon-blue));
+            opacity: 0.4;
+            border-radius: 1px 1px 0 0;
+            transition: height 0.05s linear;
+        }
+
+        .eq-freq-label {
+            font-size: 7px;
+            color: #555;
+            margin-top: 8px;
+            font-family: 'Orbitron';
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .toggle-btn {
+            background: #1a1a2e;
+            color: #666;
+            font-size: 10px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            color: var(--neon-blue);
+            border-color: var(--neon-blue);
+            background: rgba(0, 242, 255, 0.05);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading" class="loading-overlay">
+        <h1 class="orbitron text-5xl glow-text-purple mb-6 tracking-tighter">NEON MPC</h1>
+        <button onclick="initAudio()" class="px-10 py-4 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold transition-all transform hover:scale-105 shadow-2xl shadow-purple-600/40">
+            ENTER STUDIO
+        </button>
+        <p class="mt-6 text-gray-600 text-sm orbitron tracking-widest">C3 ROOT MAPPING</p>
+    </div>
+
+    <div class="mpc-container">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+            <div class="text-center md:text-left">
+                <h1 class="orbitron text-3xl font-bold tracking-tighter glow-text-purple">MPC-808</h1>
+                <p class="text-[9px] uppercase tracking-[0.3em] text-gray-500 font-black">Reactive Synthesis Engine</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-4 bg-black/40 p-4 rounded-2xl border border-white/5 w-full md:w-auto">
+                <div class="knob-container">
+                    <span class="knob-label">Drive</span>
+                    <input type="range" id="master-drive" min="0" max="2" step="0.01" value="0.8">
+                </div>
+                <div class="knob-container">
+                    <span class="knob-label">Space</span>
+                    <input type="range" id="master-reverb" min="0" max="1" step="0.01" value="0.4">
+                </div>
+                <div class="knob-container">
+                    <span class="knob-label" id="tuning-label">Root: C</span>
+                    <input type="range" id="root-key" min="0" max="11" step="1" value="0">
+                </div>
+                <div class="knob-container ml-2">
+                    <button id="toggle-eq" class="toggle-btn orbitron">EQ STACK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualizer Screen -->
+        <div class="display-screen mb-6">
+            <canvas id="visualizer"></canvas>
+            <div class="absolute top-4 left-6 flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                    <span id="status-text" class="text-[10px] orbitron text-red-500">ENGINE LIVE</span>
+                </div>
+                <div id="midi-status" class="text-[9px] orbitron text-gray-600">MIDI READY (C3)</div>
+            </div>
+            <div id="current-pad-info" class="absolute bottom-4 right-6 text-right">
+                <div id="pad-name-display" class="orbitron text-lg text-white opacity-20">---</div>
+            </div>
+        </div>
+
+        <!-- Pad Grid -->
+        <div class="grid grid-cols-4 gap-3 md:gap-4">
+            <div class="pad pad-fx" data-pad="12" data-key="1"><span class="pad-emoji">🌪️</span><span class="pad-note">G#4</span><span class="pad-label">Rumble</span></div>
+            <div class="pad pad-fx" data-pad="13" data-key="2"><span class="pad-emoji">🥁</span><span class="pad-note">A4</span><span class="pad-label">Tom 808</span></div>
+            <div class="pad pad-fx" data-pad="14" data-key="3"><span class="pad-emoji">🔔</span><span class="pad-note">A#4</span><span class="pad-label">Cowbell</span></div>
+            <div class="pad pad-fx" data-pad="15" data-key="4"><span class="pad-emoji">💥</span><span class="pad-note">B4</span><span class="pad-label">Rimshot</span></div>
+
+            <div class="pad pad-hat" data-pad="8" data-key="q"><span class="pad-emoji">💿</span><span class="pad-note">E4</span><span class="pad-label">Vinyl</span></div>
+            <div class="pad pad-hat" data-pad="9" data-key="w"><span class="pad-emoji">🐍</span><span class="pad-note">F4</span><span class="pad-label">Trap</span></div>
+            <div class="pad pad-hat" data-pad="10" data-key="e"><span class="pad-emoji">🌊</span><span class="pad-note">F#4</span><span class="pad-label">Open</span></div>
+            <div class="pad pad-hat" data-pad="11" data-key="r"><span class="pad-emoji">✨</span><span class="pad-note">G4</span><span class="pad-label">Closed</span></div>
+
+            <div class="pad pad-snare" data-pad="4" data-key="a"><span class="pad-emoji">📼</span><span class="pad-note">C4</span><span class="pad-label">Tape</span></div>
+            <div class="pad pad-snare" data-pad="5" data-key="s"><span class="pad-emoji">⛓️</span><span class="pad-note">C#4</span><span class="pad-label">Metal</span></div>
+            <div class="pad pad-snare" data-pad="6" data-key="d"><span class="pad-emoji">👏</span><span class="pad-note">D4</span><span class="pad-label">Clap</span></div>
+            <div class="pad pad-snare" data-pad="7" data-key="f"><span class="pad-emoji">⚡</span><span class="pad-note">D#4</span><span class="pad-label">808 Snr</span></div>
+
+            <div class="pad pad-kick" data-pad="0" data-key="z"><span class="pad-emoji">🪐</span><span class="pad-note">C3</span><span class="pad-label">Mega 808</span></div>
+            <div class="pad pad-kick" data-pad="1" data-key="x"><span class="pad-emoji">💣</span><span class="pad-note">C#3</span><span class="pad-label">Boom</span></div>
+            <div class="pad pad-kick" data-pad="2" data-key="c"><span class="pad-emoji">📻</span><span class="pad-note">D3</span><span class="pad-label">Dirty</span></div>
+            <div class="pad pad-kick" data-pad="3" data-key="v"><span class="pad-emoji">🔪</span><span class="pad-note">D#3</span><span class="pad-label">Soft</span></div>
+        </div>
+
+        <!-- 20-Band EQ Panel -->
+        <div id="eq-panel" class="eq-panel">
+            <div class="eq-visualizer-row" id="eq-visualizer-container">
+                <!-- Visualizer bars injected here -->
+            </div>
+            <div class="eq-knob-row" id="eq-knob-container">
+                <!-- Knobs injected here -->
+            </div>
+            <div class="text-center mt-6">
+                <span class="orbitron text-[8px] text-gray-600 tracking-[0.5em]">20-BAND TACTILE ANALYZER & FREQUENCY SHAPER</span>
+            </div>
+        </div>
+
+        <!-- Master Controls -->
+        <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-8 border-t border-white/5 pt-6">
+            <div class="text-center w-full sm:w-48">
+                <span class="block text-[10px] uppercase text-gray-500 mb-3 tracking-widest font-bold">Gain Level</span>
+                <input type="range" id="master-vol" min="0" max="1.5" step="0.01" value="0.9">
+            </div>
+            <div class="text-center w-full sm:w-48">
+                <span class="block text-[10px] uppercase text-gray-500 mb-3 tracking-widest font-bold">Global Pitch</span>
+                <input type="range" id="global-pitch" min="0.5" max="1.5" step="0.01" value="1.0">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx, masterGain, analyser, reverbNode, distortionNode, masterBus;
+        let eqBands = [];
+        let fftDataArray;
+        const pads = document.querySelectorAll('.pad');
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let globalRootOffset = 0;
+        let pitchMultiplier = 1.0;
+
+        const keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const frequencies = [
+            32, 45, 63, 90, 125, 180, 250, 350, 500, 700, 
+            1000, 1400, 2000, 2800, 4000, 5600, 8000, 11000, 16000, 20000
+        ];
+
+        async function initAudio() {
+            if (audioCtx) return;
+            
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterBus = audioCtx.createGain();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.9;
+
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 1024;
+            fftDataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            reverbNode = await createReverb();
+            const revGain = audioCtx.createGain();
+            revGain.gain.value = 0.4;
+
+            distortionNode = audioCtx.createWaveShaper();
+            distortionNode.curve = makeDistortionCurve(60);
+
+            let lastNode = masterBus;
+            frequencies.forEach(f => {
+                const band = audioCtx.createBiquadFilter();
+                band.type = 'peaking';
+                band.frequency.value = f;
+                band.Q.value = 1.2;
+                band.gain.value = 0;
+                lastNode.connect(band);
+                lastNode = band;
+                eqBands.push(band);
+            });
+
+            lastNode.connect(distortionNode);
+            masterBus.connect(reverbNode);
+            reverbNode.connect(revGain);
+            revGain.connect(distortionNode);
+            
+            distortionNode.connect(analyser);
+            analyser.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            document.getElementById('loading').style.display = 'none';
+            initEQUI();
+            startVisualizer();
+            setupControls(revGain);
+            setupMIDI();
+        }
+
+        function initEQUI() {
+            const vizContainer = document.getElementById('eq-visualizer-container');
+            const knobContainer = document.getElementById('eq-knob-container');
+            
+            frequencies.forEach((f, i) => {
+                // Analyzer Column
+                const vizCol = document.createElement('div');
+                vizCol.className = 'eq-band-column';
+                vizCol.innerHTML = `<div class="eq-fft-bar" id="fft-bar-${i}" style="height: 0px"></div>`;
+                vizContainer.appendChild(vizCol);
+
+                // Knob Column
+                const knobCol = document.createElement('div');
+                knobCol.className = 'eq-band-column';
+                const labelText = f >= 1000 ? (f/1000).toFixed(1).replace('.0','') + 'k' : f;
+                
+                knobCol.innerHTML = `
+                    <div class="twist-knob" data-index="${i}"></div>
+                    <span class="eq-freq-label">${labelText}</span>
+                `;
+                
+                const knob = knobCol.querySelector('.twist-knob');
+                setupKnobInteractivity(knob, i);
+                knobContainer.appendChild(knobCol);
+            });
+
+            document.getElementById('toggle-eq').onclick = (e) => {
+                const panel = document.getElementById('eq-panel');
+                panel.classList.toggle('visible');
+                e.target.classList.toggle('active');
+            };
+        }
+
+        function setupKnobInteractivity(knob, index) {
+            let startY, startVal;
+            const sensitivity = 0.5; // Drag sensitivity
+
+            const handleMove = (e) => {
+                const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+                const delta = (startY - y) * sensitivity;
+                let newVal = Math.max(-12, Math.min(12, startVal + delta));
+                
+                // Update Audio
+                eqBands[index].gain.setTargetAtTime(newVal, audioCtx.currentTime, 0.05);
+                
+                // Update Visual Rotation (-135 to 135 degrees)
+                const rotation = (newVal / 12) * 135;
+                knob.style.transform = `rotate(${rotation}deg)`;
+            };
+
+            const handleEnd = () => {
+                window.removeEventListener('mousemove', handleMove);
+                window.removeEventListener('mouseup', handleEnd);
+                window.removeEventListener('touchmove', handleMove);
+                window.removeEventListener('touchend', handleEnd);
+            };
+
+            const handleStart = (e) => {
+                startY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+                startVal = eqBands[index].gain.value;
+                window.addEventListener('mousemove', handleMove);
+                window.addEventListener('mouseup', handleEnd);
+                window.addEventListener('touchmove', handleMove);
+                window.addEventListener('touchend', handleEnd);
+            };
+
+            knob.addEventListener('mousedown', handleStart);
+            knob.addEventListener('touchstart', handleStart);
+        }
+
+        function setupControls(revGain) {
+            document.getElementById('master-vol').oninput = (e) => masterGain.gain.value = e.target.value;
+            document.getElementById('master-drive').oninput = (e) => distortionNode.curve = makeDistortionCurve(e.target.value * 80);
+            document.getElementById('master-reverb').oninput = (e) => revGain.gain.value = e.target.value;
+            document.getElementById('global-pitch').oninput = (e) => pitchMultiplier = parseFloat(e.target.value);
+            
+            const rootSlider = document.getElementById('root-key');
+            const tuningLabel = document.getElementById('tuning-label');
+            rootSlider.oninput = (e) => {
+                globalRootOffset = parseInt(e.target.value);
+                tuningLabel.innerText = `Root: ${keys[globalRootOffset]}`;
+            };
+        }
+
+        function getFreq(base) { 
+            return base * Math.pow(2, globalRootOffset / 12) * pitchMultiplier; 
+        }
+
+        const synthEngines = {
+            0: (t) => mega808(t, 45), 1: (t) => kick(t, 120, 0.45, 45, false, 0.3),
+            2: (t) => kick(t, 140, 0.5, 40, true, 0.5), 3: (t) => kick(t, 100, 0.3, 35, false, 0.1),
+            4: (t) => snare(t, 0.3, 1200, 0.3), 5: (t) => snare(t, 0.1, 3000, 0.6),
+            6: (t) => clap(t), 7: (t) => snare(t, 0.25, 1800, 0.2),
+            8: (t) => hat(t, 0.2, 6000, true), 9: (t) => hat(t, 0.04, 9000),
+            10: (t) => hat(t, 0.5, 5500), 11: (t) => hat(t, 0.08, 8000),
+            12: (t) => rumble(t), 13: (t) => tom(t, 110), 14: (t) => cowbell(t), 15: (t) => rimshot(t)
+        };
+
+        function mega808(t, f) {
+            const tuned = getFreq(f);
+            const o = audioCtx.createOscillator(); const s = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.frequency.setValueAtTime(tuned*2, t); o.frequency.exponentialRampToValueAtTime(tuned, t+0.1);
+            s.frequency.setValueAtTime(tuned, t); s.frequency.exponentialRampToValueAtTime(tuned*0.5, t+0.8);
+            g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t+0.005); g.gain.exponentialRampToValueAtTime(0.001, t+1.2);
+            o.connect(g); s.connect(g); g.connect(masterBus);
+            o.start(t); s.start(t); o.stop(t+1.2); s.stop(t+1.2);
+            createBurst(60, 'var(--neon-purple)', true);
+        }
+
+        function kick(t, f, d, ef, tp, cl) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.frequency.setValueAtTime(getFreq(f), t); o.frequency.exponentialRampToValueAtTime(getFreq(ef), t+d);
+            o.type = tp ? 'triangle' : 'sine';
+            g.gain.setValueAtTime(1, t); g.gain.exponentialRampToValueAtTime(0.001, t+d);
+            o.connect(g); g.connect(masterBus); o.start(t); o.stop(t+d);
+            createBurst(30, 'white');
+        }
+
+        function snare(t, d, f, nL) {
+            const noise = audioCtx.createBufferSource();
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * d, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = getFreq(f);
+            const g = audioCtx.createGain(); g.gain.setValueAtTime(nL, t); g.gain.exponentialRampToValueAtTime(0.01, t+d);
+            noise.connect(filter); filter.connect(g); g.connect(masterBus); noise.start(t);
+            createBurst(20, 'white');
+        }
+
+        function hat(t, d, f, cr) {
+            const source = audioCtx.createBufferSource();
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * d, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+            source.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = getFreq(f);
+            const g = audioCtx.createGain(); g.gain.setValueAtTime(0.2, t); g.gain.exponentialRampToValueAtTime(0.01, t+d);
+            source.connect(filter); filter.connect(g); g.connect(masterBus); source.start(t);
+            createBurst(10, 'var(--neon-blue)');
+        }
+
+        function rumble(t) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); const fl = audioCtx.createBiquadFilter();
+            o.type = 'sawtooth'; o.frequency.setValueAtTime(getFreq(30), t); o.frequency.linearRampToValueAtTime(getFreq(60), t+1.0);
+            fl.type = 'lowpass'; fl.frequency.value = getFreq(100);
+            g.gain.setValueAtTime(0.4, t); g.gain.exponentialRampToValueAtTime(0.01, t+1.0);
+            o.connect(fl); fl.connect(g); g.connect(masterBus); o.start(t); o.stop(t+1.0);
+            createBurst(60, 'var(--neon-green)', true);
+        }
+
+        function tom(t, f) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.frequency.setValueAtTime(getFreq(f), t); o.frequency.exponentialRampToValueAtTime(getFreq(f)*0.5, t+0.3);
+            g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.3);
+            o.connect(g); g.connect(masterBus); o.start(t); o.stop(t+0.3);
+        }
+
+        function cowbell(t) {
+            const o1 = audioCtx.createOscillator(); const o2 = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o1.type = 'square'; o2.type = 'square'; o1.frequency.value = getFreq(800); o2.frequency.value = getFreq(540);
+            g.gain.setValueAtTime(0.4, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.3);
+            o1.connect(g); o2.connect(g); g.connect(masterBus); o1.start(t); o2.start(t); o1.stop(t+0.3); o2.stop(t+0.3);
+        }
+
+        function rimshot(t) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.type = 'triangle'; o.frequency.setValueAtTime(getFreq(1200), t);
+            g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.05);
+            o.connect(g); g.connect(masterBus); o.start(t); o.stop(t+0.05);
+        }
+
+        function clap(t) {
+            const d = 0.25; const src = audioCtx.createBufferSource();
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * d, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+            src.buffer = buffer; const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.8, t); g.gain.exponentialRampToValueAtTime(0.001, t+d);
+            src.connect(g); g.connect(masterBus); src.start(t);
+        }
+
+        class Particle {
+            constructor(x, y, color, isSmoke = false) {
+                this.x = x; this.y = y;
+                this.vx = (Math.random() - 0.5) * (isSmoke ? 4 : 15);
+                this.vy = (Math.random() - 0.5) * (isSmoke ? 4 : 15);
+                this.life = 1.0;
+                this.color = color;
+                this.isSmoke = isSmoke;
+                this.size = isSmoke ? Math.random() * 40 + 20 : Math.random() * 4 + 1;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.life -= this.isSmoke ? 0.007 : 0.025;
+                if (this.isSmoke) this.vy -= 0.15;
+            }
+            draw() {
+                ctx.globalAlpha = this.life * 0.4;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createBurst(count, color, smoke = false) {
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            for (let i = 0; i < count; i++) particles.push(new Particle(cx, cy, color, smoke));
+        }
+
+        function startVisualizer() {
+            function draw() {
+                requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(fftDataArray);
+                
+                ctx.fillStyle = '#050508';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Update EQ FFT Bars
+                if (document.getElementById('eq-panel').classList.contains('visible')) {
+                    frequencies.forEach((f, i) => {
+                        const bin = Math.floor((f / (audioCtx.sampleRate / 2)) * fftDataArray.length);
+                        const val = fftDataArray[bin] || 0;
+                        const bar = document.getElementById(`fft-bar-${i}`);
+                        if (bar) bar.style.height = (val / 255 * 80) + 'px';
+                    });
+                }
+
+                const subBass = (fftDataArray[0] + fftDataArray[1] + fftDataArray[2]) / 3;
+                if (subBass > 50) {
+                    const radius = (subBass / 255) * (canvas.height * 0.85);
+                    const gradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, radius);
+                    gradient.addColorStop(0, 'rgba(157, 0, 255, 0)');
+                    gradient.addColorStop(1, 'rgba(157, 0, 255, 0.4)');
+                    
+                    ctx.beginPath();
+                    ctx.arc(canvas.width/2, canvas.height/2, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    
+                    if (Math.random() > 0.8) createBurst(2, 'rgba(157, 0, 255, 0.2)', true);
+                }
+
+                particles = particles.filter(p => p.life > 0);
+                particles.forEach(p => { p.update(); p.draw(); });
+
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(0, 242, 255, 0.6)`;
+                ctx.lineWidth = 3;
+                let x = 0;
+                let sliceWidth = canvas.width / (fftDataArray.length / 4);
+                for (let i = 0; i < fftDataArray.length / 4; i++) {
+                    const v = fftDataArray[i] / 255.0;
+                    const y = canvas.height - (v * canvas.height * 0.95);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                    x += sliceWidth;
+                }
+                ctx.stroke();
+            }
+            const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+            window.onresize = resize; resize(); draw();
+        }
+
+        function playPad(id) {
+            if (!audioCtx) return;
+            const time = audioCtx.currentTime;
+            if (synthEngines[id]) {
+                synthEngines[id](time);
+                const pad = Array.from(pads).find(p => p.dataset.pad == id);
+                if (pad) {
+                    pad.classList.add('active');
+                    setTimeout(() => pad.classList.remove('active'), 120);
+                    document.getElementById('pad-name-display').innerText = pad.querySelector('.pad-label').innerText;
+                }
+            }
+        }
+
+        function setupMIDI() {
+            if (navigator.requestMIDIAccess) {
+                navigator.requestMIDIAccess().then(m => {
+                    for (let input of m.inputs.values()) {
+                        input.onmidimessage = (msg) => {
+                            const cmd = msg.data[0];
+                            const note = msg.data[1];
+                            const vel = msg.data[2];
+                            if (cmd === 144 && vel > 0) { 
+                                if (note >= 48 && note <= 63) playPad(note - 48);
+                            }
+                        };
+                    }
+                });
+            }
+        }
+
+        async function createReverb() {
+            const len = 2.5 * audioCtx.sampleRate;
+            const buffer = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+            for (let c = 0; c < 2; c++) {
+                const data = buffer.getChannelData(c);
+                for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.5);
+            }
+            const node = audioCtx.createConvolver();
+            node.buffer = buffer;
+            return node;
+        }
+
+        function makeDistortionCurve(amount) {
+            const k = amount, n = 44100, curve = new Float32Array(n);
+            for (let i = 0; i < n; ++i) {
+                const x = i * 2 / n - 1;
+                curve[i] = (3 + k) * x * 20 * (Math.PI / 180) / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+
+        pads.forEach(p => p.addEventListener('mousedown', () => playPad(p.dataset.pad)));
+        const keyMap = {'z':0,'x':1,'c':2,'v':3,'a':4,'s':5,'d':6,'f':7,'q':8,'w':9,'e':10,'r':11,'1':12,'2':13,'3':14,'4':15};
+        window.onkeydown = (e) => { if (keyMap[e.key.toLowerCase()] !== undefined) playPad(keyMap[e.key.toLowerCase()]); };
+    </script>
+</body>
+</html>

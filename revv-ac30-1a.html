@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Studio Rack - Virtual Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --rack-bg: #121212;
+            --silver-panel: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 100%);
+            --chime-blue: linear-gradient(180deg, #1e3a8a 0%, #172554 100%);
+            --jcm-gold: linear-gradient(180deg, #2a260a 0%, #1a1806 100%);
+            --insane-red: linear-gradient(180deg, #2a0a0a 0%, #1a0606 100%);
+            --graphite: linear-gradient(180deg, #222 0%, #111 100%);
+            --flange-purple: linear-gradient(180deg, #4c1d95 0%, #2e1065 100%);
+            --verb-cyan: linear-gradient(180deg, #164e63 0%, #083344 100%);
+            /* New Colored Border Variable */
+            --rack-border-color: linear-gradient(90deg, #444 0%, #8b7355 50%, #444 100%);
+        }
+
+        body { background-color: #050505; color: #e5e7eb; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+        .rack-unit {
+            /* Updated Side Borders with Color/Gradient */
+            border-left: 20px solid #8b7355; 
+            border-right: 20px solid #8b7355;
+            border-image: linear-gradient(to bottom, #a38b6d, #634e33) 1;
+            background-clip: padding-box;
+            
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 4px solid #000;
+            position: relative;
+            margin-bottom: 4px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Side panels styling for the color */
+        .rack-unit::before, .rack-unit::after,
+        .screw-right::before, .screw-right::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, #ddd 0%, #777 100%); /* Polished Chrome Screws */
+            border-radius: 50%;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        /* Position Screws on the Left Colored Border */
+        .rack-unit::before { top: 12px; left: -15px; }
+        .rack-unit::after { bottom: 12px; left: -15px; }
+
+        /* Position Screws on the Right Colored Border */
+        .screw-right::before { top: 12px; right: -15px; content: ''; position: absolute; }
+        .screw-right::after { bottom: 12px; right: -15px; content: ''; position: absolute; }
+
+        /* Unit Backgrounds */
+        .bg-eq { background: var(--graphite); }
+        .bg-silver { background: var(--silver-panel); color: #1e293b; }
+        .bg-chime { background: var(--chime-blue); }
+        .bg-jcm { background: var(--jcm-gold); }
+        .bg-insane { background: var(--insane-red); }
+        .bg-adsr { background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%); }
+        .bg-flange { background: var(--flange-purple); }
+        .bg-verb { background: var(--verb-cyan); }
+        .bg-master { background: #111; border-top: 2px solid #333; }
+
+        /* EQ Faders */
+        .eq-fader {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 100px;
+            background: transparent;
+            appearance: slider-vertical;
+        }
+
+        /* Power Lights */
+        .power-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #111;
+            box-shadow: inset 0 0 4px #000;
+            transition: 0.3s;
+        }
+        .active-red { background: #ff4444; box-shadow: 0 0 12px #ff4444; }
+        .active-green { background: #4ade80; box-shadow: 0 0 12px #4ade80; }
+        .active-blue { background: #60a5fa; box-shadow: 0 0 12px #60a5fa; }
+        .active-purple { background: #a855f7; box-shadow: 0 0 12px #a855f7; }
+
+        /* Vertical dB Meters */
+        .meter-rail {
+            width: 12px;
+            height: 100px;
+            background: #000;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .meter-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(0deg, #4ade80 60%, #fbbf24 80%, #f87171 95%);
+            transition: height 0.05s ease-out;
+        }
+        .peak-led {
+            width: 10px;
+            height: 10px;
+            background: #1a0000;
+            border-radius: 2px;
+            margin-bottom: 2px;
+            transition: background 0.1s;
+            border: 1px solid #300;
+        }
+        .peak-active { background: #ff0000; box-shadow: 0 0 12px #ff0000; border-color: #ffaaaa; }
+
+        /* Knob Styles */
+        .knob-container {
+            position: relative;
+            width: 65px;
+            height: 85px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .knob-wrapper {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            cursor: ns-resize;
+        }
+
+        .knob-gauge {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            transform: rotate(-135deg);
+        }
+
+        .knob-body {
+            position: absolute;
+            top: 6px; left: 6px;
+            width: 36px; height: 36px;
+            background: #222;
+            border-radius: 50%;
+            border: 2px solid #444;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .knob-pointer {
+            width: 2px;
+            height: 12px;
+            background: #fff;
+            transform-origin: bottom center;
+            position: absolute;
+            top: 4px;
+            border-radius: 2px;
+        }
+
+        .bg-silver .knob-body { background: #ddd; border-color: #bbb; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .bg-silver .knob-pointer { background: #111; }
+
+        .label-micro { font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; margin-top: 4px; }
+        
+        .amp-btn {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 9px;
+            font-weight: 900;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .bg-silver .amp-btn { border-color: rgba(0,0,0,0.2); color: #000; }
+        .amp-btn:active { transform: scale(0.95); }
+        .amp-btn.active { background: #f87171; color: white; border-color: #ef4444; }
+    </style>
+</head>
+<body class="p-2 select-none">
+
+    <div class="max-w-7xl mx-auto pb-10">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-2 border-b border-zinc-800 pb-1 px-4">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-black italic tracking-tighter text-zinc-500">ULTRA-RACK <span class="text-zinc-100">DSP-X</span></h1>
+                <div class="flex gap-2">
+                    <label class="bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold py-1 px-3 rounded cursor-pointer border border-zinc-700">
+                        UPLOAD AUDIO
+                        <input type="file" id="audioUpload" accept="audio/*" class="hidden">
+                    </label>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4 bg-zinc-900 px-3 py-1 rounded border border-zinc-800">
+                <button id="prevSound" class="text-lg hover:text-white">◀</button>
+                <div class="text-center w-28">
+                    <div class="label-micro text-zinc-500">Profile</div>
+                    <div id="soundName" class="font-bold text-[10px]">STEEL STRING</div>
+                </div>
+                <button id="nextSound" class="text-lg hover:text-white">▶</button>
+            </div>
+        </header>
+
+        <!-- 1. EQ RACK -->
+        <div class="rack-unit screw-right bg-eq p-3">
+            <div class="flex justify-between items-center mb-2 px-4">
+                <span class="label-micro text-zinc-400">20-Band Graphic Mastering EQ</span>
+                <div class="power-light active-blue"></div>
+            </div>
+            <div class="flex gap-1 h-28 items-end px-4" id="eq-container"></div>
+        </div>
+
+        <!-- 2. SILVERFACE AMP -->
+        <div id="unit-clean" class="rack-unit screw-right bg-silver p-3 flex gap-4">
+            <div class="w-24 border-r border-black/10 flex flex-col items-center justify-center">
+                <div id="light-clean" class="power-light active-green mb-1"></div>
+                <div class="font-black italic text-sm text-center">SILVER<br>FACE</div>
+            </div>
+            <div class="flex-1 flex justify-around items-center">
+                <div class="knob-container" data-id="clean-vol" data-min="0" data-max="4" data-value="1.5" data-color="#10b981" data-label="Gain"></div>
+                <div class="knob-container" data-id="clean-treble" data-min="-20" data-max="20" data-value="4" data-color="#60a5fa" data-label="Treble"></div>
+                <div class="knob-container" data-id="clean-mid" data-min="-20" data-max="20" data-value="-6" data-color="#60a5fa" data-label="Mid"></div>
+                <div class="knob-container" data-id="clean-bass" data-min="-20" data-max="20" data-value="2" data-color="#60a5fa" data-label="Bass"></div>
+                <div class="knob-container" data-id="clean-bright" data-min="0" data-max="100" data-value="20" data-color="#fbbf24" data-label="Drive"></div>
+                <div class="flex flex-col items-center gap-2">
+                    <button data-mode="clean" class="amp-power amp-btn active">DRIVE</button>
+                    <span class="label-micro">Circuit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. CHIME-30 AMP -->
+        <div id="unit-ac30" class="rack-unit screw-right bg-chime p-3 flex gap-4">
+            <div class="w-24 border-r border-white/10 flex flex-col items-center justify-center">
+                <div id="light-ac30" class="power-light mb-1"></div>
+                <div class="font-black italic text-sm text-center text-blue-200">CHIME<br>30</div>
+            </div>
+            <div class="flex-1 flex justify-around items-center">
+                <div class="knob-container" data-id="ac30-gain" data-min="0" data-max="100" data-value="40" data-color="#3b82f6" data-label="Gain"></div>
+                <div class="knob-container" data-id="ac30-treble" data-min="-20" data-max="20" data-value="10" data-color="#3b82f6" data-label="Treble"></div>
+                <div class="knob-container" data-id="ac30-mid" data-min="-20" data-max="20" data-value="8" data-color="#3b82f6" data-label="Mid"></div>
+                <div class="knob-container" data-id="ac30-bass" data-min="-20" data-max="20" data-value="2" data-color="#3b82f6" data-label="Bass"></div>
+                <div class="knob-container" data-id="ac30-cut" data-min="1000" data-max="20000" data-value="18000" data-color="#93c5fd" data-label="Drive"></div>
+                <div class="flex flex-col items-center gap-2">
+                    <button data-mode="ac30" class="amp-power amp-btn">DRIVE</button>
+                    <span class="label-micro">Circuit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. JCM-800 AMP -->
+        <div id="unit-jcm" class="rack-unit screw-right bg-jcm p-3 flex gap-4">
+            <div class="w-24 border-r border-white/10 flex flex-col items-center justify-center">
+                <div id="light-jcm" class="power-light mb-1"></div>
+                <div class="font-black italic text-sm text-center text-amber-500">BRIT<br>800</div>
+            </div>
+            <div class="flex-1 flex justify-around items-center">
+                <div class="knob-container" data-id="jcm-gain" data-min="0" data-max="150" data-value="80" data-color="#f59e0b" data-label="Gain"></div>
+                <div class="knob-container" data-id="jcm-treble" data-min="-20" data-max="20" data-value="5" data-color="#f59e0b" data-label="Treble"></div>
+                <div class="knob-container" data-id="jcm-mid" data-min="-20" data-max="20" data-value="2" data-color="#f59e0b" data-label="Mid"></div>
+                <div class="knob-container" data-id="jcm-bass" data-min="-20" data-max="20" data-value="4" data-color="#f59e0b" data-label="Bass"></div>
+                <div class="knob-container" data-id="jcm-pres" data-min="0" data-max="100" data-value="50" data-color="#fef3c7" data-label="Drive"></div>
+                <div class="flex flex-col items-center gap-2">
+                    <button data-mode="jcm" class="amp-power amp-btn">DRIVE</button>
+                    <span class="label-micro">Circuit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. INSANE AMP -->
+        <div id="unit-insane" class="rack-unit screw-right bg-insane p-3 flex gap-4">
+            <div class="w-24 border-r border-white/10 flex flex-col items-center justify-center">
+                <div id="light-insane" class="power-light mb-1"></div>
+                <div class="font-black italic text-sm text-center text-red-500">INSANE</div>
+            </div>
+            <div class="flex-1 flex justify-around items-center">
+                <div class="knob-container" data-id="insane-drive" data-min="0" data-max="250" data-value="180" data-color="#ef4444" data-label="Gain"></div>
+                <div class="knob-container" data-id="insane-treble" data-min="-20" data-max="20" data-value="10" data-color="#ef4444" data-label="Treble"></div>
+                <div class="knob-container" data-id="insane-mid" data-min="-20" data-max="20" data-value="-10" data-color="#ef4444" data-label="Mid"></div>
+                <div class="knob-container" data-id="insane-bass" data-min="-20" data-max="20" data-value="8" data-color="#ef4444" data-label="Bass"></div>
+                <div class="knob-container" data-id="insane-tight" data-min="0" data-max="100" data-value="40" data-color="#f87171" data-label="Drive"></div>
+                <div class="flex flex-col items-center gap-2">
+                    <button data-mode="insane" class="amp-power amp-btn">DRIVE</button>
+                    <span class="label-micro">Circuit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. ADSR RACK -->
+        <div class="rack-unit screw-right bg-adsr p-3 flex gap-4">
+            <div class="w-24 border-r border-white/10 flex flex-col items-center justify-center text-purple-400">
+                <span class="label-micro">Envelope</span>
+                <div class="font-black italic text-sm">ADSR-X</div>
+                <div class="power-light active-purple mt-1"></div>
+            </div>
+            <div class="flex-1 flex justify-around items-center">
+                <div class="knob-container" data-id="adsr-gain" data-min="0" data-max="2" data-value="1.0" data-color="#a855f7" data-label="Gain"></div>
+                <div class="knob-container" data-id="adsr-drive" data-min="0" data-max="100" data-value="10" data-color="#a855f7" data-label="Drive"></div>
+                <div class="knob-container" data-id="adsr-treble" data-min="-20" data-max="20" data-value="0" data-color="#a855f7" data-label="Treble"></div>
+                <div class="knob-container" data-id="adsr-mid" data-min="-20" data-max="20" data-value="0" data-color="#a855f7" data-label="Mid"></div>
+                <div class="knob-container" data-id="adsr-bass" data-min="-20" data-max="20" data-value="0" data-color="#a855f7" data-label="Bass"></div>
+                <div class="knob-container" data-id="adsr-curve" data-min="0" data-max="1" data-value="0.5" data-color="#c084fc" data-label="Curve"></div>
+            </div>
+        </div>
+
+        <!-- 7. FLANGER UNIT -->
+        <div class="rack-unit screw-right bg-flange p-3 flex gap-4">
+            <div class="w-24 border-r border-white/10 flex flex-col items-center justify-center text-purple-200">
+                <span class="label-micro">Modulation</span>
+                <div class="font-black italic text-sm">FLANGE</div>
+                <div class="power-light active-purple mt-1"></div>
+            </div>
+            <div class="flex-1 flex justify-around items-center">
+                <div class="knob-container" data-id="flange-rate" data-min="0.1" data-max="10" data-value="0.5" data-color="#e9d5ff" data-label="Rate"></div>
+                <div class="knob-container" data-id="flange-depth" data-min="0" data-max="1" data-value="0.7" data-color="#e9d5ff" data-label="Depth"></div>
+                <div class="knob-container" data-id="flange-fb" data-min="0" data-max="0.9" data-value="0.5" data-color="#e9d5ff" data-label="Feedback"></div>
+                <div class="knob-container" data-id="flange-delay" data-min="0.001" data-max="0.02" data-value="0.005" data-color="#e9d5ff" data-label="Manual"></div>
+                <div class="knob-container" data-id="flange-mix" data-min="0" data-max="1" data-value="0.5" data-color="#f5f3ff" data-label="Mix"></div>
+            </div>
+        </div>
+
+        <!-- 8. REVERB UNIT -->
+        <div class="rack-unit screw-right bg-verb p-3 flex gap-4">
+            <div class="w-24 border-r border-white/10 flex flex-col items-center justify-center text-cyan-300">
+                <span class="label-micro">Spatial</span>
+                <div class="font-black italic text-sm">VERB</div>
+                <div class="power-light active-blue mt-1"></div>
+            </div>
+            <div class="flex-1 flex justify-around items-center">
+                <div class="knob-container" data-id="verb-size" data-min="0.1" data-max="0.95" data-value="0.8" data-color="#67e8f9" data-label="Size"></div>
+                <div class="knob-container" data-id="verb-decay" data-min="0.1" data-max="10" data-value="2.5" data-color="#67e8f9" data-label="Decay"></div>
+                <div class="knob-container" data-id="verb-damp" data-min="0" data-max="20000" data-value="5000" data-color="#67e8f9" data-label="Damp"></div>
+                <div class="knob-container" data-id="verb-pre" data-min="0" data-max="0.1" data-value="0.02" data-color="#67e8f9" data-label="Pre"></div>
+                <div class="knob-container" data-id="verb-mix" data-min="0" data-max="1" data-value="0.3" data-color="#cffafe" data-label="Mix"></div>
+            </div>
+        </div>
+
+        <!-- 9. MASTER RACK -->
+        <div class="rack-unit screw-right bg-master p-3">
+            <div class="flex items-center gap-6 px-4">
+                <div class="w-24 border-r border-white/10 flex flex-col items-center justify-center">
+                    <span class="label-micro text-zinc-500">Master</span>
+                    <div class="font-black italic text-sm text-red-500">OUT</div>
+                    <div class="power-light active-red mt-1"></div>
+                </div>
+                
+                <div class="flex gap-4 items-end pb-2">
+                    <div class="flex flex-col items-center gap-1">
+                        <div id="peak-l" class="peak-led"></div>
+                        <div class="meter-rail"><div id="meter-l" class="meter-bar"></div></div>
+                        <span class="text-[8px] font-black opacity-50">L</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2 mb-2">
+                        <span class="text-[8px] font-black text-red-500">+6</span>
+                        <span class="text-[8px] font-black">0</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <div id="peak-r" class="peak-led"></div>
+                        <div class="meter-rail"><div id="meter-r" class="meter-bar"></div></div>
+                        <span class="text-[8px] font-black opacity-50">R</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex justify-around items-center">
+                    <div class="knob-container" data-id="master-gain" data-min="0" data-max="2" data-value="1.0" data-color="#f87171" data-label="Output"></div>
+                    <div class="knob-container" data-id="master-limiter-gain" data-min="0" data-max="20" data-value="0" data-color="#fb7185" data-label="L-Gain"></div>
+                    <div class="knob-container" data-id="master-limiter" data-min="-20" data-max="0" data-value="-0.1" data-color="#fca5a5" data-label="Ceiling"></div>
+                    <button id="testPluck" class="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-2 font-black rounded uppercase text-xs border border-zinc-600 active:bg-zinc-600">Manual Pluck</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx, masterBus, inputGain, ampDist, limiterNode, analyzer, limiterMakeUp;
+        let ampMode = 'clean';
+        const eqFilters = [];
+        const knobStates = {};
+        
+        const soundProfiles = [
+            { name: "STEEL STRING", damping: 0.996, noise: 1.0 },
+            { name: "NYLON SOFT", damping: 0.985, noise: 0.3 },
+            { name: "JAZZ SEMI", damping: 0.992, noise: 0.1 },
+            { name: "METAL CHUG", damping: 0.998, noise: 1.5 }
+        ];
+        let currentProfileIdx = 0;
+
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            inputGain = audioCtx.createGain();
+            ampDist = audioCtx.createWaveShaper();
+            
+            const freqs = [31, 44, 63, 87, 125, 175, 250, 350, 500, 700, 1000, 1400, 2000, 2800, 4000, 5600, 8000, 11000, 16000, 20000];
+            let lastFilter = ampDist;
+            freqs.forEach((f) => {
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = "peaking"; filter.frequency.value = f; filter.Q.value = 1.5; filter.gain.value = 0;
+                lastFilter.connect(filter); lastFilter = filter;
+                eqFilters.push(filter);
+            });
+
+            limiterMakeUp = audioCtx.createGain();
+            limiterNode = audioCtx.createDynamicsCompressor();
+            limiterNode.threshold.value = -0.1;
+            limiterNode.ratio.value = 20;
+
+            analyzer = audioCtx.createAnalyser();
+            analyzer.fftSize = 256;
+            masterBus = audioCtx.createGain();
+            
+            inputGain.connect(ampDist);
+            lastFilter.connect(limiterMakeUp);
+            limiterMakeUp.connect(limiterNode);
+            limiterNode.connect(masterBus);
+            masterBus.connect(analyzer);
+            analyzer.connect(audioCtx.destination);
+
+            updateMeters();
+            syncUI();
+        }
+
+        function createKnobs() {
+            document.querySelectorAll('.knob-container').forEach(container => {
+                const id = container.dataset.id;
+                const min = parseFloat(container.dataset.min);
+                const max = parseFloat(container.dataset.max);
+                const startVal = parseFloat(container.dataset.value);
+                const color = container.dataset.color || '#fff';
+                const label = container.dataset.label || id.split('-')[1];
+
+                knobStates[id] = startVal;
+                container.innerHTML = `
+                    <div class="knob-wrapper" id="wrapper-${id}">
+                        <svg class="knob-gauge" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#333" stroke-width="8" stroke-dasharray="188.5" stroke-dashoffset="0" stroke-linecap="round"/>
+                            <circle class="gauge-active" cx="50" cy="50" r="40" fill="none" stroke="${color}" stroke-width="8" stroke-dasharray="188.5" stroke-dashoffset="188.5" stroke-linecap="round"/>
+                        </svg>
+                        <div class="knob-body"><div class="knob-pointer"></div></div>
+                    </div>
+                    <span class="label-micro">${label}</span>
+                `;
+
+                const wrapper = container.querySelector('.knob-wrapper');
+                const pointer = container.querySelector('.knob-pointer');
+                const gauge = container.querySelector('.gauge-active');
+
+                const updateKnobUI = (val) => {
+                    const percent = (val - min) / (max - min);
+                    const rotation = (percent * 270) - 135;
+                    pointer.style.transform = `rotate(${rotation}deg)`;
+                    gauge.style.strokeDashoffset = 188.5 - (percent * 188.5 * 0.75);
+                };
+                updateKnobUI(startVal);
+
+                let startY, startValMove;
+                wrapper.addEventListener('mousedown', e => {
+                    startY = e.pageY;
+                    startValMove = knobStates[id];
+                    const onMouseMove = moveE => {
+                        const delta = (startY - moveE.pageY) * ((max - min) / 200);
+                        let newVal = Math.min(max, Math.max(min, startValMove + delta));
+                        knobStates[id] = newVal;
+                        updateKnobUI(newVal);
+                        syncUI();
+                    };
+                    const onMouseUp = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            });
+        }
+
+        function createEQUI() {
+            const container = document.getElementById('eq-container');
+            const labels = [31, 44, 63, 87, 125, 175, 250, 350, 500, 700, '1k', '1.4k', '2k', '2.8k', '4k', '5.6k', '8k', '11k', '16k', '20k'];
+            labels.forEach((f, i) => {
+                const w = document.createElement('div');
+                w.className = "flex-1 flex flex-col items-center h-full gap-1";
+                w.innerHTML = `<input type="range" class="eq-fader" min="-12" max="12" step="0.1" value="0"><span class="text-[6px] font-bold opacity-40">${f}</span>`;
+                container.appendChild(w);
+                w.querySelector('input').oninput = (e) => { if(eqFilters[i]) eqFilters[i].gain.setTargetAtTime(e.target.value, audioCtx.currentTime, 0.05); };
+            });
+        }
+
+        function updateMeters() {
+            if (!analyzer) return;
+            const data = new Uint8Array(analyzer.frequencyBinCount);
+            analyzer.getByteFrequencyData(data);
+            let avg = 0;
+            for(let i=0; i<data.length; i++) avg += data[i];
+            avg = avg / data.length;
+
+            const db = (avg / 255) * 36 - 30; 
+            const percent = Math.min(100, Math.max(0, ((db + 30) / 36) * 100));
+            document.getElementById('meter-l').style.height = percent + "%";
+            document.getElementById('meter-r').style.height = (percent * 0.96 + Math.random()*1.5) + "%";
+
+            const peakL = document.getElementById('peak-l');
+            const peakR = document.getElementById('peak-r');
+            if (db > 0.1) {
+                peakL.classList.add('peak-active');
+                peakR.classList.add('peak-active');
+            } else {
+                peakL.classList.remove('peak-active');
+                peakR.classList.remove('peak-active');
+            }
+            requestAnimationFrame(updateMeters);
+        }
+
+        function syncUI() {
+            if (!audioCtx) return;
+            masterBus.gain.setTargetAtTime(knobStates['master-gain'] || 1.0, audioCtx.currentTime, 0.1);
+            if(limiterNode) limiterNode.threshold.setTargetAtTime(knobStates['master-limiter'] || -0.1, audioCtx.currentTime, 0.1);
+            if(limiterMakeUp) {
+                const makeUpGain = Math.pow(10, (knobStates['master-limiter-gain'] || 0) / 20);
+                limiterMakeUp.gain.setTargetAtTime(makeUpGain, audioCtx.currentTime, 0.1);
+            }
+            const driveVal = knobStates[`${ampMode}-gain`] || knobStates[`${ampMode}-drive`] || knobStates[`${ampMode}-vol`] || 1;
+            updateDistortion(driveVal);
+        }
+
+        function updateDistortion(amount) {
+            const n = 44100;
+            const curve = new Float32Array(n);
+            const k = parseFloat(amount);
+            for (let i = 0; i < n; i++) {
+                const x = (i * 2) / n - 1;
+                curve[i] = (1 + k/10) * x / (1 + k/10 * Math.abs(x));
+            }
+            ampDist.curve = curve;
+        }
+
+        function playPluck(frequency, velocity = 0.6) {
+            if (!audioCtx) initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            const profile = soundProfiles[currentProfileIdx];
+            const p = Math.floor(audioCtx.sampleRate / frequency);
+            const buffer = audioCtx.createBuffer(1, Math.ceil(audioCtx.sampleRate * 2.5), audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < p; i++) data[i] = (Math.random() * 2 - 1) * profile.noise;
+            for (let i = p; i < data.length; i++) data[i] = profile.damping * 0.5 * (data[i - p] + data[i - p - 1]);
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const vca = audioCtx.createGain();
+            vca.gain.setValueAtTime(0, now);
+            vca.gain.linearRampToValueAtTime(velocity, now + 0.005);
+            vca.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
+
+            source.connect(vca);
+            vca.connect(inputGain);
+            source.start(now);
+        }
+
+        document.getElementById('audioUpload').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            initAudio();
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const buffer = await audioCtx.decodeAudioData(ev.target.result);
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(inputGain);
+                source.start();
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        document.getElementById('nextSound').onclick = () => { currentProfileIdx = (currentProfileIdx + 1) % soundProfiles.length; document.getElementById('soundName').innerText = soundProfiles[currentProfileIdx].name; };
+        document.getElementById('prevSound').onclick = () => { currentProfileIdx = (currentProfileIdx - 1 + soundProfiles.length) % soundProfiles.length; document.getElementById('soundName').innerText = soundProfiles[currentProfileIdx].name; };
+
+        document.querySelectorAll('.amp-power').forEach(btn => {
+            btn.onclick = () => {
+                initAudio();
+                ampMode = btn.dataset.mode;
+                document.querySelectorAll('.power-light').forEach(l => l.classList.remove('active-green'));
+                document.querySelectorAll('.amp-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const unitId = `light-${ampMode}`;
+                if(document.getElementById(unitId)) document.getElementById(unitId).classList.add('active-green');
+                syncUI();
+            };
+        });
+
+        document.getElementById('testPluck').onclick = () => playPluck(196, 0.8);
+        window.onload = () => { createEQUI(); createKnobs(); };
+    </script>
+</body>
+</html>
