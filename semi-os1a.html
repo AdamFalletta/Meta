@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEO OS - Executive Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --glass-bg: rgba(230, 231, 235, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-main: #111827;
+            --bg-base: #94a3b8;
+            --bg-aura-1: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.3) 0px, transparent 50%);
+            --bg-aura-2: radial-gradient(at 50% 50%, rgba(147, 51, 234, 0.2) 0px, transparent 50%);
+            --bg-aura-3: radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.3) 0px, transparent 50%);
+            --bg-aura-4: radial-gradient(at 80% 20%, rgba(245, 158, 11, 0.15) 0px, transparent 40%);
+            
+            /* Window Header Specific Variables */
+            --win-header-bg: rgba(18, 18, 18, 0.85);
+        }
+
+        [data-theme='dark'] {
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --bg-base: #020617;
+            --bg-aura-1: radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.6) 0px, transparent 50%);
+            --bg-aura-2: radial-gradient(at 50% 50%, rgba(88, 28, 135, 0.5) 0px, transparent 55%);
+            --bg-aura-3: radial-gradient(at 100% 100%, rgba(17, 94, 89, 0.6) 0px, transparent 50%);
+            --bg-aura-4: radial-gradient(at 20% 80%, rgba(153, 27, 27, 0.3) 0px, transparent 40%);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-base);
+            background-image: var(--bg-aura-1), var(--bg-aura-2), var(--bg-aura-3), var(--bg-aura-4);
+            background-attachment: fixed;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            color: var(--text-main);
+            transition: background-color 0.5s ease;
+        }
+
+        .aero-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        .desktop-icon {
+            width: 80px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background 0.2s;
+            border-radius: 8px;
+            position: absolute;
+            z-index: 50;
+        }
+        .desktop-icon:hover { background: rgba(255,255,255,0.15); }
+        .desktop-icon .icon-wrapper { font-size: 32px; margin-bottom: 4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); pointer-events: none; }
+        .desktop-icon span { font-size: 11px; color: white; text-align: center; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.2; font-weight: 500; pointer-events: none; }
+
+        .vista-window {
+            position: absolute;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-width: 320px;
+            min-height: 200px;
+        }
+
+        .vista-window.active-window {
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .vista-window.maximized {
+            top: 10px !important;
+            left: 10px !important;
+            width: calc(100vw - 20px) !important;
+            height: calc(100vh - 80px) !important;
+            border-radius: 16px;
+        }
+
+        .vista-title-bar {
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px 0 16px;
+            cursor: move;
+            background: var(--win-header-bg);
+            backdrop-filter: blur(15px);
+            border-bottom: none;
+            flex-shrink: 0;
+        }
+
+        .window-controls { display: flex; height: 100%; }
+        .control-btn {
+            width: 44px; height: 100%; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; cursor: pointer; transition: all 0.2s;
+            color: rgba(255, 255, 255, 0.6);
+            background: transparent;
+            border: none;
+        }
+        .control-btn:hover { color: white; background: rgba(255, 255, 255, 0.1); }
+        .btn-close:hover { background: #ef4444 !important; color: white; }
+
+        .vista-content {
+            background: rgba(255, 255, 255, 0.98);
+            color: #1f2937;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        [data-theme='dark'] .vista-content { background: rgba(15, 23, 42, 0.98); color: #f9fafb; }
+
+        .window-resizer {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.2) 50%);
+            z-index: 10;
+        }
+
+        .draggable { user-select: none; }
+
+        .taskbar-item {
+            height: 40px; min-width: 140px; padding: 0 12px;
+            border-radius: 8px; background: rgba(255,255,255,0.05);
+            display: flex; align-items: center; justify-content: start;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.08);
+            gap: 10px;
+            position: relative;
+        }
+        
+        .taskbar-item.active { 
+            background: rgba(59, 130, 246, 0.25); 
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
+        }
+        .taskbar-item.active::after {
+            content: ''; position: absolute; bottom: 4px; left: 15%; right: 15%; height: 2px;
+            background: #3b82f6; border-radius: 2px; box-shadow: 0 0 8px #3b82f6;
+        }
+
+        .taskbar-item.inactive { opacity: 0.6; }
+        .taskbar-item.inactive:hover { opacity: 0.9; background: rgba(255,255,255,0.1); }
+
+        .quick-launch-btn {
+            width: 40px; height: 40px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s, border-color 0.2s; 
+            border: 1px solid transparent;
+            font-size: 20px;
+        }
+        .quick-launch-btn:hover { 
+            background: rgba(255,255,255,0.1); 
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .search-container {
+            width: 200px; height: 36px; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            display: flex; align-items: center; padding: 0 10px;
+            transition: all 0.2s;
+        }
+        .search-container:focus-within {
+            background: rgba(255,255,255,0.15); border-color: rgba(59, 130, 246, 0.6);
+        }
+        .search-input {
+            background: transparent; border: none; outline: none;
+            color: white; font-size: 13px; margin-left: 8px; flex: 1;
+        }
+
+        #context-menu {
+            position: fixed; z-index: 1000000; width: 210px; padding: 6px;
+            border-radius: 12px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .context-item {
+            padding: 10px 12px; font-size: 13px; border-radius: 8px;
+            cursor: pointer; display: flex; align-items: center; gap: 12px;
+        }
+        .context-item:hover { background: rgba(255,255,255,0.15); }
+
+        .start-orb {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #4ade80 0%, #166534 100%);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(22, 101, 52, 0.4);
+            border: 2px solid rgba(255,255,255,0.4);
+            transition: transform 0.2s;
+        }
+
+        .priority-high { color: #ef4444; }
+        .priority-med { color: #f59e0b; }
+        .priority-low { color: #10b981; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .system-dialog-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            display: none; align-items: center; justify-content: center; z-index: 200000;
+            backdrop-filter: blur(8px);
+        }
+
+        #start-menu {
+            transform: translateY(20px); opacity: 0; visibility: hidden;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            pointer-events: none;
+        }
+        #start-menu.visible { transform: translateY(0); opacity: 1; visibility: visible; pointer-events: all; }
+
+        .win-textarea {
+            width: 100%;
+            height: 100%;
+            padding: 24px;
+            background: transparent;
+            outline: none;
+            resize: none;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body data-theme="dark" oncontextmenu="handleContextMenu(event)">
+
+    <div id="desktop" class="relative w-full h-full overflow-hidden"></div>
+    <div id="window-layer" class="absolute inset-0 pointer-events-none"></div>
+
+    <!-- Context Menu -->
+    <div id="context-menu" class="aero-glass">
+        <div id="ctx-desktop-opts">
+            <div class="context-item" onclick="showFilePrompt()"><i class="fa-solid fa-file-circle-plus text-blue-500"></i> New Directive</div>
+            <div class="context-item" onclick="showTaskPrompt()"><i class="fa-solid fa-calendar-plus text-emerald-500"></i> New Objective</div>
+            <hr class="border-white/10 my-1">
+            <div class="context-item" onclick="toggleTheme()"><i class="fa-solid fa-palette"></i> Personalize</div>
+            <div class="context-item" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Refresh Desktop</div>
+        </div>
+        <div id="ctx-file-opts" class="hidden">
+            <div class="context-item" id="ctx-open-file"><i class="fa-solid fa-folder-open text-blue-400"></i> Open</div>
+            <div class="context-item" id="ctx-rename-file"><i class="fa-solid fa-pen-to-square text-amber-500"></i> Rename</div>
+            <hr class="border-white/10 my-1">
+            <div class="context-item text-red-400" id="ctx-delete-file"><i class="fa-solid fa-trash-can"></i> Delete Directive</div>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="fixed bottom-0 left-0 right-0 h-14 aero-glass flex items-center px-4 z-[99999] border-t border-white/10">
+        <div class="flex items-center gap-3">
+            <div class="start-orb" id="start-orb-trigger"><i class="fa-solid fa-microchip text-white text-xl"></i></div>
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass text-white/40 text-xs"></i>
+                <input type="text" placeholder="Search directives..." class="search-input">
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1 mx-4 pl-4 border-l border-white/10">
+            <div class="quick-launch-btn text-blue-400" onclick="openWindow('Strategy Center')" title="Strategy Center"><i class="fa-solid fa-chess-king"></i></div>
+            <div class="quick-launch-btn text-pink-400" onclick="openWindow('Logistics')" title="Global Logistics"><i class="fa-solid fa-globe"></i></div>
+            <div class="quick-launch-btn text-emerald-400" onclick="openWindow('Terminal')" title="System Terminal"><i class="fa-solid fa-terminal"></i></div>
+            <div class="quick-launch-btn text-amber-400" onclick="openWindow('Mail')" title="Executive Mail"><i class="fa-solid fa-envelope"></i></div>
+            <div class="quick-launch-btn text-purple-400" onclick="openWindow('Analytics')" title="Live Analytics"><i class="fa-solid fa-chart-line"></i></div>
+        </div>
+
+        <div class="flex-1 flex gap-2 mx-2 overflow-x-auto no-scrollbar justify-start items-center" id="taskbar-apps"></div>
+
+        <div class="px-4 flex items-center gap-3 border-l border-white/20 h-8">
+            <i class="fa-solid fa-network-wired text-[12px] text-blue-400 opacity-80"></i>
+            <i class="fa-solid fa-shield-halved text-[12px] text-orange-400 opacity-80"></i>
+            <i class="fa-solid fa-lock text-[12px] text-emerald-500"></i>
+            <div class="flex items-center pl-1">
+                <div class="text-[14px] font-bold tracking-tight" id="taskbar-time">12:00 PM</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div id="start-menu" class="fixed bottom-[65px] left-4 w-[380px] h-[450px] aero-glass rounded-2xl flex flex-col shadow-2xl z-[99998]">
+        <div class="p-5 bg-white/10 flex items-center gap-4 border-b border-white/10 rounded-t-2xl">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-xl">
+                <i class="fa-solid fa-user-tie text-xl"></i>
+            </div>
+            <div>
+                <div class="font-bold text-base tracking-tight">Executive Office</div>
+                <div class="text-[8px] uppercase tracking-widest opacity-60 font-black">Admin Access Restricted</div>
+            </div>
+        </div>
+        <div class="flex-1 flex overflow-hidden">
+            <div class="flex-1 p-2 space-y-1 overflow-y-auto no-scrollbar">
+                <div class="p-2.5 hover:bg-white/10 rounded-xl flex items-center gap-4 cursor-pointer" onclick="openWindow('Strategy Center')">
+                    <div class="w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center"><i class="fa-solid fa-chess-king text-blue-500 text-sm"></i></div>
+                    <span class="text-sm font-medium">Strategy Center</span>
+                </div>
+                <div class="p-2.5 hover:bg-white/10 rounded-xl flex items-center gap-4 cursor-pointer" onclick="openWindow('AI Forecast')">
+                    <div class="w-7 h-7 rounded-lg bg-cyan-500/20 flex items-center justify-center"><i class="fa-solid fa-brain text-cyan-500 text-sm"></i></div>
+                    <span class="text-sm font-medium">AI Forecast</span>
+                </div>
+                <div class="p-2.5 hover:bg-white/10 rounded-xl flex items-center gap-4 cursor-pointer" onclick="openWindow('Foundry Ops')">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center"><i class="fa-solid fa-industry text-emerald-500 text-sm"></i></div>
+                    <span class="text-sm font-medium">Foundry Ops</span>
+                </div>
+                <div class="p-2.5 hover:bg-white/10 rounded-xl flex items-center gap-4 cursor-pointer" onclick="openWindow('Secure Vault')">
+                    <div class="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fa-solid fa-vault text-amber-500 text-sm"></i></div>
+                    <span class="text-sm font-medium">Secure Vault</span>
+                </div>
+            </div>
+            <div class="w-14 bg-white/5 p-3 flex flex-col items-center justify-end gap-4">
+                <i class="fa-solid fa-power-off text-red-500 opacity-60 hover:opacity-100 cursor-pointer text-lg" onclick="location.reload()"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialogs -->
+    <div id="system-dialog-overlay" class="system-dialog-overlay">
+        <div class="system-dialog aero-glass p-8 rounded-3xl w-[400px]">
+            <h2 id="dialog-title" class="text-2xl font-bold mb-1">System Action</h2>
+            <p id="dialog-desc" class="text-[10px] opacity-50 mb-6 uppercase tracking-widest font-bold">Awaiting Input</p>
+            <input type="text" id="dialog-input" class="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-blue-500 mb-6 text-sm">
+            <div id="dialog-priority" class="hidden flex gap-2 mb-6">
+                <button onclick="setPriority('high')" class="p-priority flex-1 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/10 text-[10px] font-bold uppercase">High</button>
+                <button onclick="setPriority('med')" class="p-priority flex-1 py-3 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/10 text-[10px] font-bold uppercase">Med</button>
+                <button onclick="setPriority('low')" class="p-priority flex-1 py-3 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/10 text-[10px] font-bold uppercase border-2 opacity-100">Low</button>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeDialog()" class="px-6 py-3 hover:bg-white/5 rounded-xl text-sm font-semibold opacity-60">Cancel</button>
+                <button id="dialog-confirm" class="px-8 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-xl shadow-blue-500/40">Initialize</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const getW = () => window.innerWidth;
+        const getH = () => window.innerHeight;
+        const GRID_SIZE = 100;
+        const OFFSET = 20;
+
+        const DEFAULT_STATE = {
+            theme: 'dark',
+            positions: {
+                'icon-comp': { x: 20, y: 20 }, 
+                'icon-docs': { x: 20, y: 120 }, 
+                'icon-net': { x: 20, y: 220 }, 
+                'icon-bin': { x: 20, y: 320 },
+                'icon-ai-forecast': { x: 120, y: 20 }, 
+                'icon-corp-strat': { x: 120, y: 120 },
+                'widget-clock': { x: getW() - 280, y: 30 }, 
+                'widget-agenda': { x: getW() - 280, y: 180 }, 
+                'widget-health': { x: getW() - 280, y: 460 }
+            },
+            agenda: [{ id: 1, text: 'Finalize Architecture', priority: 'high' }],
+            files: { 'Welcome': 'Welcome to your Executive Management System.' }
+        };
+
+        let state = JSON.parse(localStorage.getItem('ceo_os_v11')) || DEFAULT_STATE;
+        let windows = {}; 
+        let activeWindowId = null;
+        let selectedPriority = 'low';
+
+        // Drag & Resize State
+        let activeDrag = null, activeResize = null;
+        let offX = 0, offY = 0, initialW = 0, initialH = 0, isSnapping = false;
+
+        function save() { localStorage.setItem('ceo_os_v11', JSON.stringify(state)); }
+
+        function snapValue(val) {
+            const gridIndex = Math.round((val - OFFSET) / GRID_SIZE);
+            return (gridIndex * GRID_SIZE) + OFFSET;
+        }
+
+        function findEmptySlot(id) {
+            const occupied = state.positions;
+            for (let x = OFFSET; x < getW() - 300; x += GRID_SIZE) {
+                for (let y = OFFSET; y < getH() - 150; y += GRID_SIZE) {
+                    let isFree = true;
+                    for (const [key, pos] of Object.entries(occupied)) {
+                        if (key === id) continue;
+                        if (Math.abs(pos.x - x) < 50 && Math.abs(pos.y - y) < 50) { isFree = false; break; }
+                    }
+                    if (isFree) return { x, y };
+                }
+            }
+            return { x: 400, y: 400 };
+        }
+
+        function init() {
+            document.body.setAttribute('data-theme', state.theme);
+            const desktop = document.getElementById('desktop');
+            desktop.innerHTML = ''; // Only clears icon layer, windows are in body or window-layer
+
+            const systemIcons = [
+                { id: 'icon-comp', label: 'My Computer', icon: 'fa-desktop', color: 'text-blue-300' },
+                { id: 'icon-docs', label: 'My Documents', icon: 'fa-folder-open', color: 'text-yellow-400' },
+                { id: 'icon-net', label: 'Network', icon: 'fa-network-wired', color: 'text-emerald-400' },
+                { id: 'icon-bin', label: 'Recycle Bin', icon: 'fa-trash-can', color: 'text-gray-400' },
+                { id: 'icon-ai-forecast', label: 'AI Forecast', icon: 'fa-brain', color: 'text-cyan-400' },
+                { id: 'icon-corp-strat', label: 'Strategy', icon: 'fa-chess-king', color: 'text-indigo-400' }
+            ];
+
+            systemIcons.forEach(renderIcon);
+            Object.keys(state.files).forEach((f) => {
+                if (f === 'Welcome') return;
+                renderIcon({ id: `file-${f}`, label: f, icon: 'fa-file-lines', color: 'text-blue-100', isFile: true });
+            });
+
+            renderWidgets(); 
+            updateTime();
+            renderTaskbar();
+            
+            document.getElementById('start-orb-trigger').onclick = (e) => { e.stopPropagation(); toggleStartMenu(); };
+        }
+
+        function renderIcon(data) {
+            let pos = state.positions[data.id];
+            if (!pos) {
+                pos = findEmptySlot(data.id);
+                state.positions[data.id] = pos;
+                save();
+            } else {
+                pos.x = snapValue(pos.x);
+                pos.y = snapValue(pos.y);
+            }
+            const div = document.createElement('div');
+            div.id = data.id;
+            div.className = "draggable desktop-icon";
+            div.style.left = pos.x + 'px'; 
+            div.style.top = pos.y + 'px';
+            div.onmousedown = (e) => { if(e.button !== 2) startDrag(e, div, true); };
+            div.ondblclick = () => openWindow(data.label, data.isFile);
+            div.oncontextmenu = (e) => { if(data.isFile) { e.stopPropagation(); handleContextMenu(e, data.label); } };
+            div.innerHTML = `<div class="icon-wrapper ${data.color}"><i class="fa-solid ${data.icon}"></i></div><span>${data.label}</span>`;
+            document.getElementById('desktop').appendChild(div);
+        }
+
+        function startDrag(e, el, snap) {
+            if (el.classList.contains('maximized')) return;
+            if (e.target.tagName === 'BUTTON' || e.target.classList.contains('control-btn')) return;
+            activeDrag = el;
+            isSnapping = snap;
+            const rect = activeDrag.getBoundingClientRect();
+            offX = e.clientX - rect.left;
+            offY = e.clientY - rect.top;
+            activeDrag.style.transition = 'none'; 
+            activeDrag.style.zIndex = 10000;
+            if (activeDrag.classList.contains('vista-window')) focusWindow(activeDrag.id);
+        }
+
+        function startResize(e, el) {
+            e.stopPropagation();
+            e.preventDefault();
+            activeResize = el;
+            const rect = activeResize.getBoundingClientRect();
+            initialW = rect.width;
+            initialH = rect.height;
+            offX = e.clientX;
+            offY = e.clientY;
+            activeResize.style.transition = 'none';
+            focusWindow(activeResize.id);
+        }
+
+        function onMove(e) {
+            if (activeDrag) {
+                activeDrag.style.left = (e.clientX - offX) + 'px'; 
+                activeDrag.style.top = (e.clientY - offY) + 'px'; 
+            }
+            if (activeResize) {
+                const deltaX = e.clientX - offX;
+                const deltaY = e.clientY - offY;
+                activeResize.style.width = Math.max(320, initialW + deltaX) + 'px';
+                activeResize.style.height = Math.max(200, initialH + deltaY) + 'px';
+            }
+        }
+
+        function onUp() {
+            if (activeDrag) {
+                let finalX = activeDrag.offsetLeft;
+                let finalY = activeDrag.offsetTop;
+                if (isSnapping) {
+                    finalX = snapValue(finalX);
+                    finalY = snapValue(finalY);
+                    activeDrag.style.transition = 'left 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28), top 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+                    activeDrag.style.left = finalX + 'px';
+                    activeDrag.style.top = finalY + 'px';
+                }
+                state.positions[activeDrag.id] = { x: finalX, y: finalY }; 
+                activeDrag.style.zIndex = activeDrag.classList.contains('vista-window') ? 2000 : 60;
+                save(); 
+            }
+            if (activeResize) {
+                activeResize.style.transition = '';
+                save();
+            }
+            activeDrag = null;
+            activeResize = null;
+        }
+
+        function openWindow(title, isFile = false) {
+            const id = `win-${title.replace(/\s/g, '-')}`;
+            if(windows[id]) { 
+                if (windows[id].minimized) restoreWindow(id);
+                else focusWindow(id);
+                return; 
+            }
+            windows[id] = { title, minimized: false, maximized: false };
+            const win = document.createElement('div');
+            win.id = id;
+            win.className = "vista-window w-[600px] h-[400px] pointer-events-auto";
+            win.style.left = (200 + (Object.keys(windows).length * 20)) + 'px'; 
+            win.style.top = (100 + (Object.keys(windows).length * 20)) + 'px';
+            const isEditor = isFile || title === 'Welcome';
+            win.innerHTML = `
+                <div class="vista-title-bar" onmousedown="startDrag(event, this.parentElement, false)">
+                    <span class="text-sm font-bold opacity-80 flex items-center gap-2 pointer-events-none">
+                        <i class="fa-solid ${isEditor ? 'fa-file-lines' : 'fa-window-maximize'} text-xs"></i> <span class="window-title-text">${title}</span>
+                    </span>
+                    <div class="window-controls">
+                        <div class="control-btn" onclick="minimizeWindow('${id}')"><i class="fa-solid fa-minus"></i></div>
+                        <div class="control-btn" onclick="toggleMaximize('${id}')"><i class="fa-solid fa-expand"></i></div>
+                        <div class="control-btn btn-close" onclick="closeWindow('${id}')"><i class="fa-solid fa-xmark"></i></div>
+                    </div>
+                </div>
+                <div class="vista-content">
+                    ${isEditor ? `<textarea oninput="autosave('${title}', this.value)" class="win-textarea no-scrollbar">${state.files[title] || ''}</textarea>` 
+                    : `<div class="p-8"><h1 class="text-3xl font-light mb-4 text-white">${title} Overview</h1><p class="opacity-40 italic text-white/50">Module online. Monitoring KPIs...</p></div>`}
+                    <div class="window-resizer" onmousedown="startResize(event, this.parentElement.parentElement)"></div>
+                </div>
+            `;
+            win.addEventListener('mousedown', () => focusWindow(id));
+            // Append to body instead of desktop to separate it from the icon layer re-renders
+            document.body.appendChild(win);
+            focusWindow(id);
+        }
+
+        function toggleMaximize(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            windows[id].maximized = !windows[id].maximized;
+            win.classList.toggle('maximized');
+        }
+
+        function focusWindow(id) {
+            document.querySelectorAll('.vista-window').forEach(w => {
+                w.style.zIndex = 100;
+                w.classList.remove('active-window');
+            });
+            const win = document.getElementById(id);
+            if(win) {
+                win.style.zIndex = 2000;
+                win.classList.add('active-window');
+                activeWindowId = id;
+            }
+            renderTaskbar();
+        }
+
+        function minimizeWindow(id) {
+            const win = document.getElementById(id);
+            if (!win) return;
+            win.style.transform = "scale(0.8) translateY(100px)";
+            win.style.opacity = "0";
+            win.style.pointerEvents = "none";
+            windows[id].minimized = true;
+            if (activeWindowId === id) activeWindowId = null;
+            renderTaskbar();
+        }
+
+        function restoreWindow(id) {
+            const win = document.getElementById(id);
+            if(win) {
+                win.style.transform = "scale(1)";
+                win.style.opacity = "1";
+                win.style.pointerEvents = "all";
+                windows[id].minimized = false;
+                focusWindow(id);
+            }
+        }
+
+        function closeWindow(id) {
+            document.getElementById(id)?.remove();
+            delete windows[id];
+            if (activeWindowId === id) activeWindowId = null;
+            renderTaskbar();
+        }
+
+        function handleTaskbarItemClick(id) {
+            if (!windows[id]) return;
+            const win = windows[id];
+            if (win.minimized) restoreWindow(id);
+            else (activeWindowId === id) ? minimizeWindow(id) : focusWindow(id);
+        }
+
+        function renderTaskbar() {
+            const container = document.getElementById('taskbar-apps');
+            container.innerHTML = '';
+            Object.entries(windows).forEach(([id, win]) => {
+                const item = document.createElement('div');
+                const isActive = (id === activeWindowId && !win.minimized);
+                item.className = `taskbar-item ${isActive ? 'active' : 'inactive'} ${win.minimized ? 'opacity-40' : ''}`;
+                item.innerHTML = `
+                    <i class="fa-solid fa-window-maximize text-[10px] ${isActive ? 'text-blue-400' : 'opacity-40'}"></i>
+                    <span class="text-[11px] font-bold truncate max-w-[100px] text-white">${win.title}</span>
+                `;
+                item.onclick = (e) => { e.stopPropagation(); handleTaskbarItemClick(id); };
+                container.appendChild(item);
+            });
+        }
+
+        function renderWidgets() {
+            const desktop = document.getElementById('desktop');
+            ['clock', 'agenda', 'health'].forEach(type => {
+                const id = `widget-${type}`;
+                let pos = state.positions[id] || { x: getW() - 280, y: 30 + (['clock','agenda','health'].indexOf(type) * 150) };
+                
+                const div = document.createElement('div');
+                div.id = id;
+                div.className = "draggable aero-glass p-6 rounded-3xl w-64 shadow-xl absolute z-[60]";
+                div.style.left = pos.x + 'px'; 
+                div.style.top = pos.y + 'px';
+                div.onmousedown = (e) => startDrag(e, div, false);
+
+                if(type === 'clock') {
+                    div.innerHTML = `<div id="w-time" class="text-5xl font-extralight tracking-tighter pointer-events-none">12:00</div><div id="w-date" class="text-[10px] opacity-60 uppercase tracking-widest mt-2 font-bold pointer-events-none">...</div>`;
+                } else if(type === 'agenda') {
+                    const items = state.agenda.map(a => `<div class="flex items-center justify-between text-[11px] py-1.5 border-b border-white/5"><span class="truncate"><i class="fa-solid fa-circle text-[4px] priority-${a.priority} mr-2"></i>${a.text}</span><i class="fa-solid fa-xmark opacity-20 hover:opacity-100 cursor-pointer" onclick="deleteTask(event, ${a.id})"></i></div>`).join('');
+                    div.innerHTML = `<div class="flex justify-between items-center mb-3"><span class="text-[10px] font-black uppercase opacity-40 tracking-widest">Objectives</span><i class="fa-solid fa-plus text-blue-500 cursor-pointer" onclick="showTaskPrompt()"></i></div><div class="max-h-48 overflow-y-auto no-scrollbar">${items}</div>`;
+                } else if(type === 'health') {
+                    div.innerHTML = `<div class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">Infrastructure</div><div class="flex justify-between text-[10px] font-bold mb-1"><span>Network Load</span><span class="text-blue-500">94%</span></div><div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div class="bg-blue-500 h-full w-[94%]"></div></div>`;
+                }
+                desktop.appendChild(div);
+            });
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const tbTime = document.getElementById('taskbar-time');
+            if(tbTime) tbTime.innerText = timeStr;
+            const wt = document.getElementById('w-time'), wd = document.getElementById('w-date');
+            if(wt) wt.innerText = timeStr;
+            if(wd) wd.innerText = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+        }
+
+        function autosave(name, val) { state.files[name] = val; save(); }
+
+        function handleContextMenu(e, fileName = null) { 
+            e.preventDefault(); 
+            const m = document.getElementById('context-menu');
+            const deskOpts = document.getElementById('ctx-desktop-opts'), fileOpts = document.getElementById('ctx-file-opts');
+            if(fileName) {
+                deskOpts.classList.add('hidden'); fileOpts.classList.remove('hidden');
+                document.getElementById('ctx-open-file').onclick = () => openWindow(fileName, true);
+                document.getElementById('ctx-rename-file').onclick = () => showRenamePrompt(fileName);
+                document.getElementById('ctx-delete-file').onclick = () => deleteFile(fileName);
+            } else {
+                deskOpts.classList.remove('hidden'); fileOpts.classList.add('hidden');
+            }
+            m.style.display = 'block'; m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px'; 
+        }
+
+        function renameFile(oldName, newName) {
+            if (!newName || !newName.trim() || newName === oldName) return;
+            const trimmed = newName.trim();
+            if (state.files[trimmed] !== undefined) return;
+
+            state.files[trimmed] = state.files[oldName];
+            state.positions[`file-${trimmed}`] = state.positions[`file-${oldName}`];
+            
+            delete state.files[oldName];
+            delete state.positions[`file-${oldName}`];
+            
+            const oldId = `win-${oldName.replace(/\s/g, '-')}`;
+            if (windows[oldId]) {
+                const newId = `win-${trimmed.replace(/\s/g, '-')}`;
+                windows[newId] = { ...windows[oldId], title: trimmed };
+                delete windows[oldId];
+                const winEl = document.getElementById(oldId);
+                if (winEl) {
+                    winEl.id = newId;
+                    winEl.querySelector('.window-title-text').innerText = trimmed;
+                    const area = winEl.querySelector('textarea');
+                    if(area) area.oninput = () => autosave(trimmed, area.value);
+                }
+            }
+            
+            save();
+            init();
+        }
+
+        function showRenamePrompt(oldName) {
+            openDialog('Rename Directive', `Updating ${oldName}`, (val) => renameFile(oldName, val));
+            document.getElementById('dialog-input').value = oldName;
+            document.getElementById('dialog-input').select();
+        }
+
+        function deleteFile(name) { delete state.files[name]; delete state.positions[`file-${name}`]; closeWindow(`win-${name.replace(/\s/g, '-')}`); save(); init(); }
+        function toggleTheme() { state.theme = state.theme === 'light' ? 'dark' : 'light'; document.body.setAttribute('data-theme', state.theme); save(); }
+        function toggleStartMenu() { document.getElementById('start-menu').classList.toggle('visible'); }
+        function deleteTask(e, id) { e.stopPropagation(); state.agenda = state.agenda.filter(a => a.id !== id); save(); init(); }
+
+        function openDialog(title, desc, confirmFn, hasPriority = false) {
+            const overlay = document.getElementById('system-dialog-overlay');
+            document.getElementById('dialog-title').innerText = title;
+            document.getElementById('dialog-desc').innerText = desc;
+            document.getElementById('dialog-input').value = '';
+            document.getElementById('dialog-priority').style.display = hasPriority ? 'flex' : 'none';
+            overlay.style.display = 'flex';
+            document.getElementById('dialog-input').focus();
+            document.getElementById('dialog-confirm').onclick = () => { confirmFn(document.getElementById('dialog-input').value); closeDialog(); };
+        }
+
+        function closeDialog() { document.getElementById('system-dialog-overlay').style.display = 'none'; }
+        function setPriority(p) { selectedPriority = p; document.querySelectorAll('.p-priority').forEach(b => { b.classList.remove('border-2', 'opacity-100'); if(b.innerText.toLowerCase() === p) b.classList.add('border-2', 'opacity-100'); }); }
+        
+        function showTaskPrompt() { setPriority('low'); openDialog('New Objective', 'Tactical Goal', (val) => { if(val) { state.agenda.push({ id: Date.now(), text: val, priority: selectedPriority }); save(); init(); } }, true); }
+        function showFilePrompt() { openDialog('New Directive', 'Name encrypted document', (val) => { if(val) { state.files[val.trim()] = ""; save(); init(); } }); }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('start-menu');
+            if (menu && menu.classList.contains('visible') && !menu.contains(e.target) && !document.getElementById('start-orb-trigger').contains(e.target)) menu.classList.remove('visible');
+            document.getElementById('context-menu').style.display = 'none';
+        });
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+
+        window.onload = init;
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
