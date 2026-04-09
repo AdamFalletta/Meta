@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Pro - Multitasking Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+
+        :root {
+            --ios-blur: blur(40px);
+            --ios-glass: rgba(255, 255, 255, 0.1);
+            --transition-main: 0.5s cubic-bezier(0.3, 1, 0.3, 1);
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            user-select: none;
+        }
+
+        #device-frame {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop') center/cover;
+            border-radius: 44px;
+            overflow: hidden;
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.7);
+            border: 12px solid #1a1a1a;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 90vh;
+            aspect-ratio: 1200 / 800;
+            max-width: 95vw;
+        }
+
+        #device-frame.portrait {
+            height: 92vh; 
+            aspect-ratio: 800 / 1200;
+            border-radius: 50px;
+        }
+
+        .status-bar {
+            height: 44px;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            background: rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        #home-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition-main), opacity 0.5s ease, filter 0.5s ease;
+            transform-origin: center center;
+        }
+
+        .screen-container-wrapper {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen-container {
+            height: 100%;
+            display: flex;
+            transition: transform var(--transition-main);
+            width: 300%;
+        }
+
+        .page {
+            width: 33.333%;
+            height: 100%;
+            padding: 20px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 100px));
+            grid-auto-rows: min-content;
+            gap: 30px;
+            justify-content: center;
+            align-content: start;
+        }
+
+        .portrait .page {
+            grid-template-columns: repeat(4, 1fr);
+            padding: 30px 20px;
+            gap: 20px;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+            outline: none;
+        }
+        .app-icon:active { transform: scale(0.9); }
+        .icon-shape {
+            width: 75px; height: 75px; border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin-bottom: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .icon-label { font-size: 12px; font-weight: 400; text-shadow: 0 2px 4px rgba(0,0,0,0.5); text-align: center; }
+
+        .app-instance {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 500;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            padding-top: 44px;
+            transform: scale(0.1);
+            opacity: 0;
+            transition: transform var(--transition-main), opacity 0.3s ease, visibility 0.5s;
+            visibility: hidden;
+            transform-origin: center center;
+            pointer-events: none;
+        }
+        .app-instance.active {
+            transform: scale(1);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .app-instance.minimized {
+            transform: scale(0.1);
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Dark Mode Browser Chrome */
+        .browser-chrome {
+            background: #1c1c1e;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+        }
+        .browser-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+        .browser-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .browser-btn.close:hover {
+            background: #ff3b30;
+        }
+        .address-bar-input {
+            flex: 1;
+            background: #2c2c2e;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 13px;
+            color: white;
+            outline: none;
+            text-align: center;
+            transition: background 0.2s, text-align 0.2s;
+        }
+        .address-bar-input:focus {
+            background: #3a3a3c;
+            text-align: left;
+        }
+
+        .settings-container {
+            background: #f2f2f7;
+            height: 100%;
+            color: #000;
+            overflow-y: auto;
+        }
+        .settings-header {
+            padding: 40px 20px 20px;
+            font-size: 34px;
+            font-weight: 700;
+        }
+        .settings-group {
+            background: #fff;
+            margin: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .settings-row {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 0.5px solid #c6c6c8;
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-row-left { display: flex; align-items: center; gap: 12px; }
+        .settings-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: white; }
+
+        .switch {
+            position: relative; display: inline-block; width: 51px; height: 31px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 27px; width: 27px;
+            left: 2px; bottom: 2px; background-color: white;
+            transition: .4s; border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider { background-color: #34C759; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        #confirm-dialog {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 9000; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px);
+            display: none; align-items: center; justify-content: center;
+        }
+        .confirm-box {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            width: 270px;
+            border-radius: 14px;
+            text-align: center;
+            color: #000;
+            overflow: hidden;
+        }
+        .confirm-btn {
+            width: 100%;
+            padding: 12px;
+            border-top: 0.5px solid #c6c6c8;
+            font-size: 17px;
+            cursor: pointer;
+        }
+        .confirm-btn.danger { color: #ff3b30; font-weight: 600; }
+        .confirm-btn.cancel { color: #007aff; }
+
+        #app-switcher {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 800;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(20px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+        }
+        #switcher-cards {
+            display: flex;
+            gap: 30px;
+            overflow-x: auto;
+            width: 100%;
+            padding: 40px;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+        }
+        .app-card {
+            min-width: 220px;
+            height: 400px;
+            background: #2c2c2e;
+            border-radius: 24px;
+            position: relative;
+            scroll-snap-align: center;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .pagination {
+            display: flex; gap: 8px; justify-content: center; padding: 15px; z-index: 10;
+        }
+        .dot {
+            width: 7px; height: 7px; background: rgba(255,255,255,0.3);
+            border-radius: 50%; transition: background 0.3s;
+        }
+        .dot.active { background: #fff; }
+
+        .gesture-bar-container {
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; pointer-events: auto;
+        }
+        .gesture-indicator {
+            width: 80px; height: 5px; background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .dock-wrapper { padding: 10px 0 40px 0; display: flex; justify-content: center; }
+        .dock {
+            background: var(--ios-glass); backdrop-filter: var(--ios-blur);
+            padding: 12px 20px; border-radius: 35px; display: flex; gap: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .dock .icon-shape { width: 60px; height: 60px; margin-bottom: 0; }
+
+        #add-app-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2000; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px);
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: #1c1c1e; width: 450px; border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+            max-width: 90%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="device-frame">
+        <div class="status-bar">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-signal"></i>
+                <span class="text-xs">LTE</span>
+                <i class="fas fa-wifi"></i>
+            </div>
+            
+            <div class="gesture-bar-container" onmousedown="handleGestureStart(event)">
+                <div class="gesture-indicator"></div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+                <i class="fas fa-battery-full text-lg"></i>
+                <div id="clock">9:41 AM</div>
+            </div>
+        </div>
+
+        <div id="home-view">
+            <div class="screen-container-wrapper" id="home-drag-area">
+                <div class="screen-container" id="screen-slider">
+                    <!-- Page 1 -->
+                    <div class="page" id="system-page">
+                        <div class="app-icon" onclick="launchApp('Google', 'https://www.google.com/search?igu=1', 'browser', '#fff')">
+                            <div class="icon-shape" style="background: white;"><i class="fab fa-google" style="color: #4285F4"></i></div>
+                            <span class="icon-label">Google</span>
+                        </div>
+                    </div>
+                    <!-- Page 2 -->
+                    <div class="page" id="user-page"></div>
+                    <!-- Page 3 -->
+                    <div class="page">
+                        <div class="app-icon" onclick="openAddModal()">
+                            <div class="icon-shape" style="background: rgba(255,255,255,0.05); border: 1.5px dashed rgba(255,255,255,0.15);">
+                                <i class="fas fa-plus text-white/30"></i>
+                            </div>
+                            <span class="icon-label">Add App</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pagination">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <div class="dock-wrapper">
+                <div class="dock">
+                    <div class="icon-shape" style="background: #34C759;"><i class="fas fa-phone text-white"></i></div>
+                    <div class="icon-shape" style="background: #007AFF;"><i class="fas fa-envelope text-white"></i></div>
+                    <div class="icon-shape" style="background: #fff;" onclick="launchApp('Safari', 'https://www.google.com/search?igu=1', 'browser', '#fff')">
+                        <i class="fab fa-safari text-blue-500 text-5xl"></i>
+                    </div>
+                    <div class="icon-shape" style="background: #FF2D55;"><i class="fas fa-music text-white"></i></div>
+                    <div class="icon-shape" style="background: #8e8e93;" onclick="openSettings()">
+                        <i class="fas fa-cog text-white text-5xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirm-dialog">
+            <div class="confirm-box">
+                <div class="p-5">
+                    <h3 class="font-bold text-lg" id="confirm-title">Delete App?</h3>
+                    <p class="text-sm opacity-60 mt-1" id="confirm-msg">This will remove the shortcut from your home screen.</p>
+                </div>
+                <div class="confirm-btn danger" id="confirm-delete-btn">Delete</div>
+                <div class="confirm-btn cancel" onclick="closeConfirm()">Cancel</div>
+            </div>
+        </div>
+
+        <div id="app-switcher" onclick="closeSwitcher()">
+            <h2 class="text-2xl font-bold mb-4">App Switcher</h2>
+            <div id="switcher-cards" onclick="event.stopPropagation()"></div>
+        </div>
+
+        <div id="apps-container"></div>
+
+        <div id="add-app-modal">
+            <div class="modal-content">
+                <div class="modal-header p-5 border-b border-white/10 flex justify-between">
+                    <h2 class="text-lg font-semibold">New App Shortcut</h2>
+                    <i class="fas fa-times opacity-40 cursor-pointer" onclick="closeAddModal()"></i>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="text-xs uppercase opacity-40 font-bold ml-1">Name</label>
+                        <input type="text" id="app-name" class="w-full bg-white/5 p-4 rounded-2xl outline-none focus:ring-2 ring-blue-500 mt-1" placeholder="YouTube">
+                    </div>
+                    <div>
+                        <label class="text-xs uppercase opacity-40 font-bold ml-1">URL</label>
+                        <input type="text" id="app-url" class="w-full bg-white/5 p-4 rounded-2xl outline-none focus:ring-2 ring-blue-500 mt-1" placeholder="https://...">
+                    </div>
+                    <div>
+                        <label class="text-xs uppercase opacity-40 font-bold ml-1">Mode</label>
+                        <select id="app-type" class="w-full bg-white/5 p-4 rounded-2xl outline-none mt-1">
+                            <option value="app">Native App (Fullscreen)</option>
+                            <option value="browser" selected>Safari Mode (Address Bar)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="text-xs uppercase opacity-40 font-bold">Color</label>
+                        <input type="color" id="app-color" value="#007AFF" class="bg-transparent w-12 h-10 border-none">
+                    </div>
+                </div>
+                <div class="p-6 pt-0 flex gap-3">
+                    <button class="flex-1 bg-white/5 p-4 rounded-2xl font-bold" onclick="closeAddModal()">Cancel</button>
+                    <button class="flex-1 bg-blue-600 p-4 rounded-2xl font-bold" onclick="saveNewApp()">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const clock = document.getElementById('clock');
+        const homeView = document.getElementById('home-view');
+        const screenSlider = document.getElementById('screen-slider');
+        const dragArea = document.getElementById('home-drag-area');
+        const dots = document.querySelectorAll('.dot');
+        const appsContainer = document.getElementById('apps-container');
+        const appSwitcher = document.getElementById('app-switcher');
+        const switcherCards = document.getElementById('switcher-cards');
+        const userPage = document.getElementById('user-page');
+        const confirmDialog = document.getElementById('confirm-dialog');
+        const deviceFrame = document.getElementById('device-frame');
+
+        let activeAppId = null;
+        let runningApps = []; 
+        let userApps = JSON.parse(localStorage.getItem('ios_clone_apps_v2') || '[]');
+        let currentScreen = 0;
+        let isPortrait = localStorage.getItem('ios_orientation_v2') === 'portrait';
+
+        if (isPortrait) deviceFrame.classList.add('portrait');
+
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            clock.textContent = `${hours}:${minutes} ${ampm}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        let slideStartX = 0;
+        let isSlideDragging = false;
+        dragArea.addEventListener('mousedown', e => { slideStartX = e.clientX; isSlideDragging = true; });
+        window.addEventListener('mouseup', e => {
+            if (!isSlideDragging) return;
+            const diff = slideStartX - e.clientX;
+            if (Math.abs(diff) > 100) {
+                if (diff > 0 && currentScreen < 2) currentScreen++;
+                else if (diff < 0 && currentScreen > 0) currentScreen--;
+                updateSlider();
+            }
+            isSlideDragging = false;
+        });
+
+        function updateSlider() {
+            screenSlider.style.transform = `translateX(-${currentScreen * 33.333}%)`;
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === currentScreen));
+        }
+
+        function openSettings() {
+            const id = 'app-settings';
+            if (runningApps.find(a => a.id === id)) { resumeApp(id); return; }
+
+            const appEl = document.createElement('div');
+            appEl.className = 'app-instance active';
+            appEl.id = id;
+            updateSettingsUI(appEl);
+            appsContainer.appendChild(appEl);
+            runningApps.push({ id, name: 'Settings', url: 'system:settings', type: 'system', color: '#8e8e93', element: appEl });
+            
+            setTimeout(() => {
+                activeAppId = id;
+                homeView.style.filter = "blur(15px) brightness(0.7)";
+                homeView.style.transform = "scale(0.9)";
+                homeView.style.opacity = "0.5";
+            }, 10);
+        }
+
+        function updateSettingsUI(appEl) {
+            appEl.innerHTML = `
+                <div class="settings-container">
+                    <div class="flex justify-between items-center px-5 pt-8">
+                        <span class="text-blue-500 font-medium cursor-pointer" onclick="minimizeActive()">Done</span>
+                    </div>
+                    <div class="settings-header">Settings</div>
+                    <div class="px-5 mb-2 text-xs uppercase opacity-40 font-bold">Display & Orientation</div>
+                    <div class="settings-group">
+                        <div class="settings-row">
+                            <div class="settings-row-left">
+                                <div class="settings-icon" style="background: #32ade6"><i class="fas fa-mobile-alt text-xs"></i></div>
+                                <span>Portrait Mode (Vertical Monitor)</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="orientation-toggle" ${isPortrait ? 'checked' : ''} onchange="toggleOrientation(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="px-5 mb-2 text-xs uppercase opacity-40 font-bold">Installed Apps</div>
+                    <div class="settings-group" id="settings-app-list">${renderSettingsAppItems()}</div>
+                </div>
+            `;
+        }
+
+        function toggleOrientation(cb) {
+            isPortrait = cb.checked;
+            localStorage.setItem('ios_orientation_v2', isPortrait ? 'portrait' : 'landscape');
+            deviceFrame.classList.toggle('portrait', isPortrait);
+        }
+
+        function renderSettingsAppItems() {
+            if (userApps.length === 0) return '<div class="settings-row opacity-30 italic">No custom apps installed</div>';
+            return userApps.map((app, index) => `
+                <div class="settings-row">
+                    <div class="settings-row-left">
+                        <div class="settings-icon" style="background:${app.color}">${app.name.charAt(0)}</div>
+                        <span>${app.name}</span>
+                    </div>
+                    <button class="text-red-500 text-sm font-semibold" onclick="askDelete(${index})">Uninstall</button>
+                </div>
+            `).join('');
+        }
+
+        let pendingDeleteIndex = null;
+        function askDelete(index) {
+            pendingDeleteIndex = index;
+            document.getElementById('confirm-title').textContent = `Uninstall ${userApps[index].name}?`;
+            confirmDialog.style.display = 'flex';
+            document.getElementById('confirm-delete-btn').onclick = doDelete;
+        }
+
+        function closeConfirm() { confirmDialog.style.display = 'none'; }
+        function doDelete() {
+            if (pendingDeleteIndex !== null) {
+                userApps.splice(pendingDeleteIndex, 1);
+                localStorage.setItem('ios_clone_apps_v2', JSON.stringify(userApps));
+                renderUserApps();
+                const settingsApp = runningApps.find(a => a.id === 'app-settings');
+                if (settingsApp) updateSettingsUI(settingsApp.element);
+                closeConfirm();
+            }
+        }
+
+        function launchApp(name, url, type, color) {
+            const existing = runningApps.find(a => a.url === url);
+            if (existing) { resumeApp(existing.id); return; }
+
+            const id = 'app-' + Date.now();
+            const appEl = document.createElement('div');
+            appEl.className = 'app-instance'; 
+            appEl.id = id;
+
+            let browserChrome = '';
+            if (type === 'browser') {
+                browserChrome = `
+                    <div class="browser-chrome">
+                        <div class="browser-btn" title="Back" onclick="window.history.back()"><i class="fas fa-chevron-left"></i></div>
+                        
+                        <input type="text" 
+                               class="address-bar-input" 
+                               value="${url}" 
+                               onkeydown="if(event.key === 'Enter') navigateBrowser('${id}', this.value)"
+                        >
+                        
+                        <div class="flex items-center gap-1">
+                            <div class="browser-btn" title="Refresh" onclick="refreshBrowser('${id}')"><i class="fas fa-redo"></i></div>
+                            <div class="browser-btn close" title="Close Tab" onclick="closeApp('${id}')"><i class="fas fa-times"></i></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            appEl.innerHTML = `${browserChrome}<iframe id="frame-${id}" src="${url}" class="flex-1 bg-white border-none w-full h-full"></iframe>`;
+
+            appsContainer.appendChild(appEl);
+            runningApps.push({ id, name, url, type, color, element: appEl });
+            
+            setTimeout(() => {
+                appEl.classList.add('active');
+                activeAppId = id;
+                homeView.style.filter = "blur(15px) brightness(0.7)";
+                homeView.style.transform = "scale(0.9)";
+                homeView.style.opacity = "0.5";
+            }, 10);
+        }
+
+        function refreshBrowser(id) {
+            const frame = document.getElementById(`frame-${id}`);
+            if(frame) frame.src = frame.src;
+        }
+
+        function navigateBrowser(id, url) {
+            const frame = document.getElementById(`frame-${id}`);
+            if(frame) {
+                const finalUrl = url.startsWith('http') ? url : 'https://' + url;
+                frame.src = finalUrl;
+            }
+        }
+
+        function resumeApp(id) {
+            runningApps.forEach(a => a.element.classList.remove('active'));
+            const app = runningApps.find(a => a.id === id);
+            if (app) {
+                app.element.classList.remove('minimized');
+                app.element.classList.add('active');
+                activeAppId = id;
+                closeSwitcher();
+                homeView.style.filter = "blur(15px) brightness(0.7)";
+                homeView.style.transform = "scale(0.9)";
+                homeView.style.opacity = "0.5";
+            }
+        }
+
+        function minimizeActive() {
+            if (!activeAppId) {
+                resetHomeState();
+                return;
+            }
+            const app = runningApps.find(a => a.id === activeAppId);
+            if (app) {
+                app.element.classList.remove('active');
+                app.element.classList.add('minimized');
+            }
+            activeAppId = null;
+            resetHomeState();
+        }
+
+        function resetHomeState() {
+            homeView.style.filter = "none";
+            homeView.style.transform = "scale(1)";
+            homeView.style.opacity = "1";
+        }
+
+        function closeApp(id) {
+            const appIndex = runningApps.findIndex(a => a.id === id);
+            if (appIndex > -1) {
+                const el = runningApps[appIndex].element;
+                el.classList.remove('active');
+                el.classList.add('minimized');
+                setTimeout(() => {
+                    el.remove();
+                    runningApps.splice(appIndex, 1);
+                    if (activeAppId === id) minimizeActive();
+                    if (appSwitcher.style.display === 'flex') renderSwitcher();
+                }, 500);
+            }
+        }
+
+        function openSwitcher() {
+            renderSwitcher();
+            appSwitcher.style.display = 'flex';
+            homeView.style.filter = "blur(20px)";
+        }
+        function closeSwitcher() {
+            appSwitcher.style.display = 'none';
+            if (!activeAppId) minimizeActive();
+        }
+
+        function renderSwitcher() {
+            switcherCards.innerHTML = '';
+            runningApps.forEach(app => {
+                const card = document.createElement('div');
+                card.className = 'app-card';
+                card.onclick = () => resumeApp(app.id);
+                card.innerHTML = `
+                    <div class="absolute top-0 w-full p-4 flex justify-between items-center z-10 bg-black/20">
+                        <span class="font-bold text-xs">${app.name}</span>
+                        <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center" onclick="event.stopPropagation(); closeApp('${app.id}')">
+                            <i class="fas fa-times text-[10px]"></i>
+                        </div>
+                    </div>
+                    <div class="w-full h-full bg-white/10 flex items-center justify-center">
+                        <div class="w-16 h-16 rounded-xl flex items-center justify-center text-3xl" style="background:${app.color}">
+                             ${app.type === 'system' ? '<i class="fas fa-cog text-white"></i>' : app.name.charAt(0)}
+                        </div>
+                    </div>
+                `;
+                switcherCards.appendChild(card);
+            });
+        }
+
+        function handleGestureStart(e) {
+            let startY = e.clientY;
+            const moveHandler = (me) => { if (me.clientY - startY > 80) { cleanup(); openSwitcher(); } };
+            const endHandler = (ee) => { if (ee.clientY - startY < 30) minimizeActive(); cleanup(); };
+            const cleanup = () => { window.removeEventListener('mousemove', moveHandler); window.removeEventListener('mouseup', endHandler); };
+            window.addEventListener('mousemove', moveHandler);
+            window.addEventListener('mouseup', endHandler);
+        }
+
+        function openAddModal() { document.getElementById('add-app-modal').style.display = 'flex'; }
+        function closeAddModal() { document.getElementById('add-app-modal').style.display = 'none'; }
+        
+        function saveNewApp() {
+            const name = document.getElementById('app-name').value;
+            const url = document.getElementById('app-url').value;
+            const type = document.getElementById('app-type').value;
+            const color = document.getElementById('app-color').value;
+            if (!name || !url) return;
+            userApps.push({ name, url: url.startsWith('http') ? url : 'https://' + url, type, color });
+            localStorage.setItem('ios_clone_apps_v2', JSON.stringify(userApps));
+            renderUserApps();
+            const settingsApp = runningApps.find(a => a.id === 'app-settings');
+            if (settingsApp) updateSettingsUI(settingsApp.element);
+            closeAddModal();
+        }
+
+        function renderUserApps() {
+            userPage.innerHTML = '';
+            userApps.forEach(app => {
+                const icon = document.createElement('div');
+                icon.className = 'app-icon';
+                icon.onclick = () => launchApp(app.name, app.url, app.type, app.color);
+                icon.innerHTML = `<div class="icon-shape" style="background:${app.color}; color:white;"><span class="font-bold">${app.name.charAt(0).toUpperCase()}</span></div><span class="icon-label">${app.name}</span>`;
+                userPage.appendChild(icon);
+            });
+        }
+
+        renderUserApps();
+    </script>
+</body>
+</html>
