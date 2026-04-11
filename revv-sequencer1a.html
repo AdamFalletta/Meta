@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <title>Neon 909 Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --neon-pink: #ff00ff;
+            --neon-blue: #00d2ff;
+            --neon-green: #39ff14;
+            --bg-dark: #070709;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Step Internal Glows */
+        .step {
+            height: 100%;
+            border-radius: 2px;
+            transition: all 0.05s ease;
+            cursor: pointer;
+            background: #1a1a20;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Gradient generation for the 16 channels */
+        .active-step {
+            box-shadow: 0 0 15px var(--step-color), inset 0 0 10px rgba(0,0,0,0.3);
+            background-color: var(--step-color) !important;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+
+        .step.playing {
+            filter: brightness(1.5);
+            transform: scale(0.96);
+        }
+
+        .glass-panel {
+            background: rgba(18, 18, 22, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* MPC Pad Internal Glow */
+        .mpc-pad {
+            aspect-ratio: 1/1;
+            transition: all 0.1s;
+            position: relative;
+            background: rgba(255,255,255,0.02);
+        }
+        .mpc-pad.trigger {
+            transform: scale(0.96);
+            box-shadow: inset 0 0 30px var(--pad-color), 0 0 20px var(--pad-color);
+            background-color: var(--pad-color);
+        }
+        .mpc-pad.trigger span {
+            color: white;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .tab-btn.active {
+            color: var(--neon-blue);
+            box-shadow: inset 0 -2px 0 var(--neon-blue);
+        }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-runnable-track { height: 2px; background: #333; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; margin-top: -5px; }
+        
+        .channel-strip { height: 38px; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <header class="h-14 glass-panel border-b border-white/5 flex items-center justify-between px-4 z-50">
+        <div class="flex items-center gap-6">
+            <h1 class="font-black italic text-xl tracking-tighter" style="color: var(--neon-purple)">909<span class="text-white not-italic text-[10px] ml-1 opacity-40 uppercase">Studio</span></h1>
+            
+            <div class="flex items-center gap-2 bg-black/40 p-1 rounded border border-white/5">
+                <button id="playBtn" class="w-10 h-8 flex items-center justify-center rounded bg-green-500/10 text-green-400">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button id="stopBtn" class="w-10 h-8 flex items-center justify-center rounded bg-red-500/10 text-red-400">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M6 6h12v12H6z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-8">
+            <div class="flex flex-col w-40">
+                <div class="flex justify-between text-[9px] font-bold opacity-50"><span>909 TUNE</span><span id="tuneVal">100%</span></div>
+                <input type="range" id="globalTuner" min="0.5" max="2.0" step="0.01" value="1.0">
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-[9px] font-bold opacity-50">BPM</span>
+                <input type="number" id="bpmInput" value="128" class="bg-transparent text-lg font-mono font-bold w-12 text-center outline-none">
+            </div>
+            <div id="patternIndicator" class="font-mono text-xl bg-black/60 px-3 py-1 rounded border border-white/5 text-blue-400">P1</div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <section class="flex-1 flex flex-col overflow-hidden">
+            <nav class="h-10 flex border-b border-white/5 bg-black/20">
+                <button class="tab-btn active px-6 text-[10px] font-bold uppercase tracking-widest" data-tab="sequencer">Sequencer</button>
+                <button class="tab-btn px-6 text-[10px] font-bold uppercase tracking-widest" data-tab="mixer">Mixer</button>
+                <button class="tab-btn px-6 text-[10px] font-bold uppercase tracking-widest text-orange-400" data-tab="mpc">MPC Pad</button>
+            </nav>
+
+            <div id="tabContent" class="flex-1 relative">
+                <div id="view-sequencer" class="tab-view absolute inset-0 flex">
+                    <div class="w-48 flex flex-col border-r border-white/5">
+                        <div class="h-8 bg-white/5 border-b border-white/5 flex items-center px-4 text-[9px] font-bold opacity-40 uppercase">Channel</div>
+                        <div id="channelLabels" class="flex-1 flex flex-col"></div>
+                    </div>
+                    <div class="flex-1 flex flex-col overflow-hidden">
+                        <div class="h-8 bg-white/5 border-b border-white/5 flex" id="stepHeaders"></div>
+                        <div id="sequencerGrid" class="flex-1 flex flex-col overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <div id="view-mixer" class="tab-view absolute inset-0 hidden p-4 overflow-x-auto">
+                    <div id="mixerStripContainer" class="flex gap-1 h-full"></div>
+                </div>
+
+                <div id="view-mpc" class="tab-view absolute inset-0 hidden flex items-center justify-center p-10 bg-black/40">
+                    <div class="grid grid-cols-4 grid-rows-4 gap-4 w-full max-w-2xl h-full max-h-[600px]" id="mpcGrid"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const masterBus = ctx.createGain();
+        masterBus.connect(ctx.destination);
+
+        const state = {
+            isPlaying: false, bpm: 128, currentStep: 0, currentPattern: 0, globalTune: 1,
+            patterns: Array.from({length: 8}, () => Array.from({length: 16}, () => Array(16).fill(false))),
+            channels: [
+                { id: 0, name: '01 KICK', color: '#bc13fe', type: 'kick', key: 'Z' },
+                { id: 1, name: '02 SNARE', color: '#cd0efd', type: 'snare', key: 'X' },
+                { id: 2, name: '03 RIMSHOT', color: '#df09fc', type: 'rim', key: 'C' },
+                { id: 3, name: '04 CLAP', color: '#f104fb', type: 'clap', key: 'V' },
+                { id: 4, name: '05 CLOSED HAT', color: '#ff00ff', type: 'hat', key: 'A' },
+                { id: 5, name: '06 OPEN HAT', color: '#c035ff', type: 'openhat', key: 'S' },
+                { id: 6, name: '07 CRASH', color: '#806aff', type: 'crash', key: 'D' },
+                { id: 7, name: '08 RIDE', color: '#409fff', type: 'ride', key: 'F' },
+                { id: 8, name: '09 LOW TOM', color: '#00d2ff', type: 'tom', freq: 80, key: 'Q' },
+                { id: 9, name: '10 MID TOM', color: '#0eded4', type: 'tom', freq: 120, key: 'W' },
+                { id: 10, name: '11 HIGH TOM', color: '#1ce9a8', type: 'tom', freq: 180, key: 'E' },
+                { id: 11, name: '12 COWBELL', color: '#29ff7d', type: 'cowbell', key: 'R' },
+                { id: 12, name: '13 HI CONGA', color: '#39ff14', type: 'conga', freq: 400, key: '1' },
+                { id: 13, name: '14 MID CONGA', color: '#68ff14', type: 'conga', freq: 300, key: '2' },
+                { id: 14, name: '15 LOW CONGA', color: '#98ff14', type: 'conga', freq: 200, key: '3' },
+                { id: 15, name: '16 FX NOISE', color: '#c7ff14', type: 'fx', key: '4' },
+            ]
+        };
+
+        // --- 909 MODELING ENGINES ---
+        
+        const createNoiseBuffer = () => {
+            const bufferSize = ctx.sampleRate * 2;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            return buffer;
+        };
+        const noiseBuffer = createNoiseBuffer();
+
+        const triggerDrum = (idx, time = ctx.currentTime) => {
+            const ch = state.channels[idx];
+            const out = ctx.createGain();
+            out.connect(masterBus);
+            const tune = state.globalTune;
+
+            switch(ch.type) {
+                case 'kick':
+                    const kOsc = ctx.createOscillator();
+                    const kEnv = ctx.createGain();
+                    kOsc.frequency.setValueAtTime(150 * tune, time);
+                    kOsc.frequency.exponentialRampToValueAtTime(40 * tune, time + 0.1);
+                    kEnv.gain.setValueAtTime(1, time);
+                    kEnv.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
+                    kOsc.connect(kEnv); kEnv.connect(out);
+                    kOsc.start(time); kOsc.stop(time + 0.5);
+                    // Click
+                    const kClick = ctx.createOscillator();
+                    const kCEnv = ctx.createGain();
+                    kClick.frequency.setValueAtTime(800, time);
+                    kCEnv.gain.setValueAtTime(0.5, time);
+                    kCEnv.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+                    kClick.connect(kCEnv); kCEnv.connect(out);
+                    kClick.start(time); kClick.stop(time + 0.02);
+                    break;
+
+                case 'snare':
+                    const sOsc = ctx.createOscillator();
+                    const sOEnv = ctx.createGain();
+                    sOsc.frequency.setValueAtTime(180 * tune, time);
+                    sOEnv.gain.setValueAtTime(0.5, time);
+                    sOEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+                    sOsc.connect(sOEnv); sOEnv.connect(out);
+                    sOsc.start(time); sOsc.stop(time + 0.1);
+                    // Noise
+                    const sNoise = ctx.createBufferSource();
+                    sNoise.buffer = noiseBuffer;
+                    const sNFilter = ctx.createBiquadFilter();
+                    sNFilter.type = 'bandpass'; sNFilter.frequency.value = 1500;
+                    const sNEnv = ctx.createGain();
+                    sNEnv.gain.setValueAtTime(0.8, time);
+                    sNEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+                    sNoise.connect(sNFilter); sNFilter.connect(sNEnv); sNEnv.connect(out);
+                    sNoise.start(time); sNoise.stop(time + 0.2);
+                    break;
+
+                case 'clap':
+                    for(let i=0; i<4; i++) {
+                        const burst = ctx.createBufferSource();
+                        burst.buffer = noiseBuffer;
+                        const bEnv = ctx.createGain();
+                        const burstTime = time + (i * 0.01);
+                        bEnv.gain.setValueAtTime(0.8, burstTime);
+                        bEnv.gain.exponentialRampToValueAtTime(0.01, burstTime + 0.03);
+                        burst.connect(bEnv); bEnv.connect(out);
+                        burst.start(burstTime); burst.stop(burstTime + 0.04);
+                    }
+                    break;
+
+                case 'hat':
+                case 'openhat':
+                case 'ride':
+                    const freqs = [300, 450, 600, 750, 900, 1050].map(f => f * tune);
+                    freqs.forEach(f => {
+                        const hOsc = ctx.createOscillator();
+                        hOsc.type = 'square'; hOsc.frequency.value = f;
+                        const hEnv = ctx.createGain();
+                        hEnv.gain.setValueAtTime(0.05, time);
+                        const dur = ch.type === 'hat' ? 0.08 : (ch.type === 'openhat' ? 0.4 : 0.8);
+                        hEnv.gain.exponentialRampToValueAtTime(0.001, time + dur);
+                        hOsc.connect(hEnv); hEnv.connect(out);
+                        hOsc.start(time); hOsc.stop(time + dur);
+                    });
+                    break;
+
+                case 'tom':
+                case 'conga':
+                    const tOsc = ctx.createOscillator();
+                    const tEnv = ctx.createGain();
+                    tOsc.frequency.setValueAtTime(ch.freq * tune, time);
+                    tOsc.frequency.exponentialRampToValueAtTime(ch.freq * 0.5 * tune, time + 0.2);
+                    tEnv.gain.setValueAtTime(0.8, time);
+                    const tDur = ch.type === 'tom' ? 0.4 : 0.15;
+                    tEnv.gain.exponentialRampToValueAtTime(0.001, time + tDur);
+                    tOsc.connect(tEnv); tEnv.connect(out);
+                    tOsc.start(time); tOsc.stop(time + tDur);
+                    break;
+
+                case 'cowbell':
+                    [540, 800].forEach(f => {
+                        const cbOsc = ctx.createOscillator();
+                        cbOsc.type = 'square'; cbOsc.frequency.value = f * tune;
+                        const cbEnv = ctx.createGain();
+                        cbEnv.gain.setValueAtTime(0.4, time);
+                        cbEnv.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+                        cbOsc.connect(cbEnv); cbEnv.connect(out);
+                        cbOsc.start(time); cbOsc.stop(time + 0.1);
+                    });
+                    break;
+                
+                case 'rim':
+                    const rNoise = ctx.createBufferSource();
+                    rNoise.buffer = noiseBuffer;
+                    const rFilter = ctx.createBiquadFilter();
+                    rFilter.type = 'bandpass'; rFilter.frequency.value = 1800; rFilter.Q.value = 10;
+                    const rEnv = ctx.createGain();
+                    rEnv.gain.setValueAtTime(0.8, time);
+                    rEnv.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+                    rNoise.connect(rFilter); rFilter.connect(rEnv); rEnv.connect(out);
+                    rNoise.start(time); rNoise.stop(time + 0.05);
+                    break;
+
+                default: // FX
+                    const n = ctx.createBufferSource();
+                    n.buffer = noiseBuffer;
+                    const nEnv = ctx.createGain();
+                    nEnv.gain.setValueAtTime(0.5, time);
+                    nEnv.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
+                    n.connect(nEnv); nEnv.connect(out);
+                    n.start(time); n.stop(time + 0.5);
+            }
+
+            const elements = document.querySelectorAll(`[data-channel-id="${idx}"]`);
+            elements.forEach(el => { el.classList.add('trigger'); setTimeout(() => el.classList.remove('trigger'), 100); });
+        };
+
+        function init() {
+            const grid = document.getElementById('sequencerGrid');
+            const labels = document.getElementById('channelLabels');
+            const stepHeaders = document.getElementById('stepHeaders');
+            const mpcGrid = document.getElementById('mpcGrid');
+            const mixer = document.getElementById('mixerStripContainer');
+
+            for (let i = 1; i <= 16; i++) {
+                const h = document.createElement('div');
+                h.className = "flex-1 border-r border-white/5 flex items-center justify-center text-[9px] font-bold opacity-30";
+                h.innerText = i < 10 ? '0' + i : i;
+                stepHeaders.appendChild(h);
+            }
+
+            state.channels.forEach((ch, idx) => {
+                const label = document.createElement('div');
+                label.className = `channel-strip flex items-center px-4 text-[10px] font-bold border-b border-white/5 cursor-pointer hover:brightness-125`;
+                label.style.background = `linear-gradient(90deg, ${ch.color}22 0%, transparent 100%)`;
+                label.innerHTML = `<span class="opacity-40 mr-3" style="color:${ch.color}">${idx + 1}</span> ${ch.name}`;
+                label.onclick = () => triggerDrum(idx);
+                labels.appendChild(label);
+
+                const row = document.createElement('div');
+                row.className = "channel-strip flex border-b border-white/5";
+                for (let s = 0; s < 16; s++) {
+                    const step = document.createElement('div');
+                    step.className = `flex-1 step border-r border-white/5` + (s % 4 === 0 ? ' bg-white/5' : '');
+                    step.dataset.channel = idx; step.dataset.step = s;
+                    step.style.setProperty('--step-color', ch.color);
+                    step.onclick = () => {
+                        state.patterns[state.currentPattern][idx][s] = !state.patterns[state.currentPattern][idx][s];
+                        renderSequencer();
+                    };
+                    row.appendChild(step);
+                }
+                grid.appendChild(row);
+
+                const strip = document.createElement('div');
+                strip.className = "w-20 glass-panel flex flex-col items-center py-4 border-r border-white/5";
+                strip.innerHTML = `
+                    <div class="h-2 w-full mb-4" style="background:${ch.color}"></div>
+                    <div class="flex-1 flex flex-col gap-8 items-center w-full">
+                        <div class="flex flex-col items-center w-full px-2">
+                             <span class="text-[8px] opacity-40 mb-1">VOL</span>
+                             <input type="range" class="w-full rotate-[-90deg] translate-y-8" min="0" max="1" step="0.1" value="0.8">
+                        </div>
+                    </div>
+                    <span class="text-[8px] font-bold mt-4" style="color:${ch.color}">${ch.name.split(' ').slice(1).join(' ')}</span>
+                `;
+                mixer.appendChild(strip);
+            });
+
+            const mpcOrder = [12,13,14,15, 8,9,10,11, 4,5,6,7, 0,1,2,3];
+            mpcOrder.forEach(idx => {
+                const ch = state.channels[idx];
+                const pad = document.createElement('div');
+                pad.className = `mpc-pad glass-panel border border-white/10 rounded-xl flex flex-col items-center justify-center cursor-pointer`;
+                pad.style.setProperty('--pad-color', ch.color);
+                pad.style.color = ch.color;
+                pad.dataset.channelId = idx;
+                pad.innerHTML = `
+                    <span class="text-xl font-black">${ch.key}</span>
+                    <span class="text-[8px] font-bold opacity-50 mt-1 uppercase">${ch.name.split(' ').slice(1).join(' ')}</span>
+                `;
+                pad.onmousedown = () => triggerDrum(idx);
+                mpcGrid.appendChild(pad);
+            });
+        }
+
+        function renderSequencer() {
+            const steps = document.querySelectorAll('.step');
+            const pattern = state.patterns[state.currentPattern];
+            steps.forEach(el => {
+                const ch = parseInt(el.dataset.channel);
+                const s = parseInt(el.dataset.step);
+                const active = pattern[ch][s];
+                
+                el.classList.toggle('active-step', active);
+                if (s === state.currentStep && state.isPlaying) el.classList.add('playing');
+                else el.classList.remove('playing');
+            });
+        }
+
+        const workerBlob = new Blob([`let t = null; self.onmessage = e => { if(e.data === "start") t = setInterval(() => self.postMessage("tick"), 25); else clearInterval(t); }`], { type: "text/javascript" });
+        const worker = new Worker(URL.createObjectURL(workerBlob));
+        let nextNoteTime = 0;
+        worker.onmessage = () => {
+            while (nextNoteTime < ctx.currentTime + 0.1) {
+                state.patterns[state.currentPattern].forEach((track, ch) => { if (track[state.currentStep]) triggerDrum(ch, nextNoteTime); });
+                nextNoteTime += 60 / state.bpm / 4;
+                state.currentStep = (state.currentStep + 1) % 16;
+                requestAnimationFrame(renderSequencer);
+            }
+        };
+
+        document.getElementById('playBtn').onclick = () => { if (ctx.state === 'suspended') ctx.resume(); state.isPlaying = true; nextNoteTime = ctx.currentTime; worker.postMessage("start"); };
+        document.getElementById('stopBtn').onclick = () => { state.isPlaying = false; worker.postMessage("stop"); state.currentStep = 0; renderSequencer(); };
+        document.getElementById('bpmInput').onchange = (e) => state.bpm = parseInt(e.target.value);
+        document.getElementById('globalTuner').oninput = (e) => {
+            state.globalTune = parseFloat(e.target.value);
+            document.getElementById('tuneVal').innerText = Math.round(state.globalTune * 100) + "%";
+        };
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+                btn.classList.add('active'); document.getElementById(`view-${btn.dataset.tab}`).classList.remove('hidden');
+            };
+        });
+
+        window.onkeydown = (e) => {
+            const key = e.key.toUpperCase();
+            const ch = state.channels.find(c => c.key === key);
+            if (ch) triggerDrum(ch.id);
+        };
+
+        init(); renderSequencer();
+    </script>
+</body>
+</html>
