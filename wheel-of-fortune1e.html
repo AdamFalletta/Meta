@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fortune Wheel Pro - Tournament</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Rowdies:wght@400;700&display=swap');
+
+        :root {
+            --gold: #d4af37;
+            --gold-bright: #f9e29c;
+            --tile-white: #dddddd;
+            --board-bg: #1c1e23;
+        }
+
+        body {
+            background: radial-gradient(circle, #1a3a5a 0%, #0a1a2a 100%);
+            font-family: 'Roboto Condensed', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+            color: white;
+        }
+
+        #board {
+            background-color: var(--board-bg);
+            border: 6px solid var(--gold);
+            box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(212, 175, 55, 0.2);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            min-height: 300px;
+        }
+
+        .board-tile {
+            perspective: 1000px;
+            width: 6vw;
+            height: 8vw;
+            max-width: 60px;
+            max-height: 70px;
+        }
+
+        .tile-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .tile-inner.flipped { transform: rotateY(180deg); }
+
+        .tile-front, .tile-back {
+              position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.75rem;
+    font-weight: 900;
+    border: 5px solid #111111;
+        }
+
+        .tile-front { background-color: var(--tile-white); box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
+        .tile-back { background-color: #eeeeee; color: #232323; transform: rotateY(180deg); }
+        
+        .tile-space { background-color: transparent; border: none; }
+        .tile-inactive {     background-color: #385f29;
+    border: 5px solid #111111;
+    opacity: 1;}
+
+        .keyboard-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+        }
+        
+        .keyboard-btn.used {
+            background: rgba(0, 0, 0, 0.4);
+            color: rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+        }
+
+        .player-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0.4;
+            transform: scale(0.9);
+            filter: grayscale(0.5);
+        }
+
+        .player-card.active.p-red { opacity: 1; transform: scale(1.05); filter: grayscale(0); border-color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); }
+        .player-card.active.p-yellow { opacity: 1; transform: scale(1.05); filter: grayscale(0); border-color: #eab308; box-shadow: 0 0 25px rgba(234, 179, 8, 0.6); }
+        .player-card.active.p-blue { opacity: 1; transform: scale(1.05); filter: grayscale(0); border-color: #3b82f6; box-shadow: 0 0 25px rgba(59, 130, 246, 0.6); }
+
+        .power-meter-container {
+            width: 100%;
+            height: 12px;
+            background: #111;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #444;
+            display: none;
+        }
+        .power-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #22c55e, #eab308, #ef4444);
+            transition: width 0.05s linear;
+        }
+
+        .bonus-envelope {
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(135deg, #fff 0%, #eee 100%);
+            border: 3px solid #d4af37;
+            color: #b48a04;
+            font-size: 2rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .bonus-envelope:hover { transform: translateY(-10px) scale(1.1); box-shadow: 0 10px 20px rgba(212, 175, 55, 0.4); background: #f9e29c; }
+        .bonus-envelope.selected { border-color: #fff; background: #d4af37; color: white; transform: translateY(-10px) scale(1.1); }
+
+        @media (orientation: portrait) {
+            .portrait-warning { display: flex !important; }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen select-none overflow-hidden" onclick="initAudio()">
+
+    <div class="portrait-warning fixed inset-0 z-[100] bg-black hidden flex-col items-center justify-center text-center p-10">
+        <div class="text-4xl mb-4">🔄</div>
+        <h1 class="text-2xl font-bold">Landscape Required</h1>
+    </div>
+
+    <div class="flex h-full">
+        <!-- Main Game Area -->
+        <div class="flex-[1.8] flex flex-col p-4 space-y-4">
+            <div class="grid grid-cols-3 gap-3">
+                <div id="p0-card" class="player-card p-red bg-red-900/20 border-2 border-white/10 p-3 rounded-xl flex flex-col items-center">
+                    <span class="text-[10px] font-bold text-red-400 uppercase">You (Red)</span>
+                    <div id="p0-bank" class="text-[9px] opacity-60">TOTAL: $0</div>
+                    <div id="p0-score" class="text-2xl font-black text-white">$0</div>
+                </div>
+                <div id="p1-card" class="player-card p-yellow bg-yellow-900/20 border-2 border-white/10 p-3 rounded-xl flex flex-col items-center">
+                    <span class="text-[10px] font-bold text-yellow-400 uppercase">Jesse (Yellow)</span>
+                    <div id="p1-bank" class="text-[9px] opacity-60">TOTAL: $0</div>
+                    <div id="p1-score" class="text-2xl font-black text-white">$0</div>
+                </div>
+                <div id="p2-card" class="player-card p-blue bg-blue-900/20 border-2 border-white/10 p-3 rounded-xl flex flex-col items-center">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase">Terry (Blue)</span>
+                    <div id="p2-bank" class="text-[9px] opacity-60">TOTAL: $0</div>
+                    <div id="p2-score" class="text-2xl font-black text-white">$0</div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center px-2">
+                <div class="bg-black/60 border border-gold/30 rounded-lg px-4 py-1 flex items-center gap-4">
+                    <div>
+                        <span class="text-yellow-500 font-bold uppercase text-[10px]">Round</span>
+                        <div id="round-display" class="text-lg font-black text-white">1 / 4</div>
+                    </div>
+                    <div class="w-px h-8 bg-white/20"></div>
+                    <div>
+                        <span class="text-yellow-500 font-bold uppercase text-[10px]">Category</span>
+                        <div id="category-display" class="text-lg font-black uppercase text-white">---</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="vowel-btn" class="bg-blue-700 hover:bg-blue-600 px-5 py-2 rounded-lg font-black text-white border-b-4 border-blue-900 active:border-0 transition-all uppercase hidden">
+                        Buy Vowel <span class="text-[10px] opacity-70 ml-1">$250</span>
+                    </button>
+                    <button id="solve-btn" class="bg-purple-700 hover:bg-purple-600 px-6 py-2 rounded-lg font-black text-white border-b-4 border-purple-900 active:border-0 transition-all uppercase">
+                        Solve
+                    </button>
+                </div>
+            </div>
+
+            <div id="board" class="flex-1 rounded-lg p-3"></div>
+            <div id="keyboard" class="grid grid-cols-9 gap-1.5 px-2 pb-2"></div>
+        </div>
+
+        <!-- Wheel Area -->
+        <div id="sidebar" class="flex-1 max-w-[400px] flex flex-col items-center justify-center relative bg-black/40 border-l border-white/5">
+            <div class="wheel-container relative w-[80%] aspect-square mb-4">
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 z-20">
+                    <svg width="40" height="50" viewBox="0 0 40 50"><path d="M20 50 L40 0 L0 0 Z" fill="#d4af37" stroke="white" stroke-width="2"/></svg>
+                </div>
+                <canvas id="wheel-canvas"></canvas>
+            </div>
+
+            <div class="w-full px-8 space-y-4">
+                <div id="wheel-value" class="text-xl font-black text-yellow-500 text-center h-8 uppercase">Spin to begin!</div>
+                
+                <div id="power-container" class="power-meter-container">
+                    <div id="power-fill" class="power-fill"></div>
+                </div>
+
+                <button id="spin-btn" class="w-full bg-gradient-to-b from-yellow-400 via-yellow-600 to-yellow-800 text-black font-black text-2xl py-6 rounded-xl shadow-2xl active:scale-95 transition-all border-t-2 border-yellow-200">
+                    HOLD TO SPIN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="overlay" class="fixed inset-0 bg-black/95 z-50 hidden flex-col items-center justify-center text-center p-8">
+        <div class="border-4 border-yellow-600 p-12 rounded-3xl bg-slate-900 max-w-lg w-full">
+            <h2 id="overlay-title" class="text-5xl font-black text-white mb-2 uppercase">SOLVED!</h2>
+            <div id="overlay-msg" class="text-2xl text-yellow-500 mb-8 font-mono">Winner: Player</div>
+            <button id="next-btn" class="bg-white text-black font-black text-2xl px-16 py-5 rounded-full hover:bg-yellow-500 transition-colors uppercase">Next Round</button>
+        </div>
+    </div>
+
+    <div id="solve-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex flex-col items-center justify-center p-4">
+        <div class="bg-neutral-900 border-2 border-purple-500 p-8 rounded-2xl w-full max-w-md">
+            <h3 class="text-white text-2xl font-black mb-4 uppercase">Enter Solution</h3>
+            <input type="text" id="solve-input" class="w-full bg-black border border-white/20 p-4 text-white text-xl rounded-lg mb-4 outline-none uppercase">
+            <div class="flex gap-2">
+                <button id="solve-submit" class="flex-1 bg-purple-600 text-white py-3 rounded-lg font-bold">SUBMIT</button>
+                <button id="solve-cancel" class="flex-1 bg-neutral-700 text-white py-3 rounded-lg font-bold">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bonus-select-modal" class="fixed inset-0 bg-black/90 z-[70] hidden flex flex-col items-center justify-center p-4">
+        <h2 class="text-4xl font-black text-white mb-8 uppercase text-center">BONUS ROUND<br><span class="text-yellow-500 text-2xl">Pick a Letter from WHEEL</span></h2>
+        <div id="envelope-grid" class="flex flex-wrap justify-center gap-6 max-w-2xl">
+            <div class="bonus-envelope" onclick="pickBonusEnvelope(0)">W</div>
+            <div class="bonus-envelope" onclick="pickBonusEnvelope(1)">H</div>
+            <div class="bonus-envelope" onclick="pickBonusEnvelope(2)">E</div>
+            <div class="bonus-envelope" onclick="pickBonusEnvelope(3)">E</div>
+            <div class="bonus-envelope" onclick="pickBonusEnvelope(4)">L</div>
+        </div>
+    </div>
+
+    <script>
+        const PUZZLE_CONFIG = {
+            "FOOD & DRINK": ["CHICKEN PARMESAN", "AVOCADO TOAST", "SPAGHETTI AND MEATBALLS", "BEEF WELLINGTON", "LOBSTER TAIL", "BLUEBERRY PANCAKES"],
+            "PLACES": ["THE GRAND CANYON", "EMPIRE STATE BUILDING", "THE GREAT WALL OF CHINA", "SYDNEY OPERA HOUSE", "YELLOWSTONE PARK"],
+            "TV & MOVIES": ["STRANGER THINGS", "THE AVENGERS", "BREAKING BAD", "JURASSIC PARK", "STAR WARS", "GAME OF THRONES"],
+            "PERSON": ["ALBERT EINSTEIN", "MARILYN MONROE", "LEONARDO DA VINCI", "WINSTON CHURCHILL", "TAYLOR SWIFT", "ELON MUSK"],
+            "PHRASE": ["WAKE UP AND SMELL THE COFFEE", "PIECE OF CAKE", "BACK TO THE DRAWING BOARD"]
+        };
+
+        const BONUS_PUZZLES = {
+            "WHAT ARE YOU DOING?": ["WALKING THE DOG", "WAITING IN LINE", "SINGING IN THE RAIN"],
+            "THING": ["DIAMOND RING", "VINTAGE SPORTS CAR", "ELECTRIC GUITAR", "QUARTZ WATCH"],
+            "OCCUPATION": ["ASTRONAUT", "SOFTWARE ENGINEER", "LANDSCAPE ARCHITECT"]
+        };
+
+        const BONUS_PRIZES = ["A BRAND NEW SPORTS CAR", "$50,000 CASH", "$100,000 GRAND PRIZE", "A LUXURY EUROPEAN CRUISE", "$45,000 CASH"];
+
+        const WHEEL_VALUES = [500, 700, 600, 650, 900, "BANKRUPT", 2500, 500, 900, 700, 600, 800, "LOSE A TURN", 700, 500, 600, 550, 500, 900, "BANKRUPT", 650, 1000, 800, 500];
+        const WHEEL_COLORS = ["#e74c3c", "#9b59b6", "#3498db", "#1abc9c", "#f1c40f", "#000000", "#e67e22", "#ecf0f1", "#34495e", "#2ecc71", "#95a5a6", "#d35400", "#2c3e50", "#f39c12", "#bdc3c7", "#27ae60", "#2980b9", "#8e44ad", "#c0392b", "#000000", "#16a085", "#f1c40f", "#27ae60", "#2980b9"];
+        const VOWELS = "AEIOU";
+        const CONSONANTS = "BCDFGHJKLMNPQRSTVWXYZ";
+        const RSTLNE = "RSTLNE";
+        const VOWEL_COST = 250;
+
+        let players = [
+            { id: 0, score: 0, bank: 0, name: "Red", isAI: false },
+            { id: 1, score: 0, bank: 0, name: "Jesse", isAI: true },
+            { id: 2, score: 0, bank: 0, name: "Terry", isAI: true }
+        ];
+
+        let currentRound = 1;
+        let totalRounds = 4;
+        let isBonusRound = false;
+        let bonusPicksMade = [];
+        let selectedBonusPrize = "";
+        let usedPuzzles = [];
+        let bonusPuzzlesUsed = [];
+
+        let currentPlayerIndex = 0;
+        let puzzle = "";
+        let category = "";
+        let used = new Set();
+        let angle = 0;
+        let spinning = false;
+        let spinVal = 0;
+        let canGuessConsonant = false;
+        let canGuessVowel = false;
+        let power = 0;
+        let powerInterval = null;
+        let powerDirection = 1;
+        let audioCtx = null;
+        let voices = [];
+        let processingGuess = false;
+        let activeCheerGain = null;
+
+        const boardEl = document.getElementById('board');
+        const keyboardEl = document.getElementById('keyboard');
+        const canvas = document.getElementById('wheel-canvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spin-btn');
+        const wheelTxt = document.getElementById('wheel-value');
+        const catTxt = document.getElementById('category-display');
+        const roundTxt = document.getElementById('round-display');
+        const overlay = document.getElementById('overlay');
+        const solveModal = document.getElementById('solve-modal');
+        const solveInput = document.getElementById('solve-input');
+        const powerFill = document.getElementById('power-fill');
+        const powerContainer = document.getElementById('power-container');
+        const vowelBtn = document.getElementById('vowel-btn');
+
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+        }
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
+
+        function speak(text, role = 'host') {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (voices.length > 0) {
+                if (role === 'player') {
+                    utterance.voice = voices.find(v => v.name.includes('Female') || v.name.includes('Google UK English Female') || v.name.includes('Samantha')) || voices[0];
+                    utterance.pitch = 1.2;
+                } else {
+                    utterance.voice = voices.find(v => v.lang.includes('US') && v.name.includes('Male')) || voices[0];
+                    utterance.pitch = 1.0;
+                }
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function initAudio() {
+            if (audioCtx) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                loadVoices();
+            } catch(e) { console.error(e); }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+
+            if (type === 'tick') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(400, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'ding') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'square'; osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); 
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'win') {
+                playCheer(6.0, true); 
+            }
+        }
+
+        function playCheer(duration = 2.0, isWin = false) {
+            if (!audioCtx) return null;
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass'; filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            const gain = audioCtx.createGain();
+            const start = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(isWin ? 0.3 : 0.12, start + 0.3);
+            gain.gain.setValueAtTime(isWin ? 0.3 : 0.12, start + duration - 1.5);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+            noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+            noise.start();
+            return gain;
+        }
+
+        function initiateAmbianceFadeOut(customDuration = 1.0) {
+            if (activeCheerGain && audioCtx) {
+                const now = audioCtx.currentTime;
+                activeCheerGain.gain.cancelScheduledValues(now);
+                activeCheerGain.gain.setValueAtTime(activeCheerGain.gain.value, now);
+                activeCheerGain.gain.exponentialRampToValueAtTime(0.001, now + customDuration); 
+                activeCheerGain = null;
+            }
+        }
+
+        function init() {
+            setupWheel();
+            setupKeyboard();
+            resetGame();
+            
+            const startSpin = () => { initAudio(); if(!isBonusRound) startPowerCharge(); };
+            spinBtn.addEventListener('mousedown', startSpin);
+            spinBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startSpin(); });
+            window.addEventListener('mouseup', stopPowerCharge);
+            window.addEventListener('touchend', stopPowerCharge);
+
+            document.getElementById('next-btn').onclick = nextStep;
+            document.getElementById('solve-btn').onclick = () => { if (!spinning && !isBonusRound && !players[currentPlayerIndex].isAI) solveModal.classList.remove('hidden'); };
+            document.getElementById('solve-cancel').onclick = () => { if(!isBonusRound) solveModal.classList.add('hidden'); };
+            document.getElementById('solve-submit').onclick = handleSolve;
+            
+            vowelBtn.onclick = () => {
+                if (!spinning && players[currentPlayerIndex].score >= VOWEL_COST) {
+                    canGuessVowel = true;
+                    canGuessConsonant = false;
+                    wheelTxt.innerText = "CHOOSE A VOWEL";
+                    updateKeys();
+                }
+            };
+            window.onresize = setupWheel;
+        }
+
+        function resetGame() {
+            currentRound = 1;
+            isBonusRound = false;
+            usedPuzzles = [];
+            bonusPuzzlesUsed = [];
+            players.forEach(p => { p.score = 0; p.bank = 0; });
+            startRound();
+        }
+
+        function selectPuzzle(isBonus = false) {
+            const pool = isBonus ? BONUS_PUZZLES : PUZZLE_CONFIG;
+            const usedList = isBonus ? bonusPuzzlesUsed : usedPuzzles;
+            const allCats = Object.keys(pool);
+            
+            let validPuzzle = null;
+            let attempts = 0;
+            while(!validPuzzle && attempts < 100) {
+                const cat = allCats[Math.floor(Math.random() * allCats.length)];
+                const list = pool[cat];
+                const puz = list[Math.floor(Math.random() * list.length)].toUpperCase();
+                if (!usedList.includes(puz)) {
+                    validPuzzle = { category: cat, puzzle: puz };
+                    usedList.push(puz);
+                }
+                attempts++;
+            }
+            return validPuzzle;
+        }
+
+        function startRound() {
+            if (currentRound > totalRounds) {
+                initBonusRound();
+                return;
+            }
+            const selection = selectPuzzle();
+            category = selection.category;
+            puzzle = selection.puzzle;
+            used.clear();
+            processingGuess = false;
+            players.forEach(p => p.score = 0);
+            currentPlayerIndex = (currentRound - 1) % players.length;
+            speak(`Round ${currentRound}. Category is ${category}.`, 'host');
+            startTurn();
+        }
+
+        function startTurn() {
+            canGuessConsonant = false;
+            canGuessVowel = false;
+            processingGuess = false;
+            updateUI();
+            drawBoard();
+            updateKeys();
+
+            if (players[currentPlayerIndex].isAI && !isBonusRound) {
+                setTimeout(handleAITurn, 1000);
+            }
+        }
+
+        function updateUI() {
+            players.forEach((p, i) => {
+                document.getElementById(`p${i}-score`).innerText = `$${p.score.toLocaleString()}`;
+                document.getElementById(`p${i}-bank`).innerText = `TOTAL: $${p.bank.toLocaleString()}`;
+                const card = document.getElementById(`p${i}-card`);
+                card.classList.toggle('active', i === currentPlayerIndex);
+            });
+            catTxt.innerText = category;
+            roundTxt.innerText = isBonusRound ? "BONUS" : `${currentRound} / ${totalRounds}`;
+            
+            const p = players[currentPlayerIndex];
+            
+            // Logic to check for remaining consonants
+            const lettersInPuzzle = puzzle.replace(/[^A-Z]/g, '');
+            const remainingConsonants = lettersInPuzzle.split('').filter(c => CONSONANTS.includes(c) && !used.has(c));
+            const allConsonantsGuessed = remainingConsonants.length === 0;
+
+            if (isBonusRound) {
+                wheelTxt.innerText = "BONUS ROUND SOLVE";
+            } else {
+                wheelTxt.innerText = `${p.name}'s Turn - ${p.isAI ? 'Thinking...' : 'Spin or Solve!'}`;
+            }
+            
+            // New Rule: If no consonants left, user cannot spin.
+            const shouldHideSpin = p.isAI || isBonusRound || allConsonantsGuessed;
+            
+            spinBtn.style.display = shouldHideSpin ? 'none' : 'block';
+            powerContainer.style.display = shouldHideSpin ? 'none' : 'block';
+            
+            // Always show solve button except for AI/Bonus automatic modes
+            document.getElementById('solve-btn').style.display = (p.isAI || isBonusRound) ? 'none' : 'block';
+            
+            const availableVowels = VOWELS.split('').some(v => !used.has(v));
+            const hasVowelMoney = p.score >= VOWEL_COST;
+            vowelBtn.style.display = (!isBonusRound && !p.isAI && hasVowelMoney && availableVowels && !canGuessConsonant) ? 'block' : 'none';
+        }
+
+        function drawBoard() {
+            boardEl.innerHTML = '';
+            const words = puzzle.split(' ');
+            const gridRows = ["", "", "", ""];
+            let cur = 1;
+            words.forEach(w => {
+                if ((gridRows[cur] + w).length > 12) cur++;
+                gridRows[cur] += w + " ";
+            });
+
+            gridRows.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = "flex gap-1 justify-center w-full";
+                const slots = 14;
+                const txt = row.trim();
+                const pad = Math.floor((slots - txt.length) / 2);
+                
+                for (let i = 0; i < slots; i++) {
+                    const char = txt[i - pad];
+                    const tile = document.createElement('div');
+                    tile.className = "board-tile";
+                    if (char && char !== " ") {
+                        const open = used.has(char) || !/[A-Z]/.test(char);
+                        tile.innerHTML = `<div class="tile-inner ${open ? 'flipped' : ''}" data-char="${char}"><div class="tile-front"></div><div class="tile-back">${char}</div></div>`;
+                    } else if (char === " ") {
+                        tile.innerHTML = `<div class="w-full h-full tile-space"></div>`;
+                    } else {
+                        tile.innerHTML = `<div class="w-full h-full tile-inactive rounded-sm"></div>`;
+                    }
+                    rowDiv.appendChild(tile);
+                }
+                boardEl.appendChild(rowDiv);
+            });
+        }
+
+        function setupKeyboard() {
+            keyboardEl.innerHTML = '';
+            "QWERTYUIOPASDFGHJKLZXCVBNM".split('').forEach(l => {
+                const b = document.createElement('button');
+                const isV = VOWELS.includes(l);
+                b.className = `keyboard-btn text-white font-bold py-3 rounded-md text-lg uppercase ${isV ? 'border-blue-500 border' : 'border-slate-700 border'}`;
+                b.innerText = l;
+                b.onclick = () => { handleGuessSequence(l); };
+                keyboardEl.appendChild(b);
+            });
+        }
+
+        function updateKeys() {
+            const p = players[currentPlayerIndex];
+            keyboardEl.querySelectorAll('button').forEach(b => {
+                const char = b.innerText;
+                const isV = VOWELS.includes(char);
+                if (isBonusRound) {
+                    const hasVowel = bonusPicksMade.some(p => VOWELS.includes(p));
+                    const consonantsCount = bonusPicksMade.filter(p => !VOWELS.includes(p)).length;
+                    const canPick = (isV && !hasVowel) || (!isV && consonantsCount < 3);
+                    b.disabled = used.has(char) || !canPick;
+                } else {
+                    b.disabled = used.has(char) || (isV && !canGuessVowel) || (!isV && !canGuessConsonant) || spinning || processingGuess;
+                }
+                b.classList.toggle('used', used.has(char));
+                b.classList.toggle('opacity-20', b.disabled);
+            });
+        }
+
+        function startPowerCharge() {
+            if (spinning || canGuessConsonant || canGuessVowel || players[currentPlayerIndex].isAI) return;
+            
+            // Check if consonants remain before allowing charge
+            const lettersInPuzzle = puzzle.replace(/[^A-Z]/g, '');
+            const remainingConsonants = lettersInPuzzle.split('').filter(c => CONSONANTS.includes(c) && !used.has(c));
+            if (remainingConsonants.length === 0) return;
+
+            power = 0; powerDirection = 1;
+            powerInterval = setInterval(() => {
+                power += 2.5 * powerDirection;
+                if (power >= 100 || power <= 0) powerDirection *= -1;
+                powerFill.style.width = power + "%";
+            }, 20);
+        }
+
+        function stopPowerCharge() {
+            if (!powerInterval) return;
+            clearInterval(powerInterval);
+            powerInterval = null;
+            const force = (power / 100) * 0.35 + 0.15;
+            powerFill.style.width = "0%";
+            spin(force);
+        }
+
+        function handleGuessSequence(l) {
+            if (spinning || used.has(l) || processingGuess) return;
+            if (isBonusRound) {
+                bonusPicksMade.push(l); used.add(l);
+                updateKeys();
+                if (bonusPicksMade.length === 4) revealBonusLetters();
+                return;
+            }
+            processingGuess = true;
+            updateKeys();
+            setTimeout(() => {
+                const role = currentPlayerIndex === 0 ? 'player' : 'host';
+                speak(l, role);
+            }, 1000);
+            setTimeout(() => guess(l), 3000);
+        }
+
+        function guess(l) {
+            const p = players[currentPlayerIndex];
+            const isV = VOWELS.includes(l);
+            if (isV) { p.score -= VOWEL_COST; canGuessVowel = false; }
+            used.add(l);
+            
+            const matchIndices = [];
+            boardEl.querySelectorAll('.tile-inner').forEach(t => { if (t.dataset.char === l) matchIndices.push(t); });
+
+            if (matchIndices.length > 0) {
+                if (!isV) p.score += (spinVal * matchIndices.length);
+                let hostMsg = matchIndices.length === 1 ? `There is 1 ${l}` : `There are ${matchIndices.length} ${l}'s`;
+                speak(hostMsg, 'host');
+                playCheer(4.0, false);
+
+                matchIndices.forEach((tile, index) => {
+                    setTimeout(() => {
+                        tile.classList.add('flipped');
+                        playSound('ding');
+                        if (index === matchIndices.length - 1) {
+                            checkWin();
+                            canGuessConsonant = false;
+                            processingGuess = false;
+                            updateUI(); updateKeys();
+                            if (p.isAI) setTimeout(handleAITurn, 1000);
+                        }
+                    }, index * 400);
+                });
+            } else {
+                speak(`There are no ${l}'s`, 'host');
+                setTimeout(nextTurn, 1000);
+            }
+        }
+
+        function nextTurn() {
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            startTurn();
+        }
+
+        function handleSolve() {
+            const val = solveInput.value.toUpperCase().trim();
+            solveModal.classList.add('hidden');
+            solveInput.value = "";
+            if (val === puzzle) {
+                boardEl.querySelectorAll('.tile-inner').forEach(t => t.classList.add('flipped'));
+                if (isBonusRound) gameOverBonus(true);
+                else roundWin();
+            } else {
+                if (isBonusRound) {
+                    gameOverBonus(false);
+                } else {
+                    speak("That is not correct!", "host");
+                    setTimeout(nextTurn, 1200);
+                }
+            }
+        }
+
+        function checkWin() {
+            const rem = puzzle.replace(/[^A-Z]/g, '').split('').filter(c => !used.has(c));
+            if (rem.length === 0) roundWin();
+        }
+
+        function roundWin() {
+            playSound('win');
+            const winner = players[currentPlayerIndex];
+            winner.bank += winner.score;
+            speak(`Congratulations ${winner.name}, you won!`, 'host');
+            document.getElementById('overlay-title').innerText = "PUZZLE SOLVED!";
+            document.getElementById('overlay-msg').innerText = `${winner.name} WINS $${winner.score.toLocaleString()}`;
+            overlay.classList.remove('hidden');
+        }
+
+        function nextStep() {
+            overlay.classList.add('hidden');
+            currentRound++;
+            startRound();
+        }
+
+        function initBonusRound() {
+            isBonusRound = true;
+            let max = -1;
+            players.forEach((p, i) => { if (p.bank > max) { max = p.bank; currentPlayerIndex = i; } });
+            const winner = players[currentPlayerIndex];
+            
+            speak(`Congratulations ${winner.name}, you are our grand champion with $${winner.bank.toLocaleString()}! Proceed to the bonus round.`, 'host');
+            
+            document.getElementById('sidebar').style.opacity = "0.3";
+            document.getElementById('sidebar').style.pointerEvents = "none";
+            document.getElementById('overlay-title').innerText = "GRAND CHAMPION!";
+            document.getElementById('overlay-msg').innerText = `${winner.name} wins $${winner.bank.toLocaleString()}!`;
+            document.getElementById('next-btn').innerText = "BONUS ROUND";
+            
+            document.getElementById('next-btn').onclick = () => {
+                overlay.classList.add('hidden');
+                boardEl.innerHTML = '';
+                if (winner.isAI) {
+                    setTimeout(() => pickBonusEnvelope(Math.floor(Math.random()*5)), 1500);
+                } else {
+                    document.getElementById('bonus-select-modal').classList.remove('hidden');
+                }
+            };
+            overlay.classList.remove('hidden');
+        }
+
+        function pickBonusEnvelope(idx) {
+            document.getElementById('bonus-select-modal').classList.add('hidden');
+            selectedBonusPrize = BONUS_PRIZES[idx] || BONUS_PRIZES[0];
+            
+            const selection = selectPuzzle(true);
+            category = selection.category;
+            puzzle = selection.puzzle;
+            used.clear();
+            bonusPicksMade = [];
+            
+            RSTLNE.split('').forEach(l => used.add(l));
+            updateUI(); drawBoard();
+            
+            const winner = players[currentPlayerIndex];
+            speak("I've given you R, S, T, L, N, and E. Now give me 3 consonants and 1 vowel.", 'host');
+            
+            if (winner.isAI) setTimeout(handleAIBonusPicks, 2000);
+            else updateKeys();
+        }
+
+        function handleAIBonusPicks() {
+            const uc = CONSONANTS.split('').filter(c => !used.has(c));
+            const uv = VOWELS.split('').filter(v => !used.has(v));
+            for(let i=0; i<3; i++) {
+                const p = uc.filter(c => puzzle.includes(c))[i] || uc[i];
+                bonusPicksMade.push(p); used.add(p);
+            }
+            const v = uv.filter(v => puzzle.includes(v))[0] || uv[0];
+            bonusPicksMade.push(v); used.add(v);
+            revealBonusLetters();
+        }
+
+        function revealBonusLetters() {
+            processingGuess = true;
+            updateKeys();
+            let delay = 1000;
+            bonusPicksMade.forEach((l, i) => {
+                setTimeout(() => {
+                    const tiles = Array.from(boardEl.querySelectorAll('.tile-inner')).filter(t => t.dataset.char === l);
+                    if (tiles.length > 0) {
+                        tiles.forEach(t => { t.classList.add('flipped'); playSound('ding'); });
+                    }
+                    if (i === bonusPicksMade.length - 1) {
+                        setTimeout(() => {
+                            const winner = players[currentPlayerIndex];
+                            if (winner.isAI) {
+                                speak(`${winner.name} is thinking...`, 'host');
+                                setTimeout(() => {
+                                    if (Math.random() > 0.3) {
+                                        boardEl.querySelectorAll('.tile-inner').forEach(t => t.classList.add('flipped'));
+                                        gameOverBonus(true);
+                                    } else gameOverBonus(false);
+                                }, 3000);
+                            } else {
+                                speak("You have 10 seconds. Solve it!", 'host');
+                                solveModal.classList.remove('hidden');
+                                document.getElementById('solve-cancel').style.display = "none";
+                            }
+                        }, 1000);
+                    }
+                }, delay);
+                delay += 800;
+            });
+        }
+
+        function gameOverBonus(win) {
+            overlay.classList.remove('hidden');
+            const winner = players[currentPlayerIndex];
+            if (win) {
+                playSound('win');
+                speak(`That is it! Let's see what you won... ${selectedBonusPrize}!`, 'host');
+                document.getElementById('overlay-title').innerText = "CONGRATULATIONS!";
+                document.getElementById('overlay-msg').innerHTML = `<span class="text-white">YOU WON:</span><br><span class="text-3xl text-yellow-300">${selectedBonusPrize}</span>`;
+            } else {
+                speak(`The solution was ${puzzle}. Let's see what the prize would have been... it was ${selectedBonusPrize}.`, 'host');
+                document.getElementById('overlay-title').innerText = "TOUGH LUCK";
+                document.getElementById('overlay-msg').innerHTML = `<span class="text-sm">THE SOLUTION WAS:</span><br>${puzzle}<br><br><span class="text-xs opacity-60">Prize inside was ${selectedBonusPrize}</span>`;
+            }
+            document.getElementById('next-btn').innerText = "PLAY AGAIN";
+            document.getElementById('next-btn').onclick = () => location.reload();
+        }
+
+        async function handleAITurn() {
+            const p = players[currentPlayerIndex];
+            if (!p.isAI || spinning || isBonusRound) return;
+            const letters = puzzle.replace(/[^A-Z]/g, '');
+            const unknownLetters = letters.split('').filter(c => !used.has(c));
+            if (unknownLetters.length === 0) return;
+            
+            // Percentage of puzzle revealed
+            const knownRatio = (letters.length - unknownLetters.length) / letters.length;
+            
+            // New Logic: AI Solves if 85% or more is revealed
+            if (knownRatio >= 0.85) {
+                setTimeout(() => { 
+                    speak("I'd like to solve!", "player");
+                    setTimeout(() => {
+                        boardEl.querySelectorAll('.tile-inner').forEach(t => t.classList.add('flipped')); 
+                        roundWin(); 
+                    }, 1500);
+                }, 1000);
+                return;
+            }
+
+            // Logic for buying vowels
+            if (p.score >= VOWEL_COST && Math.random() > 0.7) {
+                const uv = VOWELS.split('').filter(v => !used.has(v));
+                if (uv.length > 0) {
+                    canGuessVowel = true;
+                    const correctVowels = uv.filter(v => puzzle.includes(v));
+                    const pick = (correctVowels.length > 0 && Math.random() > 0.4) ? correctVowels[0] : uv[Math.floor(Math.random()*uv.length)];
+                    setTimeout(() => handleGuessSequence(pick), 800);
+                    return;
+                }
+            }
+
+            // Regular spin if consonants exist
+            const remainingConsonants = letters.split('').filter(c => CONSONANTS.includes(c) && !used.has(c));
+            if (remainingConsonants.length > 0) {
+                spin(0.2 + Math.random() * 0.3);
+                const checkSpin = setInterval(() => {
+                    if (!spinning) {
+                        clearInterval(checkSpin);
+                        if (canGuessConsonant) {
+                            const uc = CONSONANTS.split('').filter(c => !used.has(c));
+                            const correctCons = uc.filter(c => puzzle.includes(c));
+                            const pick = (correctCons.length > 0 && Math.random() > 0.4) ? correctCons[Math.floor(Math.random()*correctCons.length)] : uc[Math.floor(Math.random()*uc.length)];
+                            setTimeout(() => handleGuessSequence(pick), 800);
+                        }
+                    }
+                }, 500);
+            } else if (p.score >= VOWEL_COST) {
+                // No consonants left, but has money for vowels
+                const uv = VOWELS.split('').filter(v => !used.has(v));
+                if (uv.length > 0) {
+                    canGuessVowel = true;
+                    const pick = uv.filter(v => puzzle.includes(v))[0] || uv[0];
+                    setTimeout(() => handleGuessSequence(pick), 800);
+                } else {
+                    // Nothing left to guess, solve
+                    setTimeout(() => {
+                        boardEl.querySelectorAll('.tile-inner').forEach(t => t.classList.add('flipped')); 
+                        roundWin(); 
+                    }, 1000);
+                }
+            } else {
+                // Nothing left to guess and no money, solve
+                setTimeout(() => {
+                    boardEl.querySelectorAll('.tile-inner').forEach(t => t.classList.add('flipped')); 
+                    roundWin(); 
+                }, 1000);
+            }
+        }
+
+        function setupWheel() {
+            const s = Math.max(100, Math.min(canvas.parentElement.offsetWidth, 350));
+            canvas.width = s; canvas.height = s; renderWheel();
+        }
+
+        function renderWheel() {
+            const s = canvas.width, c = s / 2, r = Math.max(10, s / 2 - 5), step = (Math.PI * 2) / WHEEL_VALUES.length;
+            ctx.clearRect(0, 0, s, s);
+            WHEEL_VALUES.forEach((v, i) => {
+                const a = angle + (i * step);
+                ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, r, a, a + step);
+                ctx.fillStyle = WHEEL_COLORS[i]; ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.stroke();
+                ctx.save(); ctx.translate(c, c); ctx.rotate(a + step / 2);
+                const isSpecial = (v === "BANKRUPT" || v === "LOSE A TURN");
+                ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = isSpecial ? "white" : "#121212";
+                if (!isSpecial) {
+                    const label = "$" + v; ctx.font = `bold ${s / 16}px Arial Black`;
+                    ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,255,255,0.6)";
+                    for(let ci = 0; ci < label.length; ci++) {
+                        const x = r - 25 - (ci * (s / 18));
+                        if (x > 0) { ctx.save(); ctx.translate(x, 0); ctx.rotate(Math.PI / 2); ctx.strokeText(label[ci], 0, 0); ctx.fillText(label[ci], 0, 0); ctx.restore(); }
+                    }
+                } else { ctx.font = `bold ${s / 28}px Arial`; ctx.fillText(v, r / 1.5, 0); }
+                ctx.restore();
+            });
+            ctx.beginPath(); ctx.arc(c, c, Math.max(5, s / 8), 0, Math.PI * 2);
+            const g = ctx.createRadialGradient(c, c, 0, c, c, Math.max(5, s / 8));
+            g.addColorStop(0, "#f9e29c"); g.addColorStop(1, "#d4af37");
+            ctx.fillStyle = g; ctx.fill();
+            ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 3; ctx.stroke();
+        }
+
+        function spin(force) {
+            if (spinning) return;
+            spinning = true; canGuessConsonant = false; canGuessVowel = false; updateKeys();
+            wheelTxt.innerText = "SPINNING...";
+            activeCheerGain = playCheer(15.0, false); 
+            let vel = force, lastTick = angle;
+            function loop() {
+                angle += vel; vel *= 0.985;
+                const step = (Math.PI * 2) / WHEEL_VALUES.length;
+                if (Math.floor(angle / step) !== Math.floor(lastTick / step)) playSound('tick');
+                lastTick = angle; renderWheel();
+                if (vel > 0.0015) requestAnimationFrame(loop);
+                else { spinning = false; initiateAmbianceFadeOut(0.4); finishSpin(); }
+            }
+            loop();
+        }
+
+        function finishSpin() {
+            const step = (Math.PI*2)/WHEEL_VALUES.length;
+            let norm = (angle + Math.PI/2) % (Math.PI*2);
+            if (norm < 0) norm += Math.PI*2;
+            const idx = Math.floor((WHEEL_VALUES.length - (norm/step)) % WHEEL_VALUES.length);
+            const res = WHEEL_VALUES[idx];
+            if (res === "BANKRUPT") { 
+                playSound('bankrupt'); speak("Bankrupt!", "host");
+                players[currentPlayerIndex].score = 0; wheelTxt.innerText = "BANKRUPT!";
+                updateUI(); setTimeout(nextTurn, 1500); 
+            } else if (res === "LOSE A TURN") { 
+                speak("Lose a turn.", "host"); wheelTxt.innerText = "LOSE A TURN";
+                setTimeout(nextTurn, 1500); 
+            } else { 
+                spinVal = res; canGuessConsonant = true;
+                wheelTxt.innerText = `$${res} - PICK A CONSONANT`; speak(res.toString(), "host");
+                updateUI(); updateKeys();
+            }
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>
