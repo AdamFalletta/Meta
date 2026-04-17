@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Submariner - High Polish Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #010101;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="watchCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('watchCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, radius, dpr;
+        
+        const colors = {
+            steelLight: '#D0D0D0',
+            steelMedium: '#888888',
+            steelDark: '#222222',
+            bezelBg: '#080808',
+            dialBg: '#010101',
+            diamondSparkle: '#F0F9FF',
+            whiteText: '#FFFFFF',
+            lume: '#FDFFFF',
+            rehautMuted: '#4A4A4A',
+            handSilver: '#E8E8E8'
+        };
+
+        function init() {
+            resize();
+            requestAnimationFrame(animate);
+        }
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            radius = Math.min(width, height) * 0.36;
+        }
+
+        function drawChunkyCase() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const bWidth = radius * 1.05;
+
+            ctx.save();
+            const bandGrad = ctx.createLinearGradient(cx - bWidth, 0, cx + bWidth, 0);
+            bandGrad.addColorStop(0, '#121212');
+            bandGrad.addColorStop(0.2, '#444');
+            bandGrad.addColorStop(0.5, '#B0B0B0'); 
+            bandGrad.addColorStop(0.8, '#444');
+            bandGrad.addColorStop(1, '#121212');
+
+            ctx.fillStyle = bandGrad;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx - bWidth, 0);
+            ctx.lineTo(cx + bWidth, 0);
+            ctx.lineTo(cx + radius * 0.95, cy - radius);
+            ctx.lineTo(cx - radius * 0.95, cy - radius);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(cx - bWidth, height);
+            ctx.lineTo(cx + bWidth, height);
+            ctx.lineTo(cx + radius * 0.95, cy + radius);
+            ctx.lineTo(cx - radius * 0.95, cy + radius);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 1.28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawSideDial() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const crownX = cx + radius * 1.2;
+            const cw = radius * 0.18;
+            const ch = radius * 0.3;
+
+            ctx.fillStyle = '#444';
+            ctx.beginPath();
+            ctx.ellipse(crownX - 10, cy, radius * 0.15, radius * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const cGrad = ctx.createLinearGradient(crownX, cy - ch/2, crownX, cy + ch/2);
+            cGrad.addColorStop(0, '#111');
+            cGrad.addColorStop(0.5, '#AAA');
+            cGrad.addColorStop(1, '#111');
+            ctx.fillStyle = cGrad;
+            ctx.beginPath();
+            ctx.roundRect(crownX, cy - ch/2, cw, ch, 4);
+            ctx.fill();
+        }
+
+        function drawBezel() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const bezelOuter = radius * 1.22;
+
+            const steelGrad = ctx.createRadialGradient(cx, cy, radius * 1.1, cx, cy, bezelOuter);
+            steelGrad.addColorStop(0, '#333');
+            steelGrad.addColorStop(0.5, '#BBB');
+            steelGrad.addColorStop(1, '#333');
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, bezelOuter, 0, Math.PI * 2);
+            ctx.fillStyle = steelGrad;
+            ctx.fill();
+
+            const shineGrad = ctx.createConicGradient(Math.PI/6, cx, cy);
+            shineGrad.addColorStop(0, '#000');
+            shineGrad.addColorStop(0.1, '#1a1a1a'); 
+            shineGrad.addColorStop(0.2, '#000');
+            shineGrad.addColorStop(0.6, '#000');
+            shineGrad.addColorStop(0.7, '#222'); 
+            shineGrad.addColorStop(0.8, '#000');
+            shineGrad.addColorStop(1, '#000');
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 1.15, 0, Math.PI * 2);
+            ctx.fillStyle = shineGrad;
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#D0D0D0';
+            
+            for (let i = 0; i < 60; i++) {
+                ctx.save();
+                ctx.rotate(i * 6 * Math.PI / 180);
+                if (i === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, -radius * 1.15); 
+                    ctx.lineTo(-radius * 0.11, -radius * 0.96); 
+                    ctx.lineTo(radius * 0.11, -radius * 0.96);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(0, -radius * 1.04, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = colors.lume; ctx.fill();
+                } else if (i % 10 === 0) {
+                    ctx.font = `bold ${radius * 0.16}px "Helvetica Neue", Arial, sans-serif`;
+                    ctx.fillText(i, 0, -radius * 1.06);
+                } else if (i % 5 === 0) {
+                    ctx.fillRect(-2.5, -radius * 1.12, 5, radius * 0.08);
+                }
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function drawDial() {
+            const cx = width / 2;
+            const cy = height / 2;
+
+            const rehautGrad = ctx.createRadialGradient(cx, cy, radius * 0.98, cx, cy, radius);
+            rehautGrad.addColorStop(0, '#333');
+            rehautGrad.addColorStop(0.5, '#888');
+            rehautGrad.addColorStop(1, '#222');
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = rehautGrad;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.985, 0, Math.PI * 2);
+            ctx.fillStyle = colors.dialBg;
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.lineWidth = 2.2;
+            for (let i = 0; i < 60; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, -radius * 0.985);
+                ctx.lineTo(0, -radius * 0.985 + (i % 5 === 0 ? 15 : 8));
+                ctx.stroke();
+                ctx.rotate(Math.PI / 30);
+            }
+            ctx.restore();
+
+            // BRANDING
+            ctx.textAlign = 'center';
+            ctx.fillStyle = colors.whiteText;
+            
+            ctx.font = `${radius * 0.16}px serif`;
+            ctx.fillText("♛", cx, cy - radius * 0.52);
+            
+            ctx.font = `bold ${radius * 0.09}px sans-serif`;
+            ctx.letterSpacing = "2px";
+            ctx.fillText("ROLEX", cx, cy - radius * 0.38);
+            
+            ctx.letterSpacing = "0px";
+            ctx.font = `bold ${radius * 0.038}px sans-serif`;
+            ctx.fillText("OYSTER PERPETUAL DATE", cx, cy - radius * 0.31);
+
+            // LOWER DIAL TEXT
+            ctx.font = `bold ${radius * 0.07}px sans-serif`;
+            ctx.fillText("SUBMARINER", cx, cy + radius * 0.38);
+            ctx.font = `bold ${radius * 0.035}px sans-serif`;
+            ctx.fillText("1000ft = 300m", cx, cy + radius * 0.46);
+            ctx.fillText("SUPERLATIVE CHRONOMETER", cx, cy + radius * 0.51);
+            ctx.fillText("OFFICIALLY CERTIFIED", cx, cy + radius * 0.56);
+
+            // CIRCLES AND SHAPES
+            for (let i = 1; i <= 12; i++) {
+                if (i === 3) continue;
+                const ang = i * 30 * Math.PI / 180;
+                
+                // Circles stay at 0.81. Shapes (Triangle/Batons) nudge back 2px (~0.01 radius units) to 0.80
+                const currentRadius = (i === 12 || i === 6 || i === 9) ? radius * 0.80 : radius * 0.81;
+                
+                const x = Math.sin(ang) * currentRadius;
+                const y = -Math.cos(ang) * currentRadius;
+                
+                ctx.save();
+                ctx.translate(cx + x, cy + y);
+                ctx.rotate(ang);
+                
+                // Silver border/casing for shapes
+                ctx.fillStyle = '#999';
+                ctx.beginPath();
+                if (i === 12) {
+                    ctx.moveTo(0, radius * 0.12); 
+                    ctx.lineTo(-radius * 0.11, -radius * 0.11); 
+                    ctx.lineTo(radius * 0.11, -radius * 0.11); 
+                } else if (i === 6 || i === 9) {
+                    ctx.rect(-radius * 0.055, -radius * 0.11, radius * 0.11, radius * 0.22);
+                } else {
+                    ctx.arc(0, 0, radius * 0.082, 0, Math.PI * 2);
+                }
+                ctx.fill();
+
+                // Inner Lume/Sparkle
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius * 0.075);
+                grad.addColorStop(0, '#FFF');
+                grad.addColorStop(0.4, colors.diamondSparkle);
+                grad.addColorStop(1, '#BBB');
+                ctx.fillStyle = grad;
+                
+                ctx.beginPath();
+                if (i === 12) {
+                    ctx.moveTo(0, radius * 0.095); 
+                    ctx.lineTo(-radius * 0.085, -radius * 0.085); 
+                    ctx.lineTo(radius * 0.085, -radius * 0.085);
+                } else if (i === 6 || i === 9) {
+                    ctx.rect(-radius * 0.042, -radius * 0.095, radius * 0.084, radius * 0.19);
+                } else {
+                    ctx.arc(0, 0, radius * 0.07, 0, Math.PI * 2);
+                }
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function drawDatePlate() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const datePos = { x: cx + radius * 0.74, y: cy };
+            const now = new Date();
+            
+            // White plate background
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(datePos.x - radius * 0.13, datePos.y - radius * 0.09, radius * 0.26, radius * 0.18);
+            
+            // Date text
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `bold ${radius * 0.15}px sans-serif`;
+            ctx.fillText(now.getDate(), datePos.x, datePos.y);
+        }
+
+        function drawDateLens() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const datePos = { x: cx + radius * 0.74, y: cy };
+
+            // Cyclops Lens with border that MUST sit above hands
+            const lensGrad = ctx.createLinearGradient(datePos.x - 20, datePos.y - 20, datePos.x + 20, datePos.y + 20);
+            lensGrad.addColorStop(0, 'rgba(255,255,255,0.3)');
+            lensGrad.addColorStop(1, 'rgba(255,255,255,0.05)');
+            ctx.fillStyle = lensGrad;
+            
+            // Stroke/Border of the lens
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 1;
+            
+            ctx.beginPath();
+            ctx.roundRect(datePos.x - radius * 0.18, datePos.y - radius * 0.14, radius * 0.36, radius * 0.28, 12);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function drawHands(type) {
+            const now = new Date();
+            const ms = now.getMilliseconds();
+            const s = now.getSeconds();
+            const m = now.getMinutes();
+            const h = now.getHours() % 12;
+
+            const cx = width / 2;
+            const cy = height / 2;
+
+            const sAng = ((s + ms / 1000) * 6) * Math.PI / 180;
+            const mAng = (m * 6 + s * 0.1 + (ms / 1000) * 0.1) * Math.PI / 180;
+             const hAng = (h * 30 + m * 0.5 + s * (0.5/60)) * Math.PI / 180;
+
+            const getHandGrad = (len) => {
+                const g = ctx.createLinearGradient(0, 0, 0, -len);
+                g.addColorStop(0, '#B0B0B0');
+                g.addColorStop(0.5, colors.handSilver);
+                g.addColorStop(1, '#A0A0A0');
+                return g;
+            };
+
+            if (type === 'main') {
+                // Hour Hand
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(hAng);
+                ctx.fillStyle = getHandGrad(radius * 0.58);
+                ctx.strokeStyle = '#2a2a2a';
+                ctx.lineWidth = 4.5;
+                ctx.beginPath();
+                ctx.moveTo(0, 15); 
+                ctx.lineTo(-radius * 0.05, -radius * 0.45);
+                ctx.lineTo(0, -radius * 0.58); 
+                ctx.lineTo(radius * 0.05, -radius * 0.45);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, -radius * 0.35, radius * 0.07, 0, Math.PI * 2); 
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, -radius*0.35); ctx.lineTo(0, -radius*0.42);
+                ctx.moveTo(0, -radius*0.35); ctx.lineTo(-radius*0.05, -radius*0.31);
+                ctx.moveTo(0, -radius*0.35); ctx.lineTo(radius*0.05, -radius*0.31);
+                ctx.strokeStyle = '#111'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.restore();
+
+                // Minute Hand
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(mAng);
+                ctx.fillStyle = getHandGrad(radius * 0.88);
+                ctx.strokeStyle = '#2a2a2a';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(-radius * 0.04, 15);
+                ctx.lineTo(-radius * 0.04, -radius * 0.78);
+                ctx.lineTo(0, -radius * 0.88); 
+                ctx.lineTo(radius * 0.04, -radius * 0.78);
+                ctx.lineTo(radius * 0.04, 15);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.restore();
+            } else if (type === 'second') {
+                // Sweep Seconds
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(sAng);
+                ctx.strokeStyle = colors.handSilver; ctx.lineWidth = 1.3;
+                ctx.beginPath();
+                ctx.moveTo(0, 25); ctx.lineTo(0, -radius * 0.98);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, -radius * 0.74, radius * 0.025, 0, Math.PI * 2);
+                ctx.fillStyle = colors.handSilver; ctx.fill(); ctx.stroke();
+                ctx.restore();
+
+                // Center Pin
+                ctx.beginPath();
+                ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+                ctx.fillStyle = '#BBB'; ctx.fill();
+                ctx.strokeStyle = '#222'; ctx.stroke();
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#010101';
+            ctx.fillRect(0, 0, width, height);
+
+            drawChunkyCase();
+            drawSideDial();
+            drawBezel();
+            drawDial();
+            
+            // 1. Draw the Date Background plate
+            drawDatePlate();
+
+            // 2. Draw Hour and Minute Hands (sweeps over dial and date plate)
+            drawHands('main');
+            
+            // 3. Draw the Cyclops Lens (covers the hands to make them look "under" the glass window)
+            drawDateLens();
+            
+            // 4. Draw Seconds hand and Pin above everything
+            drawHands('second');
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        window.onload = init;
+    </script>
+</body>
+</html>
