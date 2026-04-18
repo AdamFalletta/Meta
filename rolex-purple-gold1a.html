@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Submariner - Refined Purple & Glass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #010101;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="watchCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('watchCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, radius, dpr;
+        
+        const colors = {
+            goldLight: '#F3E5AB', // Champagne gold
+            goldMedium: '#C5B358', // 18K Gold
+            goldDark: '#7A6B31',
+            dialPurple: '#3B1670', // Brightened purple
+            dialPurpleDark: '#0F051C', // Darker edges
+            lume: '#F8FBFF',
+            datePlate: '#FFFFFF'
+        };
+
+        function init() {
+            resize();
+            requestAnimationFrame(animate);
+        }
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            radius = Math.min(width, height) * 0.38;
+        }
+
+        function drawChunkyCase() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const bWidth = radius * 1.05;
+
+            ctx.save();
+            const bandGrad = ctx.createLinearGradient(cx - bWidth, 0, cx + bWidth, 0);
+            bandGrad.addColorStop(0, '#3D351A');
+            bandGrad.addColorStop(0.2, '#7A6B31');
+            bandGrad.addColorStop(0.5, '#F3E5AB'); 
+            bandGrad.addColorStop(0.8, '#7A6B31');
+            bandGrad.addColorStop(1, '#3D351A');
+
+            ctx.fillStyle = bandGrad;
+            ctx.beginPath();
+            ctx.moveTo(cx - bWidth, 0);
+            ctx.lineTo(cx + bWidth, 0);
+            ctx.lineTo(cx + radius * 0.95, cy - radius);
+            ctx.lineTo(cx - radius * 0.95, cy - radius);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(cx - bWidth, height);
+            ctx.lineTo(cx + bWidth, height);
+            ctx.lineTo(cx + radius * 0.95, cy + radius);
+            ctx.lineTo(cx - radius * 0.95, cy + radius);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 1.28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawBezel() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const bezelOuter = radius * 1.22;
+
+            const goldGrad = ctx.createRadialGradient(cx, cy, radius * 1.1, cx, cy, bezelOuter);
+            goldGrad.addColorStop(0, '#7A6B31');
+            goldGrad.addColorStop(0.5, '#F3E5AB');
+            goldGrad.addColorStop(1, '#7A6B31');
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, bezelOuter, 0, Math.PI * 2);
+            ctx.fillStyle = goldGrad;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 1.15, 0, Math.PI * 2);
+            ctx.fillStyle = '#080808';
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = colors.goldLight;
+            
+            for (let i = 0; i < 60; i++) {
+                ctx.save();
+                ctx.rotate(i * 6 * Math.PI / 180);
+                if (i === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, -radius * 1.15); 
+                    ctx.lineTo(-radius * 0.11, -radius * 0.96); 
+                    ctx.lineTo(radius * 0.11, -radius * 0.96);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(0, -radius * 1.04, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = colors.lume; ctx.fill();
+                } else if (i % 10 === 0) {
+                    ctx.font = `bold ${radius * 0.16}px sans-serif`;
+                    ctx.fillText(i, 0, -radius * 1.06);
+                } else if (i % 5 === 0) {
+                    ctx.fillRect(-2.5, -radius * 1.12, 5, radius * 0.08);
+                }
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function drawDial() {
+            const cx = width / 2;
+            const cy = height / 2;
+
+            // Rehaut (Gold)
+            const rehautGrad = ctx.createRadialGradient(cx, cy, radius * 0.98, cx, cy, radius);
+            rehautGrad.addColorStop(0, '#7A6B31');
+            rehautGrad.addColorStop(0.5, '#F3E5AB');
+            rehautGrad.addColorStop(1, '#3D351A');
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = rehautGrad;
+            ctx.fill();
+
+            // Dial Background (Purple Sunburst)
+            const burstGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.985);
+            burstGrad.addColorStop(0, colors.dialPurple);
+            burstGrad.addColorStop(0.7, '#1A0B2E');
+            burstGrad.addColorStop(1, colors.dialPurpleDark);
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.985, 0, Math.PI * 2);
+            ctx.fillStyle = burstGrad;
+            ctx.fill();
+
+            // Texture: 10x10 Checkered Pattern
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.985, 0, Math.PI * 2);
+            ctx.clip();
+            
+            const cellCount = 10;
+            const cellSize = (radius * 2) / cellCount;
+            ctx.fillStyle = 'rgba(0,0,0,0.42)'; 
+            for(let x = 0; x < cellCount; x++) {
+                for(let y = 0; y < cellCount; y++) {
+                    if((x + y) % 2 === 0) {
+                        ctx.fillRect(cx - radius + x * cellSize, cy - radius + y * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+            ctx.restore();
+
+            // --- TICK MARKS ---
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.strokeStyle = colors.goldLight;
+            ctx.shadowColor = 'rgba(243, 229, 171, 0.4)';
+            ctx.shadowBlur = 2;
+            for (let i = 0; i < 60; i++) {
+                const isBigTick = i % 5 === 0;
+                ctx.lineWidth = isBigTick ? 2.8 : 1.4;
+                const tickLength = isBigTick ? radius * 0.085 : radius * 0.05;
+                ctx.beginPath();
+                ctx.moveTo(0, -radius * 0.98);
+                ctx.lineTo(0, -radius * 0.98 + tickLength);
+                ctx.stroke();
+                ctx.rotate(Math.PI / 30);
+            }
+            ctx.restore();
+
+            // --- SHIMMER GOLD BRANDING ---
+            const shimmer = ctx.createLinearGradient(cx - radius * 0.5, 0, cx + radius * 0.5, 0);
+            shimmer.addColorStop(0, '#7A6B31');
+            shimmer.addColorStop(0.4, '#F3E5AB');
+            shimmer.addColorStop(0.6, '#F3E5AB');
+            shimmer.addColorStop(1, '#7A6B31');
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = shimmer;
+            ctx.font = `${radius * 0.28}px serif`;
+            ctx.fillText("♛", cx, cy - radius * 0.48);
+            ctx.font = `bold ${radius * 0.13}px sans-serif`;
+            ctx.letterSpacing = "3px";
+            ctx.fillText("ATLAS", cx, cy - radius * 0.30);
+            
+            ctx.fillStyle = colors.goldLight;
+            ctx.letterSpacing = "0px";
+            ctx.font = `bold ${radius * 0.04}px sans-serif`;
+            ctx.fillText("OYSTER PERPETUAL DATE", cx, cy - radius * 0.21);
+
+            // --- LOWER DIAL TEXT ---
+            ctx.fillStyle = shimmer;
+            ctx.font = `bold ${radius * 0.075}px sans-serif`;
+            ctx.fillText("SUBMARINER", cx, cy + radius * 0.40);
+            
+            ctx.fillStyle = colors.goldLight;
+            ctx.font = `bold ${radius * 0.035}px sans-serif`;
+            ctx.fillText("1000ft = 300m", cx, cy + radius * 0.48);
+            ctx.fillText("SUPERLATIVE CHRONOMETER", cx, cy + radius * 0.53);
+            ctx.fillText("OFFICIALLY CERTIFIED", cx, cy + radius * 0.58);
+
+            // --- HOUR DECALS ---
+            const markerScale = 0.85; 
+            for (let i = 1; i <= 12; i++) {
+                if (i === 3) continue;
+                const ang = i * 30 * Math.PI / 180;
+                const currentRadius = radius * 0.81;
+                const x = Math.sin(ang) * currentRadius;
+                const y = -Math.cos(ang) * currentRadius;
+                
+                ctx.save();
+                ctx.translate(cx + x, cy + y);
+                ctx.rotate(ang);
+                ctx.fillStyle = '#7A6B31';
+                ctx.beginPath();
+                if (i === 12) {
+                    ctx.moveTo(0, radius * 0.12 * markerScale); 
+                    ctx.lineTo(-radius * 0.11 * markerScale, -radius * 0.11 * markerScale); 
+                    ctx.lineTo(radius * 0.11 * markerScale, -radius * 0.11 * markerScale); 
+                } else if (i === 6 || i === 9) {
+                    ctx.rect(-radius * 0.05 * markerScale, -radius * 0.1 * markerScale, radius * 0.1 * markerScale, radius * 0.2 * markerScale);
+                } else {
+                    ctx.arc(0, 0, radius * 0.075 * markerScale, 0, Math.PI * 2);
+                }
+                ctx.fill();
+
+                ctx.fillStyle = colors.lume;
+                ctx.beginPath();
+                if (i === 12) {
+                    ctx.moveTo(0, radius * 0.09 * markerScale); 
+                    ctx.lineTo(-radius * 0.08 * markerScale, -radius * 0.08 * markerScale); 
+                    ctx.lineTo(radius * 0.08 * markerScale, -radius * 0.08 * markerScale);
+                } else if (i === 6 || i === 9) {
+                    ctx.rect(-radius * 0.04 * markerScale, -radius * 0.09 * markerScale, radius * 0.08 * markerScale, radius * 0.18 * markerScale);
+                } else {
+                    ctx.arc(0, 0, radius * 0.065 * markerScale, 0, Math.PI * 2);
+                }
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function drawDatePlate() {
+            const cx = width / 2;
+            const cy = height / 2;
+            const datePos = { x: cx + radius * 0.72, y: cy }; 
+            const now = new Date();
+            
+            // Glass Border (Bezel/Blur effect)
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = 'rgba(122, 107, 49, 0.8)'; // Gold border
+            ctx.beginPath();
+            ctx.roundRect(datePos.x - radius * 0.17, datePos.y - radius * 0.13, radius * 0.34, radius * 0.26, 4);
+            ctx.fill();
+            ctx.restore();
+
+            // Glass/Cyclops Overlay Effect
+            const grad = ctx.createLinearGradient(datePos.x - radius * 0.14, datePos.y - radius * 0.1, datePos.x + radius * 0.14, datePos.y + radius * 0.1);
+            grad.addColorStop(0, 'rgba(255,255,255,0.2)');
+            grad.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+            grad.addColorStop(1, 'rgba(255,255,255,0.1)');
+            
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.roundRect(datePos.x - radius * 0.13, datePos.y - radius * 0.09, radius * 0.26, radius * 0.18, 1);
+            ctx.fill();
+            
+            ctx.fillStyle = grad;
+            ctx.fillRect(datePos.x - radius * 0.13, datePos.y - radius * 0.09, radius * 0.26, radius * 0.18);
+
+            ctx.fillStyle = '#111111';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `bold ${radius * 0.15}px sans-serif`;
+            ctx.fillText(now.getDate(), datePos.x, datePos.y);
+        }
+
+        function drawHands() {
+            const now = new Date();
+            const ms = now.getMilliseconds(), s = now.getSeconds(), m = now.getMinutes(), h = now.getHours() % 12;
+            const cx = width / 2, cy = height / 2;
+            const sAng = ((s + ms / 1000) * 6) * Math.PI / 180;
+            const mAng = (m * 6 + s * 0.1 + (ms / 1000) * 0.1) * Math.PI / 180;
+            const hAng = (h * 30 + m * 0.5 + s * (0.5/60)) * Math.PI / 180;
+
+            const getGoldGrad = (len) => {
+                const g = ctx.createLinearGradient(0, 0, 0, -len);
+                g.addColorStop(0, '#7A6B31');
+                g.addColorStop(0.5, '#F3E5AB');
+                g.addColorStop(1, '#7A6B31');
+                return g;
+            };
+
+            // HOUR HAND (Mercedes Style Refined)
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(hAng);
+            
+            // Drop shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 2;
+            
+            ctx.fillStyle = getGoldGrad(radius * 0.58);
+            ctx.strokeStyle = '#3D351A';
+            ctx.lineWidth = 1.2;
+            
+            // Main body
+            ctx.beginPath();
+            ctx.moveTo(-radius * 0.05, 15); ctx.lineTo(-radius * 0.055, -radius * 0.45);
+            ctx.lineTo(0, -radius * 0.58); ctx.lineTo(radius * 0.055, -radius * 0.45);
+            ctx.lineTo(radius * 0.05, 15);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            
+            // Mercedes circle
+            const circleY = -radius * 0.30; 
+            const circleR = radius * 0.09; // Slightly larger
+            
+            ctx.beginPath();
+            ctx.arc(0, circleY, circleR, 0, Math.PI * 2); 
+            ctx.fill(); ctx.stroke();
+            
+            // Lume Filling
+            ctx.fillStyle = colors.lume;
+            ctx.beginPath();
+            ctx.arc(0, circleY, circleR - 2.5, 0, Math.PI * 2); // Thicker border
+            ctx.fill();
+
+            // Mercedes Cutout Lines (Thicker/Clearer)
+            ctx.strokeStyle = '#3D351A';
+            ctx.lineWidth = 3.5; // Thicker lines
+            ctx.lineCap = 'round';
+            for(let a=0; a<3; a++) {
+                ctx.save();
+                ctx.translate(0, circleY);
+                ctx.rotate(a * 120 * Math.PI/180);
+                ctx.beginPath(); 
+                ctx.moveTo(0,0); 
+                ctx.lineTo(0, -circleR + 1); 
+                ctx.stroke();
+                ctx.restore();
+            }
+            ctx.restore();
+
+            // MINUTE HAND
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(mAng);
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 3;
+            
+            ctx.fillStyle = getGoldGrad(radius * 0.9);
+            ctx.strokeStyle = '#3D351A';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-radius * 0.035, 15);
+            ctx.lineTo(-radius * 0.035, -radius * 0.8);
+            ctx.lineTo(0, -radius * 0.9);
+            ctx.lineTo(radius * 0.035, -radius * 0.8);
+            ctx.lineTo(radius * 0.035, 15);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            
+            const rectW = radius * 0.04;
+            const rectH = radius * 0.55;
+            const rectY = -radius * 0.72;
+            ctx.fillStyle = '#7A6B31';
+            ctx.fillRect(-rectW/2 - 1, rectY - 1, rectW + 2, rectH + 2);
+            ctx.fillStyle = colors.lume;
+            ctx.fillRect(-rectW/2 + 1, rectY + 1, rectW - 2, rectH - 2);
+            ctx.restore();
+
+            // SECOND HAND
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(sAng);
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 2;
+            ctx.shadowOffsetY = 4;
+            
+            ctx.strokeStyle = colors.goldLight; ctx.lineWidth = 1.3;
+            ctx.beginPath(); ctx.moveTo(0, 25); ctx.lineTo(0, -radius * 0.98); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, -radius * 0.74, radius * 0.025, 0, Math.PI * 2);
+            ctx.fillStyle = colors.goldLight; ctx.fill(); ctx.stroke();
+            ctx.restore();
+            
+            ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+            ctx.fillStyle = colors.goldMedium; ctx.fill();
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            drawChunkyCase();
+            drawBezel();
+            drawDial();
+            drawDatePlate();
+            drawHands();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        window.onload = init;
+    </script>
+</body>
+</html>
