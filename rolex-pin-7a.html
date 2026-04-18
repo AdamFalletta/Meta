@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Submariner - Silver & Charcoal Mechanical</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #010101;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="watchCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('watchCanvas');
+        const ctx = canvas.getContext('2d');
+        const offscreenCanvas = document.createElement('canvas');
+        const offCtx = offscreenCanvas.getContext('2d');
+
+        let width, height, radius, dpr;
+        let lastDate = -1;
+        let lastTickIndex = -1; 
+        
+        let handGradients = { hour: null, minute: null };
+
+        const colors = {
+            silverLight: '#F0F0F0',
+            silverMedium: '#C0C0C0',
+            silverDark: '#707070',
+            dialCharcoal: '#1A1A1A',
+            dialBlack: '#020202',
+            lume: '#F0F8FF',
+            datePlate: '#FFFFFF'
+        };
+
+        function init() {
+            resize();
+            renderStaticLayer();
+            requestAnimationFrame(animate);
+        }
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            offscreenCanvas.width = width * dpr;
+            offscreenCanvas.height = height * dpr;
+            offCtx.scale(dpr, dpr);
+            radius = Math.min(width, height) * 0.38;
+
+            const hLen = radius * 0.58;
+            const mLen = radius * 0.9;
+            const hG = ctx.createLinearGradient(0, 0, 0, -hLen);
+            hG.addColorStop(0, '#707070'); hG.addColorStop(0.5, '#FFFFFF'); hG.addColorStop(1, '#707070');
+            handGradients.hour = hG;
+            const mG = ctx.createLinearGradient(0, 0, 0, -mLen);
+            mG.addColorStop(0, '#707070'); mG.addColorStop(0.5, '#FFFFFF'); mG.addColorStop(1, '#707070');
+            handGradients.minute = mG;
+        }
+
+        function renderStaticLayer() {
+            offCtx.clearRect(0, 0, width, height);
+            drawChunkyCase(offCtx);
+            drawBezel(offCtx);
+            drawDial(offCtx);
+            drawDatePlate(offCtx);
+        }
+
+        function drawChunkyCase(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            const bWidth = radius * 1.05;
+            targetCtx.save();
+            const bandGrad = targetCtx.createLinearGradient(cx - bWidth, 0, cx + bWidth, 0);
+            bandGrad.addColorStop(0, '#1A1A1A'); bandGrad.addColorStop(0.2, '#707070'); bandGrad.addColorStop(0.5, '#E0E0E0'); bandGrad.addColorStop(0.8, '#707070'); bandGrad.addColorStop(1, '#1A1A1A');
+            targetCtx.fillStyle = bandGrad;
+            targetCtx.beginPath(); targetCtx.moveTo(cx - bWidth, 0); targetCtx.lineTo(cx + bWidth, 0); targetCtx.lineTo(cx + radius * 0.95, cy - radius); targetCtx.lineTo(cx - radius * 0.95, cy - radius); targetCtx.fill();
+            targetCtx.beginPath(); targetCtx.moveTo(cx - bWidth, height); targetCtx.lineTo(cx + bWidth, height); targetCtx.lineTo(cx + radius * 0.95, cy + radius); targetCtx.lineTo(cx - radius * 0.95, cy + radius); targetCtx.fill();
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius * 1.28, 0, Math.PI * 2); targetCtx.fill();
+            const crownX = cx + radius * 1.25; const crownH = radius * 0.25; const crownW = radius * 0.15;
+            const crownGrad = targetCtx.createLinearGradient(crownX, cy - crownH/2, crownX + crownW, cy - crownH/2);
+            crownGrad.addColorStop(0, '#707070'); crownGrad.addColorStop(0.5, '#F0F0F0'); crownGrad.addColorStop(1, '#333333');
+            targetCtx.fillStyle = crownGrad;
+            targetCtx.beginPath(); targetCtx.moveTo(cx + radius * 1.1, cy - radius * 0.2); targetCtx.quadraticCurveTo(cx + radius * 1.28, cy - radius * 0.15, cx + radius * 1.28, cy); targetCtx.quadraticCurveTo(cx + radius * 1.28, cy + radius * 0.15, cx + radius * 1.1, cy + radius * 0.2); targetCtx.fill();
+            targetCtx.beginPath(); targetCtx.roundRect(crownX, cy - crownH/2, crownW, crownH, 3); targetCtx.fill();
+            targetCtx.restore();
+        }
+
+        function drawBezel(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            const bezelOuter = radius * 1.22;
+            const silverGrad = targetCtx.createRadialGradient(cx, cy, radius * 1.1, cx, cy, bezelOuter);
+            silverGrad.addColorStop(0, '#707070'); silverGrad.addColorStop(0.5, '#F0F0F0'); silverGrad.addColorStop(1, '#707070');
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, bezelOuter, 0, Math.PI * 2); targetCtx.fillStyle = silverGrad; targetCtx.fill();
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius * 1.15, 0, Math.PI * 2); targetCtx.fillStyle = '#0A0A0A'; targetCtx.fill();
+            targetCtx.save();
+            targetCtx.translate(cx, cy); targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle'; targetCtx.fillStyle = colors.silverLight;
+            for (let i = 0; i < 60; i++) {
+                targetCtx.save(); targetCtx.rotate(i * 6 * Math.PI / 180);
+                if (i === 0) {
+                    targetCtx.beginPath(); targetCtx.moveTo(0, -radius * 1.15); targetCtx.lineTo(-radius * 0.11, -radius * 0.96); targetCtx.lineTo(radius * 0.11, -radius * 0.96); targetCtx.fill();
+                    targetCtx.beginPath(); targetCtx.arc(0, -radius * 1.04, 6, 0, Math.PI * 2); targetCtx.fillStyle = colors.lume; targetCtx.fill();
+                } else if (i % 10 === 0) {
+                    targetCtx.font = `bold ${radius * 0.16}px sans-serif`; targetCtx.fillText(i, 0, -radius * 1.06);
+                } else if (i % 5 === 0) {
+                    targetCtx.fillRect(-2.5, -radius * 1.12, 5, radius * 0.08);
+                }
+                targetCtx.restore();
+            }
+            targetCtx.restore();
+        }
+
+        function drawDial(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            const rehautGrad = targetCtx.createRadialGradient(cx, cy, radius * 0.98, cx, cy, radius);
+            rehautGrad.addColorStop(0, '#707070'); rehautGrad.addColorStop(0.5, '#F0F0F0'); rehautGrad.addColorStop(1, '#333333');
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius, 0, Math.PI * 2); targetCtx.fillStyle = rehautGrad; targetCtx.fill();
+            
+            const vignetteGrad = targetCtx.createRadialGradient(cx, cy, radius * 0.1, cx, cy, radius * 0.985);
+            vignetteGrad.addColorStop(0, colors.dialCharcoal); vignetteGrad.addColorStop(0.8, '#080808'); vignetteGrad.addColorStop(1, colors.dialBlack);
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius * 0.985, 0, Math.PI * 2); targetCtx.fillStyle = vignetteGrad; targetCtx.fill();
+            
+            // Refined Silver Pinstripes - lighter and more spread
+            targetCtx.save();
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius * 0.985, 0, Math.PI * 2); targetCtx.clip();
+            targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.07)'; 
+            targetCtx.lineWidth = 0.8;
+            for(let x = -radius; x < radius; x += 18) { 
+                targetCtx.beginPath(); targetCtx.moveTo(cx + x, cy - radius); targetCtx.lineTo(cx + x, cy + radius); targetCtx.stroke();
+            }
+            targetCtx.restore();
+
+            targetCtx.save(); targetCtx.translate(cx, cy); targetCtx.strokeStyle = colors.silverLight;
+            for (let i = 0; i < 60; i++) {
+                const isBigTick = i % 5 === 0; targetCtx.lineWidth = isBigTick ? 2.8 : 1.4; const tickLength = isBigTick ? radius * 0.085 : radius * 0.05;
+                targetCtx.beginPath(); targetCtx.moveTo(0, -radius * 0.98); targetCtx.lineTo(0, -radius * 0.98 + tickLength); targetCtx.stroke(); targetCtx.rotate(Math.PI / 30);
+            }
+            targetCtx.restore();
+            
+            const metalShimmer = targetCtx.createLinearGradient(cx - radius * 0.5, 0, cx + radius * 0.5, 0); 
+            metalShimmer.addColorStop(0, '#888888'); metalShimmer.addColorStop(0.4, '#FFFFFF'); metalShimmer.addColorStop(0.6, '#FFFFFF'); metalShimmer.addColorStop(1, '#888888');
+            
+            const globeY = cy - radius * 0.55; 
+            const globeR = radius * 0.13;
+            targetCtx.save();
+            targetCtx.shadowColor = 'rgba(0,0,0,0.8)'; targetCtx.shadowBlur = 4; targetCtx.shadowOffsetY = 2;
+            targetCtx.strokeStyle = metalShimmer; targetCtx.lineWidth = 2;
+            targetCtx.beginPath(); targetCtx.arc(cx, globeY, globeR, 0, Math.PI * 2); targetCtx.stroke();
+            targetCtx.beginPath(); targetCtx.moveTo(cx - globeR, globeY); targetCtx.lineTo(cx + globeR, globeY); 
+            targetCtx.moveTo(cx, globeY - globeR); targetCtx.lineTo(cx, globeY + globeR); targetCtx.stroke();
+            targetCtx.beginPath(); targetCtx.ellipse(cx, globeY, globeR * 0.5, globeR, 0, 0, Math.PI * 2); targetCtx.stroke();
+            targetCtx.restore();
+            
+            targetCtx.save();
+            targetCtx.textAlign = 'center'; targetCtx.shadowColor = 'rgba(0,0,0,0.8)'; targetCtx.shadowBlur = 4; targetCtx.shadowOffsetY = 2;
+            targetCtx.fillStyle = metalShimmer; targetCtx.font = `bold ${radius * 0.16}px "Times New Roman", serif`; targetCtx.letterSpacing = "7px"; 
+            targetCtx.fillText("NEXUS", cx, cy - radius * 0.26);
+            targetCtx.restore();
+
+            targetCtx.fillStyle = colors.silverLight; targetCtx.textAlign = 'center'; targetCtx.letterSpacing = "0px"; targetCtx.font = `bold ${radius * 0.04}px sans-serif`; targetCtx.fillText("OYSTER PERPETUAL DATE", cx, cy - radius * 0.17);
+            targetCtx.fillStyle = metalShimmer; targetCtx.font = `bold ${radius * 0.075}px sans-serif`; targetCtx.fillText("SUBMARINER", cx, cy + radius * 0.40);
+            targetCtx.fillStyle = colors.silverLight; targetCtx.font = `bold ${radius * 0.035}px sans-serif`; targetCtx.fillText("1000ft = 300m", cx, cy + radius * 0.48); targetCtx.fillText("SUPERLATIVE CHRONOMETER", cx, cy + radius * 0.53); targetCtx.fillText("OFFICIALLY CERTIFIED", cx, cy + radius * 0.58);
+            
+            const markerScale = 0.85; 
+            for (let i = 1; i <= 12; i++) {
+                if (i === 3) continue;
+                const ang = i * 30 * Math.PI / 180; const currentRadius = radius * 0.81; const x = Math.sin(ang) * currentRadius; const y = -Math.cos(ang) * currentRadius;
+                targetCtx.save(); targetCtx.translate(cx + x, cy + y); targetCtx.rotate(ang); targetCtx.fillStyle = '#666666'; targetCtx.beginPath();
+                if (i === 12) { targetCtx.moveTo(0, radius * 0.12 * markerScale); targetCtx.lineTo(-radius * 0.11 * markerScale, -radius * 0.11 * markerScale); targetCtx.lineTo(radius * 0.11 * markerScale, -radius * 0.11 * markerScale); }
+                else if (i === 6 || i === 9) { targetCtx.rect(-radius * 0.05 * markerScale, -radius * 0.1 * markerScale, radius * 0.1 * markerScale, radius * 0.2 * markerScale); }
+                else { targetCtx.arc(0, 0, radius * 0.075 * markerScale, 0, Math.PI * 2); }
+                targetCtx.fill(); targetCtx.fillStyle = colors.lume; targetCtx.beginPath();
+                if (i === 12) { targetCtx.moveTo(0, radius * 0.09 * markerScale); targetCtx.lineTo(-radius * 0.08 * markerScale, -radius * 0.08 * markerScale); targetCtx.lineTo(radius * 0.08 * markerScale, -radius * 0.08 * markerScale); }
+                else if (i === 6 || i === 9) { targetCtx.rect(-radius * 0.04 * markerScale, -radius * 0.09 * markerScale, radius * 0.08 * markerScale, radius * 0.18 * markerScale); }
+                else { targetCtx.arc(0, 0, radius * 0.065 * markerScale, 0, Math.PI * 2); }
+                targetCtx.fill(); targetCtx.restore();
+            }
+        }
+
+        function drawDatePlate(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            const datePos = { x: cx + radius * 0.66, y: cy }; 
+            const now = new Date(); lastDate = now.getDate();
+            const frameW = radius * 0.38; const frameH = radius * 0.30; const innerW = radius * 0.30; const innerH = radius * 0.22;
+            targetCtx.save();
+            const frameGrad = targetCtx.createLinearGradient(datePos.x - frameW/2, datePos.y - frameH/2, datePos.x + frameW/2, datePos.y + frameH/2);
+            frameGrad.addColorStop(0, '#707070'); frameGrad.addColorStop(0.5, '#FFFFFF'); frameGrad.addColorStop(1, '#333333');
+            targetCtx.fillStyle = frameGrad; targetCtx.beginPath(); targetCtx.roundRect(datePos.x - frameW/2, datePos.y - frameH/2, frameW, frameH, 12); targetCtx.fill();
+            targetCtx.fillStyle = '#111111'; targetCtx.beginPath(); targetCtx.roundRect(datePos.x - innerW/2, datePos.y - innerH/2, innerW, innerH, 6); targetCtx.fill();
+            targetCtx.fillStyle = '#EDEDED'; targetCtx.beginPath(); targetCtx.roundRect(datePos.x - innerW/2 + 1, datePos.y - innerH/2 + 1, innerW - 2, innerH - 2, 6); targetCtx.fill();
+            targetCtx.fillStyle = '#080808'; targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle'; targetCtx.font = `bold ${radius * 0.17}px sans-serif`; targetCtx.fillText(lastDate, datePos.x, datePos.y + 2); 
+            targetCtx.restore();
+        }
+
+        function drawHands() {
+            const now = new Date();
+            const ms = now.getMilliseconds(), s = now.getSeconds(), m = now.getMinutes(), h = now.getHours() % 12;
+            const cx = width / 2, cy = height / 2;
+            const beatMs = Math.floor(ms / 125) * 125;
+            const mechanicalSeconds = s + beatMs / 1000;
+            const mechanicalMinutes = m + mechanicalSeconds / 60;
+            const mechanicalHours = h + mechanicalMinutes / 60;
+            const sAng = (mechanicalSeconds * 6) * Math.PI / 180;
+            const mAng = (mechanicalMinutes * 6) * Math.PI / 180;
+            const hAng = (mechanicalHours * 30) * Math.PI / 180;
+
+            if (now.getDate() !== lastDate) renderStaticLayer();
+
+            // Hour Hand with Shadow
+            ctx.save();
+            ctx.translate(cx, cy); ctx.rotate(hAng);
+            ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 4;
+            ctx.fillStyle = handGradients.hour; ctx.strokeStyle = '#444444'; ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.moveTo(-radius * 0.05, 15); ctx.lineTo(-radius * 0.055, -radius * 0.45); ctx.lineTo(0, -radius * 0.58); ctx.lineTo(radius * 0.055, -radius * 0.45); ctx.lineTo(radius * 0.05, 15); ctx.closePath(); ctx.fill(); ctx.stroke();
+            const circleY = -radius * 0.30; const circleR = radius * 0.09;
+            ctx.beginPath(); ctx.arc(0, circleY, circleR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = colors.lume; ctx.beginPath(); ctx.arc(0, circleY, circleR - 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; 
+            ctx.strokeStyle = '#444444'; ctx.lineWidth = 3.5;
+            for(let a=0; a<3; a++) {
+                ctx.save(); ctx.translate(0, circleY); ctx.rotate(a * 120 * Math.PI/180);
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, -circleR + 1); ctx.stroke(); ctx.restore();
+            }
+            ctx.restore();
+
+            // Minute Hand with Shadow
+            ctx.save();
+            ctx.translate(cx, cy); ctx.rotate(mAng);
+            ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 6;
+            ctx.fillStyle = handGradients.minute; ctx.strokeStyle = '#444444'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(-radius * 0.035, 15); ctx.lineTo(-radius * 0.035, -radius * 0.8); ctx.lineTo(0, -radius * 0.9); ctx.lineTo(radius * 0.035, -radius * 0.8); ctx.lineTo(radius * 0.035, 15); ctx.closePath(); ctx.fill(); ctx.stroke();
+            const rectW = radius * 0.04; const rectH = radius * 0.55; const rectY = -radius * 0.72;
+            ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+            ctx.fillStyle = '#777777'; ctx.fillRect(-rectW/2 - 1, rectY - 1, rectW + 2, rectH + 2);
+            ctx.fillStyle = colors.lume; ctx.fillRect(-rectW/2 + 1, rectY + 1, rectW - 2, rectH - 2);
+            ctx.restore();
+
+            // Second Hand with Shadow - Cleaned smudge from circle
+            ctx.save();
+            ctx.translate(cx, cy); ctx.rotate(sAng);
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 8;
+            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.3;
+            // Draw full length needle
+            ctx.beginPath(); ctx.moveTo(0, 25); ctx.lineTo(0, -radius * 0.98); ctx.stroke();
+            // Draw clean lume circle (removed extra .stroke() that caused the smudge effect)
+            ctx.beginPath(); ctx.arc(0, -radius * 0.74, radius * 0.025, 0, Math.PI * 2); ctx.fillStyle = '#FFFFFF'; ctx.fill();
+            ctx.restore();
+            
+            ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fillStyle = '#BBBBBB'; ctx.fill();
+        }
+
+        function animate() {
+            const now = new Date();
+            const ms = now.getMilliseconds();
+            const currentTickIndex = Math.floor(ms / 125);
+            if (currentTickIndex !== lastTickIndex) {
+                lastTickIndex = currentTickIndex;
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(offscreenCanvas, 0, 0, width, height);
+                drawHands();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => { resize(); renderStaticLayer(); });
+        window.onload = init;
+    </script>
+</body>
+</html>
