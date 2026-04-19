@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Cyberpunk - Neon Mechanical Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #010103;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="watchCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('watchCanvas');
+        const ctx = canvas.getContext('2d');
+        const offscreenCanvas = document.createElement('canvas');
+        const offCtx = offscreenCanvas.getContext('2d');
+
+        let width, height, radius, dpr;
+        let lastDate = -1;
+        let lastTickIndex = -1; 
+        
+        // Neon Palette
+        const colors = {
+            neonBlue: '#00F3FF',
+            neonPink: '#FF00E5',
+            neonGreen: '#39FF14',
+            neonGold: '#FFD700',
+            darkVoid: '#050508',
+            metalDark: '#121218',
+            deepBlack: '#020205'
+        };
+
+        function init() {
+            resize();
+            renderStaticLayer();
+            requestAnimationFrame(animate);
+        }
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            offscreenCanvas.width = width * dpr;
+            offscreenCanvas.height = height * dpr;
+            offCtx.scale(dpr, dpr);
+            radius = Math.min(width, height) * 0.38;
+        }
+
+        function renderStaticLayer() {
+            offCtx.clearRect(0, 0, width, height);
+            drawChunkyCase(offCtx);
+            drawBezel(offCtx);
+            drawDial(offCtx);
+            drawDatePlate(offCtx);
+        }
+
+        function drawChunkyCase(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            const bWidth = radius * 1.05;
+            targetCtx.save();
+            
+            const bandGrad = targetCtx.createLinearGradient(cx - bWidth, 0, cx + bWidth, 0);
+            bandGrad.addColorStop(0, '#010103'); 
+            bandGrad.addColorStop(0.2, '#0a0a0f'); 
+            bandGrad.addColorStop(0.5, '#1a1a24'); 
+            bandGrad.addColorStop(0.8, '#0a0a0f'); 
+            bandGrad.addColorStop(1, '#010103');
+            
+            targetCtx.fillStyle = bandGrad;
+            targetCtx.beginPath(); targetCtx.moveTo(cx - bWidth, 0); targetCtx.lineTo(cx + bWidth, 0); targetCtx.lineTo(cx + radius * 0.95, cy - radius); targetCtx.lineTo(cx - radius * 0.95, cy - radius); targetCtx.fill();
+            targetCtx.beginPath(); targetCtx.moveTo(cx - bWidth, height); targetCtx.lineTo(cx + bWidth, height); targetCtx.lineTo(cx + radius * 0.95, cy + radius); targetCtx.lineTo(cx - radius * 0.95, cy + radius); targetCtx.fill();
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius * 1.28, 0, Math.PI * 2); targetCtx.fill();
+            
+            targetCtx.strokeStyle = colors.neonBlue;
+            targetCtx.globalAlpha = 0.15;
+            targetCtx.lineWidth = 2;
+            targetCtx.stroke();
+            targetCtx.globalAlpha = 1.0;
+
+            const crownX = cx + radius * 1.25; const crownH = radius * 0.25; const crownW = radius * 0.15;
+            targetCtx.fillStyle = '#0a0a0f';
+            targetCtx.beginPath(); targetCtx.roundRect(crownX, cy - crownH/2, crownW, crownH, 3); targetCtx.fill();
+            targetCtx.restore();
+        }
+
+        function drawBezel(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            const bezelOuter = radius * 1.22;
+            
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, bezelOuter, 0, Math.PI * 2); targetCtx.fillStyle = '#050508'; targetCtx.fill();
+            targetCtx.strokeStyle = colors.neonPink; targetCtx.lineWidth = 2; targetCtx.stroke();
+            
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius * 1.15, 0, Math.PI * 2); targetCtx.fillStyle = colors.deepBlack; targetCtx.fill();
+            
+            targetCtx.save();
+            targetCtx.translate(cx, cy); targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle'; 
+            for (let i = 0; i < 60; i++) {
+                targetCtx.save(); targetCtx.rotate(i * 6 * Math.PI / 180);
+                if (i === 0) {
+                    targetCtx.shadowBlur = 15; targetCtx.shadowColor = colors.neonGreen;
+                    targetCtx.fillStyle = colors.neonGreen;
+                    targetCtx.beginPath(); targetCtx.moveTo(0, -radius * 1.15); targetCtx.lineTo(-radius * 0.08, -radius * 1.02); targetCtx.lineTo(radius * 0.08, -radius * 1.02); targetCtx.fill();
+                } else if (i % 10 === 0) {
+                    targetCtx.shadowBlur = 8; targetCtx.shadowColor = colors.neonBlue;
+                    targetCtx.fillStyle = colors.neonBlue;
+                    targetCtx.font = `bold ${radius * 0.14}px monospace`; targetCtx.fillText(i, 0, -radius * 1.06);
+                } else if (i % 5 === 0) {
+                    targetCtx.fillStyle = colors.neonPink;
+                    targetCtx.fillRect(-1.5, -radius * 1.12, 3, radius * 0.06);
+                }
+                targetCtx.restore();
+            }
+            targetCtx.restore();
+        }
+
+        function drawDial(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            
+            const rehautGrad = targetCtx.createRadialGradient(cx, cy, radius * 0.98, cx, cy, radius);
+            rehautGrad.addColorStop(0, '#0a0a0f'); rehautGrad.addColorStop(1, '#000');
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius, 0, Math.PI * 2); targetCtx.fillStyle = rehautGrad; targetCtx.fill();
+            
+            targetCtx.beginPath(); targetCtx.arc(cx, cy, radius * 0.985, 0, Math.PI * 2); targetCtx.fillStyle = colors.darkVoid; targetCtx.fill();
+            
+            const dialVignette = targetCtx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius * 0.98);
+            dialVignette.addColorStop(0, 'rgba(0,0,0,0)');
+            dialVignette.addColorStop(1, 'rgba(0,0,0,0.95)');
+            targetCtx.fillStyle = dialVignette;
+            targetCtx.fill();
+
+            targetCtx.save(); targetCtx.translate(cx, cy); targetCtx.strokeStyle = 'rgba(0, 243, 255, 0.4)';
+            for (let i = 0; i < 60; i++) {
+                const isBigTick = i % 5 === 0; 
+                targetCtx.lineWidth = isBigTick ? 2 : 1; 
+                const tickLength = isBigTick ? radius * 0.06 : radius * 0.03;
+                targetCtx.beginPath(); targetCtx.moveTo(0, -radius * 0.98); targetCtx.lineTo(0, -radius * 0.98 + tickLength); targetCtx.stroke(); targetCtx.rotate(Math.PI / 30);
+            }
+            targetCtx.restore();
+            
+            // IDENTICAL GLOBE CODE FROM SOURCE
+            const globeY = cy - radius * 0.55; 
+            const globeR = radius * 0.13;
+            targetCtx.save();
+            targetCtx.shadowColor = 'rgba(0,0,0,0.8)'; 
+            targetCtx.shadowBlur = 4; 
+            targetCtx.shadowOffsetY = 2;
+            targetCtx.strokeStyle = colors.neonGold; 
+            targetCtx.lineWidth = 2;
+            targetCtx.beginPath(); 
+            targetCtx.arc(cx, globeY, globeR, 0, Math.PI * 2); 
+            targetCtx.stroke();
+            targetCtx.beginPath(); 
+            targetCtx.moveTo(cx - globeR, globeY); 
+            targetCtx.lineTo(cx + globeR, globeY); 
+            targetCtx.moveTo(cx, globeY - globeR); 
+            targetCtx.lineTo(cx, globeY + globeR); 
+            targetCtx.stroke();
+            targetCtx.beginPath(); 
+            targetCtx.ellipse(cx, globeY, globeR * 0.5, globeR, 0, 0, Math.PI * 2); 
+            targetCtx.stroke();
+            targetCtx.restore();
+            
+            targetCtx.save();
+            targetCtx.textAlign = 'center'; 
+            targetCtx.fillStyle = colors.neonBlue; 
+            targetCtx.font = `bold ${radius * 0.16}px serif`; 
+            targetCtx.letterSpacing = "7px"; 
+            targetCtx.fillText("NEXUS", cx, cy - radius * 0.26);
+            targetCtx.restore();
+
+            targetCtx.fillStyle = colors.neonPink; 
+            targetCtx.textAlign = 'center'; 
+            targetCtx.font = `bold ${radius * 0.04}px monospace`; 
+            targetCtx.fillText("NEON PROTOCOL X-DATE", cx, cy - radius * 0.17);
+            
+            // Lower Decals - Updated to Neon Blue and Serif
+            targetCtx.save();
+            targetCtx.shadowBlur = 18; targetCtx.shadowColor = colors.neonGold;
+            targetCtx.fillStyle = colors.neonGold; 
+            targetCtx.font = `bold ${radius * 0.075}px serif`; 
+            targetCtx.fillText("SUB-CYBER", cx, cy + radius * 0.40);
+            
+            targetCtx.shadowBlur = 10;
+            targetCtx.shadowColor = colors.neonBlue;
+            targetCtx.fillStyle = colors.neonBlue; 
+            targetCtx.font = `bold ${radius * 0.035}px serif`; 
+            targetCtx.fillText("1000ft = 300m", cx, cy + radius * 0.48); 
+            targetCtx.fillText("SUPERLATIVE CHRONOMETER", cx, cy + radius * 0.53); 
+            targetCtx.fillText("QUANTUM CERTIFIED", cx, cy + radius * 0.58);
+            targetCtx.restore();
+            
+            // Hour Markers - ALL NEON BLUE (No green)
+            const markerScale = 0.85; 
+            for (let i = 1; i <= 12; i++) {
+                if (i === 3) continue;
+                const ang = i * 30 * Math.PI / 180; const currentRadius = radius * 0.81; const x = Math.sin(ang) * currentRadius; const y = -Math.cos(ang) * currentRadius;
+                targetCtx.save(); targetCtx.translate(cx + x, cy + y); targetCtx.rotate(ang); 
+                
+                targetCtx.shadowBlur = 20; targetCtx.shadowColor = colors.neonBlue;
+                targetCtx.fillStyle = 'rgba(0, 243, 255, 0.7)'; 
+                targetCtx.beginPath();
+                if (i === 12) { targetCtx.moveTo(0, radius * 0.1 * markerScale); targetCtx.lineTo(-radius * 0.1 * markerScale, -radius * 0.1 * markerScale); targetCtx.lineTo(radius * 0.1 * markerScale, -radius * 0.1 * markerScale); }
+                else if (i === 6 || i === 9) { targetCtx.rect(-radius * 0.05 * markerScale, -radius * 0.1 * markerScale, radius * 0.1 * markerScale, radius * 0.2 * markerScale); }
+                else { targetCtx.arc(0, 0, radius * 0.07 * markerScale, 0, Math.PI * 2); }
+                targetCtx.fill(); 
+                
+                targetCtx.strokeStyle = colors.neonBlue; targetCtx.lineWidth = 2; targetCtx.stroke();
+                targetCtx.restore();
+            }
+        }
+
+        function drawDatePlate(targetCtx) {
+            const cx = width / 2; const cy = height / 2;
+            const datePos = { x: cx + radius * 0.66, y: cy }; 
+            const now = new Date(); lastDate = now.getDate();
+            const frameW = radius * 0.36; const frameH = radius * 0.28;
+            targetCtx.save();
+            targetCtx.fillStyle = '#000'; targetCtx.beginPath(); targetCtx.roundRect(datePos.x - frameW/2, datePos.y - frameH/2, frameW, frameH, 8); targetCtx.fill();
+            targetCtx.strokeStyle = colors.neonPink; targetCtx.lineWidth = 2; targetCtx.stroke();
+            
+            targetCtx.shadowBlur = 25; targetCtx.shadowColor = colors.neonPink;
+            targetCtx.fillStyle = colors.neonPink; targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle'; targetCtx.font = `bold ${radius * 0.17}px monospace`; targetCtx.fillText(lastDate.toString().padStart(2, '0'), datePos.x, datePos.y + 2); 
+            targetCtx.restore();
+        }
+
+        function drawHands() {
+            const now = new Date();
+            const ms = now.getMilliseconds(), s = now.getSeconds(), m = now.getMinutes(), h = now.getHours() % 12;
+            const cx = width / 2, cy = height / 2;
+            const beatMs = Math.floor(ms / 125) * 125;
+            const mechanicalSeconds = s + beatMs / 1000;
+            const mechanicalMinutes = m + mechanicalSeconds / 60;
+            const mechanicalHours = h + mechanicalMinutes / 60;
+            const sAng = (mechanicalSeconds * 6) * Math.PI / 180;
+            const mAng = (mechanicalMinutes * 6) * Math.PI / 180;
+            const hAng = (mechanicalHours * 30) * Math.PI / 180;
+
+            if (now.getDate() !== lastDate) renderStaticLayer();
+
+            // Hour Hand - Chunky and Pointed
+            ctx.save();
+            ctx.translate(cx, cy); ctx.rotate(hAng);
+            ctx.shadowColor = colors.neonBlue; ctx.shadowBlur = 15;
+            ctx.fillStyle = colors.neonBlue;
+            ctx.beginPath();
+            ctx.moveTo(-10, 20);      // Base left
+            ctx.lineTo(10, 20);       // Base right
+            ctx.lineTo(10, -radius * 0.4); // Body right
+            ctx.lineTo(0, -radius * 0.62); // Pointed tip
+            ctx.lineTo(-10, -radius * 0.4); // Body left
+            ctx.closePath();
+            ctx.fill();
+            
+            // Mercedes Emblem on Hour Hand
+            const circleY = -radius * 0.38; const circleR = radius * 0.11;
+            ctx.fillStyle = colors.darkVoid; ctx.beginPath(); ctx.arc(0, circleY, circleR, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = colors.neonBlue; ctx.lineWidth = 3; ctx.stroke();
+            ctx.lineWidth = 2;
+            for(let a=0; a<3; a++) {
+                ctx.save(); ctx.translate(0, circleY); ctx.rotate(a * 120 * Math.PI/180);
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, -circleR + 1); ctx.stroke(); ctx.restore();
+            }
+            ctx.restore();
+
+            // Minute Hand - Chunky and Pointed
+            ctx.save();
+            ctx.translate(cx, cy); ctx.rotate(mAng);
+            ctx.shadowColor = colors.neonPink; ctx.shadowBlur = 15;
+            ctx.fillStyle = colors.neonPink;
+            ctx.beginPath();
+            ctx.moveTo(-7, 20);       // Base left
+            ctx.lineTo(7, 20);        // Base right
+            ctx.lineTo(7, -radius * 0.7);  // Body right
+            ctx.lineTo(0, -radius * 0.92); // Pointed tip
+            ctx.lineTo(-7, -radius * 0.7);  // Body left
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // Second Hand - Electric Green
+            ctx.save();
+            ctx.translate(cx, cy); ctx.rotate(sAng);
+            ctx.shadowColor = colors.neonGreen; ctx.shadowBlur = 12;
+            ctx.strokeStyle = colors.neonGreen; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(0, 30); ctx.lineTo(0, -radius * 0.98); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, -radius * 0.74, 5, 0, Math.PI * 2); ctx.fillStyle = colors.neonGreen; ctx.fill();
+            ctx.restore();
+            
+            // Center Pin
+            ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill();
+            ctx.strokeStyle = colors.neonGold; ctx.lineWidth = 2; ctx.stroke();
+        }
+
+        function animate() {
+            const now = new Date();
+            const ms = now.getMilliseconds();
+            const currentTickIndex = Math.floor(ms / 125);
+            if (currentTickIndex !== lastTickIndex) {
+                lastTickIndex = currentTickIndex;
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(offscreenCanvas, 0, 0, width, height);
+                drawHands();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => { resize(); renderStaticLayer(); });
+        window.onload = init;
+    </script>
+</body>
+</html>
