@@ -74,27 +74,27 @@
             color: #ffffff !important;
             filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
         }
-
-        .main-content {
-            padding-bottom: 9rem; 
-        }
     </style>
 </head>
-<body class="bg-black text-white font-sans antialiased overflow-hidden">
+<body class="bg-black text-white font-sans antialiased overflow-hidden h-screen">
 
-    <div id="app" class="h-screen flex flex-col relative max-w-4xl mx-auto">
+    <!-- Main Flex Container: ensures header, content, and footer fit exactly in viewport -->
+    <div id="app" class="h-full flex flex-col relative max-w-4xl mx-auto">
         
-        <header class="p-6">
+        <!-- Fixed Header -->
+        <header class="p-6 shrink-0">
             <h1 class="text-4xl font-black tracking-tighter text-white italic uppercase">RevV Radio</h1>
         </header>
 
-        <main class="main-content flex-1 overflow-y-auto px-4 no-scrollbar">
-            <div id="track-list" class="space-y-0 shadow-2xl rounded-lg overflow-hidden border border-zinc-900">
+        <!-- Scrollable Content: flex-1 ensures it takes remaining space above the footer -->
+        <main class="flex-1 overflow-y-auto px-4 no-scrollbar">
+            <div id="track-list" class="space-y-0 shadow-2xl rounded-lg overflow-hidden border border-zinc-900 mb-4">
                 <!-- Tracks injected here -->
             </div>
         </main>
 
-        <footer class="fixed bottom-0 left-0 right-0 glass-footer z-50">
+        <!-- Footer Player: shrink-0 ensures it stays its fixed size at the bottom -->
+        <footer class="shrink-0 glass-footer w-full">
             <div class="max-w-4xl mx-auto px-4 py-6 flex flex-col items-center gap-4">
                 
                 <!-- Controls Row -->
@@ -126,7 +126,7 @@
                     </button>
                 </div>
 
-                <!-- Seeker Row - Explicitly value="0" -->
+                <!-- Seeker Row -->
                 <div class="w-full flex items-center space-x-4">
                     <span id="time-current" class="text-[10px] text-zinc-500 w-10 text-right font-mono">0:00</span>
                     <div class="flex-1 flex items-center relative h-5">
@@ -200,7 +200,6 @@
             audio.src = tracks[index].url;
             audio.load();
             
-            // Critical: reset UI every time source changes
             forceResetUI();
             audio.currentTime = 0;
 
@@ -245,7 +244,6 @@
 
             audio.onloadedmetadata = () => {
                 document.getElementById('time-total').innerText = formatTime(audio.duration);
-                // Ensure seeker stays at 0 even after metadata loads if not already playing
                 if (!isPlaying && audio.currentTime === 0) {
                     forceResetUI();
                 }
