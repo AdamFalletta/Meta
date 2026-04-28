@@ -15,41 +15,39 @@
             scrollbar-width: none;
         }
 
-        /* Basic range input styling */
+        /* Tighter range input for visibility */
         input[type='range'] {
             -webkit-appearance: none;
             background: transparent;
             width: 100%;
-            height: 32px; /* Increased height for better visibility/hit area */
+            height: 24px;
             cursor: pointer;
             margin: 0;
             display: block;
-            position: relative;
+            z-index: 30;
         }
         
-        /* The invisible track */
+        /* The invisible track - visible enough to see the path */
         input[type='range']::-webkit-slider-runnable-track {
             width: 100%;
-            height: 4px; /* Slightly thicker track */
+            height: 4px;
             background: #27272a;
             border-radius: 2px;
         }
 
-        /* The Dot (Thumb) */
+        /* The Dot (Thumb) - Larger for mobile touch */
         input[type='range']::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
+            height: 18px;
+            width: 18px;
             border-radius: 50%;
             background: #ffffff;
-            margin-top: -6px; /* Centers thumb on thicker track */
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
+            margin-top: -7px; /* Centers thumb on 4px track */
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
             border: none;
-            position: relative;
-            z-index: 20;
         }
 
-        /* The white fill logic */
+        /* The progress fill logic */
         input[type='range'].progress-fill {
             background: linear-gradient(to right, 
                 #ffffff 0%, 
@@ -58,11 +56,11 @@
                 transparent 100%);
             border-radius: 2px;
             height: 4px;
-            /* Precise positioning to overlay the track perfectly */
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
             left: 0;
+            pointer-events: none; /* Let clicks pass through to the input */
         }
 
         .track-item:nth-child(even) {
@@ -90,58 +88,58 @@
 
     <div id="app" class="h-full flex flex-col relative max-w-4xl mx-auto">
         
-        <!-- Fixed Header -->
-        <header class="p-6 shrink-0">
-            <h1 class="text-4xl font-black tracking-tighter text-white italic uppercase">RevV Radio</h1>
+        <!-- Tightened Header -->
+        <header class="pt-4 pb-2 px-6 shrink-0">
+            <h1 class="text-3xl font-black tracking-tighter text-white italic uppercase">RevV Radio</h1>
         </header>
 
         <!-- Scrollable Content -->
         <main class="flex-1 overflow-y-auto px-4 no-scrollbar">
-            <div id="track-list" class="space-y-0 shadow-2xl rounded-lg overflow-hidden border border-zinc-900 mb-4">
+            <div id="track-list" class="space-y-0 shadow-2xl rounded-lg overflow-hidden border border-zinc-900 mb-2">
                 <!-- Tracks injected here -->
             </div>
         </main>
 
-        <!-- Footer Player -->
+        <!-- Taller, Tighter Footer Player -->
         <footer class="shrink-0 glass-footer w-full">
-            <div class="max-w-4xl mx-auto px-4 py-6 flex flex-col items-center gap-6">
+            <div class="max-w-4xl mx-auto px-4 pt-4 pb-8 flex flex-col items-center gap-4">
                 
                 <!-- Controls Row -->
                 <div class="flex items-center justify-between w-full px-2">
                     <div class="w-10"></div>
 
-                    <div class="flex items-center space-x-12">
+                    <div class="flex items-center space-x-10">
                         <button id="btn-prev" class="text-zinc-500 hover:text-white transition active:scale-90">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="m11 19-7-7 7-7v14zm8 0-7-7 7-7v14z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="m11 19-7-7 7-7v14zm8 0-7-7 7-7v14z"/></svg>
                         </button>
                         
-                        <button id="btn-play-pause" class="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                        <button id="btn-play-pause" class="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                             <div id="play-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                             </div>
                             <div id="pause-icon" class="hidden">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                             </div>
                         </button>
 
                         <button id="btn-next" class="text-zinc-500 hover:text-white transition active:scale-90">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="m5 19 7-7-7-7v14zm8 0 7-7-7-7v14z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="m5 19 7-7-7-7v14zm8 0 7-7-7-7v14z"/></svg>
                         </button>
                     </div>
 
                     <button id="btn-autoplay" class="transition-all duration-200 flex flex-col items-center group text-zinc-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                        <span class="text-[8px] uppercase tracking-tighter mt-1 font-black">AUTO</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        <span class="text-[7px] uppercase tracking-tighter mt-1 font-black">AUTO</span>
                     </button>
                 </div>
 
-                <!-- Seeker Row - Enhanced Visibility -->
-                <div class="w-full flex items-center space-x-4 mb-2">
-                    <span id="time-current" class="text-[10px] text-zinc-500 w-10 text-right font-mono">0:00</span>
-                    <div class="flex-1 relative h-8 flex items-center">
+                <!-- Seeker Row - Cleaned up spacing -->
+                <div class="w-full flex items-center space-x-3">
+                    <span id="time-current" class="text-[10px] text-zinc-500 w-8 text-right font-mono">0:00</span>
+                    <div class="flex-1 relative h-6 flex items-center">
                         <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.01" class="progress-fill w-full" style="--progress: 0%;">
                     </div>
-                    <span id="time-total" class="text-[10px] text-zinc-500 w-10 font-mono">0:00</span>
+                    <span id="time-total" class="text-[10px] text-zinc-500 w-8 font-mono">0:00</span>
                 </div>
 
             </div>
@@ -186,13 +184,13 @@
 
         function renderTrackList() {
             document.getElementById('track-list').innerHTML = tracks.map((track, index) => `
-                <div id="track-item-${index}" onclick="selectTrack(${index}, true)" class="track-item flex items-center p-5 cursor-pointer transition-all group">
-                    <img src="${track.cover}" class="w-14 h-14 rounded object-cover mr-5 border border-white/5">
+                <div id="track-item-${index}" onclick="selectTrack(${index}, true)" class="track-item flex items-center p-4 cursor-pointer transition-all group border-b border-zinc-900 last:border-b-0">
+                    <img src="${track.cover}" class="w-12 h-12 rounded object-cover mr-4 border border-white/5">
                     <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-lg text-white truncate">${track.title}</h4>
-                        <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-black">DEMO RECORDING</p>
+                        <h4 class="font-bold text-base text-white truncate">${track.title}</h4>
+                        <p class="text-[9px] text-zinc-500 uppercase tracking-widest font-black">DEMO RECORDING</p>
                     </div>
-                    <div class="text-zinc-500 font-mono text-sm pl-4">
+                    <div class="text-zinc-500 font-mono text-xs pl-2">
                         ${track.duration}
                     </div>
                 </div>
