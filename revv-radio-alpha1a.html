@@ -16,7 +16,7 @@
             display: flex;
             align-items: center;
             cursor: pointer;
-            touch-action: none; /* Critical: Stops page scroll while touching */
+            touch-action: none; 
             position: relative;
         }
 
@@ -100,21 +100,21 @@
                     </button>
                 </div>
 
-                <!-- Seeker Row -->
-                <div class="w-full flex items-center space-x-3 max-w-md">
-                    <span id="time-current" class="text-[10px] text-zinc-500 w-10 text-right font-mono">0:00</span>
-                    <div id="seeker-container">
+                <!-- Seeker Row - Added extra horizontal padding between times and slider -->
+                <div class="w-full flex items-center max-w-md">
+                    <span id="time-current" class="text-[10px] text-zinc-500 w-12 text-right font-mono pr-2">0:00</span>
+                    <div id="seeker-container" class="flex-1 px-2">
                         <div class="seeker-track">
                             <div id="seeker-fill" class="seeker-fill"></div>
                             <div id="seeker-thumb" class="seeker-thumb"></div>
                         </div>
                     </div>
-                    <span id="time-total" class="text-[10px] text-zinc-500 w-10 font-mono">0:00</span>
+                    <span id="time-total" class="text-[10px] text-zinc-500 w-12 font-mono pl-2">0:00</span>
                 </div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto no-scrollbar">
+        <main id="main-scroll" class="flex-1 overflow-y-auto no-scrollbar">
             <div id="track-list" class="divide-y divide-zinc-900 border-b border-zinc-900 mb-[60px]">
                 <!-- Tracks injected here -->
             </div>
@@ -129,9 +129,10 @@
             { id: 1, title: "Crimson Sky", duration: "4:05", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", cover: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200" },
             { id: 2, title: "Neon Jungle", duration: "3:18", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200" },
             { id: 3, title: "Bass Line Idea #4", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200" },
-            { id: 4, title: "Neon Jungle", duration: "3:18", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200" },
-            { id: 5, title: "Bass Line Idea #4", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200" },
-            { id: 6, title: "After Hours", duration: "5:21", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200" }
+            { id: 4, title: "After Hours", duration: "5:21", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200" },
+            { id: 5, title: "Midnight City", duration: "4:12", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3", cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=200" },
+            { id: 6, title: "Electric Dreams", duration: "3:45", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", cover: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=200" },
+            { id: 7, title: "Velvet Sky", duration: "5:01", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3", cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=200" }
         ];
 
         let currentTrackIndex = 0;
@@ -145,6 +146,7 @@
         const thumb = document.getElementById('seeker-thumb');
         const btnPlayPause = document.getElementById('btn-play-pause');
         const btnAutoplay = document.getElementById('btn-autoplay');
+        const mainScroll = document.getElementById('main-scroll');
 
         function init() {
             renderTrackList();
@@ -169,7 +171,12 @@
         function selectTrack(index, shouldPlay) {
             document.querySelectorAll('[id^="track-item-"]').forEach(el => el.classList.remove('active-track'));
             const currentItem = document.getElementById(`track-item-${index}`);
-            if (currentItem) currentItem.classList.add('active-track');
+            
+            if (currentItem) {
+                currentItem.classList.add('active-track');
+                // Scroll the selected track to the top of the scrollable area
+                currentItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
             currentTrackIndex = index;
             audio.src = tracks[index].url;
@@ -241,7 +248,6 @@
 
             audio.onended = () => { if (autoplay) document.getElementById('btn-next').click(); };
 
-            // TOUCH AND MOUSE EVENTS FOR CUSTOM SEEKER
             const startSeek = (e) => {
                 isDragging = true;
                 handleSeek(e);
@@ -252,15 +258,15 @@
             };
 
             const moveSeek = (e) => {
-                if (e.cancelable) e.preventDefault(); // Stop scrolling
+                if (e.cancelable) e.preventDefault();
                 handleSeek(e);
             };
 
             const endSeek = (e) => {
                 if (isDragging) {
                     const rect = container.getBoundingClientRect();
-                    // For touch end, we use the last known position or the event if available
-                    const lastX = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - rect.left;
+                    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                    const lastX = clientX - rect.left;
                     let percent = (lastX / rect.width) * 100;
                     percent = Math.min(100, Math.max(0, percent));
                     
