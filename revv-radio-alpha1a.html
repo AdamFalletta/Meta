@@ -66,6 +66,11 @@
         }
 
         .autoplay-active { color: #ffffff !important; filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
+
+        /* Fix for scroll positioning to account for header height */
+        .track-item {
+            scroll-margin-top: 180px; /* Adjust this to match header height */
+        }
     </style>
 </head>
 <body class="bg-black text-white font-sans antialiased overflow-hidden h-screen select-none">
@@ -121,7 +126,7 @@
 
         <!-- SCROLLABLE LIST -->
         <main id="main-scroll" class="flex-1 overflow-y-auto no-scrollbar">
-            <div id="track-list" class="divide-y divide-zinc-900 border-b border-zinc-900 mb-[60px]">
+            <div id="track-list" class="divide-y divide-zinc-900 border-b border-zinc-900 mb-[100px]">
                 <!-- Tracks injected here -->
             </div>
         </main>
@@ -180,6 +185,7 @@
             
             if (currentItem) {
                 currentItem.classList.add('active-track');
+                // Scroll to top of list area, but the scroll-margin-top in CSS ensures it's not behind header
                 currentItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
