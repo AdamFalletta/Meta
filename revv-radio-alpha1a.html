@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The RevV - Demos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Custom styles for the progress bar with white fill and glow */
+        input[type='range'] {
+            -webkit-appearance: none;
+            background: transparent;
+            width: 100%;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        /* Progress Bar Track - The Background */
+        input[type='range']::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #3f3f46; /* Zinc 700 (Uncompleted) */
+            border-radius: 2px;
+        }
+
+        /* Thumb - The White Circle */
+        input[type='range']::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            margin-top: -4px; /* Centers thumb on track */
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+            border: none;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Solid white background that fills up to the thumb position */
+        input[type='range'].progress-fill {
+            background: linear-gradient(to right, 
+                #ffffff 0%, 
+                #ffffff var(--progress), 
+                transparent var(--progress), 
+                transparent 100%);
+            border-radius: 2px;
+            height: 4px;
+            margin-top: 8px;
+        }
+
+        /* Zebra Striping: 2nd, 4th, 6th tracks get charcoal #111111 */
+        .track-item:nth-child(even) {
+            background-color: #111111;
+        }
+
+        /* Active track is now NAVY BLUE per request */
+        .active-track {
+            background-color: #001f3f !important; /* Navy Blue */
+            border-left: 4px solid #ffffff;
+        }
+        
+        .glass-footer {
+            background: rgba(10, 10, 10, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid #27272a;
+        }
+
+        .autoplay-active {
+            color: #ffffff !important;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+        }
+
+        /* Adjusted layout for longer slider and bigger art */
+        @media (max-width: 640px) {
+            .track-info-container { width: 30%; }
+            .controls-container { width: 60%; }
+            .settings-container { width: 10%; }
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-sans antialiased overflow-hidden">
+
+    <div id="app" class="h-screen flex flex-col relative max-w-4xl mx-auto">
+        
+        <header class="p-6">
+            <h1 class="text-4xl font-black tracking-tighter text-white italic">RevV Radio</h1>
+        </header>
+
+        <!-- Track List Area with hidden scrollbars -->
+        <main class="flex-1 overflow-y-auto px-4 pb-40 no-scrollbar">
+            <div id="track-list" class="space-y-0 shadow-2xl rounded-lg overflow-hidden border border-zinc-900">
+                <!-- Tracks injected here -->
+            </div>
+        </main>
+
+        <footer class="fixed bottom-0 left-0 right-0 glass-footer z-50">
+            <div class="max-w-5xl mx-auto px-4 py-6 flex items-center justify-between gap-6">
+                
+                <!-- Left: Track Info - Bigger Art & No Truncation -->
+                <div class="flex items-center w-1/5 min-w-0 track-info-container">
+                    <img id="footer-art" src="" class="w-16 h-16 rounded shadow-md mr-4 object-cover bg-zinc-800 flex-shrink-0 border border-zinc-700/50">
+                    <div class="min-w-0">
+                        <div id="footer-title" class="font-bold text-base text-white leading-tight">Select a track</div>
+                        <div id="footer-artist" class="text-[10px] text-zinc-500 uppercase tracking-widest font-black mt-1">THE REVV</div>
+                    </div>
+                </div>
+
+                <!-- Center: Primary Controls & EXTRA LONG Seek Bar -->
+                <div class="flex flex-col items-center flex-1 controls-container">
+                    <div class="flex items-center space-x-12 mb-3">
+                        <button id="btn-prev" class="text-zinc-500 hover:text-white transition active:scale-90">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="m11 19-7-7 7-7v14zm8 0-7-7 7-7v14z"/></svg>
+                        </button>
+                        
+                        <button id="btn-play-pause" class="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                            <div id="play-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                            <div id="pause-icon" class="hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </div>
+                        </button>
+
+                        <button id="btn-next" class="text-zinc-500 hover:text-white transition active:scale-90">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="m5 19 7-7-7-7v14zm8 0 7-7-7-7v14z"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- EXTRA LONG WHITE SEEKER -->
+                    <div class="w-full flex items-center space-x-4">
+                        <span id="time-current" class="text-[11px] text-zinc-500 w-10 text-right font-mono">0:00</span>
+                        <div class="flex-1 flex items-center relative h-5">
+                            <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.01" class="progress-fill" style="--progress: 0%;">
+                        </div>
+                        <span id="time-total" class="text-[11px] text-zinc-500 w-10 font-mono">0:00</span>
+                    </div>
+                </div>
+
+                <!-- Right: Auto Play -->
+                <div class="flex items-center justify-end w-1/12 settings-container">
+                    <button id="btn-autoplay" class="p-2 transition-all duration-200 flex flex-col items-center group text-zinc-600" title="Auto-play next">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        <span class="text-[9px] uppercase tracking-tighter mt-1 font-black">AUTO</span>
+                    </button>
+                </div>
+
+            </div>
+        </footer>
+
+        <audio id="main-audio" preload="auto"></audio>
+    </div>
+
+    <script>
+        const tracks = [
+            { id: 0, title: "Voodoo Riff (Draft)", duration: "3:42", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", cover: "https://images.unsplash.com/photo-1514525253361-bee8718a300c?w=200" },
+            { id: 1, title: "Crimson Sky", duration: "4:05", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", cover: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200" },
+            { id: 2, title: "Neon Jungle", duration: "3:18", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200" },
+            { id: 3, title: "Bass Line Idea #4", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200" },
+            { id: 4, title: "After Hours", duration: "5:21", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200" }
+        ];
+
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let autoplay = true;
+        let isDragging = false;
+
+        const audio = document.getElementById('main-audio');
+        const seekBar = document.getElementById('seek-bar');
+        const btnPlayPause = document.getElementById('btn-play-pause');
+        const btnAutoplay = document.getElementById('btn-autoplay');
+
+        function init() {
+            renderTrackList();
+            setupEventListeners();
+            updateAutoplayUI();
+            selectTrack(0, false);
+        }
+
+        function renderTrackList() {
+            document.getElementById('track-list').innerHTML = tracks.map((track, index) => `
+                <div id="track-item-${index}" onclick="selectTrack(${index}, true)" class="track-item flex items-center p-4 cursor-pointer transition-all group">
+                    <img src="${track.cover}" class="w-14 h-14 rounded object-cover mr-4 border border-white/5">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-base text-white truncate">${track.title}</h4>
+                        <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-black">DEMO RECORDING</p>
+                    </div>
+                    <div class="text-zinc-500 font-mono text-sm pl-4">
+                        ${track.duration}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectTrack(index, shouldPlay) {
+            document.querySelectorAll('[id^="track-item-"]').forEach(el => el.classList.remove('active-track'));
+            document.getElementById(`track-item-${index}`)?.classList.add('active-track');
+
+            currentTrackIndex = index;
+            audio.pause();
+            audio.src = tracks[index].url;
+            audio.load();
+            
+            document.getElementById('footer-title').innerText = tracks[index].title;
+            document.getElementById('footer-art').src = tracks[index].cover;
+            
+            updateProgressUI(0);
+            if (shouldPlay) playAudio();
+        }
+
+        function playAudio() {
+            audio.play().then(() => {
+                isPlaying = true;
+                updatePlayPauseUI();
+            }).catch(() => {});
+        }
+
+        function updatePlayPauseUI() {
+            document.getElementById('play-icon').classList.toggle('hidden', isPlaying);
+            document.getElementById('pause-icon').classList.toggle('hidden', !isPlaying);
+        }
+
+        function updateAutoplayUI() {
+            btnAutoplay.classList.toggle('autoplay-active', autoplay);
+        }
+
+        function updateProgressUI(percent) {
+            seekBar.value = percent;
+            seekBar.style.setProperty('--progress', `${percent}%`);
+        }
+
+        function formatTime(secs) {
+            if (isNaN(secs)) return "0:00";
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function setupEventListeners() {
+            btnPlayPause.onclick = () => { if (isPlaying) audio.pause(); else playAudio(); };
+            audio.onpause = () => { isPlaying = false; updatePlayPauseUI(); };
+            
+            document.getElementById('btn-next').onclick = () => selectTrack((currentTrackIndex + 1) % tracks.length, true);
+            document.getElementById('btn-prev').onclick = () => selectTrack((currentTrackIndex - 1 + tracks.length) % tracks.length, true);
+            btnAutoplay.onclick = () => { autoplay = !autoplay; updateAutoplayUI(); };
+
+            audio.onloadedmetadata = () => document.getElementById('time-total').innerText = formatTime(audio.duration);
+            
+            audio.ontimeupdate = () => {
+                if (isDragging) return;
+                const percent = (audio.currentTime / audio.duration) * 100;
+                updateProgressUI(percent);
+                document.getElementById('time-current').innerText = formatTime(audio.currentTime);
+            };
+
+            audio.onended = () => { if (autoplay) document.getElementById('btn-next').click(); };
+
+            seekBar.onmousedown = () => isDragging = true;
+            seekBar.ontouchstart = () => isDragging = true;
+            
+            seekBar.oninput = () => {
+                updateProgressUI(seekBar.value);
+                const time = (seekBar.value / 100) * audio.duration;
+                document.getElementById('time-current').innerText = formatTime(time);
+            };
+
+            seekBar.onchange = () => {
+                isDragging = false;
+                audio.currentTime = (seekBar.value / 100) * audio.duration;
+                if (isPlaying) playAudio();
+            };
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
