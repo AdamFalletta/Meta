@@ -2,98 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>The RevV - Radio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Fixed Seeker Styling */
-        input[type='range'] {
-            -webkit-appearance: none;
-            background: transparent;
+        /* Custom Seeker - 100% Reliable Touch */
+        #seeker-container {
             width: 100%;
-            height: 24px;
+            height: 40px; /* Huge touch target */
+            display: flex;
+            align-items: center;
             cursor: pointer;
-            margin: 0;
-            display: block;
-            z-index: 50;
+            touch-action: none; /* Critical: Stops page scroll while touching */
             position: relative;
         }
-        
-        input[type='range']::-webkit-slider-runnable-track {
+
+        .seeker-track {
             width: 100%;
             height: 4px;
             background: #27272a;
             border-radius: 2px;
+            position: relative;
+            overflow: visible;
         }
 
-        input[type='range']::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 18px;
-            width: 18px;
-            border-radius: 50%;
-            background: #ffffff;
-            margin-top: -7px;
-            box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
-            border: none;
-        }
-
-        input[type='range'].progress-fill {
-            background: linear-gradient(to right, 
-                #ffffff 0%, 
-                #ffffff var(--progress, 0%), 
-                transparent var(--progress, 0%), 
-                transparent 100%);
-            border-radius: 2px;
-            height: 4px;
+        .seeker-fill {
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            left: 0;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 2px;
+            width: 0%;
             pointer-events: none;
         }
 
-        .track-item:nth-child(even) {
-            background-color: #0a0a0a;
+        .seeker-thumb {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            width: 20px;
+            height: 20px;
+            background: #ffffff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+            z-index: 60;
         }
 
-        .active-track {
-            background-color: #001f3f !important;
-            border-left: 4px solid #ffffff;
-        }
+        .track-item:nth-child(even) { background-color: #0a0a0a; }
+        .active-track { background-color: #001f3f !important; border-left: 4px solid #ffffff; }
         
         .header-player {
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid #18181b;
         }
 
-        .autoplay-active {
-            color: #ffffff !important;
-            filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
-        }
+        .autoplay-active { color: #ffffff !important; filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
     </style>
 </head>
-<body class="bg-black text-white font-sans antialiased overflow-hidden h-screen">
+<body class="bg-black text-white font-sans antialiased overflow-hidden h-screen select-none">
 
     <div id="app" class="h-full flex flex-col relative max-w-4xl mx-auto">
         
-        <!-- HEADER WITH CENTERED PLAYER -->
         <header class="shrink-0 header-player z-50">
             <div class="px-6 pt-6 pb-2 text-center">
                 <h1 class="text-3xl font-black tracking-tighter text-white italic uppercase">RevV Radio</h1>
             </div>
 
             <div class="px-6 pb-6 pt-2 flex flex-col items-center gap-4">
-                <!-- Controls Row - Now Centered -->
+                <!-- Controls -->
                 <div class="flex items-center justify-center w-full relative">
                     <div class="flex items-center space-x-10">
                         <button id="btn-prev" class="text-zinc-500 hover:text-white transition active:scale-90">
@@ -114,7 +95,6 @@
                         </button>
                     </div>
 
-                    <!-- Autoplay Button - Text removed, icon only -->
                     <button id="btn-autoplay" class="absolute right-0 transition-all duration-200 flex items-center group text-zinc-600">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
                     </button>
@@ -122,18 +102,20 @@
 
                 <!-- Seeker Row -->
                 <div class="w-full flex items-center space-x-3 max-w-md">
-                    <span id="time-current" class="text-[10px] text-zinc-500 w-8 text-right font-mono">0:00</span>
-                    <div class="flex-1 relative h-6 flex items-center">
-                        <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.01" class="progress-fill w-full" style="--progress: 0%;">
+                    <span id="time-current" class="text-[10px] text-zinc-500 w-10 text-right font-mono">0:00</span>
+                    <div id="seeker-container">
+                        <div class="seeker-track">
+                            <div id="seeker-fill" class="seeker-fill"></div>
+                            <div id="seeker-thumb" class="seeker-thumb"></div>
+                        </div>
                     </div>
-                    <span id="time-total" class="text-[10px] text-zinc-500 w-8 font-mono">0:00</span>
+                    <span id="time-total" class="text-[10px] text-zinc-500 w-10 font-mono">0:00</span>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content Area - Scrollable Track List -->
         <main class="flex-1 overflow-y-auto no-scrollbar">
-            <div id="track-list" class="divide-y divide-zinc-900 border-b border-zinc-900">
+            <div id="track-list" class="divide-y divide-zinc-900 border-b border-zinc-900 mb-[60px]">
                 <!-- Tracks injected here -->
             </div>
         </main>
@@ -147,8 +129,8 @@
             { id: 1, title: "Crimson Sky", duration: "4:05", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", cover: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=200" },
             { id: 2, title: "Neon Jungle", duration: "3:18", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200" },
             { id: 3, title: "Bass Line Idea #4", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200" },
-             { id: 4, title: "Bass Line Idea #4", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200" },
-             { id: 5, title: "Bass Line Idea #4", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200" },
+            { id: 4, title: "Neon Jungle", duration: "3:18", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200" },
+            { id: 5, title: "Bass Line Idea #4", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200" },
             { id: 6, title: "After Hours", duration: "5:21", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200" }
         ];
 
@@ -158,36 +140,28 @@
         let isDragging = false;
 
         const audio = document.getElementById('main-audio');
-        const seekBar = document.getElementById('seek-bar');
+        const container = document.getElementById('seeker-container');
+        const fill = document.getElementById('seeker-fill');
+        const thumb = document.getElementById('seeker-thumb');
         const btnPlayPause = document.getElementById('btn-play-pause');
         const btnAutoplay = document.getElementById('btn-autoplay');
-
-        function forceResetUI() {
-            seekBar.value = 0;
-            seekBar.setAttribute('value', '0');
-            seekBar.style.setProperty('--progress', '0%');
-            document.getElementById('time-current').innerText = "0:00";
-        }
 
         function init() {
             renderTrackList();
             setupEventListeners();
             updateAutoplayUI();
-            forceResetUI();
             selectTrack(0, false);
         }
 
         function renderTrackList() {
             document.getElementById('track-list').innerHTML = tracks.map((track, index) => `
-                <div id="track-item-${index}" onclick="selectTrack(${index}, true)" class="track-item flex items-center p-4 cursor-pointer transition-all group">
+                <div id="track-item-${index}" onclick="selectTrack(${index}, true)" class="track-item flex items-center p-4 cursor-pointer transition-all">
                     <img src="${track.cover}" class="w-12 h-12 rounded object-cover mr-4 border border-white/5">
                     <div class="flex-1 min-w-0">
                         <h4 class="font-bold text-base text-white truncate">${track.title}</h4>
                         <p class="text-[9px] text-zinc-500 uppercase tracking-widest font-black">DEMO RECORDING</p>
                     </div>
-                    <div class="text-zinc-500 font-mono text-xs pl-2">
-                        ${track.duration}
-                    </div>
+                    <div class="text-zinc-500 font-mono text-xs pl-2">${track.duration}</div>
                 </div>
             `).join('');
         }
@@ -198,21 +172,14 @@
             if (currentItem) currentItem.classList.add('active-track');
 
             currentTrackIndex = index;
-            audio.pause();
             audio.src = tracks[index].url;
             audio.load();
-            
-            forceResetUI();
-            audio.currentTime = 0;
-
+            updateProgress(0);
             if (shouldPlay) playAudio();
         }
 
         function playAudio() {
-            audio.play().then(() => {
-                isPlaying = true;
-                updatePlayPauseUI();
-            }).catch(() => {});
+            audio.play().then(() => { isPlaying = true; updatePlayPauseUI(); }).catch(() => {});
         }
 
         function updatePlayPauseUI() {
@@ -224,9 +191,10 @@
             btnAutoplay.classList.toggle('autoplay-active', autoplay);
         }
 
-        function updateProgressUI(percent) {
-            seekBar.value = percent;
-            seekBar.style.setProperty('--progress', `${percent}%`);
+        function updateProgress(percent) {
+            const safePercent = Math.min(100, Math.max(0, percent));
+            fill.style.width = `${safePercent}%`;
+            thumb.style.left = `${safePercent}%`;
         }
 
         function formatTime(secs) {
@@ -234,6 +202,22 @@
             const m = Math.floor(secs / 60);
             const s = Math.floor(secs % 60);
             return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function handleSeek(e) {
+            const rect = container.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const x = clientX - rect.left;
+            let percent = (x / rect.width) * 100;
+            percent = Math.min(100, Math.max(0, percent));
+            
+            updateProgress(percent);
+            const time = (percent / 100) * audio.duration;
+            document.getElementById('time-current').innerText = formatTime(time);
+            
+            if (!isDragging) {
+                audio.currentTime = time;
+            }
         }
 
         function setupEventListeners() {
@@ -246,34 +230,51 @@
 
             audio.onloadedmetadata = () => {
                 document.getElementById('time-total').innerText = formatTime(audio.duration);
-                if (!isPlaying && audio.currentTime === 0) {
-                    forceResetUI();
-                }
             };
             
             audio.ontimeupdate = () => {
                 if (isDragging) return;
                 const percent = (audio.currentTime / audio.duration) * 100;
-                updateProgressUI(percent);
+                updateProgress(percent);
                 document.getElementById('time-current').innerText = formatTime(audio.currentTime);
             };
 
             audio.onended = () => { if (autoplay) document.getElementById('btn-next').click(); };
 
-            seekBar.onmousedown = () => isDragging = true;
-            seekBar.ontouchstart = () => isDragging = true;
-            
-            seekBar.oninput = () => {
-                updateProgressUI(seekBar.value);
-                const time = (seekBar.value / 100) * audio.duration;
-                document.getElementById('time-current').innerText = formatTime(time);
+            // TOUCH AND MOUSE EVENTS FOR CUSTOM SEEKER
+            const startSeek = (e) => {
+                isDragging = true;
+                handleSeek(e);
+                window.addEventListener('mousemove', moveSeek);
+                window.addEventListener('mouseup', endSeek);
+                window.addEventListener('touchmove', moveSeek, { passive: false });
+                window.addEventListener('touchend', endSeek);
             };
 
-            seekBar.onchange = () => {
-                isDragging = false;
-                audio.currentTime = (seekBar.value / 100) * audio.duration;
-                if (isPlaying) playAudio();
+            const moveSeek = (e) => {
+                if (e.cancelable) e.preventDefault(); // Stop scrolling
+                handleSeek(e);
             };
+
+            const endSeek = (e) => {
+                if (isDragging) {
+                    const rect = container.getBoundingClientRect();
+                    // For touch end, we use the last known position or the event if available
+                    const lastX = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - rect.left;
+                    let percent = (lastX / rect.width) * 100;
+                    percent = Math.min(100, Math.max(0, percent));
+                    
+                    audio.currentTime = (percent / 100) * audio.duration;
+                    isDragging = false;
+                }
+                window.removeEventListener('mousemove', moveSeek);
+                window.removeEventListener('mouseup', endSeek);
+                window.removeEventListener('touchmove', moveSeek);
+                window.removeEventListener('touchend', endSeek);
+            };
+
+            container.addEventListener('mousedown', startSeek);
+            container.addEventListener('touchstart', startSeek, { passive: false });
         }
 
         window.onload = init;
