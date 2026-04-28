@@ -57,8 +57,10 @@
         
         /* Fixed Header Styling */
         .header-player {
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             background: rgba(0, 0, 0, 0.98);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid #18181b;
@@ -67,9 +69,9 @@
 
         .autoplay-active { color: #ffffff !important; filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
 
-        /* Updated scroll margin to account for header height + new list margin */
+        /* landing position landing perfectly at the top of the list under the header */
         .track-item {
-            scroll-margin-top: 220px; 
+            scroll-margin-top: 200px; 
         }
     </style>
 </head>
@@ -78,7 +80,7 @@
     <div id="app" class="h-full flex flex-col relative max-w-4xl mx-auto">
         
         <!-- FIXED HEADER -->
-        <header class="shrink-0 header-player">
+        <header id="main-header" class="header-player max-w-4xl mx-auto">
             <div class="px-6 pt-6 pb-2 text-center">
                 <h1 class="text-3xl font-black tracking-tighter text-white italic uppercase">RevV Radio</h1>
             </div>
@@ -112,22 +114,24 @@
 
                 <!-- Seeker Row -->
                 <div class="w-full flex items-center max-w-md">
-                    <span id="time-current" class="text-[10px] text-zinc-500 w-12 text-right font-mono pr-2">0:00</span>
-                    <div id="seeker-container" class="flex-1 px-2">
+                    <span id="time-current" class="text-[10px] text-zinc-500 w-12 text-right font-mono pr-3">0:00</span>
+                    <div id="seeker-container" class="flex-1 px-1">
                         <div class="seeker-track">
                             <div id="seeker-fill" class="seeker-fill"></div>
                             <div id="seeker-thumb" class="seeker-thumb"></div>
                         </div>
                     </div>
-                    <span id="time-total" class="text-[10px] text-zinc-500 w-12 font-mono pl-2">0:00</span>
+                    <span id="time-total" class="text-[10px] text-zinc-500 w-12 font-mono pl-3">0:00</span>
                 </div>
             </div>
         </header>
 
         <!-- SCROLLABLE LIST -->
         <main id="main-scroll" class="flex-1 overflow-y-auto no-scrollbar">
-            <!-- Added 40px top margin (mt-10) to the list container -->
-            <div id="track-list" class="mt-10 divide-y divide-zinc-900 border-b border-zinc-900 mb-[100px]">
+            <!-- Dynamic Spacer to prevent overlap -->
+            <div id="header-spacer" class="h-[200px] w-full"></div>
+            
+            <div id="track-list" class="divide-y divide-zinc-900 border-b border-zinc-900 mb-[100px]">
                 <!-- Tracks injected here -->
             </div>
         </main>
@@ -159,12 +163,25 @@
         const btnPlayPause = document.getElementById('btn-play-pause');
         const btnAutoplay = document.getElementById('btn-autoplay');
         const mainScroll = document.getElementById('main-scroll');
+        const header = document.getElementById('main-header');
+        const spacer = document.getElementById('header-spacer');
 
         function init() {
             renderTrackList();
             setupEventListeners();
             updateAutoplayUI();
+            adjustSpacer();
             selectTrack(0, false);
+        }
+
+        function adjustSpacer() {
+            // Get exact header height and apply to spacer
+            const height = header.offsetHeight;
+            spacer.style.height = height + 'px';
+            // Update the scroll margin for track items too
+            const style = document.createElement('style');
+            style.innerHTML = `.track-item { scroll-margin-top: ${height + 20}px; }`;
+            document.head.appendChild(style);
         }
 
         function renderTrackList() {
@@ -186,7 +203,9 @@
             
             if (currentItem) {
                 currentItem.classList.add('active-track');
-                currentItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (shouldPlay) {
+                    currentItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
 
             currentTrackIndex = index;
@@ -292,6 +311,8 @@
 
             container.addEventListener('mousedown', startSeek);
             container.addEventListener('touchstart', startSeek, { passive: false });
+            
+            window.addEventListener('resize', adjustSpacer);
         }
 
         window.onload = init;
