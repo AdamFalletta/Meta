@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Mouse: Cheese Chase - Stable Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        :root { --neon-blue: #00f2ff; --neon-pink: #ff00ff; --neon-yellow: #fbff00; --bg-dark: #020205; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark); color: white;
+            font-family: 'Orbitron', sans-serif; overflow: hidden;
+            touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #game-container {
+            position: relative; width: 95vmin; max-width: 500px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        #hud {
+            display: flex; justify-content: space-between;
+            color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue);
+            font-size: 1.1rem; padding: 0 10px; font-weight: bold;
+        }
+        #canvas-wrapper {
+            position: relative; width: 100%; aspect-ratio: 19 / 19;
+            border: 4px solid var(--neon-blue);
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.4);
+            border-radius: 16px; overflow: hidden; background: #000;
+        }
+        canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+        .scanlines {
+            position: absolute; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 10;
+        }
+        .overlay {
+            position: absolute; inset: 0; background: rgba(2, 2, 5, 0.9);
+            z-index: 50; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; padding: 20px;
+        }
+        .btn-main {
+            background: linear-gradient(45deg, var(--neon-pink), #b000ff);
+            color: white; padding: 18px 45px; border-radius: 50px;
+            font-weight: bold; box-shadow: 0 0 20px var(--neon-pink);
+            transition: transform 0.1s; margin-top: 20px; border: none; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .btn-main:active { transform: scale(0.9); }
+        .controls {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 60px); gap: 10px;
+            width: 100%; max-width: 300px; margin: 5px auto 0;
+        }
+        .btn-ctrl {
+            background: rgba(0, 242, 255, 0.1); border: 2px solid var(--neon-blue);
+            border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 1.5rem; color: var(--neon-blue);
+            user-select: none; touch-action: none; cursor: pointer;
+        }
+        .btn-ctrl:active { background: var(--neon-blue); color: black; }
+        .hidden { display: none !important; }
+        
+        #initials-input {
+            background: transparent; border: 2px solid var(--neon-yellow);
+            color: var(--neon-yellow); font-family: 'Orbitron', sans-serif;
+            font-size: 2rem; width: 120px; text-align: center;
+            outline: none; margin: 20px 0; border-radius: 8px;
+            text-transform: uppercase;
+        }
+        #countdown-text {
+            font-size: 8rem; font-weight: 900; color: var(--neon-yellow);
+            text-shadow: 0 0 30px var(--neon-yellow);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="hud">
+            <div>SCORE: <span id="score-val">0000</span></div>
+            <div id="lives-val">❤️❤️❤️</div>
+        </div>
+
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            <div class="scanlines"></div>
+
+            <div id="menu-screen" class="overlay">
+                <h1 class="text-3xl font-black text-yellow-400 italic mb-1 tracking-tight">NEON MOUSE</h1>
+                <p class="text-[10px] text-blue-300 tracking-[0.2em] mb-4 uppercase">Hold Buttons to Scurry</p>
+                <button class="btn-main" onclick="game.start()">START MISSION</button>
+                <div id="highscores" class="mt-6 text-[11px] text-gray-400 leading-relaxed uppercase"></div>
+            </div>
+
+            <div id="countdown-screen" class="overlay hidden">
+                <div id="countdown-text">3</div>
+            </div>
+
+            <div id="initials-screen" class="overlay hidden">
+                <h2 class="text-2xl text-yellow-400 font-bold mb-2">NEW HIGH SCORE!</h2>
+                <p class="text-xs text-blue-300">ENTER YOUR INITIALS</p>
+                <input type="text" id="initials-input" maxlength="3" placeholder="AAA">
+                <button class="btn-main" onclick="game.submitInitials()">SUBMIT</button>
+            </div>
+
+            <div id="game-over-screen" class="overlay hidden">
+                <h2 class="text-4xl text-red-500 font-bold mb-2">GAME OVER</h2>
+                <p id="final-score" class="text-xl text-yellow-400 mb-6"></p>
+                <button class="btn-main" onclick="game.toMenu()">MAIN MENU</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="btn-ctrl" style="grid-column: 2" id="btn-up">▲</div>
+            <div class="btn-ctrl" style="grid-column: 1; grid-row: 2" id="btn-left">◀</div>
+            <div class="btn-ctrl" style="grid-column: 2; grid-row: 2" id="btn-down">▼</div>
+            <div class="btn-ctrl" style="grid-column: 3; grid-row: 2" id="btn-right">▶</div>
+        </div>
+    </div>
+
+    <script>
+        const TILE = 20;
+        const COLS = 19;
+        const ROWS = 19; 
+        const SPEED = 2.5; 
+
+        // 1=Wall, 2=Dot, 3=PowerCheese, 4=Gate, 0=Empty
+        const MAP_DATA = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,3,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,3,1],
+            [1,2,1,1,2,1,1,1,2,1,2,1,1,1,2,1,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,2,1,2,1,1,1,1,1,2,1,2,1,1,2,1],
+            [1,2,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,2,1],
+            [1,1,1,1,2,1,1,1,0,1,0,1,1,1,2,1,1,1,1],
+            [0,0,0,1,2,1,0,0,0,0,0,0,0,1,2,1,0,0,0],
+            [1,1,1,1,2,1,0,1,1,4,1,1,0,1,2,1,1,1,1],
+            [0,0,0,0,2,0,0,1,0,0,0,1,0,0,2,0,0,0,0],
+            [1,1,1,1,2,1,0,1,1,1,1,1,0,1,2,1,1,1,1],
+            [0,0,0,1,2,1,0,0,0,0,0,0,0,1,2,1,0,0,0],
+            [1,1,1,1,2,1,1,1,0,1,0,1,1,1,2,1,1,1,1],
+            [1,2,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,2,1],
+            [1,2,1,1,2,1,2,1,1,1,1,1,2,1,2,1,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,2,1,1,1,2,1,2,1,1,1,2,1,1,2,1],
+            [1,3,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,3,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        const audio = {
+            ctx: null,
+            init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            beep(freq, dur=0.1, vol=0.05, type='sine') {
+                if(!this.ctx || this.ctx.state === 'suspended') return;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                g.gain.setValueAtTime(vol, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + dur);
+                osc.connect(g); g.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + dur);
+            }
+        };
+
+        class Entity {
+            constructor(x, y, emoji, color) {
+                this.gridX = x;
+                this.gridY = y;
+                this.pixelX = x * TILE;
+                this.pixelY = y * TILE;
+                this.dir = {x: 0, y: 0};
+                this.nextDir = {x: 0, y: 0};
+                this.emoji = emoji;
+                this.color = color;
+                this.angle = 0;
+                this.speed = SPEED;
+            }
+
+            isAtCenter() {
+                return (this.pixelX % TILE === 0 && this.pixelY % TILE === 0);
+            }
+
+            canMove(dx, dy) {
+                const nx = (this.gridX + dx + COLS) % COLS;
+                const ny = this.gridY + dy;
+                if (ny < 0 || ny >= ROWS) return false;
+                const tile = MAP_DATA[ny][nx];
+                if (this instanceof Mouse) return tile !== 1 && tile !== 4;
+                return tile !== 1;
+            }
+
+            update(isInputActive) {
+                if (this.isAtCenter()) {
+                    this.gridX = (Math.round(this.pixelX / TILE) + COLS) % COLS;
+                    this.gridY = Math.round(this.pixelY / TILE);
+                    this.pixelX = this.gridX * TILE;
+
+                    if (this instanceof Mouse) {
+                        if (this.canMove(this.nextDir.x, this.nextDir.y)) {
+                            this.dir = { ...this.nextDir };
+                        }
+                        if (!isInputActive || !this.canMove(this.dir.x, this.dir.y)) {
+                            if (!this.canMove(this.nextDir.x, this.nextDir.y)) {
+                                this.dir = {x: 0, y: 0};
+                            }
+                        }
+                    } else {
+                        this.ai();
+                    }
+
+                    if (this.dir.x !== 0 || this.dir.y !== 0) {
+                        // Rotation: Subtracting PI/2 ensures the "nose" of 🐭 leads the way
+                        this.angle = Math.atan2(this.dir.y, this.dir.x) - Math.PI/2;
+                    }
+                }
+
+                this.pixelX += this.dir.x * this.speed;
+                this.pixelY += this.dir.y * this.speed;
+
+                if (this.pixelX < -TILE/2) this.pixelX = (COLS - 0.5) * TILE;
+                if (this.pixelX > (COLS - 0.5) * TILE) this.pixelX = -TILE/2;
+            }
+        }
+
+        class Mouse extends Entity { constructor(x,y){ super(x,y,'🐭','#ffff00'); } }
+
+        class Enemy extends Entity {
+            constructor(x,y,emoji,color) {
+                super(x,y,emoji,color);
+                this.scared = false;
+                this.speed = 2; 
+                this.dir = {x: 0, y: -1}; 
+            }
+
+            ai() {
+                const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+                const possible = dirs.filter(d => {
+                    if (d.x === -this.dir.x && d.y === -this.dir.y) return false;
+                    return this.canMove(d.x, d.y);
+                });
+
+                if (possible.length > 0) {
+                    possible.sort((a,b) => {
+                        const distA = Math.hypot((this.gridX+a.x)-game.mouse.gridX, (this.gridY+a.y)-game.mouse.gridY);
+                        const distB = Math.hypot((this.gridX+b.x)-game.mouse.gridX, (this.gridY+b.y)-game.mouse.gridY);
+                        return this.scared ? distB - distA : distA - distB;
+                    });
+                    this.dir = (Math.random() < 0.1) ? possible[Math.floor(Math.random() * possible.length)] : possible[0];
+                } else {
+                    this.dir = {x: -this.dir.x, y: -this.dir.y};
+                }
+            }
+        }
+
+        const game = {
+            canvas: document.getElementById('gameCanvas'),
+            ctx: null, mouse: null, enemies: [], dots: [], 
+            bonuses: [], floatingScores: [],
+            score: 0, lives: 3, powerTimer: 0, keys: {}, running: false,
+            countingDown: false, countVal: 3,
+            
+            init() {
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = COLS * TILE;
+                this.canvas.height = ROWS * TILE;
+                this.setupInputs();
+                this.loadScores();
+                this.reset(true);
+                requestAnimationFrame(() => this.loop());
+            },
+
+            setupInputs() {
+                window.addEventListener('keydown', e => { 
+                    this.keys[e.key] = true; 
+                    audio.init(); 
+                    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","w","a","s","d"].includes(e.key)) e.preventDefault();
+                });
+                window.addEventListener('keyup', e => { this.keys[e.key] = false; });
+
+                const bind = (id, dx, dy) => {
+                    const el = document.getElementById(id);
+                    el.addEventListener('pointerdown', (e) => { e.preventDefault(); this.keys[id] = true; audio.init(); });
+                    el.addEventListener('pointerup', (e) => { e.preventDefault(); this.keys[id] = false; });
+                    el.addEventListener('pointerleave', (e) => { e.preventDefault(); this.keys[id] = false; });
+                };
+                bind('btn-up', 0, -1); bind('btn-down', 0, 1);
+                bind('btn-left', -1, 0); bind('btn-right', 1, 0);
+            },
+
+            isInputActive() {
+                const up = this.keys['ArrowUp'] || this.keys['btn-up'] || this.keys['w'] || this.keys['W'];
+                const down = this.keys['ArrowDown'] || this.keys['btn-down'] || this.keys['s'] || this.keys['S'];
+                const left = this.keys['ArrowLeft'] || this.keys['btn-left'] || this.keys['a'] || this.keys['A'];
+                const right = this.keys['ArrowRight'] || this.keys['btn-right'] || this.keys['d'] || this.keys['D'];
+
+                if (up) this.mouse.nextDir = {x: 0, y: -1};
+                else if (down) this.mouse.nextDir = {x: 0, y: 1};
+                else if (left) this.mouse.nextDir = {x: -1, y: 0};
+                else if (right) this.mouse.nextDir = {x: 1, y: 0};
+
+                return up || down || left || right;
+            },
+
+            start() {
+                this.score = 0; this.lives = 3; this.reset(true);
+                document.getElementById('menu-screen').classList.add('hidden');
+                document.getElementById('game-over-screen').classList.add('hidden');
+                document.getElementById('initials-screen').classList.add('hidden');
+                this.triggerCountdown();
+            },
+
+            triggerCountdown() {
+                this.running = false;
+                this.countingDown = true;
+                this.countVal = 3;
+                document.getElementById('countdown-screen').classList.remove('hidden');
+                const el = document.getElementById('countdown-text');
+                el.innerText = this.countVal;
+                
+                const interval = setInterval(() => {
+                    this.countVal--;
+                    if (this.countVal > 0) {
+                        el.innerText = this.countVal;
+                        audio.beep(400, 0.1);
+                    } else if (this.countVal === 0) {
+                        el.innerText = "GO!";
+                        audio.beep(800, 0.3);
+                    } else {
+                        clearInterval(interval);
+                        document.getElementById('countdown-screen').classList.add('hidden');
+                        this.countingDown = false;
+                        this.running = true;
+                    }
+                }, 1000);
+                audio.beep(400, 0.1);
+            },
+
+            reset(full) {
+                this.mouse = new Mouse(9, 15);
+                this.enemies = [
+                    new Enemy(9, 9, '🐈', '#ff0000'),
+                    new Enemy(8, 9, '🐍', '#00ff00'),
+                    new Enemy(10, 9, '🦉', '#00f2ff'),
+                    new Enemy(9, 8, '🦊', '#ffaa00')
+                ];
+                if (full) {
+                    this.dots = []; this.bonuses = []; this.floatingScores = [];
+                    for(let y=0; y<ROWS; y++) {
+                        for(let x=0; x<COLS; x++) {
+                            if (MAP_DATA[y][x] === 2 || MAP_DATA[y][x] === 3) {
+                                this.dots.push({x, y, type: MAP_DATA[y][x]});
+                            }
+                        }
+                    }
+                }
+                this.powerTimer = 0;
+            },
+
+            update() {
+                if (!this.running) return;
+
+                const active = this.isInputActive();
+                this.mouse.update(active);
+
+                // Eat Dots
+                this.dots = this.dots.filter(d => {
+                    if (d.x === this.mouse.gridX && d.y === this.mouse.gridY) {
+                        if (d.type === 2) { 
+                            this.score += 10; audio.beep(600, 0.05); 
+                        } else { 
+                            this.score += 50; this.powerTimer = 400; 
+                            this.enemies.forEach(e => e.scared = true);
+                            audio.beep(300, 0.2, 0.1, 'sawtooth');
+                        }
+                        return false;
+                    }
+                    return true;
+                });
+
+                // Eat Bonus
+                this.bonuses = this.bonuses.filter(b => {
+                    b.timer--;
+                    if (b.x === this.mouse.gridX && b.y === this.mouse.gridY) {
+                        this.score += b.points;
+                        this.addFloatingScore(b.x * TILE + TILE/2, b.y * TILE, b.points);
+                        audio.beep(1000, 0.1, 0.1, 'sine');
+                        return false;
+                    }
+                    return b.timer > 0;
+                });
+
+                // Update Floating Scores
+                this.floatingScores.forEach(f => {
+                    f.y -= 0.5;
+                    f.life -= 0.02;
+                });
+                this.floatingScores = this.floatingScores.filter(f => f.life > 0);
+
+                if (Math.random() < 0.005) this.spawnBonus();
+
+                if (this.powerTimer > 0) {
+                    this.powerTimer--;
+                    if (this.powerTimer === 0) this.enemies.forEach(e => e.scared = false);
+                }
+
+                this.enemies.forEach(e => {
+                    e.update();
+                    const dist = Math.hypot(e.pixelX - this.mouse.pixelX, e.pixelY - this.mouse.pixelY);
+                    if (dist < TILE * 0.8) {
+                        if (e.scared) {
+                            this.score += 2000; e.pixelX = 9*TILE; e.pixelY = 9*TILE; e.scared = false;
+                            this.addFloatingScore(e.pixelX + TILE/2, e.pixelY, 2000);
+                            audio.beep(800, 0.2, 0.1, 'square');
+                        } else {
+                            this.die();
+                        }
+                    }
+                });
+
+                if (this.dots.length === 0) { 
+                    audio.beep(1200, 0.5); 
+                    this.triggerCountdown(); 
+                    this.reset(true); 
+                }
+
+                document.getElementById('score-val').innerText = this.score.toString().padStart(4, '0');
+                document.getElementById('lives-val').innerText = '❤️'.repeat(Math.max(0, this.lives));
+            },
+
+            addFloatingScore(x, y, pts) {
+                this.floatingScores.push({ x, y, pts, life: 1.0 });
+            },
+
+            spawnBonus() {
+                const types = [
+                    {e: '🍓', p: 1000}, {e: '🍒', p: 2000}, {e: '💎', p: 10000}, {e: '🍕', p: 4000}, {e: '🌮', p: 4500}
+                ];
+                const item = types[Math.floor(Math.random() * types.length)];
+                let validSpots = [];
+                for(let y=0; y<ROWS; y++) {
+                    for(let x=0; x<COLS; x++) {
+                        if (MAP_DATA[y][x] !== 1 && MAP_DATA[y][x] !== 4 && MAP_DATA[y][x] !== 0) validSpots.push({x, y});
+                    }
+                }
+                if (validSpots.length > 0) {
+                    const spot = validSpots[Math.floor(Math.random() * validSpots.length)];
+                    this.bonuses.push({ x: spot.x, y: spot.y, emoji: item.e, points: item.p, timer: 300 });
+                }
+            },
+
+            die() {
+                this.lives--;
+                audio.beep(100, 0.5, 0.1, 'sawtooth');
+                if (this.lives <= 0) {
+                    this.running = false;
+                    this.checkHighScore();
+                } else {
+                    this.reset(false);
+                    // Stability: No countdown on heart loss as per request
+                    this.running = true;
+                }
+            },
+
+            checkHighScore() {
+                const s = JSON.parse(localStorage.getItem('nm_scores_v4') || '[]');
+                if (s.length < 5 || this.score > s[s.length-1].score) {
+                    document.getElementById('initials-screen').classList.remove('hidden');
+                } else {
+                    this.showGameOver();
+                }
+            },
+
+            submitInitials() {
+                let name = document.getElementById('initials-input').value.toUpperCase().trim() || "AAA";
+                let s = JSON.parse(localStorage.getItem('nm_scores_v4') || '[]');
+                s.push({ name, score: this.score });
+                s.sort((a,b) => b.score - a.score);
+                localStorage.setItem('nm_scores_v4', JSON.stringify(s.slice(0,5)));
+                document.getElementById('initials-screen').classList.add('hidden');
+                this.showGameOver();
+            },
+
+            showGameOver() {
+                document.getElementById('game-over-screen').classList.remove('hidden');
+                document.getElementById('final-score').innerText = `SCORE: ${this.score}`;
+            },
+
+            toMenu() {
+                this.running = false;
+                document.getElementById('game-over-screen').classList.add('hidden');
+                document.getElementById('menu-screen').classList.remove('hidden');
+                this.loadScores();
+            },
+
+            draw() {
+                const ctx = this.ctx;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw Walls
+                ctx.strokeStyle = '#00f2ff';
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 10; ctx.shadowColor = '#00f2ff';
+                for(let y=0; y<ROWS; y++) {
+                    for(let x=0; x<COLS; x++) {
+                        if (MAP_DATA[y][x] === 1) {
+                            const cx = x * TILE + TILE/2, cy = y * TILE + TILE/2;
+                            if (x < COLS-1 && MAP_DATA[y][x+1] === 1) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+TILE, cy); ctx.stroke(); }
+                            if (y < ROWS-1 && MAP_DATA[y+1][x] === 1) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy+TILE); ctx.stroke(); }
+                        }
+                        if (MAP_DATA[y][x] === 4) {
+                            ctx.strokeStyle = '#ff00ff'; ctx.shadowColor = '#ff00ff';
+                            ctx.beginPath(); ctx.moveTo(x*TILE, y*TILE + TILE/2); ctx.lineTo((x+1)*TILE, y*TILE+TILE/2); ctx.stroke();
+                            ctx.strokeStyle = '#00f2ff'; ctx.shadowColor = '#00f2ff';
+                        }
+                    }
+                }
+                ctx.shadowBlur = 0;
+
+                // Dots & Bonuses
+                this.dots.forEach(d => {
+                    if (d.type === 2) {
+                        ctx.fillStyle = '#fbff00'; ctx.beginPath(); ctx.arc(d.x*TILE + TILE/2, d.y*TILE + TILE/2, 4, 0, Math.PI*2); ctx.fill();
+                    } else {
+                        ctx.font = '18px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText('🧀', d.x*TILE + TILE/2, d.y*TILE + TILE/2);
+                    }
+                });
+                this.bonuses.forEach(b => {
+                    ctx.font = '18px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    if (b.timer > 60 || b.timer % 10 < 5) ctx.fillText(b.emoji, b.x*TILE + TILE/2, b.y*TILE + TILE/2);
+                });
+
+                // Character Rendering
+                ctx.save();
+                ctx.translate(this.mouse.pixelX + TILE/2, this.mouse.pixelY + TILE/2);
+                ctx.rotate(this.mouse.angle);
+                ctx.font = '22px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(this.mouse.emoji, 0, 0);
+                ctx.restore();
+
+                this.enemies.forEach(e => {
+                    ctx.shadowBlur = 15; ctx.shadowColor = e.color;
+                    const emoji = e.scared ? (this.powerTimer < 100 && this.powerTimer % 20 < 10 ? '😱' : '😨') : e.emoji;
+                    ctx.font = '22px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(emoji, e.pixelX + TILE/2, e.pixelY + TILE/2);
+                });
+                ctx.shadowBlur = 0;
+
+                // Floating Scores
+                this.floatingScores.forEach(f => {
+                    ctx.fillStyle = `rgba(251, 255, 0, ${f.life})`;
+                    ctx.font = `bold ${14 + (1 - f.life) * 10}px Orbitron`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`+${f.pts}`, f.x, f.y);
+                });
+            },
+
+            loop() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.loop());
+            },
+
+            loadScores() {
+                const s = JSON.parse(localStorage.getItem('nm_scores_v4') || '[]');
+                const list = document.getElementById('highscores');
+                list.innerHTML = s.length === 0 ? "NO LEGENDS YET" : "HALL OF FAME:<br>" + s.map((v, i) => `${i+1}. ${v.name} - ${v.score}`).join('<br>');
+            }
+        };
+
+        window.onload = () => game.init();
+    </script>
+</body>
+</html>
