@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Scheduler</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    /* Custom scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden select-none">
+
+  <!-- MAIN NAVIGATION & CONTROL HEADER -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shrink-0">
+    <!-- Date Navigation Group -->
+    <div class="flex items-center gap-3">
+      <!-- Back Arrow -->
+      <button onclick="navigateWeek(-1)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700/60 text-slate-200 transition-all cursor-pointer shadow-md" title="Previous Week">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+
+      <!-- Current Week Button -->
+      <button onclick="jumpToCurrentWeek()" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/40 hover:bg-indigo-950/70 border border-indigo-900/50 rounded-xl transition-all cursor-pointer shadow-md">
+        Current Week
+      </button>
+
+      <!-- Ahead Arrow -->
+      <button onclick="navigateWeek(1)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700/60 text-slate-200 transition-all cursor-pointer shadow-md" title="Next Week">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Month & Year Selector Dropdowns -->
+    <div class="flex items-center gap-2">
+      <!-- Month Dropdown -->
+      <select id="month-selector" onchange="onMonthYearSelectorChange()" class="bg-slate-800 border border-slate-700/60 text-slate-100 text-sm font-semibold rounded-xl px-4 py-2 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer shadow-md">
+        <option value="0">January</option>
+        <option value="1">February</option>
+        <option value="2">March</option>
+        <option value="3">April</option>
+        <option value="4">May</option>
+        <option value="5">June</option>
+        <option value="6">July</option>
+        <option value="7">August</option>
+        <option value="8">September</option>
+        <option value="9">October</option>
+        <option value="10">November</option>
+        <option value="11">December</option>
+      </select>
+
+      <!-- Year Dropdown -->
+      <select id="year-selector" onchange="onMonthYearSelectorChange()" class="bg-slate-800 border border-slate-700/60 text-slate-100 text-sm font-semibold rounded-xl px-4 py-2 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer shadow-md">
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+        <option value="2028">2028</option>
+        <option value="2029">2029</option>
+        <option value="2030">2030</option>
+      </select>
+    </div>
+
+    <!-- Quick Board Actions -->
+    <div>
+      <button onclick="openClearConfirmModal()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-rose-950/40 hover:text-rose-400 hover:border-rose-900/50 border border-slate-700/50 transition-all text-xs font-bold uppercase tracking-wider text-slate-300 cursor-pointer shadow-md">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+        Clear Board
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN SCHEDULER AREA -->
+  <main class="flex-1 overflow-auto bg-slate-950 p-4 md:p-6 flex flex-col justify-between">
+    <div class="w-full h-full min-w-[768px] flex flex-col border border-slate-800/80 rounded-2xl bg-slate-900/30 backdrop-blur-sm overflow-hidden shadow-2xl">
+      
+      <!-- Top Row Header (Times) - BOLD and Bigger -->
+      <div id="time-headers" class="grid grid-cols-7 border-b border-slate-800/80 bg-slate-900/60 shrink-0 select-none">
+        <!-- Top Left corner - Neutral indicator -->
+        <div class="flex flex-col items-center justify-center border-r border-slate-800/80 p-4 text-xs font-extrabold text-slate-500 uppercase tracking-widest bg-slate-900/80">
+          <span>SCHEDULE</span>
+        </div>
+        <!-- Hours -->
+        <div class="flex flex-col items-center justify-center border-r border-slate-800/50 p-4 text-sm md:text-base font-extrabold text-slate-200 tracking-wider">
+          <span>06:00 AM</span>
+        </div>
+        <div class="flex flex-col items-center justify-center border-r border-slate-800/50 p-4 text-sm md:text-base font-extrabold text-slate-200 tracking-wider">
+          <span>09:00 AM</span>
+        </div>
+        <div class="flex flex-col items-center justify-center border-r border-slate-800/50 p-4 text-sm md:text-base font-extrabold text-slate-200 tracking-wider">
+          <span>12:00 PM</span>
+        </div>
+        <div class="flex flex-col items-center justify-center border-r border-slate-800/50 p-4 text-sm md:text-base font-extrabold text-slate-200 tracking-wider">
+          <span>03:00 PM</span>
+        </div>
+        <div class="flex flex-col items-center justify-center border-r border-slate-800/50 p-4 text-sm md:text-base font-extrabold text-slate-200 tracking-wider">
+          <span>06:00 PM</span>
+        </div>
+        <div class="flex flex-col items-center justify-center p-4 text-sm md:text-base font-extrabold text-slate-200 tracking-wider">
+          <span>09:00 PM</span>
+        </div>
+      </div>
+
+      <!-- Calendar Rows Container (Sunday - Saturday) -->
+      <div class="flex-1 flex flex-col">
+        <div id="calendar-rows" class="flex-1 flex flex-col min-h-0"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- CUSTOM EVENT DIALOG/MODAL -->
+  <div id="event-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-250">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform scale-95 transition-all duration-250">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800/80 bg-slate-900/50 flex items-center justify-between">
+        <div>
+          <h3 id="modal-heading-title" class="text-base font-bold text-slate-100">Plan Event</h3>
+          <p id="modal-heading-subtitle" class="text-xs text-indigo-400 mt-0.5 font-semibold"></p>
+        </div>
+        <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="event-form" onsubmit="saveEvent(event)" class="p-6 space-y-5">
+        <!-- Event Name -->
+        <div class="space-y-1.5">
+          <label for="event-title" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Activity Title</label>
+          <input type="text" id="event-title" required placeholder="e.g. Deep Work, Gym session, Team Sync"
+            class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all" />
+        </div>
+
+        <!-- Event Description -->
+        <div class="space-y-1.5">
+          <label for="event-desc" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Notes (Optional)</label>
+          <textarea id="event-desc" rows="2" placeholder="e.g. Agenda, reminders, or locations..."
+            class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all resize-none"></textarea>
+        </div>
+
+        <!-- Premium Color Selector -->
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Visual Signature</label>
+          <div class="grid grid-cols-6 gap-2" id="color-chips">
+            <!-- Programmatically populated colors -->
+          </div>
+        </div>
+
+        <!-- Modal Action Buttons -->
+        <div class="pt-4 border-t border-slate-800/80 flex gap-3 justify-end">
+          <button type="button" id="delete-btn" onclick="deleteEvent()" 
+            class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/50 rounded-xl transition-all cursor-pointer">
+            Delete
+          </button>
+          <div class="flex-1"></div>
+          <button type="button" onclick="closeEventModal()" 
+            class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 rounded-xl transition-all cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" 
+            class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/10 rounded-xl transition-all cursor-pointer">
+            Save Blueprint
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm"></div>
+
+  <!-- CONFIRM BOARD CLEAR DIALOG -->
+  <div id="clear-confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-slate-900 border border-slate-800/95 w-full max-w-sm rounded-xl p-6 shadow-2xl space-y-4 transform scale-95 transition-all">
+      <div class="flex items-center gap-3 text-rose-500">
+        <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        <h4 class="font-bold text-slate-100">Clear Weekly Schedule?</h4>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        This action will permanently purge all mapped events from your browser's local storage. This process cannot be undone.
+      </p>
+      <div class="flex gap-3 justify-end pt-2">
+        <button onclick="closeClearConfirmModal()" class="px-3.5 py-2 text-xs font-bold text-slate-300 bg-slate-800 hover:bg-slate-700/80 rounded-lg cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="clearEntireBoard()" class="px-3.5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 rounded-lg cursor-pointer">
+          Purge Board
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pure Local Storage Script -->
+  <script>
+    const appId = 'weekly-schedule-app-v2';
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const times = ["6am", "9am", "12pm", "3pm", "6pm", "9pm"];
+    
+    // High premium color options for dark mode slots
+    const colorOptions = [
+      { id: "emerald", label: "Emerald", fill: "bg-emerald-500/20", border: "border-emerald-500/30", text: "text-emerald-300", chip: "bg-emerald-500" },
+      { id: "sky", label: "Sky", fill: "bg-sky-500/20", border: "border-sky-500/30", text: "text-sky-300", chip: "bg-sky-500" },
+      { id: "indigo", label: "Indigo", fill: "bg-indigo-500/20", border: "border-indigo-500/30", text: "text-indigo-300", chip: "bg-indigo-500" },
+      { id: "fuchsia", label: "Fuchsia", fill: "bg-fuchsia-500/20", border: "border-fuchsia-500/30", text: "text-fuchsia-300", chip: "bg-fuchsia-500" },
+      { id: "amber", label: "Amber", fill: "bg-amber-500/20", border: "border-amber-500/30", text: "text-amber-300", chip: "bg-amber-500" },
+      { id: "rose", label: "Rose", fill: "bg-rose-500/20", border: "border-rose-500/30", text: "text-rose-300", chip: "bg-rose-500" }
+    ];
+
+    let currentSelectedColor = "indigo";
+    let events = {}; // Key format: 'YYYY-MM-DD_time' => { title, description, color }
+    let selectedCell = null; // { dateStr, time, dayName }
+
+    // Date navigation state
+    let displayedWeekStart = null; // Date object for Sunday of the currently displayed week
+
+    window.onload = function() {
+      initDateState();
+      generateColorChips();
+      loadLocalStorageData();
+      updateHeaderSelectors();
+      generateGridUI();
+    };
+
+    // Initialize displayedWeekStart to Sunday of the current week
+    function initDateState() {
+      const today = new Date();
+      displayedWeekStart = getSundayOfWeek(today);
+    }
+
+    // Helper to get Sunday of the week containing a given date
+    function getSundayOfWeek(d) {
+      const tempDate = new Date(d);
+      const day = tempDate.getDay();
+      const diff = tempDate.getDate() - day;
+      return new Date(tempDate.setDate(diff));
+    }
+
+    // Load data purely from LocalStorage
+    function loadLocalStorageData() {
+      try {
+        const cached = localStorage.getItem(`aetherplan_${appId}`);
+        if (cached) {
+          events = JSON.parse(cached);
+        } else {
+          events = {};
+        }
+      } catch (e) {
+        console.warn("Could not load local storage", e);
+        events = {};
+      }
+    }
+
+    // Save Data Function (Handles local storage only)
+    function persistCurrentState() {
+      try {
+        localStorage.setItem(`aetherplan_${appId}`, JSON.stringify(events));
+        renderEventsToGrid();
+        showToast("Blueprint auto-saved.", "success");
+      } catch (err) {
+        console.error("Local Storage sync failed:", err);
+        showToast("Storage quota full. Could not save.", "error");
+      }
+    }
+
+    // Format Date Helper
+    function getISOString(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Generate Calendar Row & Column Grids
+    function generateGridUI() {
+      const container = document.getElementById("calendar-rows");
+      container.innerHTML = "";
+
+      // Determine dates for Sunday to Saturday of displayed week start
+      const weekDates = [];
+      for (let i = 0; i < 7; i++) {
+        const dateObj = new Date(displayedWeekStart);
+        dateObj.setDate(displayedWeekStart.getDate() + i);
+        weekDates.push({
+          name: daysOfWeek[i],
+          dateObj: dateObj,
+          dateStr: getISOString(dateObj),
+          displayDate: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        });
+      }
+
+      weekDates.forEach((dayInfo, index) => {
+        const isLastRow = index === weekDates.length - 1;
+        const row = document.createElement("div");
+        row.className = `grid grid-cols-7 flex-1 min-h-[90px] border-b border-slate-800/50 hover:bg-slate-900/10 transition-colors ${isLastRow ? 'border-b-0' : ''}`;
+        
+        // Day Column Header (No abbreviation, Day Name is BIG, real dates integrated)
+        const dayHeader = document.createElement("div");
+        dayHeader.className = "flex flex-col justify-center items-center p-3 border-r border-slate-800/80 bg-slate-900/40 select-none text-center";
+        dayHeader.innerHTML = `
+          <span class="text-lg font-bold text-slate-100 tracking-wide">${dayInfo.name}</span>
+          <span class="text-xs text-slate-400 font-medium tracking-wide mt-1">${dayInfo.displayDate}</span>
+        `;
+        row.appendChild(dayHeader);
+
+        // Hour Columns (with dynamic times inside cells removed)
+        times.forEach((time, tIndex) => {
+          const isLastCol = tIndex === times.length - 1;
+          const cell = document.createElement("div");
+          cell.id = `cell-${dayInfo.dateStr}-${time}`;
+          cell.className = `relative p-2 flex flex-col justify-between group cursor-pointer transition-all duration-150 border-slate-800/40 hover:bg-slate-800/35 select-none ${isLastCol ? '' : 'border-r'}`;
+          
+          // Interaction trigger
+          cell.onclick = () => openEventModal(dayInfo, time);
+
+          // Build interior layout (No time printed on inside bottom right anymore)
+          cell.innerHTML = `
+            <!-- Hover Active Accent Line -->
+            <div class="absolute inset-x-0 top-0 h-[2px] bg-indigo-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-200"></div>
+            
+            <!-- Default plus icon layer -->
+            <div class="flex-1 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              <span class="p-1 rounded-lg bg-slate-800 text-slate-400 group-hover:text-indigo-400 group-hover:bg-slate-800/80 transition-all border border-slate-700/50">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                </svg>
+              </span>
+            </div>
+          `;
+          
+          row.appendChild(cell);
+        });
+
+        container.appendChild(row);
+      });
+
+      renderEventsToGrid();
+    }
+
+    // Render Saved Events in Grid
+    function renderEventsToGrid() {
+      // Loop over Sunday to Saturday days of current week
+      for (let i = 0; i < 7; i++) {
+        const dateObj = new Date(displayedWeekStart);
+        dateObj.setDate(displayedWeekStart.getDate() + i);
+        const dateStr = getISOString(dateObj);
+
+        times.forEach(time => {
+          const key = `${dateStr}_${time}`;
+          const cell = document.getElementById(`cell-${dateStr}-${time}`);
+          if (!cell) return;
+
+          const data = events[key];
+
+          if (data) {
+            const style = colorOptions.find(o => o.id === data.color) || colorOptions[2]; // Default to Indigo
+            
+            // Render beautiful event card (No time indicator inside)
+            cell.innerHTML = `
+              <div class="h-full flex flex-col justify-between ${style.fill} ${style.border} ${style.text} border rounded-xl p-2.5 shadow-sm transition-all duration-150 hover:shadow-lg relative overflow-hidden group/item">
+                <div class="absolute left-0 top-0 bottom-0 w-[3px] ${style.chip}"></div>
+                <div class="flex flex-col gap-1 pr-4">
+                  <span class="text-xs font-bold leading-tight break-words text-slate-100">${sanitize(data.title)}</span>
+                  ${data.description ? `<p class="text-[10px] text-slate-400 font-medium line-clamp-2 leading-relaxed mt-0.5">${sanitize(data.description)}</p>` : ''}
+                </div>
+                
+                <div class="flex items-center justify-end mt-2">
+                  <div class="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                    <!-- Edit Pencil -->
+                    <span class="p-1 rounded bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">
+                      <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            // Re-render empty cell template with hover active trigger (No time indicator inside)
+            cell.innerHTML = `
+              <div class="absolute inset-x-0 top-0 h-[2px] bg-indigo-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-200"></div>
+              <div class="flex-1 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <span class="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 hover:bg-indigo-500/10 transition-all shadow-md">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                </span>
+              </div>
+            `;
+          }
+        });
+      }
+    }
+
+    // Modal Interaction Handlers
+    window.openEventModal = function(dayInfo, time) {
+      selectedCell = { dateStr: dayInfo.dateStr, time: time, dayName: dayInfo.name, displayDate: dayInfo.displayDate };
+      const key = `${dayInfo.dateStr}_${time}`;
+      const existing = events[key];
+
+      document.getElementById("modal-heading-title").innerText = `${dayInfo.name}, ${dayInfo.displayDate}`;
+      document.getElementById("modal-heading-subtitle").innerText = `Mapping Event at ${time.toUpperCase()}`;
+
+      const titleInput = document.getElementById("event-title");
+      const descInput = document.getElementById("event-desc");
+      const deleteBtn = document.getElementById("delete-btn");
+
+      if (existing) {
+        titleInput.value = existing.title || "";
+        descInput.value = existing.description || "";
+        selectColor(existing.color || "indigo");
+        deleteBtn.classList.remove("hidden");
+      } else {
+        titleInput.value = "";
+        descInput.value = "";
+        selectColor("indigo"); 
+        deleteBtn.classList.add("hidden");
+      }
+
+      const modal = document.getElementById("event-modal");
+      modal.classList.remove("opacity-0", "pointer-events-none");
+      modal.firstElementChild.classList.remove("scale-95");
+      modal.firstElementChild.classList.add("scale-100");
+      setTimeout(() => titleInput.focus(), 80);
+    };
+
+    window.closeEventModal = function() {
+      const modal = document.getElementById("event-modal");
+      modal.classList.add("opacity-0", "pointer-events-none");
+      modal.firstElementChild.classList.remove("scale-100");
+      modal.firstElementChild.classList.add("scale-95");
+      selectedCell = null;
+    };
+
+    window.saveEvent = function(e) {
+      e.preventDefault();
+      if (!selectedCell) return;
+
+      const title = document.getElementById("event-title").value.trim();
+      const description = document.getElementById("event-desc").value.trim();
+      const key = `${selectedCell.dateStr}_${selectedCell.time}`;
+
+      events[key] = {
+        title: title,
+        description: description,
+        color: currentSelectedColor
+      };
+
+      persistCurrentState();
+      closeEventModal();
+    };
+
+    window.deleteEvent = function() {
+      if (!selectedCell) return;
+      const key = `${selectedCell.dateStr}_${selectedCell.time}`;
+      
+      if (events[key]) {
+        delete events[key];
+        persistCurrentState();
+      }
+      closeEventModal();
+    };
+
+    // Week Navigation Utilities
+    window.navigateWeek = function(direction) {
+      displayedWeekStart.setDate(displayedWeekStart.getDate() + (direction * 7));
+      updateHeaderSelectors();
+      generateGridUI();
+    };
+
+    window.jumpToCurrentWeek = function() {
+      const today = new Date();
+      displayedWeekStart = getSundayOfWeek(today);
+      updateHeaderSelectors();
+      generateGridUI();
+      showToast("Returned to Current Week", "info");
+    };
+
+    // Update Dropdown Values to Sync with navigation state
+    function updateHeaderSelectors() {
+      // Find the middle of the current week (Wednesday) to determine the focus month
+      const focusDay = new Date(displayedWeekStart);
+      focusDay.setDate(displayedWeekStart.getDate() + 3);
+
+      document.getElementById("month-selector").value = focusDay.getMonth();
+      document.getElementById("year-selector").value = focusDay.getFullYear();
+    }
+
+    // Triggered when dropdown changes manually
+    window.onMonthYearSelectorChange = function() {
+      const selectedMonth = parseInt(document.getElementById("month-selector").value);
+      const selectedYear = parseInt(document.getElementById("year-selector").value);
+      
+      // Calculate start of selected month and locate its Sunday
+      const firstOfMonth = new Date(selectedYear, selectedMonth, 1);
+      displayedWeekStart = getSundayOfWeek(firstOfMonth);
+      
+      generateGridUI();
+    };
+
+    // Color selectors chips generator
+    function generateColorChips() {
+      const chipContainer = document.getElementById("color-chips");
+      chipContainer.innerHTML = "";
+      
+      colorOptions.forEach(opt => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "relative p-3 rounded-xl border border-slate-800/80 bg-slate-950 flex flex-col items-center justify-center gap-1.5 focus:outline-none transition-all cursor-pointer hover:border-slate-700 hover:bg-slate-900";
+        button.id = `chip-${opt.id}`;
+        button.onclick = () => selectColor(opt.id);
+
+        button.innerHTML = `
+          <div class="w-4 h-4 rounded-full ${opt.chip}"></div>
+          <span class="text-[9px] font-bold text-slate-400">${opt.label}</span>
+          <div id="check-${opt.id}" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center scale-0 transition-transform">
+            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+        `;
+        chipContainer.appendChild(button);
+      });
+    }
+
+    function selectColor(colorId) {
+      currentSelectedColor = colorId;
+      colorOptions.forEach(opt => {
+        const check = document.getElementById(`check-${opt.id}`);
+        const chipBtn = document.getElementById(`chip-${opt.id}`);
+        if (opt.id === colorId) {
+          check.classList.remove('scale-0');
+          check.classList.add('scale-100');
+          chipBtn.classList.remove('border-slate-800/80');
+          chipBtn.classList.add('border-indigo-500/80', 'bg-slate-900');
+        } else {
+          check.classList.remove('scale-100');
+          check.classList.add('scale-0');
+          chipBtn.classList.remove('border-indigo-500/80', 'bg-slate-900');
+          chipBtn.classList.add('border-slate-800/80');
+        }
+      });
+    }
+
+    // Purge confirmation Modal logic
+    window.openClearConfirmModal = function() {
+      const modal = document.getElementById("clear-confirm-modal");
+      modal.classList.remove("opacity-0", "pointer-events-none");
+      modal.firstElementChild.classList.remove("scale-95");
+      modal.firstElementChild.classList.add("scale-100");
+    };
+
+    window.closeClearConfirmModal = function() {
+      const modal = document.getElementById("clear-confirm-modal");
+      modal.classList.add("opacity-0", "pointer-events-none");
+      modal.firstElementChild.classList.remove("scale-100");
+      modal.firstElementChild.classList.add("scale-95");
+    };
+
+    window.clearEntireBoard = function() {
+      events = {};
+      persistCurrentState();
+      closeClearConfirmModal();
+      showToast("Cleared schedule memory.", "info");
+    };
+
+    // Helper functions: Sanitization
+    function sanitize(string) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        "/": '&#x2F;',
+      };
+      const reg = /[&<>"'/]/ig;
+      return string.replace(reg, (match) => map[match]);
+    }
+
+    // Custom Toast notifications
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      
+      let borderCol = "border-slate-800";
+      let icon = `
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      `;
+
+      if (type === "success") {
+        borderCol = "border-emerald-500/30";
+        icon = `
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        `;
+      }
+
+      toast.className = `flex items-center gap-3 px-4 py-3 bg-slate-900 border ${borderCol} rounded-xl shadow-xl text-xs text-slate-300 font-semibold transform translate-y-4 opacity-0 transition-all duration-300`;
+      toast.innerHTML = `
+        <div class="shrink-0">${icon}</div>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.remove("translate-y-4", "opacity-0");
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
