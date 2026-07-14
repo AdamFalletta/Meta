@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Baseball Games - Master Every Skill</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons for modern sports UI elements -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Space Grotesk for an athletic, premium tech feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        sport: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        baseballBlue: '#0A2540',
+                        baseballRed: '#E63946',
+                        baseballGold: '#FFD700',
+                        fieldGreen: '#1A5F20',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #040d1a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        
+        .baseball-stitches {
+            background-image: 
+                radial-gradient(circle at 100% 150%, transparent 24%, #E63946 24%, #E63946 28%, transparent 28%),
+                radial-gradient(circle at 0% 150%, transparent 24%, #E63946 24%, #E63946 28%, transparent 28%);
+            background-size: 40px 40px;
+        }
+
+        .clip-slant {
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 0 100%);
+        }
+
+        .clip-slant-reverse {
+            clip-path: polygon(0 5%, 100% 0, 100% 100%, 0 100%);
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Continuous slow rotate for championship cup badge */
+        @keyframes slow-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-slow-spin {
+            animation: slow-spin 20s linear infinite;
+        }
+    </style>
+</head>
+<body class="selection:bg-baseballRed selection:text-white">
+
+    <!-- FIXED HEADER -->
+    <header class="fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-baseballBlue/85 backdrop-blur-md border-b border-white/10" id="mainHeader">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo Brand -->
+                <a href="#" class="flex items-center gap-3 group">
+                    <div class="bg-gradient-to-br from-baseballRed to-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-sport font-extrabold text-xl shadow-lg border border-white/20 group-hover:scale-105 transition-all">
+                        ⚾
+                    </div>
+                    <div>
+                        <span class="block text-lg font-sport font-black tracking-wider text-white group-hover:text-baseballGold transition-colors">WORLD BASEBALL GAMES</span>
+                        <span class="block text-xs font-semibold uppercase tracking-widest text-slate-400">Skill Championship</span>
+                    </div>
+                </a>
+
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex items-center gap-8 text-sm font-semibold tracking-wide">
+                    <a href="#about" class="text-slate-200 hover:text-baseballGold transition-colors">Overview</a>
+                    <a href="#categories" class="text-slate-200 hover:text-baseballGold transition-colors">Event Categories</a>
+                    <a href="#schedule" class="text-slate-200 hover:text-baseballGold transition-colors">Schedule Grid</a>
+                    <a href="#diamond-winner" class="text-slate-200 hover:text-baseballGold transition-colors">Diamond Cup Winner</a>
+                    <a href="#awards" class="text-slate-200 hover:text-baseballGold transition-colors">Elite Awards</a>
+                    <a href="#standings" class="text-slate-200 hover:text-baseballGold transition-colors">Performance Matrix</a>
+                    <a href="#philosophy" class="text-slate-200 hover:text-baseballGold transition-colors">Philosophy</a>
+                </nav>
+
+                <!-- CTA Button -->
+                <div class="hidden lg:flex items-center gap-4">
+                    <span class="text-xs font-semibold text-slate-400 bg-white/5 py-1.5 px-3 rounded-full border border-white/10">Inaugural Season</span>
+                    <a href="#diamond-winner" class="bg-gradient-to-r from-baseballGold to-amber-500 hover:from-amber-400 hover:to-baseballGold text-baseballBlue px-5 py-2.5 rounded-full font-sport font-bold text-sm tracking-wider shadow-lg transform active:scale-95 transition-all">
+                        DIAMOND WINNER
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button type="button" class="md:hidden text-slate-200 hover:text-white focus:outline-none" onclick="toggleMobileMenu()">
+                    <i class="fa-solid fa-bars text-2xl" id="menuIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown -->
+        <div class="hidden md:hidden bg-baseballBlue border-t border-white/10 px-4 py-6 transition-all" id="mobileMenu">
+            <div class="flex flex-col gap-4 text-center font-sport tracking-wider">
+                <a href="#about" class="block py-2 text-slate-200 hover:text-baseballGold hover:bg-white/5 rounded" onclick="toggleMobileMenu()">Overview</a>
+                <a href="#categories" class="block py-2 text-slate-200 hover:text-baseballGold hover:bg-white/5 rounded" onclick="toggleMobileMenu()">Event Categories</a>
+                <a href="#schedule" class="block py-2 text-slate-200 hover:text-baseballGold hover:bg-white/5 rounded" onclick="toggleMobileMenu()">Schedule Grid</a>
+                <a href="#diamond-winner" class="block py-2 text-slate-200 hover:text-baseballGold hover:bg-white/5 rounded" onclick="toggleMobileMenu()">Diamond Cup Winner</a>
+                <a href="#awards" class="block py-2 text-slate-200 hover:text-baseballGold hover:bg-white/5 rounded" onclick="toggleMobileMenu()">Elite Awards</a>
+                <a href="#standings" class="block py-2 text-slate-200 hover:text-baseballGold hover:bg-white/5 rounded" onclick="toggleMobileMenu()">Performance Matrix</a>
+                <a href="#philosophy" class="block py-2 text-slate-200 hover:text-baseballGold hover:bg-white/5 rounded" onclick="toggleMobileMenu()">Philosophy</a>
+                <hr class="border-white/10 my-2">
+                <a href="#diamond-winner" class="bg-baseballRed hover:bg-red-600 text-white py-3 rounded-lg font-bold shadow-lg" onclick="toggleMobileMenu()">
+                    View Diamond Winner
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="relative min-h-screen pt-32 pb-20 flex items-center justify-center overflow-hidden clip-slant bg-gradient-to-b from-[#0a1e36] via-[#051122] to-[#040d1a] border-b border-baseballRed/20">
+        <!-- Abstract baseball field background graphics -->
+        <div class="absolute inset-0 opacity-20 pointer-events-none">
+            <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 50% 100% L 0% 50% L 50% 0% L 100% 50% Z" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="10 10"/>
+                <circle cx="50%" cy="50%" r="20%" fill="none" stroke="#E63946" stroke-width="1.5"/>
+                <circle cx="50%" cy="50%" r="40%" fill="none" stroke="#ffffff" stroke-width="1"/>
+            </svg>
+        </div>
+        
+        <!-- Rotating gradient orb blur -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-baseballRed/20 rounded-full filter blur-[120px] pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full filter blur-[120px] pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                <!-- Hero Text Block -->
+                <div class="lg:col-span-7 text-center lg:text-left space-y-6">
+                    <!-- Event Tag -->
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-baseballRed/10 border border-baseballRed/30 text-baseballRed text-xs sm:text-sm font-sport font-bold tracking-widest uppercase mx-auto lg:mx-0">
+                        <span class="inline-block w-2.5 h-2.5 bg-baseballRed rounded-full animate-ping"></span>
+                        A World-Class Skills Revolution
+                    </div>
+
+                    <!-- Hero Title -->
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-sport font-black tracking-tight leading-none text-white">
+                        Represent Your Country.<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-baseballGold via-amber-400 to-amber-200">Master Every Skill.</span><br>
+                        Win the Diamond Cup.
+                    </h1>
+
+                    <!-- Paragraph Content -->
+                    <p class="text-base sm:text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
+                        The ultimate multi-skill battleground where the world’s elite baseball athletes compete across specialized events in hitting, pitching, fielding, throwing, and speed to determine the supreme baseball nation on Earth.
+                    </p>
+
+                    <!-- Interactive Flags Row -->
+                    <div class="py-4">
+                        <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Featured International Competitors</p>
+                        <div class="flex flex-wrap justify-center lg:justify-start gap-4 text-2xl sm:text-3xl bg-white/5 p-3 rounded-2xl border border-white/10 backdrop-blur-sm max-w-lg">
+                            <span title="United States">🇺🇸 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">USA</span></span>
+                            <span title="Japan">🇯🇵 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">JPN</span></span>
+                            <span title="Dominican Republic">🇩🇴 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">DOM</span></span>
+                            <span title="South Korea">🇰🇷 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">KOR</span></span>
+                            <span title="Venezuela">🇻🇪 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">VEN</span></span>
+                            <span title="Mexico">🇲🇽 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">MEX</span></span>
+                            <span title="Cuba">🇨🇺 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">CUB</span></span>
+                            <span title="Canada">🇨🇦 <span class="text-[10px] block text-slate-400 font-sans font-bold text-center mt-1">CAN</span></span>
+                        </div>
+                    </div>
+
+                    <!-- CTAs -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                        <a href="#categories" class="w-full sm:w-auto text-center px-8 py-4 rounded-xl bg-gradient-to-r from-baseballRed to-red-600 hover:from-red-500 hover:to-baseballRed text-white font-sport font-black tracking-wide text-lg shadow-xl shadow-baseballRed/20 transform hover:-translate-y-0.5 active:translate-y-0 transition-all">
+                            EXPLORE SKILLS
+                        </a>
+                        <a href="#standings" class="w-full sm:w-auto text-center px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-sport font-bold border border-white/20 hover:border-baseballGold transition-all">
+                            VIEW GLOBAL SCOREBOARD <i class="fa-solid fa-arrow-right ml-2 text-baseballGold"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Hero Interactive Visual -->
+                <div class="lg:col-span-5 flex justify-center">
+                    <div class="relative w-72 h-72 sm:w-96 sm:h-96">
+                        <!-- Outer rotating frame -->
+                        <div class="absolute inset-0 rounded-full border-2 border-dashed border-baseballGold/40 animate-slow-spin"></div>
+                        
+                        <!-- Inner neon pulse ring -->
+                        <div class="absolute inset-4 rounded-full bg-baseballBlue/80 border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden">
+                            <!-- Background baseball pattern -->
+                            <div class="absolute inset-0 opacity-10 baseball-stitches"></div>
+                            
+                            <!-- Visual core details -->
+                            <div class="relative z-10 text-center px-6">
+                                <span class="text-6xl sm:text-8xl drop-shadow-[0_10px_20px_rgba(255,215,0,0.5)] block mb-4 transform hover:scale-110 transition-transform cursor-pointer">🏆</span>
+                                <h3 class="font-sport font-black text-xl sm:text-2xl text-white tracking-widest uppercase">DIAMOND CUP</h3>
+                                <p class="text-xs sm:text-sm text-baseballGold font-bold tracking-widest mt-1">THE OVERALL CHAMPION TROPHY</p>
+                                
+                                <div class="mt-4 flex gap-2 justify-center">
+                                    <span class="inline-block bg-white/10 text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded border border-white/10" id="heroEventCountBadge">30 Elite Events</span>
+                                    <span class="inline-block bg-white/10 text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded border border-white/10">32 Nations</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Stat Badges around circle -->
+                        <div class="absolute -top-4 -right-4 bg-gradient-to-r from-amber-500 to-baseballGold text-slate-900 px-4 py-2 rounded-xl shadow-lg border border-white/20 font-sport font-bold text-xs flex items-center gap-2 transform hover:scale-105 transition-all">
+                            <span>🥇</span> GOLD MEDALS
+                        </div>
+                        <div class="absolute -bottom-2 -left-4 bg-slate-800 text-white px-4 py-2 rounded-xl shadow-lg border border-white/10 font-sport font-bold text-xs flex items-center gap-2 transform hover:scale-105 transition-all">
+                            <span>⚾</span> MULTI-SKILLS ONLY
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 1: ABOUT & CHAMPIONSHIP OVERVIEW -->
+    <section id="about" class="py-24 bg-white text-slate-900 relative overflow-hidden">
+        <!-- Abstract red seam stitch in background -->
+        <div class="absolute -top-12 -right-12 w-64 h-64 bg-slate-50 rounded-full border-4 border-dashed border-baseballRed/10 pointer-events-none"></div>
+        <div class="absolute -bottom-20 -left-20 w-80 h-80 bg-slate-50 rounded-full border-4 border-dashed border-blue-600/10 pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <!-- Header layout -->
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballRed bg-red-50 px-3 py-1.5 rounded-full border border-red-200">The Championship Blueprint</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight text-baseballBlue">
+                    An Athletic Skills Revolution
+                </h2>
+                <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+                    The World Baseball Games is a premier, elite international baseball competition where countries compete across a series of specialized baseball skill events instead of traditional nine-inning games. Designed to celebrate every aspect of baseball, the tournament showcases hitting, throwing, fielding, speed, accuracy, and teamwork while allowing athletes to represent their nation in individual and team-based competitions.
+                </p>
+            </div>
+
+            <!-- Exciting Metric cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <!-- Highlight 1 -->
+                <div class="bg-gradient-to-b from-[#0A2540] to-[#040d1a] p-8 rounded-3xl text-white shadow-xl relative overflow-hidden group hover:scale-105 transition-transform duration-300">
+                    <div class="absolute top-0 right-0 bg-baseballRed text-white font-sport font-black px-4 py-1.5 rounded-bl-2xl text-xs tracking-widest uppercase">
+                        The Core
+                    </div>
+                    <span class="text-4xl block mb-6">⚾</span>
+                    <h3 class="font-sport font-black text-xl text-white mb-3">Isolate & Celebrate</h3>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Rather than blending talents into a standard team game, this tournament isolates hitting, pitching, throwing, running, and fielding so the world can see who reigns supreme in each distinct category.
+                    </p>
+                </div>
+
+                <!-- Highlight 2 -->
+                <div class="bg-gradient-to-b from-[#0A2540] to-[#040d1a] p-8 rounded-3xl text-white shadow-xl relative overflow-hidden group hover:scale-105 transition-transform duration-300">
+                    <div class="absolute top-0 right-0 bg-baseballGold text-slate-900 font-sport font-black px-4 py-1.5 rounded-bl-2xl text-xs tracking-widest uppercase">
+                        Points System
+                    </div>
+                    <span class="text-4xl block mb-6">🏆</span>
+                    <h3 class="font-sport font-black text-xl text-white mb-3">The Diamond Cup</h3>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Each event distributes medals to individual athletes while contributing critical points directly to their country's overall standings. The highest combined national score captures the historic Diamond Cup!
+                    </p>
+                </div>
+
+                <!-- Highlight 3 -->
+                <div class="bg-gradient-to-b from-[#0A2540] to-[#040d1a] p-8 rounded-3xl text-white shadow-xl relative overflow-hidden group hover:scale-105 transition-transform duration-300">
+                    <div class="absolute top-0 right-0 bg-blue-600 text-white font-sport font-black px-4 py-1.5 rounded-bl-2xl text-xs tracking-widest uppercase">
+                        Global Scale
+                    </div>
+                    <span class="text-4xl block mb-6">🌎</span>
+                    <h3 class="font-sport font-black text-xl text-white mb-3">32 Nations Clash</h3>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Featuring an elite roster of 32 participating nations. This allows competitive baseball cultures from around the world to stand out under their national flag with intense global prestige.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Asymmetric detail panel -->
+            <div class="bg-slate-50 border border-slate-200 rounded-3xl p-8 sm:p-12 shadow-md grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <h3 class="text-2xl sm:text-3xl font-sport font-black text-baseballBlue">
+                        Dual Reward Ecosystem
+                    </h3>
+                    <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+                        Unlike a standard baseball tournament, each event awards medals to individual athletes while simultaneously contributing points toward their country's overall standings. At the conclusion of the competition, the nation with the highest cumulative score is crowned the overall champion and awarded the prestigious Diamond Cup.
+                    </p>
+                    <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+                        The event could be held annually or on a multi-year cycle similar to other major international sporting competitions, creating an unforgettable global skill forum that brings together millions of baseball fans.
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
+                        <span class="block text-3xl font-sport font-black text-baseballRed">30</span>
+                        <span class="block text-xs uppercase tracking-wider text-slate-400 font-bold mt-1">Events Contested</span>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
+                        <span class="block text-3xl font-sport font-black text-baseballBlue">32</span>
+                        <span class="block text-xs uppercase tracking-wider text-slate-400 font-bold mt-1">Nations Competing</span>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center col-span-2">
+                        <span class="block text-2xl font-sport font-black text-baseballGold">🏆 THE DIAMOND CUP</span>
+                        <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mt-1">Ultimate Overall Team Honor</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 1.5: EVENT POINTS SCORING SYSTEM -->
+    <section id="scoring-system" class="py-16 bg-gradient-to-br from-[#020a14] to-[#0a1e36] text-white border-y border-white/5 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-10 space-y-3">
+                <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballGold">Official Weightings</span>
+                <h2 class="text-3xl sm:text-4xl font-sport font-black tracking-tight">Event Points Scoring System</h2>
+                <p class="text-slate-300 text-sm sm:text-base">
+                    Points are awarded to the top 10 finishers of each individual event, contributing directly to their nation's points index.
+                </p>
+            </div>
+
+            <!-- Dynamic 5 over 5 Grid (Flush backgrounds, minimized padding) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Rank 1 Card -->
+                <div class="relative bg-white/5 border border-baseballGold/60 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-baseballGold text-slate-950 font-sport font-black text-[10px] px-3 py-1.5 rounded-bl-xl uppercase tracking-wider">Event Gold</span>
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">01</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">1st Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">20,000</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 2 Card -->
+                <div class="relative bg-white/5 border border-slate-300/60 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-slate-300 text-slate-950 font-sport font-black text-[10px] px-3 py-1.5 rounded-bl-xl uppercase tracking-wider">Event Silver</span>
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">02</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">2nd Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">17,500</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 3 Card -->
+                <div class="relative bg-white/5 border border-amber-600/60 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-amber-600 text-white font-sport font-black text-[10px] px-3 py-1.5 rounded-bl-xl uppercase tracking-wider">Event Bronze</span>
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">03</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">3rd Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">15,000</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 4 Card -->
+                <div class="relative bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">04</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">4th Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">12,500</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 5 Card -->
+                <div class="relative bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">05</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">5th Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">10,000</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Row 2: Ranks 6 to 10 -->
+                <!-- Rank 6 Card -->
+                <div class="relative bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">06</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">6th Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">7,500</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 7 Card -->
+                <div class="relative bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">07</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">7th Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">5,000</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 8 Card -->
+                <div class="relative bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">08</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">8th Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">3,000</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 9 Card -->
+                <div class="relative bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">09</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">9th Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">2,000</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+
+                <!-- Rank 10 Card -->
+                <div class="relative bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl flex flex-col justify-between hover:scale-[1.03] transition-transform duration-300 overflow-hidden">
+                    <div class="pt-2">
+                        <span class="text-slate-400 font-sport font-black text-base">10</span>
+                        <span class="block text-xs text-slate-300 font-bold uppercase tracking-wider mt-0.5">10th Place</span>
+                    </div>
+                    <div class="mt-6">
+                        <span class="block text-3xl font-sport font-black text-white">1,000</span>
+                        <span class="block text-[10px] text-slate-400 font-semibold uppercase">Points Index</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: EVENT CATEGORIES -->
+    <section id="categories" class="py-24 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-3xl mx-auto mb-12 space-y-4">
+                <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballRed">Explore The Arena</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight">The Five Skill Divisions</h2>
+                <p class="text-slate-400 text-sm sm:text-base">
+                    Discover our extensive roster of elite, technical challenges. Add or remove them in the code directly inside the Javascript array structure.
+                </p>
+                <div class="inline-block bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-semibold text-baseballGold">
+                    Currently hosting <span id="totalEventsCount" class="font-bold text-white">30</span> Elite Challenges (6 per Category)
+                </div>
+            </div>
+
+            <!-- Dynamic Tab Buttons Container -->
+            <div class="flex flex-wrap justify-center items-center gap-3 mb-12" id="tabButtonsContainer">
+                <!-- Tab Buttons will be rendered dynamically by JS -->
+            </div>
+
+            <!-- Dynamic Tab Content Pane Container -->
+            <div id="tabContentPane" class="transition-all duration-500">
+                <!-- Tab Contents will be rendered dynamically by JS -->
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECTION 3: THE EVENT SCHEDULE -->
+    <section id="schedule" class="py-24 bg-slate-950 text-white border-t border-b border-white/10 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12 space-y-4">
+                <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballGold font-bold">Comprehensive Programming</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight">Master Weekend Broadcast Schedule</h2>
+                <p class="text-slate-400 text-sm sm:text-base">
+                    Welcome to the master television program guide. We operate a highly dynamic broadcast containing split-screens, rapid cut-ins, and highlight transitions across all live fields. Legend is displayed directly below.
+                </p>
+            </div>
+
+            <!-- EVENT CATEGORIES LEGEND -->
+            <div class="bg-slate-900 border border-white/10 p-5 rounded-2xl mb-8 flex flex-wrap justify-center items-center gap-6 text-xs font-bold uppercase tracking-wider">
+                <span class="text-slate-300 font-sport text-xs mr-2 border-r border-white/15 pr-4">Broadcast Legend:</span>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded bg-baseballRed inline-block"></span>
+                    <span>Hitting Events</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded bg-blue-500 inline-block"></span>
+                    <span>Pitching Events</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded bg-amber-500 inline-block"></span>
+                    <span>Fielding Events</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded bg-green-500 inline-block"></span>
+                    <span>Throwing Events</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded bg-purple-500 inline-block"></span>
+                    <span>Running Events</span>
+                </div>
+            </div>
+
+            <!-- TV Guide Grid Container -->
+            <div class="bg-[#0c1b2e] border border-white/15 rounded-3xl overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[900px] table-fixed">
+                        <thead>
+                            <tr class="bg-[#12263f] border-b border-white/15 text-xs font-sport uppercase tracking-widest text-slate-300">
+                                <th class="py-5 px-5 border-r border-white/15 w-1/4">Time Block (12-Hour)</th>
+                                <th class="py-5 px-5 border-r border-white/15 w-1/4">Friday (Day 1)</th>
+                                <th class="py-5 px-5 border-r border-white/15 w-1/4">Saturday (Day 2)</th>
+                                <th class="py-5 px-5 w-1/4">Sunday (Day 3)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/10">
+                            
+                            <!-- MORNING BLOCK -->
+                            <tr class="align-top">
+                                <td class="py-6 px-5 border-r border-white/15 bg-[#091524] text-white space-y-1">
+                                    <span class="block text-baseballGold text-[10px] font-sport font-black uppercase tracking-wider">Morning Block</span>
+                                    <span class="block text-2xl font-sport font-bold">9:00 AM</span>
+                                    <span class="block text-slate-400 text-xs font-semibold">to 12:00 PM</span>
+                                    <span class="block text-[10px] bg-white/5 border border-white/10 p-2 rounded text-slate-400 font-sans mt-3">
+                                        ⏱ Live coverage split across morning sessions.
+                                    </span>
+                                </td>
+
+                                <!-- Friday Morning -->
+                                <td class="p-4 border-r border-white/15 bg-[#0a1e36]/20 space-y-3">
+                                    <div class="border-l-4 border-purple-500 bg-purple-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-purple-400 font-mono font-bold">9:15 AM - 10:00 AM</p>
+                                        <p class="font-sport font-bold text-xs text-white">First Base Laser Sprint</p>
+                                    </div>
+                                    <div class="border-l-4 border-green-500 bg-green-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-green-400 font-mono font-bold">10:15 AM - 11:00 AM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Long Toss Distance Index</p>
+                                    </div>
+                                    <div class="border-l-4 border-green-500 bg-green-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-green-400 font-mono font-bold">11:15 AM - 12:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Upright Field Goal Challenge</p>
+                                    </div>
+                                </td>
+
+                                <!-- Saturday Morning -->
+                                <td class="p-4 border-r border-white/15 bg-[#0a1e36]/10 space-y-3">
+                                    <div class="border-l-4 border-purple-500 bg-purple-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-purple-400 font-mono font-bold">9:15 AM - 10:00 AM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Obstacle Agility Circuit</p>
+                                    </div>
+                                    <div class="border-l-4 border-green-500 bg-green-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-green-400 font-mono font-bold">10:15 AM - 11:00 AM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Deep Outfield Laser Throw</p>
+                                    </div>
+                                    <div class="border-l-4 border-purple-500 bg-purple-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-purple-400 font-mono font-bold">11:15 AM - 12:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Base Running Zig-Zag</p>
+                                    </div>
+                                </td>
+
+                                <!-- Sunday Morning (BASEBALL GOLF UNIFIED BORDER) -->
+                                <td class="p-4 bg-[#0a1e36]/20 space-y-3">
+                                    <div class="border-2 border-baseballRed/50 bg-baseballRed/15 p-3 rounded-lg">
+                                        <p class="text-[10px] text-baseballRed font-mono font-bold">9:00 AM - 10:15 AM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Baseball Golf</p>
+                                        <p class="text-[10px] text-slate-300 mt-0.5">High precision landing target</p>
+                                    </div>
+                                    <div class="border-l-4 border-green-500 bg-green-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-green-400 font-mono font-bold">10:30 AM - 11:15 AM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Precision Knockdown Wall</p>
+                                    </div>
+                                    <div class="border-l-4 border-purple-500 bg-purple-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-purple-400 font-mono font-bold">11:15 AM - 12:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Outfield Gap Chase Down</p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- AFTERNOON BLOCK -->
+                            <tr class="align-top">
+                                <td class="py-6 px-5 border-r border-white/15 bg-[#091524] text-white space-y-1">
+                                    <span class="block text-baseballGold text-[10px] font-sport font-black uppercase tracking-wider">Afternoon Block</span>
+                                    <span class="block text-2xl font-sport font-bold">1:00 PM</span>
+                                    <span class="block text-slate-400 text-xs font-semibold">to 5:00 PM</span>
+                                    <span class="block text-[10px] bg-white/5 border border-white/10 p-2 rounded text-slate-400 font-sans mt-3">
+                                        ⏱ Power & precision metrics.
+                                    </span>
+                                </td>
+
+                                <!-- Friday Afternoon -->
+                                <td class="p-4 border-r border-white/15 bg-[#0a1e36]/10 space-y-3">
+                                    <div class="border-l-4 border-green-500 bg-green-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-green-400 font-mono font-bold">1:00 PM - 2:15 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Rapid Fire Bullseye Test</p>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 bg-blue-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-blue-400 font-mono font-bold">2:30 PM - 3:45 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Velocity Radar Spotlight</p>
+                                    </div>
+                                    <div class="border-l-4 border-amber-500 bg-amber-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-amber-400 font-mono font-bold">4:00 PM - 5:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Ground Ball Toss (60 Seconds)</p>
+                                    </div>
+                                </td>
+
+                                <!-- Saturday Afternoon -->
+                                <td class="p-4 border-r border-white/15 bg-[#0a1e36]/20 space-y-3">
+                                    <div class="border-l-4 border-blue-500 bg-blue-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-blue-400 font-mono font-bold">1:00 PM - 2:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Micro Target Zones</p>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 bg-blue-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-blue-400 font-mono font-bold">2:15 PM - 3:15 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Painted Black Challenge</p>
+                                    </div>
+                                    <div class="border-l-4 border-amber-500 bg-amber-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-amber-400 font-mono font-bold">3:30 PM - 4:15 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">First Baseman Snags</p>
+                                    </div>
+                                    <div class="border-l-4 border-purple-500 bg-purple-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-purple-400 font-mono font-bold">4:30 PM - 5:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Stolen Base Dash</p>
+                                    </div>
+                                </td>
+
+                                <!-- Sunday Afternoon -->
+                                <td class="p-4 bg-[#0a1e36]/10 space-y-3">
+                                    <div class="border-l-4 border-green-500 bg-green-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-green-400 font-mono font-bold">1:00 PM - 2:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Catcher Precision Targets</p>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 bg-blue-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-blue-400 font-mono font-bold">2:15 PM - 3:15 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Blind Target Curveballs</p>
+                                    </div>
+                                    <div class="border-l-4 border-amber-500 bg-amber-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-amber-400 font-mono font-bold">3:30 PM - 4:15 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Barehand Scoop Scurry</p>
+                                    </div>
+                                    <div class="border-l-4 border-purple-500 bg-purple-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-purple-400 font-mono font-bold">4:30 PM - 5:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Around the Bases Relay Race</p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- EVENING BLOCK -->
+                            <tr class="align-top">
+                                <td class="py-6 px-5 border-r border-white/15 bg-[#091524] text-white space-y-1">
+                                    <span class="block text-baseballGold text-[10px] font-sport font-black uppercase tracking-wider">Evening Block</span>
+                                    <span class="block text-2xl font-sport font-bold">6:00 PM</span>
+                                    <span class="block text-slate-400 text-xs font-semibold">to 10:00 PM</span>
+                                    <span class="block text-[10px] bg-white/5 border border-white/10 p-2 rounded text-slate-400 font-sans mt-3">
+                                        ⏱ Prime-time event conclusions & major slugfests.
+                                    </span>
+                                </td>
+
+                                <!-- Friday Evening (UNIFIED HITTING BORDERS) -->
+                                <td class="p-4 border-r border-white/15 bg-[#0a1e36]/20 space-y-3">
+                                    <div class="border-2 border-baseballRed/50 bg-baseballRed/15 p-3 rounded-lg">
+                                        <p class="text-[10px] text-baseballRed font-mono font-bold">6:00 PM - 7:30 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Home Run Derby Shootout</p>
+                                        <p class="text-[11px] text-slate-300 mt-0.5 font-sans">Deep field power exhibition under stadium lights</p>
+                                    </div>
+                                    <div class="border-2 border-baseballRed/50 bg-baseballRed/15 p-3 rounded-lg">
+                                        <p class="text-[10px] text-baseballRed font-mono font-bold">7:45 PM - 8:45 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Hit Distance Spotfire</p>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 bg-blue-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-blue-400 font-mono font-bold">9:00 PM - 10:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Off-speed Deception Battle</p>
+                                    </div>
+                                </td>
+
+                                <!-- Saturday Evening (UNIFIED HITTING BORDERS) -->
+                                <td class="p-4 border-r border-white/15 bg-[#0a1e36]/10 space-y-3">
+                                    <div class="border-2 border-baseballRed/50 bg-baseballRed/15 p-3 rounded-lg">
+                                        <p class="text-[10px] text-baseballRed font-mono font-bold">6:00 PM - 7:15 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Line Drive Arc Challenge</p>
+                                    </div>
+                                    <div class="border-2 border-baseballRed/50 bg-baseballRed/15 p-3 rounded-lg">
+                                        <p class="text-[10px] text-baseballRed font-mono font-bold">7:30 PM - 8:30 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Keep Ball Airborne</p>
+                                    </div>
+                                    <div class="border-l-4 border-amber-500 bg-amber-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-amber-400 font-mono font-bold">8:45 PM - 10:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Double Play Pivot Speed</p>
+                                    </div>
+                                </td>
+
+                                <!-- Sunday Evening (UNIFIED HITTING BORDERS) -->
+                                <td class="p-4 bg-[#0a1e36]/20 space-y-3">
+                                    <div class="border-2 border-baseballRed/50 bg-baseballRed/15 p-3 rounded-lg">
+                                        <p class="text-[10px] text-baseballRed font-mono font-bold">6:00 PM - 7:30 PM</p>
+                                        <p class="font-sport font-black text-xs text-white">Hit Accuracy Zones</p>
+                                        <p class="text-[11px] text-slate-200 mt-0.5">Championship Finals: Spray target pockets</p>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 bg-blue-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-blue-400 font-mono font-bold">7:45 PM - 8:45 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Hot Corner Snags</p>
+                                    </div>
+                                    <div class="border-l-4 border-amber-500 bg-amber-500/10 p-3 rounded-r-lg">
+                                        <p class="text-[10px] text-amber-400 font-mono font-bold">9:00 PM - 10:00 PM</p>
+                                        <p class="font-sport font-bold text-xs text-white">Wall Leaping Fly Catch</p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+
+    <!-- SECTION 4: DIAMOND CUP OVERALL WINNER SHOWCASE -->
+    <section id="diamond-winner" class="py-24 bg-gradient-to-b from-[#0c1b2e] via-[#051425] to-slate-900 text-white relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballGold">Tournament Champion</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight">The Diamond Cup Recipient</h2>
+                <p class="text-slate-300 text-sm sm:text-base">
+                    This nation reigns absolute in baseball prowess, ascending to global glory by scoring supreme aggregated metrics across all 30 skills events.
+                </p>
+            </div>
+
+            <!-- Single Grand Showcase Box -->
+            <div class="bg-gradient-to-br from-[#0e2c50] via-[#051425] to-[#010912] border-2 border-baseballGold rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+                <div class="absolute inset-0 opacity-[0.03] baseball-stitches pointer-events-none"></div>
+                <div class="absolute -top-24 -right-24 w-80 h-80 bg-baseballGold/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-baseballRed/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Left Column: Trophy Presentation -->
+                    <div class="lg:col-span-5 text-center lg:text-left space-y-6">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-baseballGold/10 border border-baseballGold/30 text-baseballGold text-xs font-sport font-black tracking-widest uppercase">
+                            👑 GRAND STANDINGS CHAMPION
+                        </div>
+                        <div>
+                            <h3 class="text-4xl sm:text-5xl md:text-6xl font-sport font-black text-white tracking-tight" id="leaderName">United States 🇺🇸</h3>
+                            <p class="text-slate-400 text-sm mt-2 leading-relaxed">
+                                Awarded the prestigious Diamond Cup after dominating the cumulative standings across all hitting, pitching, throwing, fielding, and speed events.
+                            </p>
+                        </div>
+                        <div class="flex justify-center lg:justify-start">
+                            <div class="relative inline-block">
+                                <span class="text-8xl filter drop-shadow-[0_0_35px_rgba(255,215,0,0.6)] animate-pulse inline-block transform hover:scale-105 transition-transform duration-300">🏆</span>
+                                <span class="absolute -bottom-2 -right-2 text-2xl">🥇</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Performance Ledger -->
+                    <div class="lg:col-span-7 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 backdrop-blur-sm">
+                        <h4 class="text-xs font-sport font-black uppercase tracking-widest text-slate-300 border-b border-white/10 pb-3 flex items-center justify-between">
+                            <span>CHAMPION PERFORMANCE DIRECTORY</span>
+                            <span class="text-baseballGold">OFFICIAL ACCREDITED LOGS</span>
+                        </h4>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <div class="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                                <span class="block text-[10px] font-sport font-bold text-slate-400 uppercase tracking-wider">⚾ Hitting Pts</span>
+                                <span class="block text-xl font-sport font-black text-white mt-1" id="stat-hitting">0</span>
+                            </div>
+                            <div class="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                                <span class="block text-[10px] font-sport font-bold text-slate-400 uppercase tracking-wider">🎯 Pitching Pts</span>
+                                <span class="block text-xl font-sport font-black text-white mt-1" id="stat-pitching">0</span>
+                            </div>
+                            <div class="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                                <span class="block text-[10px] font-sport font-bold text-slate-400 uppercase tracking-wider">🧤 Fielding Pts</span>
+                                <span class="block text-xl font-sport font-black text-white mt-1" id="stat-fielding">0</span>
+                            </div>
+                            <div class="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                                <span class="block text-[10px] font-sport font-bold text-slate-400 uppercase tracking-wider">💪 Throwing Pts</span>
+                                <span class="block text-xl font-sport font-black text-white mt-1" id="stat-throwing">0</span>
+                            </div>
+                            <div class="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                                <span class="block text-[10px] font-sport font-bold text-slate-400 uppercase tracking-wider">⚡ Running Pts</span>
+                                <span class="block text-xl font-sport font-black text-white mt-1" id="stat-running">0</span>
+                            </div>
+                            <div class="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20">
+                                <span class="block text-[10px] font-sport font-bold text-amber-400 uppercase tracking-wider">🥇 Gold Medals</span>
+                                <span class="block text-xl font-sport font-black text-amber-300 mt-1" id="stat-gold">0</span>
+                            </div>
+                            <div class="bg-slate-300/10 p-4 rounded-xl border border-slate-300/20 col-span-1">
+                                <span class="block text-[10px] font-sport font-bold text-slate-300 uppercase tracking-wider">🥈 Silver Medals</span>
+                                <span class="block text-xl font-sport font-black text-slate-200 mt-1" id="stat-silver">0</span>
+                            </div>
+                            <div class="bg-amber-600/10 p-4 rounded-xl border border-amber-600/20 col-span-1">
+                                <span class="block text-[10px] font-sport font-bold text-amber-600 uppercase tracking-wider">🥉 Bronze Medals</span>
+                                <span class="block text-xl font-sport font-black text-amber-500 mt-1" id="stat-bronze">0</span>
+                            </div>
+                            <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 col-span-1">
+                                <span class="block text-[10px] font-sport font-bold text-blue-400 uppercase tracking-wider">🏅 Total Medals</span>
+                                <span class="block text-xl font-sport font-black text-blue-300 mt-1" id="stat-totalMedals">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Grand Total Accent Highlight Panel -->
+                        <div class="bg-gradient-to-r from-baseballGold to-amber-500 rounded-xl p-5 border border-white/10 flex items-center justify-between text-slate-950 mt-6 shadow-lg">
+                            <div>
+                                <span class="block text-xs font-sport font-black uppercase tracking-widest text-slate-900 opacity-85">CUMULATIVE TOURNAMENT SCORE</span>
+                                <span class="block text-[10px] uppercase font-bold text-slate-800">Crowned Diamond Cup Recipient</span>
+                            </div>
+                            <span class="text-3xl sm:text-4xl font-sport font-black tracking-wider text-slate-950" id="leaderPoints">0 pts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: PRESTIGE INDIVIDUAL SPECIALTY AWARDS -->
+    <section id="awards" class="py-24 bg-gradient-to-b from-slate-900 to-[#0c1b2e] text-white border-t border-b border-white/5 relative overflow-hidden">
+        <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-baseballRed/50 via-transparent to-blue-500/50"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            
+            <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+                <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballGold font-bold">Individual Honors</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight">The Crown Jewel Specialty Awards</h2>
+                <p class="text-slate-400 text-sm sm:text-base">
+                    While teams battle for the historic Diamond Cup, elite athletes compete in their respective skill categories to immortalize their names with these highly coveted specialty trophies.
+                </p>
+            </div>
+
+            <!-- Awards Cards Grid (Increased flag sizes, modified text tags) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                
+                <!-- Award 1: Hitting -->
+                <div class="bg-slate-950/80 border border-baseballRed/30 hover:border-baseballRed rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 group shadow-xl flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-baseballRed/10 border border-baseballRed/20 text-baseballRed flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            ⚾
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-sport uppercase tracking-wider font-extrabold text-baseballRed">HITTING WINNER</span>
+                            <h3 class="text-lg font-sport font-bold text-white mt-1 group-hover:text-baseballGold transition-colors">The Golden Barrel Award</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Awarded to the batter who achieves absolute supremacy in exit velocity, sweet-spot consistency, and home run launch angle metrics.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-white/10 mt-4">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500 block">CURRENT WINNER</span>
+                        <span class="text-xl sm:text-2xl text-baseballGold font-black font-sport block mt-1 tracking-wide" id="award-hitting-winner">Loading...</span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5 font-mono" id="award-hitting-points">0 pts</span>
+                    </div>
+                </div>
+
+                <!-- Award 2: Pitching -->
+                <div class="bg-slate-950/80 border border-blue-500/30 hover:border-blue-500 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 group shadow-xl flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            🎯
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-sport uppercase tracking-wider font-extrabold text-blue-400">PITCHING WINNER</span>
+                            <h3 class="text-lg font-sport font-bold text-white mt-1 group-hover:text-baseballGold transition-colors">The Ace Award</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Presented to the pitcher demonstrating unmatched command, extreme RPM spin rate metrics, and target accuracy.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-white/10 mt-4">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500 block">CURRENT WINNER</span>
+                        <span class="text-xl sm:text-2xl text-baseballGold font-black font-sport block mt-1 tracking-wide" id="award-pitching-winner">Loading...</span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5 font-mono" id="award-pitching-points">0 pts</span>
+                    </div>
+                </div>
+
+                <!-- Award 3: Fielding -->
+                <div class="bg-slate-950/80 border border-amber-500/30 hover:border-amber-500 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 group shadow-xl flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            🧤
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-sport uppercase tracking-wider font-extrabold text-amber-400">DEFENSIVE WINNER</span>
+                            <h3 class="text-lg font-sport font-bold text-white mt-1 group-hover:text-baseballGold transition-colors">Smooth Hands Award</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Granted to the utility fielder with the quickest transfer speeds, smoothest barehand hops, and rapid pivots.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-white/10 mt-4">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500 block">CURRENT WINNER</span>
+                        <span class="text-xl sm:text-2xl text-baseballGold font-black font-sport block mt-1 tracking-wide" id="award-fielding-winner">Loading...</span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5 font-mono" id="award-fielding-points">0 pts</span>
+                    </div>
+                </div>
+
+                <!-- Award 4: Throwing -->
+                <div class="bg-slate-950/80 border border-green-500/30 hover:border-green-500 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 group shadow-xl flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            💪
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-sport uppercase tracking-wider font-extrabold text-green-400">ARM METRICS WINNER</span>
+                            <h3 class="text-lg font-sport font-bold text-white mt-1 group-hover:text-baseballGold transition-colors">Iron Arm Award</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Earned by the player recording the highest laser-timed throwing velocity and pinpoint outfield-to-catcher target accuracy.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-white/10 mt-4">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500 block">CURRENT WINNER</span>
+                        <span class="text-xl sm:text-2xl text-baseballGold font-black font-sport block mt-1 tracking-wide" id="award-throwing-winner">Loading...</span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5 font-mono" id="award-throwing-points">0 pts</span>
+                    </div>
+                </div>
+
+                <!-- Award 5: Running -->
+                <div class="bg-slate-950/80 border border-purple-500/30 hover:border-purple-500 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 group shadow-xl flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            ⚡
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-sport uppercase tracking-wider font-extrabold text-purple-400">VELOCITY WINNER</span>
+                            <h3 class="text-lg font-sport font-bold text-white mt-1 group-hover:text-baseballGold transition-colors">Flash Award</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Awarded to the fastest athlete on the baseline paths, tracked precisely with electronic laser visual triggers.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-white/10 mt-4">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500 block">CURRENT WINNER</span>
+                        <span class="text-xl sm:text-2xl text-baseballGold font-black font-sport block mt-1 tracking-wide" id="award-running-winner">Loading...</span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5 font-mono" id="award-running-points">0 pts</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECTION 6: INTERACTIVE WORLD STANDINGS MATRIX BOARD -->
+    <section id="standings" class="py-24 bg-gradient-to-b from-[#0c1b2e] via-slate-900 to-slate-950 text-white relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-3xl mx-auto mb-12 space-y-4">
+                <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballGold">Global Scoreboard</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight">The Performance Matrix</h2>
+                <p class="text-slate-300 text-sm sm:text-base">
+                    The points in the table are calculated directly from completed finishes matching our official Event Points Scoring System. Click the headers to sort instantly.
+                </p>
+            </div>
+
+            <!-- STATUS PANEL (Championship Completed) -->
+            <div class="bg-gradient-to-r from-[#0a2540] to-[#061c33] border border-white/10 rounded-2xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <div class="bg-emerald-500/20 text-emerald-400 text-2xl w-12 h-12 rounded-xl flex items-center justify-center font-bold">
+                        🏆
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-sport uppercase tracking-wider font-extrabold text-baseballGold block">Tournament Status</span>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <span class="text-2xl font-sport font-black text-white" id="gamesPlayedLabel">30</span>
+                            <span class="text-xs text-slate-400">/ 30 Events Completed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar Visualizer -->
+                <div class="flex-1 max-w-md w-full">
+                    <div class="flex items-center justify-between text-xs mb-1 font-semibold text-slate-300">
+                        <span>Championship Progress</span>
+                        <span id="progressBarPercentage">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-3.5 rounded-full overflow-hidden border border-white/10 p-0.5">
+                        <div id="statusProgressBar" class="h-full bg-gradient-to-r from-[#1A5F20] to-emerald-500 rounded-full transition-all duration-500" style="width: 100%"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1.5 flex justify-between">
+                        <span id="gamesRemainingLabel">0 Events Remaining</span>
+                        <span>Official Match Points Scale Applied</span>
+                    </p>
+                </div>
+
+                <!-- Live Concluded Badge -->
+                <div class="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/35 px-4 py-2.5 rounded-xl text-emerald-400 font-sport font-black text-xs uppercase tracking-widest">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    CONCLUDED
+                </div>
+            </div>
+
+            <!-- Standings Board Matrix Container -->
+            <div class="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/15 pb-6 mb-6 gap-4">
+                    <div>
+                        <h3 class="font-sport font-extrabold text-2xl text-white">Championship Standings Matrix</h3>
+                        <p class="text-xs text-slate-400 mt-1">Official database of current team performances. Click category headers to sort.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-xs text-slate-400 font-semibold" id="sortFeedback">Sorted by: Total Pts (High to Low)</span>
+                    </div>
+                </div>
+
+                <!-- Responsive Scroll Wrapper -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[1050px]">
+                        <thead class="sticky top-0 bg-[#0c1b2e] z-20">
+                            <tr class="border-b border-white/10 text-[11px] font-sport uppercase tracking-wider text-slate-300">
+                                <th class="py-4 px-3 min-w-[200px] bg-[#0c1b2e]">Country</th>
+                                
+                                <th onclick="handleHeaderSort('hitting')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    ⚾ HITTING <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-hitting">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('pitching')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    🎯 PITCHING <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-pitching">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('fielding')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    🧤 FIELDING <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-fielding">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('throwing')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    💪 THROWING <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-throwing">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('running')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    ⚡ RUNNING <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-running">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('totalPoints')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors bg-amber-500/10 border-x border-white/5">
+                                    TOTAL PTS <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-totalPoints">▲</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('gold')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    🥇 GOLD <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-gold">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('silver')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    🥈 SILVER <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-silver">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('bronze')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors">
+                                    🥉 BRONZE <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-bronze">⇅</span>
+                                </th>
+                                
+                                <th onclick="handleHeaderSort('totalMedals')" class="py-4 px-2 text-center cursor-pointer hover:bg-white/10 select-none group transition-colors bg-blue-500/10 border-l border-white/5">
+                                    TOTAL MEDALS <span class="text-baseballGold ml-1 group-hover:scale-110" id="sortIcon-totalMedals">⇅</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrixTableBody" class="divide-y divide-white/5 text-sm">
+                            <!-- Generated Dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECTION 7: CHAMPIONSHIP PHILOSOPHY -->
+    <section id="philosophy" class="py-24 bg-white text-slate-900 relative clip-slant-reverse">
+        <div class="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-baseballRed to-transparent opacity-50"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+                
+                <!-- Left Visual Stats Column -->
+                <div class="lg:col-span-5 order-2 lg:order-1 space-y-8">
+                    
+                    <!-- Quote Container -->
+                    <div class="bg-slate-50 border-r-4 border-l-4 border-baseballRed p-8 rounded-2xl shadow-lg space-y-4">
+                        <span class="text-5xl text-baseballRed font-serif">“</span>
+                        <p class="text-lg font-medium text-baseballBlue italic leading-relaxed">
+                            Traditional baseball often hides individual talents behind team performance over nine innings. The World Baseball Games isolates each skill, allowing athletes to compete directly against the world's best in specialized events.
+                        </p>
+                        <div class="pt-4 border-t border-slate-200">
+                            <h5 class="font-sport font-bold text-baseballBlue text-base">The Championship Mission</h5>
+                            <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Answering: Who are the most complete athletes?</p>
+                        </div>
+                    </div>
+
+                    <!-- Highlighted mini stats cards -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gradient-to-br from-slate-900 to-baseballBlue text-white p-6 rounded-2xl text-center shadow-md">
+                            <span class="block text-4xl mb-1">🌎</span>
+                            <span class="block font-sport font-black text-2xl text-baseballGold">32 NATIONS</span>
+                            <span class="block text-xs uppercase tracking-wider text-slate-400 mt-1">Global Scale</span>
+                        </div>
+                        <div class="bg-gradient-to-br from-slate-900 to-baseballBlue text-white p-6 rounded-2xl text-center shadow-md">
+                            <span class="block text-4xl mb-1">🏅</span>
+                            <span class="block font-sport font-black text-2xl text-baseballGold" id="medalCardTotal">90 Medals</span>
+                            <span class="block text-xs uppercase tracking-wider text-slate-400 mt-1">Distributed Overall</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Text Column -->
+                <div class="lg:col-span-7 order-1 lg:order-2 space-y-6">
+                    <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballRed bg-red-50 px-3 py-1 rounded-full border border-red-200">The Philosophy</span>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight text-baseballBlue">
+                        Who Are the Most Complete Baseball Athletes in the World?
+                    </h2>
+                    <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
+                        Different baseball nations shine in diverse fields of play. Some countries may dominate the explosive strength and towering high-arc launch of our power events. Others might demonstrate precision and extreme strategic glove coordination to secure fielding crowns.
+                    </p>
+                    
+                    <!-- Asymmetric Features Grid -->
+                    <div class="space-y-4 pt-4">
+                        <div class="flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-full bg-baseballRed/10 text-baseballRed flex items-center justify-center font-bold font-sport shrink-0 mt-1">✓</div>
+                            <div>
+                                <h4 class="font-sport font-bold text-lg text-baseballBlue">Power Dominance</h4>
+                                <p class="text-xs sm:text-sm text-slate-600">Nations specializing in extreme home run power and line drive launching mechanisms.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-full bg-blue-600/10 text-blue-600 flex items-center justify-center font-bold font-sport shrink-0 mt-1">✓</div>
+                            <div>
+                                <h4 class="font-sport font-bold text-lg text-baseballBlue">Fielding & Glove-Work</h4>
+                                <p class="text-xs sm:text-sm text-slate-600">Isolating glove work and throw precision metrics normally blended into nine innings.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-full bg-green-600/10 text-green-600 flex items-center justify-center font-bold font-sport shrink-0 mt-1">✓</div>
+                            <div>
+                                <h4 class="font-sport font-bold text-lg text-baseballBlue">Unified Medal System</h4>
+                                <p class="text-xs sm:text-sm text-slate-600">Every single individual medal counts equally to determine overall national standings for the Diamond Cup.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 8: REPRESENTATION & VISION -->
+    <section class="py-24 bg-gradient-to-b from-slate-900 via-baseballBlue to-[#030a13] text-white relative">
+        <div class="absolute inset-x-0 bottom-0 h-1 bg-baseballRed"></div>
+        
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-8">
+            <span class="text-xs font-bold font-sport uppercase tracking-widest text-baseballGold">The Grand Vision</span>
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-sport font-black tracking-tight leading-tight max-w-3xl mx-auto">
+                A Global Celebration of Every Aspect of the Game
+            </h2>
+            <p class="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+                The World Baseball Games is envisioned as baseball's ultimate global summit—a celebration of every skill that makes the sport unique. Rather than replacing traditional baseball, it complements it by creating an exciting international festival where the world's best players showcase their abilities across a diverse range of challenges.
+            </p>
+
+            <!-- Final Big CTA Card -->
+            <div class="bg-gradient-to-br from-[#12263f] to-[#0c1828] border border-white/10 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden group">
+                <!-- Stitches visual background inside card -->
+                <div class="absolute inset-0 opacity-10 baseball-stitches"></div>
+                
+                <div class="relative z-10 space-y-6">
+                    <h3 class="text-2xl sm:text-3xl font-sport font-black text-white">Join the Skill Revolution</h3>
+                    <p class="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto">
+                        Explore our live global performance matrix, compare national skill weights, and follow the championship journey. Represent your country. Master every skill.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
+                        <a href="#standings" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-baseballGold to-amber-500 hover:from-amber-400 hover:to-baseballGold text-slate-950 font-sport font-black tracking-wider text-sm sm:text-base shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all">
+                            LAUNCH SCOREBOARD NOW
+                        </a>
+                        <a href="#categories" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-sport font-bold border border-white/15 transition-all">
+                            SEE EVENT DETAILS
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- PREMIUM FOOTER -->
+    <footer class="bg-slate-950 text-slate-400 pt-20 pb-12 border-t border-white/10 relative overflow-hidden">
+        <div class="absolute -bottom-36 -right-36 w-96 h-96 bg-baseballRed/5 rounded-full filter blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            
+            <!-- Category Spotlight Quick-Bar -->
+            <div class="border-b border-white/10 pb-12 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 text-center md:text-left">
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-baseballRed/30 transition-all group">
+                        <span class="text-3xl block mb-2 group-hover:scale-110 transition-transform">⚾</span>
+                        <h4 class="font-sport font-bold text-white text-sm">HITTING</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">6 dynamic events targeting power, swing-arc, and strike depth accuracy.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-blue-500/30 transition-all group">
+                        <span class="text-3xl block mb-2 group-hover:scale-110 transition-transform">🎯</span>
+                        <h4 class="font-sport font-bold text-white text-sm">PITCHING</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">6 challenges evaluating micro bullpen spots, break angles, and late drift.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-amber-500/30 transition-all group">
+                        <span class="text-3xl block mb-2 group-hover:scale-110 transition-transform">🧤</span>
+                        <h4 class="font-sport font-bold text-white text-sm">FIELDING</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">6 events scoring grab reflexes, barehand scoops, and pivot transitions.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-green-500/30 transition-all group">
+                        <span class="text-3xl block mb-2 group-hover:scale-110 transition-transform">💪</span>
+                        <h4 class="font-sport font-bold text-white text-sm">THROWING</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">6 laser-guided distance tests, catcher snaps, and precision bullpen hits.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/30 transition-all group">
+                        <span class="text-3xl block mb-2 group-hover:scale-110 transition-transform">⚡</span>
+                        <h4 class="font-sport font-bold text-white text-sm">RUNNING</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">6 speed metrics tracing laser-activated base runs and stealing sprints.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Footer Links Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16">
+                
+                <!-- Col 1: Brand Pitch & Meta -->
+                <div class="md:col-span-4 space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-baseballRed text-white w-8 h-8 rounded-full flex items-center justify-center font-sport font-black text-sm">
+                            ⚾
+                        </div>
+                        <span class="font-sport font-black text-white text-lg tracking-wider">WORLD BASEBALL GAMES</span>
+                    </div>
+                    <p class="text-xs leading-relaxed text-slate-400">
+                        The ultimate international skills tournament isolating, measuring, and ranking baseball abilities on a global, world-class scale. Master every discipline to claim the Diamond Cup.
+                    </p>
+                    <div class="pt-2">
+                        <span class="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Championship Partners</span>
+                        <div class="flex items-center gap-4 text-slate-500 text-lg">
+                            <i class="fa-solid fa-ranking-star hover:text-white transition-colors cursor-help" title="Global Stats Alliance"></i>
+                            <i class="fa-solid fa-radar hover:text-white transition-colors cursor-help" title="Precision Radar Systems"></i>
+                            <i class="fa-solid fa-trophy hover:text-white transition-colors cursor-help" title="Diamond Cup Committee"></i>
+                            <i class="fa-solid fa-globe hover:text-white transition-colors cursor-help" title="International Athletics Network"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Col 2: Skill Divisions -->
+                <div class="md:col-span-2">
+                    <h4 class="font-sport font-bold text-white uppercase text-xs tracking-wider mb-4 border-l-2 border-baseballRed pl-3">Skill Divisions</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="#categories" class="hover:text-baseballGold hover:underline transition-all">⚾ Hitting Zone</a></li>
+                        <li><a href="#categories" class="hover:text-baseballGold hover:underline transition-all">🎯 Pitching Spotlights</a></li>
+                        <li><a href="#categories" class="hover:text-baseballGold hover:underline transition-all">🧤 Fielding Tactics</a></li>
+                        <li><a href="#categories" class="hover:text-baseballGold hover:underline transition-all">💪 Throwing Metrics</a></li>
+                        <li><a href="#categories" class="hover:text-baseballGold hover:underline transition-all">⚡ Running Agility</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Tournament -->
+                <div class="md:col-span-2">
+                    <h4 class="font-sport font-bold text-white uppercase text-xs tracking-wider mb-4 border-l-2 border-blue-500 pl-3">Tournament</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="#about" class="hover:text-baseballGold hover:underline transition-all">Event Overview</a></li>
+                        <li><a href="#scoring-system" class="hover:text-baseballGold hover:underline transition-all">Official Points Scale</a></li>
+                        <li><a href="#standings" class="hover:text-baseballGold hover:underline transition-all">Global Standing Matrix</a></li>
+                        <li><a href="#philosophy" class="hover:text-baseballGold hover:underline transition-all">Philosophy Model</a></li>
+                        <li><a href="#" class="hover:text-baseballGold hover:underline transition-all">Championship Rules</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Newsletter Signup -->
+                <div class="md:col-span-4 space-y-4 bg-white/5 p-6 rounded-2xl border border-white/5">
+                    <h4 class="font-sport font-bold text-white uppercase text-xs tracking-wider">Stay Updated</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Subscribe to get official live event score alerts, schedule updates, and nation-point updates straight to your inbox.
+                    </p>
+                    <form class="flex gap-2" onsubmit="event.preventDefault();">
+                        <input type="email" placeholder="Your email address" class="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-baseballGold w-full">
+                        <button type="submit" class="bg-baseballRed hover:bg-red-600 text-white font-sport font-bold text-xs px-4 py-2 rounded-lg transition-colors whitespace-nowrap">Join Alerts</button>
+                    </form>
+                </div>
+
+            </div>
+
+            <hr class="border-white/10 my-8">
+
+            <!-- Sub Footer Credentials -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+                <p>&copy; 2026 World Baseball Games. All International Rights Reserved.</p>
+                <div class="flex gap-4">
+                    <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-twitter text-lg"></i></a>
+                    <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-instagram text-lg"></i></a>
+                    <a href="#" class="hover:text-white transition-colors"><i class="fa-brands fa-youtube text-lg"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS AND SIMULATOR LOGIC -->
+    <script>
+        // MOBILE MENU TOGGLE
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('menuIcon');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            } else {
+                menu.classList.add('hidden');
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            }
+        }
+
+        // SCROLL NAVBAR ANIMATION
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 50) {
+                header.classList.add('py-2', 'bg-baseballBlue/95', 'shadow-2xl');
+                header.classList.remove('py-4');
+            } else {
+                header.classList.remove('py-2', 'bg-baseballBlue/95', 'shadow-2xl');
+                header.classList.add('py-4');
+            }
+        });
+
+        /* ==========================================
+           DYNAMIC EVENTS DATABASE
+           ========================================== */
+        const eventCategories = {
+            hitting: {
+                title: "Hitting",
+                icon: "⚾",
+                colorClass: "baseballRed",
+                accentColor: "red-500",
+                events: [
+                    { name: "Hit Distance Spotfire", desc: "Pure raw power. Laser tracker calculates dynamic ball carry." },
+                    { name: "Hit Accuracy Zones", desc: "Placing blistering line-drives into specified field target pockets." },
+                    { name: "Home Run Derby Shootout", desc: "Timed battle to launch as many deep balls as possible into the stands." },
+                    { name: "Line Drive Arc Challenge", desc: "Keeping laser-guided balls beneath designated ceiling barriers." },
+                    { name: "Baseball Golf", desc: "Hitting balls precisely into custom target ground flags." },
+                    { name: "Keep Ball Airborne", desc: "Maintain multiple rapid popups in a single restricted circle." }
+                ]
+            },
+            pitching: {
+                title: "Pitching",
+                icon: "🎯",
+                colorClass: "blue-500",
+                accentColor: "blue-500",
+                events: [
+                    { name: "Micro Target Zones", desc: "Fastballs hitting specific micro-targets on strike zone configurations." },
+                    { name: "Velocity Radar Spotlight", desc: "Measuring peak throwing speed combined with target alignment parameters." },
+                    { name: "Off-speed Deception Battle", desc: "Deceiving digital batters through optimal spin rate and late break." },
+                    { name: "Pickoff Reaction Sprint", desc: "Fastest pickoff move simulation with electronic visual triggers." },
+                    { name: "Painted Black Challenge", desc: "Flick-pitching ball precisely onto outer edge lines of home plate." },
+                    { name: "Blind Target Curveballs", desc: "Pitching with partial visual occlusion to measure muscle memory." }
+                ]
+            },
+            fielding: {
+                title: "Fielding",
+                icon: "🧤",
+                colorClass: "amber-500",
+                accentColor: "amber-500",
+                events: [
+                    { name: "First Baseman Snags", desc: "Reaching bad throws, dynamic dirt scoops, and extreme stretching play captures." },
+                    { name: "Hot Corner Reflex Snaps", desc: "Testing reflex times on blistering line drives directed straight down the third base line." },
+                    { name: "Ground Ball Toss (60s)", desc: "A high-speed fielding simulation testing clean transitions and rapid tosses." },
+                    { name: "Double Play Pivot Speed", desc: "Testing second basemen pivoting and throwing speed over oncoming sliding models." },
+                    { name: "Wall Leaping Fly Catch", desc: "Outfield wall climbs with perfectly timed leap triggers." },
+                    { name: "Barehand Scoop Scurry", desc: "Slow rolling bunts charging and barehanding to execute dynamic throws." }
+                ]
+            },
+            throwing: {
+                title: "Throwing",
+                icon: "💪",
+                colorClass: "green-500",
+                accentColor: "green-500",
+                events: [
+                    { name: "Deep Outfield Laser Throw", desc: "Testing deep throws tracking directly to target home plate buckets with zero bounces." },
+                    { name: "Catcher Precision Targets", desc: "Throwing out potential runners from the squat position directly into tight visual targets." },
+                    { name: "Long Toss Distance Index", desc: "Pure raw arm endurance testing ultimate throwing length capability." },
+                    { name: "Upright Field Goal Challenge", desc: "Throwing from center field straight over high football uprights." },
+                    { name: "Precision Knockdown Wall", desc: "Knocking down sequential targets on a sensory wall layout." },
+                    { name: "Rapid Fire Bullseye Test", desc: "Delivering five throws to varied target zones under 10 seconds." }
+                ]
+            },
+            running: {
+                title: "Running",
+                icon: "⚡",
+                colorClass: "purple-500",
+                accentColor: "purple-500",
+                events: [
+                    { name: "First Base Laser Sprint", desc: "Laser-timed home to first base sprint challenge metrics." },
+                    { name: "Around the Bases Relay", desc: "4-man relay team track style sprint passing official batons." },
+                    { name: "Stolen Base Dash", desc: "Timed jump and slide metrics starting from first base to second base." },
+                    { name: "Outfield Gap Chase Down", desc: "Chasing deep fly balls in simulated deep left-center gap zone." },
+                    { name: "Base Running Zig-Zag", desc: "Testing cornering efficiency around bag notches using pressure sensors." },
+                    { name: "Obstacle Agility Circuit", desc: "Weaving through baseball drills while maintaining high velocity sprints." }
+                ]
+            }
+        };
+
+        // Render events and calculate counts dynamically
+        function initEventsSection() {
+            let totalEvents = 0;
+            const buttonsContainer = document.getElementById('tabButtonsContainer');
+            const contentPane = document.getElementById('tabContentPane');
+            
+            buttonsContainer.innerHTML = '';
+            contentPane.innerHTML = '';
+
+            const keys = Object.keys(eventCategories);
+
+            keys.forEach((key, idx) => {
+                const category = eventCategories[key];
+                totalEvents += category.events.length;
+
+                // Create Tab button
+                const btn = document.createElement('button');
+                btn.id = `btn-${key}`;
+                btn.className = `tab-btn px-6 py-3 rounded-xl font-sport font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-300 border-2 ${
+                    idx === 0 
+                    ? `bg-baseballRed border-baseballRed text-white shadow-lg shadow-baseballRed/20` 
+                    : `bg-slate-800 border-slate-700 text-slate-300 hover:border-baseballRed`
+                }`;
+                btn.onclick = () => switchTab(key);
+                btn.innerHTML = `<span>${category.icon}</span> ${category.title}`;
+                buttonsContainer.appendChild(btn);
+
+                // Create Tab Content Box
+                const contentDiv = document.createElement('div');
+                contentDiv.id = `tab-${key}`;
+                contentDiv.className = `tab-content transition-all duration-500 ${idx === 0 ? 'block' : 'hidden'}`;
+
+                // Build internal list of events
+                let eventsHtml = '';
+                category.events.forEach((ev, evIdx) => {
+                    eventsHtml += `
+                        <div class="bg-slate-950 p-5 rounded-xl border border-white/10 flex items-start gap-4">
+                            <span class="text-${category.accentColor} font-bold text-lg">${String(evIdx + 1).padStart(2, '0')}</span>
+                            <div>
+                                <h5 class="font-sport font-semibold text-white">${ev.name}</h5>
+                                <p class="text-xs text-slate-400 mt-1">${ev.desc}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                contentDiv.innerHTML = `
+                    <div class="bg-[#121f35] rounded-3xl p-6 sm:p-12 border border-${category.accentColor}/30 shadow-2xl">
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            <div class="lg:col-span-5 space-y-6">
+                                <div class="w-16 h-16 rounded-2xl bg-${category.accentColor}/25 flex items-center justify-center text-3xl">${category.icon}</div>
+                                <h3 class="text-3xl font-sport font-bold text-white">${category.icon} ${category.title} Events</h3>
+                                <p class="text-slate-300 text-sm sm:text-base">
+                                    These custom events isolate and celebrate elite abilities, direct control parameters, and supreme capabilities in the ${category.title} category.
+                                </p>
+                                <div class="flex items-center gap-4 bg-slate-900/60 p-4 rounded-xl border border-white/10">
+                                    <span class="text-baseballGold text-2xl">🏆</span>
+                                    <span class="text-xs sm:text-sm font-semibold text-slate-300">Every single point scored counts toward the overall championship Diamond Cup index!</span>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-7">
+                                <h4 class="font-sport font-bold uppercase tracking-wider text-slate-400 mb-4">Official ${category.title} List</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    ${eventsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                contentPane.appendChild(contentDiv);
+            });
+
+            // Update DOM headers and count fields dynamically
+            document.getElementById('totalEventsCount').innerText = totalEvents;
+            document.getElementById('heroEventCountBadge').innerText = `${totalEvents} Elite Events`;
+            document.getElementById('medalCardTotal').innerText = `${totalEvents * 3} Medals`;
+        }
+
+        // Switch Tabs logic
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(function(el) {
+                el.classList.add('hidden');
+            });
+            // Show active content
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            // Reset tab button states
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.className = "tab-btn px-6 py-3 rounded-xl font-sport font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-300 bg-slate-800 border-2 border-slate-700 text-slate-300 hover:border-baseballRed";
+            });
+
+            // Set active button styles dynamically based on category theme color
+            const activeBtn = document.getElementById('btn-' + tabId);
+            const category = eventCategories[tabId];
+            
+            activeBtn.className = `tab-btn px-6 py-3 rounded-xl font-sport font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-300 bg-${category.accentColor} border-2 border-${category.accentColor} text-white shadow-lg shadow-${category.accentColor}/20`;
+        }
+
+        /* ==========================================
+           32 Nations Dataset Setup
+           ========================================== */
+        const initialNationsData = [
+            { id: "usa", name: "United States", flag: "🇺🇸", weight: 96 },
+            { id: "japan", name: "Japan", flag: "🇯🇵", weight: 98 },
+            { id: "dom", name: "Dominican Rep.", flag: "🇩🇴", weight: 94 },
+            { id: "kor", name: "South Korea", flag: "🇰🇷", weight: 89 },
+            { id: "ven", name: "Venezuela", flag: "🇻🇪", weight: 88 },
+            { id: "mex", name: "Mexico", flag: "🇲🇽", weight: 86 },
+            { id: "cub", name: "Cuba", flag: "🇨🇺", weight: 87 },
+            { id: "pur", name: "Puerto Rico", flag: "🇵🇷", weight: 86 },
+            { id: "can", name: "Canada", flag: "🇨🇦", weight: 81 },
+            { id: "tpe", name: "Chinese Taipei", flag: "🇹🇼", weight: 84 },
+            { id: "ned", name: "Netherlands", flag: "🇳🇱", weight: 83 },
+            { id: "aus", name: "Australia", flag: "🇦🇺", weight: 79 },
+            { id: "pan", name: "Panama", flag: "🇵🇦", weight: 80 },
+            { id: "col", name: "Colombia", flag: "🇨🇴", weight: 78 },
+            { id: "ita", name: "Italy", flag: "🇮🇹", weight: 77 },
+            { id: "gbr", name: "Great Britain", flag: "🇬🇧", weight: 76 },
+            { id: "nic", name: "Nicaragua", flag: "🇳🇮", weight: 75 },
+            { id: "cze", name: "Czech Republic", flag: "🇨🇿", weight: 74 },
+            { id: "chn", name: "China", flag: "🇨🇳", weight: 73 },
+            { id: "isr", name: "Israel", flag: "🇮🇱", weight: 72 },
+            { id: "rsa", name: "South Africa", flag: "🇿🇦", weight: 71 },
+            { id: "esp", name: "Spain", flag: "🇪🇸", weight: 73 },
+            { id: "ger", name: "Germany", flag: "🇩🇪", weight: 70 },
+            { id: "bra", name: "Brazil", flag: "🇧🇷", weight: 72 },
+            { id: "nzl", name: "New Zealand", flag: "🇳🇿", weight: 69 },
+            { id: "phl", name: "Philippines", flag: "🇵🇭", weight: 68 },
+            { id: "cur", name: "Curacao", flag: "🇨🇼", weight: 82 },
+            { id: "bah", name: "Bahamas", flag: "🇧🇸", weight: 75 },
+            { id: "fra", name: "France", flag: "🇫🇷", weight: 67 },
+            { id: "swe", name: "Sweden", flag: "🇸🇪", weight: 65 },
+            { id: "arg", name: "Argentina", flag: "🇦🇷", weight: 66 },
+            { id: "bel", name: "Belgium", flag: "🇧🇪", weight: 64 }
+        ];
+
+        // Format raw baseline structure
+        let nations = initialNationsData.map(d => ({
+            id: d.id,
+            name: d.name,
+            flag: d.flag,
+            weight: d.weight,
+            hitting: 0,
+            pitching: 0,
+            fielding: 0,
+            throwing: 0,
+            running: 0,
+            gold: 0,
+            silver: 0,
+            bronze: 0,
+            totalPoints: 0,
+            totalMedals: 0
+        }));
+
+        // Dynamic event statuses (Total 30 events, 6 per category - ALL fully completed)
+        const categoriesList = ["hitting", "pitching", "fielding", "throwing", "running"];
+        const baseEventStatuses = {
+            hitting: [true, true, true, true, true, true],
+            pitching: [true, true, true, true, true, true],
+            fielding: [true, true, true, true, true, true],
+            throwing: [true, true, true, true, true, true],
+            running: [true, true, true, true, true, true]
+        };
+
+        // Active mutable status tracker
+        let currentEventStatuses = JSON.parse(JSON.stringify(baseEventStatuses));
+
+        // Points Distribution Scale
+        const pointsScale = [20000, 17500, 15000, 12500, 10000, 7500, 5000, 3000, 2000, 1000];
+
+        // Global sorting parameters state
+        let currentSortKey = "totalPoints";
+        let isAscending = false;
+
+        // Safe number format helper
+        function formatVal(val) {
+            return Number(val).toLocaleString();
+        }
+
+        // Mathematical Simulation Algorithm with deterministic seeding
+        function calculateAndApplySimulation() {
+            // Reset points and medals
+            nations.forEach(n => {
+                n.hitting = 0;
+                n.pitching = 0;
+                n.fielding = 0;
+                n.throwing = 0;
+                n.running = 0;
+                n.gold = 0;
+                n.silver = 0;
+                n.bronze = 0;
+                n.totalPoints = 0;
+                n.totalMedals = 0;
+            });
+
+            // Deterministic pseudo-random seed generator
+            let seed = 1337;
+            function getSeededRandom() {
+                var x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            }
+
+            // Distribute points deterministically for completed events
+            categoriesList.forEach(cat => {
+                const statuses = currentEventStatuses[cat];
+                statuses.forEach((isCompleted) => {
+                    if (!isCompleted) return; // skip if unplayed
+
+                    // Clone list to draw candidates
+                    let candidates = [...nations];
+                    let eventWinners = [];
+
+                    // Draw 10 distinct positions based on weight distributions
+                    for (let step = 0; step < 10; step++) {
+                        let totalWeight = candidates.reduce((sum, c) => sum + c.weight, 0);
+                        let randVal = getSeededRandom() * totalWeight;
+                        let accumSum = 0;
+                        let selectedIdx = 0;
+
+                        for (let i = 0; i < candidates.length; i++) {
+                            accumSum += candidates[i].weight;
+                            if (randVal <= accumSum) {
+                                selectedIdx = i;
+                                break;
+                            }
+                        }
+
+                        // Save designated nation profile
+                        const chosen = candidates[selectedIdx];
+                        // Save index references back to the main nations array
+                        const targetNation = nations.find(n => n.id === chosen.id);
+                        eventWinners.push(targetNation);
+
+                        // Eliminate from current selection round
+                        candidates.splice(selectedIdx, 1);
+                    }
+
+                    // Apply Points and Medal indices
+                    eventWinners.forEach((nation, rankIdx) => {
+                        const scorePoints = pointsScale[rankIdx];
+                        nation[cat] += scorePoints;
+
+                        if (rankIdx === 0) nation.gold += 1;
+                        else if (rankIdx === 1) nation.silver += 1;
+                        else if (rankIdx === 2) nation.bronze += 1;
+                    });
+                });
+            });
+
+            // Calculate aggregate scores
+            nations.forEach(n => {
+                n.totalPoints = n.hitting + n.pitching + n.fielding + n.throwing + n.running;
+                n.totalMedals = n.gold + n.silver + n.bronze;
+            });
+
+            // Trigger dynamic awards updates and leaderboard display update
+            updateDynamicAwards();
+            calculateStandings();
+        }
+
+        // Determine category leaders and populate the individual awards section
+        function updateDynamicAwards() {
+            const categories = ["hitting", "pitching", "fielding", "throwing", "running"];
+            categories.forEach(cat => {
+                // Find the maximum points holder in this category
+                const sorted = [...nations].sort((a, b) => b[cat] - a[cat]);
+                const leader = sorted[0];
+
+                const winnerEl = document.getElementById(`award-${cat}-winner`);
+                const pointsEl = document.getElementById(`award-${cat}-points`);
+
+                if (winnerEl && pointsEl) {
+                    winnerEl.innerHTML = `${leader.name} ${leader.flag}`;
+                    pointsEl.innerHTML = `${formatVal(leader[cat])} pts total`;
+                }
+            });
+        }
+
+        // Render performance matrix table dynamically
+        function initMatrixTable() {
+            const tbody = document.getElementById('matrixTableBody');
+            tbody.innerHTML = '';
+
+            nations.forEach((nation, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/5 transition-colors border-b border-white/5";
+                tr.innerHTML = `
+                    <!-- Country Info -->
+                    <td class="py-3 px-3 flex items-center gap-3 sticky left-0 bg-[#061427] z-10 sm:bg-transparent">
+                        <span class="text-slate-400 font-mono text-xs w-5 text-center">${idx + 1}</span>
+                        <span class="text-xl">${nation.flag}</span>
+                        <span class="font-sport font-bold text-white tracking-wider text-xs sm:text-sm whitespace-nowrap">${nation.name}</span>
+                    </td>
+
+                    <!-- HITTING -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-slate-300">
+                        ${formatVal(nation.hitting)}
+                    </td>
+
+                    <!-- PITCHING -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-slate-300">
+                        ${formatVal(nation.pitching)}
+                    </td>
+
+                    <!-- FIELDING -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-slate-300">
+                        ${formatVal(nation.fielding)}
+                    </td>
+
+                    <!-- THROWING -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-slate-300">
+                        ${formatVal(nation.throwing)}
+                    </td>
+
+                    <!-- RUNNING -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-slate-300">
+                        ${formatVal(nation.running)}
+                    </td>
+
+                    <!-- TOTAL POINTS -->
+                    <td class="py-3 px-2 text-center bg-amber-500/5 border-x border-white/5 font-mono font-bold text-baseballGold text-xs sm:text-sm">
+                        ${formatVal(nation.totalPoints)}
+                    </td>
+
+                    <!-- GOLD MEDALS -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-amber-300 font-bold">
+                        ${nation.gold}
+                    </td>
+
+                    <!-- SILVER MEDALS -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-slate-300">
+                        ${nation.silver}
+                    </td>
+
+                    <!-- BRONZE MEDALS -->
+                    <td class="py-3 px-2 text-center font-mono text-xs sm:text-sm text-amber-600">
+                        ${nation.bronze}
+                    </td>
+
+                    <!-- TOTAL MEDALS -->
+                    <td class="py-3 px-2 text-center bg-blue-500/5 border-l border-white/5 font-mono font-bold text-blue-300 text-xs sm:text-sm">
+                        ${nation.totalMedals}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Live calculation engine based on state
+        function calculateStandings() {
+            // Perform sorting based on currentSortKey & isAscending direction using strict numeric values
+            nations.sort((a, b) => {
+                let valA = Number(a[currentSortKey]) || 0;
+                let valB = Number(b[currentSortKey]) || 0;
+                
+                if (valA !== valB) {
+                    return isAscending ? (valA - valB) : (valB - valA);
+                }
+                
+                // Fallback tie-breaker: sort by country name alphabetically
+                return a.name.localeCompare(b.name);
+            });
+
+            // Re-render table elements
+            initMatrixTable();
+
+            // Clone and sort specifically by total score points descending for the Showcase badge
+            const overallRanked = [...nations].sort((a, b) => b.totalPoints - a.totalPoints);
+
+            // Update top country champion spotlight box info
+            const leader = overallRanked[0];
+            document.getElementById('leaderName').innerHTML = `${leader.name} ${leader.flag}`;
+            document.getElementById('leaderPoints').innerText = `${formatVal(leader.totalPoints)} pts`;
+
+            // Populate the full statistics grid in the Champion Showcase block
+            document.getElementById('stat-hitting').innerText = formatVal(leader.hitting);
+            document.getElementById('stat-pitching').innerText = formatVal(leader.pitching);
+            document.getElementById('stat-fielding').innerText = formatVal(leader.fielding);
+            document.getElementById('stat-throwing').innerText = formatVal(leader.throwing);
+            document.getElementById('stat-running').innerText = formatVal(leader.running);
+            document.getElementById('stat-gold').innerText = leader.gold;
+            document.getElementById('stat-silver').innerText = leader.silver;
+            document.getElementById('stat-bronze').innerText = leader.bronze;
+            document.getElementById('stat-totalMedals').innerText = leader.totalMedals;
+
+            // Update sorting arrows indicators on table headers
+            updateHeaderIcons();
+        }
+
+        // Toggle Sorting State on Header click
+        function handleHeaderSort(columnKey) {
+            if (currentSortKey === columnKey) {
+                // Toggle direction
+                isAscending = !isAscending;
+            } else {
+                // Switch column, default to descending
+                currentSortKey = columnKey;
+                isAscending = false;
+            }
+
+            // Human readable feedback update
+            const readableNames = {
+                hitting: "Hitting Points",
+                pitching: "Pitching Points",
+                fielding: "Fielding Points",
+                throwing: "Throwing Points",
+                running: "Running Points",
+                totalPoints: "Total Pts",
+                gold: "Gold Medals",
+                silver: "Silver Medals",
+                bronze: "Bronze Medals",
+                totalMedals: "Total Medals"
+            };
+            const dirLabel = isAscending ? "Low to High" : "High to Low";
+            document.getElementById('sortFeedback').innerText = `Sorted by: ${readableNames[columnKey]} (${dirLabel})`;
+
+            calculateStandings();
+        }
+
+        // Reset and Update Header Sort Arrows
+        function updateHeaderIcons() {
+            const keys = ['hitting', 'pitching', 'fielding', 'throwing', 'running', 'totalPoints', 'gold', 'silver', 'bronze', 'totalMedals'];
+            keys.forEach(key => {
+                const element = document.getElementById(`sortIcon-${key}`);
+                if (element) {
+                    if (key === currentSortKey) {
+                        element.innerText = isAscending ? "▲" : "▼";
+                        element.className = "text-baseballRed font-black ml-1";
+                    } else {
+                        element.innerText = "⇅";
+                        element.className = "text-slate-500 ml-1 group-hover:text-baseballGold transition-colors";
+                    }
+                }
+            });
+        }
+
+        // Initialize Page Modules on Load
+        window.onload = function() {
+            initEventsSection();
+            calculateAndApplySimulation(); // Run and calculate absolute scoreboard
+        }
+    </script>
+</body>
+</html>
