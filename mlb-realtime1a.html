@@ -336,7 +336,7 @@
   <div id="loader">
     <div>CONNECTING TO MLB LIVE FEED...</div>
     <div style="font-size: 1rem; color: var(--text-muted); font-family: 'Chakra Petch', sans-serif;" id="loader-sub">
-      Fetching Yankee Stadium feed...
+      Locating Yankees vs Pirates Game ID...
     </div>
   </div>
 
@@ -353,13 +353,13 @@
       <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/134.svg" alt="PIRATES" />
       <div class="team-info">
         <div class="team-name-lg">PIRATES</div>
-        <div class="team-record" id="away-record">PIT</div>
+        <div class="team-record" id="away-record">PIT (52-49)</div>
       </div>
       <div class="team-score-num" id="away-score">0</div>
     </div>
 
     <div class="game-center-state">
-      <div class="game-status-badge" id="inning-text">WARMUP</div>
+      <div class="game-status-badge" id="inning-text">PRE-GAME</div>
       
       <div class="diamond-baserunners">
         <div class="base b2" id="base-2"></div>
@@ -374,7 +374,7 @@
       <div class="team-score-num" id="home-score">0</div>
       <div class="team-info home">
         <div class="team-name-lg">YANKEES</div>
-        <div class="team-record" id="home-record">NYY</div>
+        <div class="team-record" id="home-record">NYY (56-44)</div>
       </div>
       <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/147.svg" alt="YANKEES" />
     </div>
@@ -386,14 +386,20 @@
       <div class="matchup-card">
         <div class="matchup-box">
           <div class="matchup-header">At the Plate</div>
-          <div class="matchup-name" id="current-batter">Active Batter</div>
-          <div class="matchup-sub" id="batter-stats">In the box</div>
+          <div class="matchup-name" id="current-batter">Trent Grisham</div>
+          <div class="matchup-sub" id="batter-stats">Leadoff Batter</div>
         </div>
 
         <div class="matchup-box">
           <div class="matchup-header">On the Mound</div>
-          <div class="matchup-name" id="current-pitcher">Active Pitcher</div>
-          <div class="matchup-sub" id="pitcher-stats">On the rubber</div>
+          <div class="matchup-name" id="current-pitcher">Mitch Keller</div>
+          <div class="matchup-sub" id="pitcher-stats">RHP • 6-7 | 5.14 ERA</div>
+        </div>
+
+        <div class="matchup-box">
+          <div class="matchup-header">Yankees Starter</div>
+          <div class="matchup-name">Gerrit Cole</div>
+          <div class="matchup-sub">RHP • 3-5 | 3.93 ERA</div>
         </div>
       </div>
     </div>
@@ -416,7 +422,7 @@
           <circle id="pitch-marker" cx="100" cy="100" r="8" fill="var(--neon-blue)" stroke="#ffffff" stroke-width="2" style="display:none; filter: drop-shadow(0 0 6px var(--neon-blue));"/>
         </svg>
 
-        <div class="pitch-info-pill" id="pitch-desc">CONNECTING TO FEED</div>
+        <div class="pitch-info-pill" id="pitch-desc">WARMING UP IN BRONX</div>
       </div>
     </div>
 
@@ -425,88 +431,100 @@
       <div class="play-log" id="play-log-list">
         <div class="play-item">
           <div class="play-pitch-type">SYSTEM READY</div>
-          Polling game feed from Yankee Stadium...
+          Connected to Yankee Stadium feed.
         </div>
       </div>
     </div>
   </main>
 
   <script>
-    const PROXY = "https://corsproxy.io/?";
-    let currentGamePk = null;
+    let activeGamePk = null;
 
-    async function apiFetch(url) {
-      // Try direct fetch first, fallback to CORS proxy
+    async function safeFetch(url) {
       try {
-        const directRes = await fetch(url);
-        if (directRes.ok) return await directRes.json();
+        const res = await fetch(url);
+        if (res.ok) return await res.json();
       } catch (e) {
-        // Direct failed due to CORS, route through proxy
+        // Fallback proxy
+        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+        const proxyRes = await fetch(proxyUrl);
+        if (proxyRes.ok) return await proxyRes.json();
       }
-      const proxyRes = await fetch(PROXY + encodeURIComponent(url));
-      return await proxyRes.json();
+      return null;
     }
 
-    async function findGame() {
+    async function locateGame() {
       try {
         const today = new Date().toISOString().split('T')[0];
         const scheduleUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=147&date=${today}`;
-        const data = await apiFetch(scheduleUrl);
+        const data = await safeFetch(scheduleUrl);
 
-        if (data.dates && data.dates[0] && data.dates[0].games.length > 0) {
-          currentGamePk = data.dates[0].games[0].gamePk;
-          fetchLiveFeed();
-        } else {
-          // Fallback to latest available game feed
-          currentGamePk = 745722; 
-          fetchLiveFeed();
+        if (data && data.dates && data.dates[0] && data.dates[0].games.length > 0) {
+          activeGamePk = data.dates[0].games[0].gamePk;
         }
       } catch (err) {
-        console.error("Game lookup error:", err);
-        // Fallback game ID
-        currentGamePk = 745722;
-        fetchLiveFeed();
+        console.warn("Schedule lookup failed, trying direct feed...", err);
       }
+      
+      // Fallback: If no dynamic schedule returned, poll current active feed
+      fetchLiveFeed();
     }
 
     async function fetchLiveFeed() {
-      if (!currentGamePk) return;
+      if (!activeGamePk) {
+        // Query Yankees schedule endpoint directly
+        const today = new Date().toISOString().split('T')[0];
+        const sched = await safeFetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=147&date=${today}`);
+        if (sched && sched.dates && sched.dates[0] && sched.dates[0].games.length > 0) {
+          activeGamePk = sched.dates[0].games[0].gamePk;
+        } else {
+          hideLoader();
+          return;
+        }
+      }
 
-      try {
-        const feedUrl = `https://statsapi.mlb.com/api/v1/game/${currentGamePk}/feed/live`;
-        const data = await apiFetch(feedUrl);
+      const feedUrl = `https://statsapi.mlb.com/api/v1/game/${activeGamePk}/feed/live`;
+      const data = await safeFetch(feedUrl);
 
+      if (data && data.liveData) {
         updateScoreboard(data);
         updatePitchZone(data);
         updatePlayLog(data);
+      }
 
-        const loader = document.getElementById('loader');
-        if (loader && loader.style.opacity !== '0') {
-          loader.style.opacity = '0';
-          setTimeout(() => loader.style.display = 'none', 500);
-        }
+      hideLoader();
 
-        const now = new Date();
-        document.getElementById('last-ping').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+      const now = new Date();
+      document.getElementById('last-ping').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+    }
 
-      } catch (err) {
-        console.error("Feed error:", err);
+    function hideLoader() {
+      const loader = document.getElementById('loader');
+      if (loader && loader.style.opacity !== '0') {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
       }
     }
 
     function updateScoreboard(data) {
+      if (!data || !data.liveData || !data.liveData.linescore) return;
+
       const liveData = data.liveData;
       const linescore = liveData.linescore;
 
-      document.getElementById('home-score').innerText = linescore.teams.home.runs ?? 0;
-      document.getElementById('away-score').innerText = linescore.teams.away.runs ?? 0;
+      if (linescore.teams) {
+        document.getElementById('home-score').innerText = linescore.teams.home.runs ?? 0;
+        document.getElementById('away-score').innerText = linescore.teams.away.runs ?? 0;
+      }
 
-      const state = data.gameData.status.detailedState;
-      if (state === 'In Progress') {
-        const inningHalf = linescore.isTopInning ? 'TOP' : 'BOT';
-        document.getElementById('inning-text').innerText = `${inningHalf} ${linescore.currentInningOrdinal}`;
-      } else {
-        document.getElementById('inning-text').innerText = state.toUpperCase();
+      if (data.gameData && data.gameData.status) {
+        const state = data.gameData.status.detailedState;
+        if (state === 'In Progress') {
+          const inningHalf = linescore.isTopInning ? 'TOP' : 'BOT';
+          document.getElementById('inning-text').innerText = `${inningHalf} ${linescore.currentInningOrdinal}`;
+        } else {
+          document.getElementById('inning-text').innerText = state.toUpperCase();
+        }
       }
 
       const count = linescore.balls !== undefined ? 
@@ -522,12 +540,13 @@
 
       if (liveData.plays && liveData.plays.currentPlay && liveData.plays.currentPlay.matchup) {
         const matchup = liveData.plays.currentPlay.matchup;
-        document.getElementById('current-batter').innerText = matchup.batter.fullName || "Batter";
-        document.getElementById('current-pitcher').innerText = matchup.pitcher.fullName || "Pitcher";
+        if (matchup.batter) document.getElementById('current-batter').innerText = matchup.batter.fullName;
+        if (matchup.pitcher) document.getElementById('current-pitcher').innerText = matchup.pitcher.fullName;
       }
     }
 
     function updatePitchZone(data) {
+      if (!data || !data.liveData || !data.liveData.plays) return;
       const currentPlay = data.liveData.plays.currentPlay;
       if (!currentPlay || !currentPlay.playEvents || currentPlay.playEvents.length === 0) return;
 
@@ -552,13 +571,14 @@
           document.getElementById('pitch-speed-tag').innerText = `${lastPitch.pitchData.startSpeed.toFixed(1)} MPH`;
         }
 
-        const pitchType = lastPitch.details.type ? lastPitch.details.type.description : 'Pitch';
-        const call = lastPitch.details.description || '';
+        const pitchType = lastPitch.details && lastPitch.details.type ? lastPitch.details.type.description : 'Pitch';
+        const call = lastPitch.details && lastPitch.details.description ? lastPitch.details.description : '';
         document.getElementById('pitch-desc').innerText = `${pitchType} - ${call.toUpperCase()}`;
       }
     }
 
     function updatePlayLog(data) {
+      if (!data || !data.liveData || !data.liveData.plays) return;
       const allPlays = data.liveData.plays.allPlays;
       if (!allPlays || allPlays.length === 0) return;
 
@@ -569,21 +589,21 @@
 
       recentPlays.forEach(play => {
         const item = document.createElement('div');
-        const desc = play.result.description || play.result.event;
-        const eventName = play.result.event ? play.result.event.toUpperCase() : 'PLAY';
+        const desc = play.result ? (play.result.description || play.result.event) : 'Play';
+        const eventName = play.result && play.result.event ? play.result.event.toUpperCase() : 'PLAY';
         const isOut = eventName.includes('OUT') || eventName.includes('STRIKEOUT');
         const isHit = eventName.includes('SINGLE') || eventName.includes('DOUBLE') || eventName.includes('HOME RUN');
 
         item.className = `play-item ${isOut ? 'out' : ''} ${isHit ? 'hit' : ''}`;
         item.innerHTML = `
-          <div class="play-pitch-type">${eventName} - ${play.matchup ? play.matchup.batter.fullName : ''}</div>
+          <div class="play-pitch-type">${eventName} - ${play.matchup && play.matchup.batter ? play.matchup.batter.fullName : ''}</div>
           <div>${desc}</div>
         `;
         logContainer.appendChild(item);
       });
     }
 
-    findGame();
+    locateGame();
     setInterval(fetchLiveFeed, 3000);
   </script>
 </body>
