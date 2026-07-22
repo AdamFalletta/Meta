@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yankees vs Pirates - Live Gameday</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #05080c;
+      --panel-bg: rgba(12, 17, 28, 0.95);
+      --border-color: rgba(255, 255, 255, 0.15);
+      --neon-blue: #00d2ff;
+      --neon-red: #ff2a5f;
+      --gold-accent: #ffb703;
+      --text-main: #ffffff;
+      --text-muted: #8e9bb0;
+      --font-shadow: 0px 2px 4px rgba(0, 0, 0, 0.9);
+      --nyy-navy: #001c43;
+      --pit-gold: #fdb827;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #111827 0%, var(--bg-dark) 85%);
+      color: var(--text-main);
+      font-family: 'Chakra Petch', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5vw;
+      background: linear-gradient(90deg, rgba(0, 210, 255, 0.12), rgba(255, 42, 95, 0.12));
+      border-bottom: 2px solid var(--border-color);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+      height: 7vh;
+    }
+
+    .brand-title {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(2rem, 4vh, 3.5rem);
+      line-height: 1;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ffffff, var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: var(--font-shadow);
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 1.5vw;
+      font-size: clamp(0.75rem, 1.2vh, 1rem);
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+      display: inline-block;
+      margin-right: 6px;
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Scoreboard Banner */
+    .scoreboard-banner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 10px 2vw;
+      background: rgba(12, 17, 28, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      height: 14vh;
+      flex-shrink: 0;
+    }
+
+    .team-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .team-block.home {
+      justify-content: flex-end;
+    }
+
+    .team-logo-lg {
+      width: clamp(45px, 7vh, 70px);
+      height: clamp(45px, 7vh, 70px);
+      object-fit: contain;
+      filter: drop-shadow(0 0 8px rgba(0,0,0,0.8));
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .team-info.home { text-align: right; }
+
+    .team-name-lg {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(1.8rem, 3.5vh, 2.8rem);
+      line-height: 0.9;
+      text-transform: uppercase;
+    }
+
+    .team-record {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .team-score-num {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(2.8rem, 6vh, 4.5rem);
+      font-weight: 700;
+      padding: 0 15px;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(255,255,255,0.4);
+    }
+
+    .game-center-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 180px;
+    }
+
+    .game-status-badge {
+      font-family: 'Teko', sans-serif;
+      font-size: 1.4rem;
+      color: var(--gold-accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .diamond-baserunners {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      margin: 4px 0;
+    }
+
+    .base {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transform: rotate(45deg);
+    }
+
+    .base.active {
+      background: var(--gold-accent);
+      box-shadow: 0 0 8px var(--gold-accent);
+    }
+
+    .base.b1 { right: 2px; top: 14px; }
+    .base.b2 { left: 14px; top: 2px; }
+    .base.b3 { left: 2px; top: 14px; }
+
+    .game-count {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Main Grid Layout */
+    main {
+      flex: 1;
+      padding: 0.5vh 0.5vw;
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      gap: 0.5vw;
+      height: 79vh;
+      width: 100vw;
+    }
+
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.8vh 0.8vw;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--gold-accent), var(--neon-red));
+      z-index: 7;
+    }
+
+    .card-title {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(1.5rem, 2.8vh, 2.2rem);
+      line-height: 1;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 0.4vh;
+      margin-bottom: 0.5vh;
+      color: #ffffff;
+      text-shadow: var(--font-shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Center Section: Live Pitch Zone & At-Bat Summary */
+    .pitch-zone-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: rgba(5, 8, 12, 0.6);
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    svg.strikezone-svg {
+      width: 100%;
+      max-width: 260px;
+      height: 260px;
+    }
+
+    .pitch-info-pill {
+      margin-top: 8px;
+      padding: 6px 14px;
+      background: rgba(0, 210, 255, 0.15);
+      border: 1px solid var(--neon-blue);
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    /* Play-by-Play Pitch Feed Scroll */
+    .play-log {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+      margin-top: 8px;
+    }
+
+    .play-log::-webkit-scrollbar { width: 4px; }
+    .play-log::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+
+    .play-item {
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--neon-blue);
+      border-radius: 3px;
+      font-size: 0.85rem;
+      line-height: 1.3;
+    }
+
+    .play-item.out { border-left-color: var(--neon-red); }
+    .play-item.hit { border-left-color: #10b981; }
+
+    .play-pitch-type {
+      font-weight: 700;
+      color: var(--gold-accent);
+      margin-bottom: 2px;
+    }
+
+    /* Side Panels: Lineups & Matchup Stats */
+    .matchup-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .matchup-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .matchup-header {
+      font-family: 'Teko', sans-serif;
+      font-size: 1.3rem;
+      color: var(--neon-blue);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .matchup-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .matchup-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Teko', sans-serif;
+      font-size: 2.8rem;
+      color: var(--neon-blue);
+      z-index: 99;
+      transition: opacity 0.5s ease;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loader">
+    <div>CONNECTING TO YANKEE STADIUM LIVE FEED...</div>
+    <div style="font-size: 1rem; color: var(--text-muted); font-family: 'Chakra Petch', sans-serif;" id="loader-sub">
+      Polling MLB Stats API for Game 1...
+    </div>
+  </div>
+
+  <header>
+    <div class="brand-title">MLB LIVE GAMEDAY</div>
+    <div class="status-bar">
+      <div><span class="pulse-dot"></span>LIVE FEED</div>
+      <div id="game-date">JULY 22, 2026</div>
+      <div id="last-ping">SYNC: --:--</div>
+    </div>
+  </header>
+
+  <!-- Live Scoreboard Header -->
+  <div class="scoreboard-banner">
+    <!-- Away: Pirates -->
+    <div class="team-block away">
+      <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/134.svg" alt="PIRATES" />
+      <div class="team-info">
+        <div class="team-name-lg">PIRATES</div>
+        <div class="team-record" id="away-record">52-49</div>
+      </div>
+      <div class="team-score-num" id="away-score">0</div>
+    </div>
+
+    <!-- Center: Inning / Count / Bases -->
+    <div class="game-center-state">
+      <div class="game-status-badge" id="inning-text">1:05 PM ET</div>
+      
+      <div class="diamond-baserunners">
+        <div class="base b2" id="base-2"></div>
+        <div class="base b3" id="base-3"></div>
+        <div class="base b1" id="base-1"></div>
+      </div>
+
+      <div class="game-count" id="count-text">B: 0 | S: 0 | O: 0</div>
+    </div>
+
+    <!-- Home: Yankees -->
+    <div class="team-block home">
+      <div class="team-score-num" id="home-score">0</div>
+      <div class="team-info home">
+        <div class="team-name-lg">YANKEES</div>
+        <div class="team-record" id="home-record">56-44</div>
+      </div>
+      <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/147.svg" alt="YANKEES" />
+    </div>
+  </div>
+
+  <main>
+    <!-- Left Column: Matchup & Probables -->
+    <div class="card">
+      <div class="card-title">
+        <span>MATCHUP INFO</span>
+      </div>
+      <div class="matchup-card">
+        <div class="matchup-box">
+          <div class="matchup-header">At the Plate</div>
+          <div class="matchup-name" id="current-batter">Waiting for First Pitch...</div>
+          <div class="matchup-sub" id="batter-stats">Lineup Position #1</div>
+        </div>
+
+        <div class="matchup-box">
+          <div class="matchup-header">On the Mound</div>
+          <div class="matchup-name" id="current-pitcher">Gerrit Cole (NYY)</div>
+          <div class="matchup-sub" id="pitcher-stats">RHP • 3-5 | 3.93 ERA</div>
+        </div>
+
+        <div class="matchup-box">
+          <div class="matchup-header">Opposing Starter</div>
+          <div class="matchup-name">Mitch Keller (PIT)</div>
+          <div class="matchup-sub">RHP • 6-7 | 5.14 ERA</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Column: Strike Zone & Pitch Locator -->
+    <div class="card">
+      <div class="card-title">
+        <span>PITCH LOCATOR & STRIKE ZONE</span>
+        <span id="pitch-speed-tag" style="font-size: 1rem; color: var(--gold-accent);">-- MPH</span>
+      </div>
+      
+      <div class="pitch-zone-container">
+        <svg class="strikezone-svg" viewBox="0 0 200 200">
+          <!-- Home Plate -->
+          <polygon points="70,180 130,180 130,190 100,200 70,190" fill="#ffffff" opacity="0.8"/>
+          
+          <!-- Outer Strike Zone Box -->
+          <rect x="50" y="40" width="100" height="120" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+          
+          <!-- Inner 3x3 Grid Lines -->
+          <line x1="83.3" y1="40" x2="83.3" y2="160" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <line x1="116.6" y1="40" x2="116.6" y2="160" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <line x1="50" y1="80" x2="150" y2="80" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <line x1="50" y1="120" x2="150" y2="120" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+          <!-- Pitch Location Circle -->
+          <circle id="pitch-marker" cx="100" cy="100" r="8" fill="var(--neon-blue)" stroke="#ffffff" stroke-width="2" style="display:none; filter: drop-shadow(0 0 6px var(--neon-blue));"/>
+        </svg>
+
+        <div class="pitch-info-pill" id="pitch-desc">WARMING UP IN THE BRONX</div>
+      </div>
+    </div>
+
+    <!-- Right Column: Live Play-by-Play Feed -->
+    <div class="card">
+      <div class="card-title">
+        <span>PLAY-BY-PLAY FEED</span>
+      </div>
+      <div class="play-log" id="play-log-list">
+        <div class="play-item">
+          <div class="play-pitch-type">GAME PREVIEW</div>
+          Game 1 of Doubleheader scheduled for 1:05 PM EST at Yankee Stadium.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentGamePk = null;
+
+    async function findYankeesGame() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=147&date=${today}`);
+        const data = await res.json();
+
+        if (data.dates && data.dates[0] && data.dates[0].games.length > 0) {
+          // Select Game 1 or active game
+          const game = data.dates[0].games[0];
+          currentGamePk = game.gamePk;
+          fetchLiveFeed();
+        } else {
+          document.getElementById('pitch-desc').innerText = "NO GAME SCHEDULED TODAY";
+        }
+      } catch (err) {
+        console.error("Schedule error:", err);
+      }
+    }
+
+    async function fetchLiveFeed() {
+      if (!currentGamePk) return;
+
+      try {
+        const res = await fetch(`https://statsapi.mlb.com/api/v1/game/${currentGamePk}/feed/live`);
+        const data = await res.json();
+
+        updateScoreboard(data);
+        updatePitchZone(data);
+        updatePlayLog(data);
+
+        // Hide Loader
+        const loader = document.getElementById('loader');
+        if (loader && loader.style.opacity !== '0') {
+          loader.style.opacity = '0';
+          setTimeout(() => loader.style.display = 'none', 500);
+        }
+
+        const now = new Date();
+        document.getElementById('last-ping').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+
+      } catch (err) {
+        console.error("Live feed fetch error:", err);
+      }
+    }
+
+    function updateScoreboard(data) {
+      const liveData = data.liveData;
+      const linescore = liveData.linescore;
+
+      // Scores
+      document.getElementById('home-score').innerText = linescore.teams.home.runs ?? 0;
+      document.getElementById('away-score').innerText = linescore.teams.away.runs ?? 0;
+
+      // Inning / Status
+      const state = data.gameData.status.detailedState;
+      if (state === 'In Progress') {
+        const inningHalf = linescore.isTopInning ? 'TOP' : 'BOT';
+        document.getElementById('inning-text').innerText = `${inningHalf} ${linescore.currentInningOrdinal}`;
+      } else {
+        document.getElementById('inning-text').innerText = state.toUpperCase();
+      }
+
+      // Count
+      const count = linescore.balls !== undefined ? 
+        `B: ${linescore.balls} | S: ${linescore.strikes} | O: ${linescore.outs}` : 
+        `B: 0 | S: 0 | O: 0`;
+      document.getElementById('count-text').innerText = count;
+
+      // Baserunners
+      document.getElementById('base-1').classList.toggle('active', !!linescore.offense.first);
+      document.getElementById('base-2').classList.toggle('active', !!linescore.offense.second);
+      document.getElementById('base-3').classList.toggle('active', !!linescore.offense.third);
+
+      // Current Batter & Pitcher
+      if (liveData.plays.currentPlay) {
+        const play = liveData.plays.currentPlay;
+        if (play.matchup) {
+          document.getElementById('current-batter').innerText = play.matchup.batter.fullName;
+          document.getElementById('current-pitcher').innerText = `${play.matchup.pitcher.fullName} (${play.matchup.pitchHand.code})`;
+        }
+      }
+    }
+
+    function updatePitchZone(data) {
+      const currentPlay = data.liveData.plays.currentPlay;
+      if (!currentPlay || !currentPlay.playEvents || currentPlay.playEvents.length === 0) return;
+
+      const pitches = currentPlay.playEvents.filter(e => e.isPitch);
+      if (pitches.length === 0) return;
+
+      const lastPitch = pitches[pitches.length - 1];
+      
+      if (lastPitch.pitchData && lastPitch.pitchData.coordinates) {
+        const pX = lastPitch.pitchData.coordinates.pX; // Feet from center plate
+        const pZ = lastPitch.pitchData.coordinates.pZ; // Height in feet
+
+        // Map pitch coordinates to 200x200 SVG canvas (Strike zone x:50-150, y:40-160)
+        const svgX = 100 + (pX * 45); 
+        const svgY = 160 - ((pZ - 1.5) * 40);
+
+        const marker = document.getElementById('pitch-marker');
+        marker.setAttribute('cx', Math.max(20, Math.min(180, svgX)));
+        marker.setAttribute('cy', Math.max(20, Math.min(180, svgY)));
+        marker.style.display = 'block';
+
+        if (lastPitch.pitchData.startSpeed) {
+          document.getElementById('pitch-speed-tag').innerText = `${lastPitch.pitchData.startSpeed.toFixed(1)} MPH`;
+        }
+
+        const pitchType = lastPitch.details.type ? lastPitch.details.type.description : 'Pitch';
+        const call = lastPitch.details.description || '';
+        document.getElementById('pitch-desc').innerText = `${pitchType} - ${call.toUpperCase()}`;
+      }
+    }
+
+    function updatePlayLog(data) {
+      const allPlays = data.liveData.plays.allPlays;
+      if (!allPlays || allPlays.length === 0) return;
+
+      const logContainer = document.getElementById('play-log-list');
+      logContainer.innerHTML = '';
+
+      // Render last 10 plays in reverse order
+      const recentPlays = allPlays.slice(-10).reverse();
+
+      recentPlays.forEach(play => {
+        const item = document.createElement('div');
+        const isOut = play.result.event.toLowerCase().includes('out') || play.result.event.toLowerCase().includes('strikeout');
+        const isHit = play.result.event.toLowerCase().includes('single') || play.result.event.toLowerCase().includes('double') || play.result.event.toLowerCase().includes('home run');
+
+        item.className = `play-item ${isOut ? 'out' : ''} ${isHit ? 'hit' : ''}`;
+        item.innerHTML = `
+          <div class="play-pitch-type">${play.result.event.toUpperCase()} - ${play.matchup.batter.fullName}</div>
+          <div>${play.result.description}</div>
+        `;
+        logContainer.appendChild(item);
+      });
+    }
+
+    // Polling setup: Poll live feed every 3 seconds
+    findYankeesGame();
+    setInterval(fetchLiveFeed, 3000);
+  </script>
+</body>
+</html>
