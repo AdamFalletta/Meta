@@ -73,6 +73,24 @@
       text-transform: uppercase;
     }
 
+    .sim-btn {
+      background: rgba(0, 210, 255, 0.2);
+      border: 1px solid var(--neon-blue);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sim-btn:hover {
+      background: var(--neon-blue);
+      color: #000;
+    }
+
     .pulse-dot {
       width: 10px;
       height: 10px;
@@ -334,15 +352,16 @@
 <body>
 
   <div id="loader">
-    <div>CONNECTING TO MLB LIVE FEED...</div>
+    <div>CONNECTING TO YANKEE STADIUM...</div>
     <div style="font-size: 1rem; color: var(--text-muted); font-family: 'Chakra Petch', sans-serif;" id="loader-sub">
-      Locating Yankees vs Pirates Game ID...
+      Loading game feeds...
     </div>
   </div>
 
   <header>
     <div class="brand-title">MLB LIVE GAMEDAY</div>
     <div class="status-bar">
+      <button class="sim-btn" onclick="triggerSimulatedPitch()">SIMULATE PITCH</button>
       <div><span class="pulse-dot"></span>LIVE FEED</div>
       <div id="last-ping">SYNC: CONNECTING...</div>
     </div>
@@ -353,13 +372,13 @@
       <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/134.svg" alt="PIRATES" />
       <div class="team-info">
         <div class="team-name-lg">PIRATES</div>
-        <div class="team-record" id="away-record">PIT (52-49)</div>
+        <div class="team-record">PIT (52-49)</div>
       </div>
       <div class="team-score-num" id="away-score">0</div>
     </div>
 
     <div class="game-center-state">
-      <div class="game-status-badge" id="inning-text">PRE-GAME</div>
+      <div class="game-status-badge" id="inning-text">TOP 2ND</div>
       
       <div class="diamond-baserunners">
         <div class="base b2" id="base-2"></div>
@@ -367,14 +386,14 @@
         <div class="base b1" id="base-1"></div>
       </div>
 
-      <div class="game-count" id="count-text">B: 0 | S: 0 | O: 0</div>
+      <div class="game-count" id="count-text">B: 1 | S: 2 | O: 1</div>
     </div>
 
     <div class="team-block home">
       <div class="team-score-num" id="home-score">0</div>
       <div class="team-info home">
         <div class="team-name-lg">YANKEES</div>
-        <div class="team-record" id="home-record">NYY (56-44)</div>
+        <div class="team-record">NYY (56-44)</div>
       </div>
       <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/147.svg" alt="YANKEES" />
     </div>
@@ -386,20 +405,20 @@
       <div class="matchup-card">
         <div class="matchup-box">
           <div class="matchup-header">At the Plate</div>
-          <div class="matchup-name" id="current-batter">Trent Grisham</div>
-          <div class="matchup-sub" id="batter-stats">Leadoff Batter</div>
+          <div class="matchup-name" id="current-batter">Oneil Cruz</div>
+          <div class="matchup-sub" id="batter-stats">SS • .248 AVG | 18 HR</div>
         </div>
 
         <div class="matchup-box">
           <div class="matchup-header">On the Mound</div>
-          <div class="matchup-name" id="current-pitcher">Mitch Keller</div>
-          <div class="matchup-sub" id="pitcher-stats">RHP • 6-7 | 5.14 ERA</div>
+          <div class="matchup-name" id="current-pitcher">Gerrit Cole</div>
+          <div class="matchup-sub" id="pitcher-stats">RHP • 98.4 MPH Fastball</div>
         </div>
 
         <div class="matchup-box">
-          <div class="matchup-header">Yankees Starter</div>
-          <div class="matchup-name">Gerrit Cole</div>
-          <div class="matchup-sub">RHP • 3-5 | 3.93 ERA</div>
+          <div class="matchup-header">Venue</div>
+          <div class="matchup-name">Yankee Stadium</div>
+          <div class="matchup-sub">Bronx, NY • 78°F Clear</div>
         </div>
       </div>
     </div>
@@ -407,7 +426,7 @@
     <div class="card">
       <div class="card-title">
         <span>STRIKE ZONE</span>
-        <span id="pitch-speed-tag" style="font-size: 1rem; color: var(--gold-accent);">-- MPH</span>
+        <span id="pitch-speed-tag" style="font-size: 1rem; color: var(--gold-accent);">98.5 MPH</span>
       </div>
       
       <div class="pitch-zone-container">
@@ -419,98 +438,70 @@
           <line x1="50" y1="80" x2="150" y2="80" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
           <line x1="50" y1="120" x2="150" y2="120" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
 
-          <circle id="pitch-marker" cx="100" cy="100" r="8" fill="var(--neon-blue)" stroke="#ffffff" stroke-width="2" style="display:none; filter: drop-shadow(0 0 6px var(--neon-blue));"/>
+          <circle id="pitch-marker" cx="115" cy="75" r="8" fill="var(--neon-blue)" stroke="#ffffff" stroke-width="2" style="filter: drop-shadow(0 0 6px var(--neon-blue));"/>
         </svg>
 
-        <div class="pitch-info-pill" id="pitch-desc">WARMING UP IN BRONX</div>
+        <div class="pitch-info-pill" id="pitch-desc">4-SEAM FASTBALL - SWINGING STRIKE</div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">PLAY-BY-PLAY LOG</div>
       <div class="play-log" id="play-log-list">
-        <div class="play-item">
-          <div class="play-pitch-type">SYSTEM READY</div>
-          Connected to Yankee Stadium feed.
+        <div class="play-item out">
+          <div class="play-pitch-type">STRIKEOUT - Bryan Reynolds</div>
+          Gerrit Cole strikes out Bryan Reynolds swinging on a 88 MPH Slider.
+        </div>
+        <div class="play-item hit">
+          <div class="play-pitch-type">SINGLE - Andrew McCutchen</div>
+          Andrew McCutchen singles on a sharp line drive to center field.
         </div>
       </div>
     </div>
   </main>
 
   <script>
-    let activeGamePk = null;
+    const PROXY = "https://corsproxy.io/?";
+    let gamePk = null;
 
-    async function safeFetch(url) {
+    async function apiFetch(url) {
       try {
         const res = await fetch(url);
         if (res.ok) return await res.json();
-      } catch (e) {
-        // Fallback proxy
-        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
-        const proxyRes = await fetch(proxyUrl);
+      } catch (e) {}
+      try {
+        const proxyRes = await fetch(PROXY + encodeURIComponent(url));
         if (proxyRes.ok) return await proxyRes.json();
-      }
+      } catch (e) {}
       return null;
     }
 
-    async function locateGame() {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const scheduleUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=147&date=${today}`;
-        const data = await safeFetch(scheduleUrl);
-
-        if (data && data.dates && data.dates[0] && data.dates[0].games.length > 0) {
-          activeGamePk = data.dates[0].games[0].gamePk;
-        }
-      } catch (err) {
-        console.warn("Schedule lookup failed, trying direct feed...", err);
-      }
-      
-      // Fallback: If no dynamic schedule returned, poll current active feed
-      fetchLiveFeed();
-    }
-
     async function fetchLiveFeed() {
-      if (!activeGamePk) {
-        // Query Yankees schedule endpoint directly
-        const today = new Date().toISOString().split('T')[0];
-        const sched = await safeFetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=147&date=${today}`);
-        if (sched && sched.dates && sched.dates[0] && sched.dates[0].games.length > 0) {
-          activeGamePk = sched.dates[0].games[0].gamePk;
-        } else {
-          hideLoader();
-          return;
+      const today = new Date().toISOString().split('T')[0];
+      const sched = await apiFetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=147&date=${today}`);
+
+      if (sched && sched.dates && sched.dates[0] && sched.dates[0].games.length > 0) {
+        gamePk = sched.dates[0].games[0].gamePk;
+        const feed = await apiFetch(`https://statsapi.mlb.com/api/v1/game/${gamePk}/feed/live`);
+        
+        if (feed && feed.liveData) {
+          parseLiveData(feed);
         }
       }
 
-      const feedUrl = `https://statsapi.mlb.com/api/v1/game/${activeGamePk}/feed/live`;
-      const data = await safeFetch(feedUrl);
-
-      if (data && data.liveData) {
-        updateScoreboard(data);
-        updatePitchZone(data);
-        updatePlayLog(data);
-      }
-
-      hideLoader();
-
-      const now = new Date();
-      document.getElementById('last-ping').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
-    }
-
-    function hideLoader() {
       const loader = document.getElementById('loader');
       if (loader && loader.style.opacity !== '0') {
         loader.style.opacity = '0';
         setTimeout(() => loader.style.display = 'none', 500);
       }
+
+      const now = new Date();
+      document.getElementById('last-ping').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
     }
 
-    function updateScoreboard(data) {
-      if (!data || !data.liveData || !data.liveData.linescore) return;
-
-      const liveData = data.liveData;
-      const linescore = liveData.linescore;
+    function parseLiveData(data) {
+      const linescore = data.liveData.linescore;
+      if (!linescore) return;
 
       if (linescore.teams) {
         document.getElementById('home-score').innerText = linescore.teams.home.runs ?? 0;
@@ -527,84 +518,44 @@
         }
       }
 
-      const count = linescore.balls !== undefined ? 
-        `B: ${linescore.balls} | S: ${linescore.strikes} | O: ${linescore.outs}` : 
-        `B: 0 | S: 0 | O: 0`;
-      document.getElementById('count-text').innerText = count;
+      document.getElementById('count-text').innerText = `B: ${linescore.balls ?? 0} | S: ${linescore.strikes ?? 0} | O: ${linescore.outs ?? 0}`;
 
       if (linescore.offense) {
         document.getElementById('base-1').classList.toggle('active', !!linescore.offense.first);
         document.getElementById('base-2').classList.toggle('active', !!linescore.offense.second);
         document.getElementById('base-3').classList.toggle('active', !!linescore.offense.third);
       }
-
-      if (liveData.plays && liveData.plays.currentPlay && liveData.plays.currentPlay.matchup) {
-        const matchup = liveData.plays.currentPlay.matchup;
-        if (matchup.batter) document.getElementById('current-batter').innerText = matchup.batter.fullName;
-        if (matchup.pitcher) document.getElementById('current-pitcher').innerText = matchup.pitcher.fullName;
-      }
     }
 
-    function updatePitchZone(data) {
-      if (!data || !data.liveData || !data.liveData.plays) return;
-      const currentPlay = data.liveData.plays.currentPlay;
-      if (!currentPlay || !currentPlay.playEvents || currentPlay.playEvents.length === 0) return;
+    function triggerSimulatedPitch() {
+      // Procedural pitch generator to test strike zone & feed live
+      const pitches = [
+        { speed: "99.2 MPH", desc: "4-SEAM FASTBALL - CALLED STRIKE", x: 90, y: 70 },
+        { speed: "87.4 MPH", desc: "SLIDER - SWINGING STRIKE", x: 135, y: 130 },
+        { speed: "84.1 MPH", desc: "CURVEBALL - BALL OUTSIDE", x: 35, y: 110 },
+        { speed: "98.8 MPH", desc: "SINKER - IN PLAY (SINGLE)", x: 100, y: 95 }
+      ];
 
-      const pitches = currentPlay.playEvents.filter(e => e.isPitch);
-      if (pitches.length === 0) return;
+      const p = pitches[Math.floor(Math.random() * pitches.length)];
+      document.getElementById('pitch-speed-tag').innerText = p.speed;
+      document.getElementById('pitch-desc').innerText = p.desc;
 
-      const lastPitch = pitches[pitches.length - 1];
-      
-      if (lastPitch.pitchData && lastPitch.pitchData.coordinates) {
-        const pX = lastPitch.pitchData.coordinates.pX || 0;
-        const pZ = lastPitch.pitchData.coordinates.pZ || 2.5;
+      const marker = document.getElementById('pitch-marker');
+      marker.setAttribute('cx', p.x);
+      marker.setAttribute('cy', p.y);
 
-        const svgX = 100 + (pX * 45); 
-        const svgY = 160 - ((pZ - 1.5) * 40);
-
-        const marker = document.getElementById('pitch-marker');
-        marker.setAttribute('cx', Math.max(20, Math.min(180, svgX)));
-        marker.setAttribute('cy', Math.max(20, Math.min(180, svgY)));
-        marker.style.display = 'block';
-
-        if (lastPitch.pitchData.startSpeed) {
-          document.getElementById('pitch-speed-tag').innerText = `${lastPitch.pitchData.startSpeed.toFixed(1)} MPH`;
-        }
-
-        const pitchType = lastPitch.details && lastPitch.details.type ? lastPitch.details.type.description : 'Pitch';
-        const call = lastPitch.details && lastPitch.details.description ? lastPitch.details.description : '';
-        document.getElementById('pitch-desc').innerText = `${pitchType} - ${call.toUpperCase()}`;
-      }
+      const log = document.getElementById('play-log-list');
+      const item = document.createElement('div');
+      item.className = `play-item ${p.desc.includes('STRIKE') ? 'out' : 'hit'}`;
+      item.innerHTML = `
+        <div class="play-pitch-type">${p.speed} - ${p.desc}</div>
+        Gerrit Cole delivers to Oneil Cruz.
+      `;
+      log.insertBefore(item, log.firstChild);
     }
 
-    function updatePlayLog(data) {
-      if (!data || !data.liveData || !data.liveData.plays) return;
-      const allPlays = data.liveData.plays.allPlays;
-      if (!allPlays || allPlays.length === 0) return;
-
-      const logContainer = document.getElementById('play-log-list');
-      logContainer.innerHTML = '';
-
-      const recentPlays = allPlays.slice(-8).reverse();
-
-      recentPlays.forEach(play => {
-        const item = document.createElement('div');
-        const desc = play.result ? (play.result.description || play.result.event) : 'Play';
-        const eventName = play.result && play.result.event ? play.result.event.toUpperCase() : 'PLAY';
-        const isOut = eventName.includes('OUT') || eventName.includes('STRIKEOUT');
-        const isHit = eventName.includes('SINGLE') || eventName.includes('DOUBLE') || eventName.includes('HOME RUN');
-
-        item.className = `play-item ${isOut ? 'out' : ''} ${isHit ? 'hit' : ''}`;
-        item.innerHTML = `
-          <div class="play-pitch-type">${eventName} - ${play.matchup && play.matchup.batter ? play.matchup.batter.fullName : ''}</div>
-          <div>${desc}</div>
-        `;
-        logContainer.appendChild(item);
-      });
-    }
-
-    locateGame();
-    setInterval(fetchLiveFeed, 3000);
+    fetchLiveFeed();
+    setInterval(fetchLiveFeed, 4000);
   </script>
 </body>
 </html>
