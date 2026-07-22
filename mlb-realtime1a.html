@@ -22,11 +22,7 @@
       --font-shadow: 0px 2px 4px rgba(0, 0, 0, 0.9);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: radial-gradient(circle at 50% 20%, #111827 0%, var(--bg-dark) 85%);
@@ -46,21 +42,18 @@
       padding: 0 1.5vw;
       background: linear-gradient(90deg, rgba(0, 210, 255, 0.12), rgba(255, 42, 95, 0.12));
       border-bottom: 2px solid var(--border-color);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-      flex-shrink: 0;
       height: 7vh;
+      flex-shrink: 0;
     }
 
     .brand-title {
       font-family: 'Teko', sans-serif;
       font-size: clamp(2rem, 4vh, 3.5rem);
       line-height: 1;
-      letter-spacing: 1px;
       text-transform: uppercase;
       background: linear-gradient(90deg, #ffffff, var(--neon-blue));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: var(--font-shadow);
     }
 
     .status-bar {
@@ -70,30 +63,10 @@
       font-size: clamp(0.75rem, 1.2vh, 1rem);
       color: var(--text-muted);
       font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .sim-btn {
-      background: rgba(0, 210, 255, 0.2);
-      border: 1px solid var(--neon-blue);
-      color: #fff;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-family: 'Chakra Petch', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .sim-btn:hover {
-      background: var(--neon-blue);
-      color: #000;
     }
 
     .pulse-dot {
-      width: 10px;
-      height: 10px;
+      width: 10px; height: 10px;
       background-color: #10b981;
       border-radius: 50%;
       box-shadow: 0 0 10px #10b981;
@@ -115,32 +88,11 @@
       flex-shrink: 0;
     }
 
-    .team-block {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .team-block { display: flex; align-items: center; gap: 12px; }
     .team-block.home { justify-content: flex-end; }
 
-    .team-logo-lg {
-      width: clamp(45px, 7vh, 70px);
-      height: clamp(45px, 7vh, 70px);
-      object-fit: contain;
-      filter: drop-shadow(0 0 8px rgba(0,0,0,0.8));
-    }
-
-    .team-info { display: flex; flex-direction: column; }
-    .team-info.home { text-align: right; }
-
-    .team-name-lg {
-      font-family: 'Teko', sans-serif;
-      font-size: clamp(1.8rem, 3.5vh, 2.8rem);
-      line-height: 0.9;
-      text-transform: uppercase;
-    }
-
-    .team-record { font-size: 0.85rem; color: var(--text-muted); }
+    .team-logo-lg { width: clamp(45px, 7vh, 70px); height: clamp(45px, 7vh, 70px); object-fit: contain; }
+    .team-name-lg { font-family: 'Teko', sans-serif; font-size: clamp(1.8rem, 3.5vh, 2.8rem); line-height: 0.9; }
 
     .team-score-num {
       font-family: 'Teko', sans-serif;
@@ -148,7 +100,6 @@
       font-weight: 700;
       padding: 0 15px;
       color: #ffffff;
-      text-shadow: 0 0 12px rgba(255,255,255,0.4);
     }
 
     .game-center-state {
@@ -156,47 +107,24 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-width: 180px;
     }
 
-    .game-status-badge {
-      font-family: 'Teko', sans-serif;
-      font-size: 1.4rem;
-      color: var(--gold-accent);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
+    .game-status-badge { font-family: 'Teko', sans-serif; font-size: 1.4rem; color: var(--gold-accent); }
 
-    .diamond-baserunners {
-      position: relative;
-      width: 40px;
-      height: 40px;
-      margin: 4px 0;
-    }
+    .diamond-baserunners { position: relative; width: 40px; height: 40px; margin: 4px 0; }
 
     .base {
       position: absolute;
-      width: 12px;
-      height: 12px;
+      width: 12px; height: 12px;
       background: rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.6);
       transform: rotate(45deg);
     }
 
-    .base.active {
-      background: var(--gold-accent);
-      box-shadow: 0 0 8px var(--gold-accent);
-    }
-
+    .base.active { background: var(--gold-accent); box-shadow: 0 0 8px var(--gold-accent); }
     .base.b1 { right: 2px; top: 14px; }
     .base.b2 { left: 14px; top: 2px; }
     .base.b3 { left: 2px; top: 14px; }
-
-    .game-count {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
 
     main {
       flex: 1;
@@ -205,7 +133,6 @@
       grid-template-columns: 320px 1fr 340px;
       gap: 0.5vw;
       height: 79vh;
-      width: 100vw;
     }
 
     .card {
@@ -213,37 +140,20 @@
       border: 1px solid var(--border-color);
       border-radius: 6px;
       padding: 0.8vh 0.8vw;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
       position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--neon-blue), var(--gold-accent), var(--neon-red));
-      z-index: 7;
     }
 
     .card-title {
       font-family: 'Teko', sans-serif;
       font-size: clamp(1.5rem, 2.8vh, 2.2rem);
-      line-height: 1;
-      letter-spacing: 1px;
-      text-transform: uppercase;
       border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       padding-bottom: 0.4vh;
       margin-bottom: 0.5vh;
       color: #ffffff;
-      text-shadow: var(--font-shadow);
       display: flex;
       justify-content: space-between;
-      align-items: center;
     }
 
     .pitch-zone-container {
@@ -252,17 +162,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      position: relative;
       background: rgba(5, 8, 12, 0.6);
       border-radius: 4px;
       padding: 10px;
     }
 
-    svg.strikezone-svg {
-      width: 100%;
-      max-width: 260px;
-      height: 260px;
-    }
+    svg.strikezone-svg { width: 100%; max-width: 260px; height: 260px; }
 
     .pitch-info-pill {
       margin-top: 8px;
@@ -272,8 +177,6 @@
       border-radius: 20px;
       font-size: 0.95rem;
       font-weight: 700;
-      color: #ffffff;
-      text-align: center;
     }
 
     .play-log {
@@ -282,62 +185,19 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      padding-right: 4px;
-      margin-top: 8px;
     }
-
-    .play-log::-webkit-scrollbar { width: 4px; }
-    .play-log::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
 
     .play-item {
       padding: 8px;
       background: rgba(255, 255, 255, 0.04);
       border-left: 3px solid var(--neon-blue);
-      border-radius: 3px;
       font-size: 0.85rem;
-      line-height: 1.3;
     }
-
-    .play-item.out { border-left-color: var(--neon-red); }
-    .play-item.hit { border-left-color: #10b981; }
-
-    .play-pitch-type {
-      font-weight: 700;
-      color: var(--gold-accent);
-      margin-bottom: 2px;
-    }
-
-    .matchup-card {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      flex: 1;
-    }
-
-    .matchup-box {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 10px;
-      border-radius: 4px;
-    }
-
-    .matchup-header {
-      font-family: 'Teko', sans-serif;
-      font-size: 1.3rem;
-      color: var(--neon-blue);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .matchup-name { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
-    .matchup-sub { font-size: 0.82rem; color: var(--text-muted); }
 
     #loader {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: var(--bg-dark);
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
       font-family: 'Teko', sans-serif;
@@ -345,80 +205,62 @@
       color: var(--neon-blue);
       z-index: 99;
       transition: opacity 0.5s ease;
-      gap: 10px;
     }
   </style>
 </head>
 <body>
 
-  <div id="loader">
-    <div>CONNECTING TO YANKEE STADIUM...</div>
-    <div style="font-size: 1rem; color: var(--text-muted); font-family: 'Chakra Petch', sans-serif;" id="loader-sub">
-      Loading game feeds...
-    </div>
-  </div>
+  <div id="loader">POLLING LIVE MLB FEED...</div>
 
   <header>
     <div class="brand-title">MLB LIVE GAMEDAY</div>
     <div class="status-bar">
-      <button class="sim-btn" onclick="triggerSimulatedPitch()">SIMULATE PITCH</button>
-      <div><span class="pulse-dot"></span>LIVE FEED</div>
-      <div id="last-ping">SYNC: CONNECTING...</div>
+      <div><span class="pulse-dot"></span>LIVE CONNECTION</div>
+      <div id="last-ping">SYNC: --:--</div>
     </div>
   </header>
 
   <div class="scoreboard-banner">
     <div class="team-block away">
-      <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/134.svg" alt="PIRATES" />
+      <img class="team-logo-lg" id="away-logo" src="https://www.mlbstatic.com/team-logos/134.svg" alt="" />
       <div class="team-info">
-        <div class="team-name-lg">PIRATES</div>
-        <div class="team-record">PIT (52-49)</div>
+        <div class="team-name-lg" id="away-name">PIRATES</div>
       </div>
       <div class="team-score-num" id="away-score">0</div>
     </div>
 
     <div class="game-center-state">
-      <div class="game-status-badge" id="inning-text">TOP 2ND</div>
-      
+      <div class="game-status-badge" id="inning-text">7:05 PM ET</div>
       <div class="diamond-baserunners">
         <div class="base b2" id="base-2"></div>
         <div class="base b3" id="base-3"></div>
         <div class="base b1" id="base-1"></div>
       </div>
-
-      <div class="game-count" id="count-text">B: 1 | S: 2 | O: 1</div>
+      <div class="game-count" id="count-text">B: 0 | S: 0 | O: 0</div>
     </div>
 
     <div class="team-block home">
       <div class="team-score-num" id="home-score">0</div>
       <div class="team-info home">
-        <div class="team-name-lg">YANKEES</div>
-        <div class="team-record">NYY (56-44)</div>
+        <div class="team-name-lg" id="home-name">YANKEES</div>
       </div>
-      <img class="team-logo-lg" src="https://www.mlbstatic.com/team-logos/147.svg" alt="YANKEES" />
+      <img class="team-logo-lg" id="home-logo" src="https://www.mlbstatic.com/team-logos/147.svg" alt="" />
     </div>
   </div>
 
   <main>
     <div class="card">
-      <div class="card-title">MATCHUP INFO</div>
-      <div class="matchup-card">
-        <div class="matchup-box">
-          <div class="matchup-header">At the Plate</div>
-          <div class="matchup-name" id="current-batter">Oneil Cruz</div>
-          <div class="matchup-sub" id="batter-stats">SS • .248 AVG | 18 HR</div>
+      <div class="card-title">PROBABLE PITCHERS</div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <div style="color:var(--neon-blue); font-weight:700;">YANKEES STARTER</div>
+          <div style="font-size:1.1rem; font-weight:700;">Gerrit Cole (RHP)</div>
+          <div style="font-size:0.85rem; color:var(--text-muted);">3-5 | 3.93 ERA | 77 SO</div>
         </div>
-
-        <div class="matchup-box">
-          <div class="matchup-header">On the Mound</div>
-          <div class="matchup-name" id="current-pitcher">Gerrit Cole</div>
-          <div class="matchup-sub" id="pitcher-stats">RHP • 98.4 MPH Fastball</div>
-        </div>
-
-        <div class="matchup-box">
-          <div class="matchup-header">Venue</div>
-          <div class="matchup-name">Yankee Stadium</div>
-          <div class="matchup-sub">Bronx, NY • 78°F Clear</div>
+        <div>
+          <div style="color:var(--neon-blue); font-weight:700;">PIRATES STARTER</div>
+          <div style="font-size:1.1rem; font-weight:700;">Mitch Keller (RHP)</div>
+          <div style="font-size:0.85rem; color:var(--text-muted);">6-7 | 5.14 ERA | 77 SO</div>
         </div>
       </div>
     </div>
@@ -426,7 +268,7 @@
     <div class="card">
       <div class="card-title">
         <span>STRIKE ZONE</span>
-        <span id="pitch-speed-tag" style="font-size: 1rem; color: var(--gold-accent);">98.5 MPH</span>
+        <span id="pitch-speed-tag" style="color: var(--gold-accent);">-- MPH</span>
       </div>
       
       <div class="pitch-zone-container">
@@ -438,124 +280,120 @@
           <line x1="50" y1="80" x2="150" y2="80" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
           <line x1="50" y1="120" x2="150" y2="120" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
 
-          <circle id="pitch-marker" cx="115" cy="75" r="8" fill="var(--neon-blue)" stroke="#ffffff" stroke-width="2" style="filter: drop-shadow(0 0 6px var(--neon-blue));"/>
+          <circle id="pitch-marker" cx="100" cy="100" r="8" fill="var(--neon-blue)" stroke="#ffffff" stroke-width="2" style="display:none;"/>
         </svg>
 
-        <div class="pitch-info-pill" id="pitch-desc">4-SEAM FASTBALL - SWINGING STRIKE</div>
+        <div class="pitch-info-pill" id="pitch-desc">PRE-GAME • YANKEESTADIUM</div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">PLAY-BY-PLAY LOG</div>
+      <div class="card-title">PLAY LOG</div>
       <div class="play-log" id="play-log-list">
-        <div class="play-item out">
-          <div class="play-pitch-type">STRIKEOUT - Bryan Reynolds</div>
-          Gerrit Cole strikes out Bryan Reynolds swinging on a 88 MPH Slider.
-        </div>
-        <div class="play-item hit">
-          <div class="play-pitch-type">SINGLE - Andrew McCutchen</div>
-          Andrew McCutchen singles on a sharp line drive to center field.
+        <div class="play-item">
+          <div style="font-weight:700; color:var(--gold-accent);">GAME PREVIEW</div>
+          Pirates (52-49) at Yankees (56-44) scheduled for 7:05 PM ET.
         </div>
       </div>
     </div>
   </main>
 
   <script>
-    const PROXY = "https://corsproxy.io/?";
-    let gamePk = null;
+    const GAME_PK = 823518;
 
-    async function apiFetch(url) {
+    async function pollGameFeed() {
       try {
-        const res = await fetch(url);
-        if (res.ok) return await res.json();
-      } catch (e) {}
-      try {
-        const proxyRes = await fetch(PROXY + encodeURIComponent(url));
-        if (proxyRes.ok) return await proxyRes.json();
-      } catch (e) {}
-      return null;
-    }
-
-    async function fetchLiveFeed() {
-      const today = new Date().toISOString().split('T')[0];
-      const sched = await apiFetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=147&date=${today}`);
-
-      if (sched && sched.dates && sched.dates[0] && sched.dates[0].games.length > 0) {
-        gamePk = sched.dates[0].games[0].gamePk;
-        const feed = await apiFetch(`https://statsapi.mlb.com/api/v1/game/${gamePk}/feed/live`);
+        // Hits v1.1 live endpoint directly
+        const res = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${GAME_PK}/feed/live`);
         
-        if (feed && feed.liveData) {
-          parseLiveData(feed);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.liveData) {
+            updateUI(data);
+          }
+        } else {
+          // Fallback to linescore endpoint if v1.1 live is pre-game
+          const lineRes = await fetch(`https://statsapi.mlb.com/api/v1/game/${GAME_PK}/linescore`);
+          if (lineRes.ok) {
+            const lineData = await lineRes.json();
+            updateLinescoreOnly(lineData);
+          }
         }
-      }
 
-      const loader = document.getElementById('loader');
-      if (loader && loader.style.opacity !== '0') {
-        loader.style.opacity = '0';
-        setTimeout(() => loader.style.display = 'none', 500);
-      }
+        const loader = document.getElementById('loader');
+        if (loader) {
+          loader.style.opacity = '0';
+          setTimeout(() => loader.style.display = 'none', 500);
+        }
 
-      const now = new Date();
-      document.getElementById('last-ping').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+        const now = new Date();
+        document.getElementById('last-ping').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+      } catch (err) {
+        console.error("Poll Error:", err);
+      }
     }
 
-    function parseLiveData(data) {
-      const linescore = data.liveData.linescore;
-      if (!linescore) return;
+    function updateLinescoreOnly(linescore) {
+      if (!linescore || !linescore.teams) return;
+      document.getElementById('home-score').innerText = linescore.teams.home.runs ?? 0;
+      document.getElementById('away-score').innerText = linescore.teams.away.runs ?? 0;
+      document.getElementById('count-text').innerText = `B: ${linescore.balls ?? 0} | S: ${linescore.strikes ?? 0} | O: ${linescore.outs ?? 0}`;
+    }
 
-      if (linescore.teams) {
+    function updateUI(data) {
+      const liveData = data.liveData;
+      const linescore = liveData.linescore;
+
+      if (linescore && linescore.teams) {
         document.getElementById('home-score').innerText = linescore.teams.home.runs ?? 0;
         document.getElementById('away-score').innerText = linescore.teams.away.runs ?? 0;
-      }
-
-      if (data.gameData && data.gameData.status) {
+        document.getElementById('count-text').innerText = `B: ${linescore.balls ?? 0} | S: ${linescore.strikes ?? 0} | O: ${linescore.outs ?? 0}`;
+        
         const state = data.gameData.status.detailedState;
         if (state === 'In Progress') {
-          const inningHalf = linescore.isTopInning ? 'TOP' : 'BOT';
-          document.getElementById('inning-text').innerText = `${inningHalf} ${linescore.currentInningOrdinal}`;
+          document.getElementById('inning-text').innerText = `${linescore.isTopInning ? 'TOP' : 'BOT'} ${linescore.currentInningOrdinal}`;
         } else {
           document.getElementById('inning-text').innerText = state.toUpperCase();
         }
+
+        if (linescore.offense) {
+          document.getElementById('base-1').classList.toggle('active', !!linescore.offense.first);
+          document.getElementById('base-2').classList.toggle('active', !!linescore.offense.second);
+          document.getElementById('base-3').classList.toggle('active', !!linescore.offense.third);
+        }
       }
 
-      document.getElementById('count-text').innerText = `B: ${linescore.balls ?? 0} | S: ${linescore.strikes ?? 0} | O: ${linescore.outs ?? 0}`;
+      // Live Pitch
+      if (liveData.plays && liveData.plays.currentPlay) {
+        const cur = liveData.plays.currentPlay;
+        if (cur.playEvents && cur.playEvents.length > 0) {
+          const pitches = cur.playEvents.filter(e => e.isPitch);
+          if (pitches.length > 0) {
+            const lastPitch = pitches[pitches.length - 1];
+            if (lastPitch.pitchData && lastPitch.pitchData.coordinates) {
+              const pX = lastPitch.pitchData.coordinates.pX || 0;
+              const pZ = lastPitch.pitchData.coordinates.pZ || 2.5;
 
-      if (linescore.offense) {
-        document.getElementById('base-1').classList.toggle('active', !!linescore.offense.first);
-        document.getElementById('base-2').classList.toggle('active', !!linescore.offense.second);
-        document.getElementById('base-3').classList.toggle('active', !!linescore.offense.third);
+              const svgX = 100 + (pX * 45);
+              const svgY = 160 - ((pZ - 1.5) * 40);
+
+              const marker = document.getElementById('pitch-marker');
+              marker.setAttribute('cx', Math.max(20, Math.min(180, svgX)));
+              marker.setAttribute('cy', Math.max(20, Math.min(180, svgY)));
+              marker.style.display = 'block';
+
+              if (lastPitch.pitchData.startSpeed) {
+                document.getElementById('pitch-speed-tag').innerText = `${lastPitch.pitchData.startSpeed.toFixed(1)} MPH`;
+              }
+              document.getElementById('pitch-desc').innerText = `${lastPitch.details.type ? lastPitch.details.type.description : 'PITCH'} - ${lastPitch.details.description.toUpperCase()}`;
+            }
+          }
+        }
       }
     }
 
-    function triggerSimulatedPitch() {
-      // Procedural pitch generator to test strike zone & feed live
-      const pitches = [
-        { speed: "99.2 MPH", desc: "4-SEAM FASTBALL - CALLED STRIKE", x: 90, y: 70 },
-        { speed: "87.4 MPH", desc: "SLIDER - SWINGING STRIKE", x: 135, y: 130 },
-        { speed: "84.1 MPH", desc: "CURVEBALL - BALL OUTSIDE", x: 35, y: 110 },
-        { speed: "98.8 MPH", desc: "SINKER - IN PLAY (SINGLE)", x: 100, y: 95 }
-      ];
-
-      const p = pitches[Math.floor(Math.random() * pitches.length)];
-      document.getElementById('pitch-speed-tag').innerText = p.speed;
-      document.getElementById('pitch-desc').innerText = p.desc;
-
-      const marker = document.getElementById('pitch-marker');
-      marker.setAttribute('cx', p.x);
-      marker.setAttribute('cy', p.y);
-
-      const log = document.getElementById('play-log-list');
-      const item = document.createElement('div');
-      item.className = `play-item ${p.desc.includes('STRIKE') ? 'out' : 'hit'}`;
-      item.innerHTML = `
-        <div class="play-pitch-type">${p.speed} - ${p.desc}</div>
-        Gerrit Cole delivers to Oneil Cruz.
-      `;
-      log.insertBefore(item, log.firstChild);
-    }
-
-    fetchLiveFeed();
-    setInterval(fetchLiveFeed, 4000);
+    pollGameFeed();
+    setInterval(pollGameFeed, 4000);
   </script>
 </body>
 </html>
