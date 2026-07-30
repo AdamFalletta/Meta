@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MLB Scouting & Analytics Hub</title>
+
+  <!-- Google Fonts & Tailwind CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,500&family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-dark: #030712;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --neon-blue: #00d2ff;
+      --neon-green: #10b981;
+      --neon-gold: #ffb703;
+      --neon-red: #ff2a5f;
+      --neon-purple: #a855f7;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #0f172a 0%, var(--bg-dark) 90%);
+      color: #f9fafb;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .font-teko { font-family: 'Teko', sans-serif; }
+    .font-chakra { font-family: 'Chakra Petch', sans-serif; }
+
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 10px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .quirk-badge {
+      background: linear-gradient(135deg, rgba(255,183,3,0.15) 0%, rgba(245,158,11,0.25) 100%);
+      border: 1px solid rgba(255, 183, 3, 0.4);
+      box-shadow: 0 0 12px rgba(255, 183, 3, 0.15);
+    }
+
+    .pulse-live {
+      width: 8px;
+      height: 8px;
+      background-color: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neon-green);
+      animation: pulse-ring 1.8s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.8); }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(3, 7, 18, 0.9);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    /* Table sticky headers */
+    .sticky-th {
+      position: sticky;
+      top: 0;
+      background: #090d16;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body class="p-2 md:p-4 gap-3 max-w-[1600px] mx-auto w-full">
+
+  <!-- Main Navigation & Header Header -->
+  <header class="glass-card p-3 px-4 flex flex-wrap items-center justify-between gap-3">
+    <!-- Branding -->
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400 font-bold text-2xl leading-none">
+        🔍
+      </div>
+      <div>
+        <h1 class="font-teko text-3xl sm:text-4xl leading-none uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-cyan-400 font-bold">
+          MLB SCOUTING & TELEMETRY HUB
+        </h1>
+        <p class="text-[11px] font-chakra text-gray-400 leading-none mt-1">
+          LIVE LEADERSHIP BOARDS • TEAM ACCOLADES & QUIRKS • ACTIVE 26-MAN ROSTER ANALYTICS
+        </p>
+      </div>
+    </div>
+
+    <!-- Right Controls: Season Selector, Sync, Refresh -->
+    <div class="flex flex-wrap items-center gap-2 text-xs font-chakra">
+      
+      <!-- Season Dropdown -->
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-white/15 px-2.5 py-1.5 rounded-lg">
+        <label for="season-select" class="text-gray-400 text-[10px] uppercase font-mono">SEASON:</label>
+        <select id="season-select" onchange="onSeasonChanged(this.value)" class="bg-transparent text-cyan-300 font-bold text-xs focus:outline-none cursor-pointer">
+          <option value="2026" class="bg-slate-900">2026</option>
+          <option value="2025" selected class="bg-slate-900">2025</option>
+          <option value="2024" class="bg-slate-900">2024</option>
+        </select>
+      </div>
+
+      <!-- Refresh Button -->
+      <button onclick="refreshCurrentView()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-3 py-1.5 rounded-lg shadow-md transition-all flex items-center gap-1.5">
+        <span id="refresh-spinner">↻</span> SYNC NOW
+      </button>
+
+      <!-- Auto Sync Countdown -->
+      <div class="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-white/10 px-3 py-1.5 rounded-lg text-gray-300 font-mono text-[11px]">
+        <span class="pulse-live"></span>
+        <span>AUTO-SYNC: <span id="sync-countdown" class="text-cyan-400 font-bold">15:00</span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- View Mode Tabs (League Leaders vs Team Scouting) -->
+  <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 p-1.5 rounded-xl border border-white/10 font-chakra text-xs">
+    
+    <!-- Primary View Toggles -->
+    <div class="flex items-center gap-2">
+      <button id="tab-btn-leaders" onclick="switchViewMode('LEADERS')" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-sm transition-all">
+        <span>🏆</span> LEAGUE LEADERS
+      </button>
+      <button id="tab-btn-team" onclick="switchViewMode('TEAM')" class="hover:bg-slate-800 text-gray-400 hover:text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm transition-all">
+        <span>🧢</span> TEAM SCOUTING & QUIRKS
+      </button>
+    </div>
+
+    <!-- Active Context Label -->
+    <div id="view-status-badge" class="text-cyan-400 font-bold font-mono text-xs px-3 py-1 bg-cyan-950/80 rounded-md border border-cyan-500/30">
+      MLB OVERALL STATISTICS
+    </div>
+  </div>
+
+  <!-- VIEW 1: LEAGUE LEADERS DASHBOARD -->
+  <main id="view-leaders" class="space-y-4">
+    
+    <!-- League & Stat Group Filters Bar -->
+    <div class="glass-card p-3 flex flex-wrap items-center justify-between gap-3 text-xs font-chakra">
+      
+      <!-- League Scope Selector -->
+      <div class="flex items-center gap-1.5">
+        <span class="text-gray-400 font-mono uppercase text-[11px] mr-1">LEAGUE:</span>
+        <button onclick="setLeagueFilter('MLB')" id="btn-league-MLB" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-md font-bold">MLB OVERALL</button>
+        <button onclick="setLeagueFilter('AL')" id="btn-league-AL" class="hover:bg-slate-800 text-gray-400 px-3 py-1 rounded-md font-bold">AMERICAN LEAGUE (AL)</button>
+        <button onclick="setLeagueFilter('NL')" id="btn-league-NL" class="hover:bg-slate-800 text-gray-400 px-3 py-1 rounded-md font-bold">NATIONAL LEAGUE (NL)</button>
+      </div>
+
+      <!-- Hitting vs Pitching Category Group Toggle -->
+      <div class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-white/10 font-bold">
+        <button onclick="setStatGroup('hitting')" id="btn-group-hitting" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-md">
+          ⚾ HITTING LEADERS (8 STATS)
+        </button>
+        <button onclick="setStatGroup('pitching')" id="btn-group-pitching" class="text-gray-400 hover:text-white px-3 py-1 rounded-md">
+          🎯 PITCHING LEADERS (8 STATS)
+        </button>
+      </div>
+    </div>
+
+    <!-- 8 Stat Category Leader Cards Grid -->
+    <div id="leaders-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Dynamic Leader Cards Populated Here -->
+    </div>
+  </main>
+
+  <!-- VIEW 2: TEAM SCOUTING & QUIRKS DASHBOARD -->
+  <main id="view-team" class="space-y-4 hidden">
+    
+    <!-- Team Picker Controls Bar -->
+    <div class="glass-card p-3 flex flex-wrap items-center justify-between gap-3 text-xs font-chakra">
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <span class="text-amber-400 text-lg">🧢</span>
+        <label for="team-selector" class="text-gray-300 font-bold uppercase tracking-wider text-sm whitespace-nowrap">SELECT MLB TEAM:</label>
+        <select id="team-selector" onchange="onTeamSelected(this.value)" class="bg-slate-900 border border-cyan-500/50 text-cyan-300 font-bold text-sm px-3 py-1.5 rounded-lg focus:outline-none w-full sm:w-64 cursor-pointer">
+          <!-- Populated dynamically with all 30 MLB Teams -->
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- 26-Man Roster Count Badge -->
+        <div id="roster-count-badge" class="bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-lg text-xs font-mono font-bold">
+          26-MAN ACTIVE ROSTER: LOADING...
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Header Banner -->
+    <div id="team-banner" class="glass-card p-4 flex flex-wrap items-center justify-between gap-4 relative overflow-hidden border-cyan-500/30">
+      <!-- Dynamic Team Info & Background injected here -->
+    </div>
+
+    <!-- TEAM QUIRKS & ACCLOMATION AWARDS SECTION -->
+    <section class="space-y-2">
+      <div class="flex items-center justify-between border-b border-white/10 pb-1">
+        <h2 class="font-teko text-2xl font-bold text-amber-400 tracking-wider flex items-center gap-2 uppercase">
+          <span>🏅</span> TEAM QUIRKS & ACCOLADES (TOP HITTING & PITCHING PERFORMERS)
+        </h2>
+        <span class="text-[11px] font-mono text-gray-400">AUTOMATICALLY AWARDED BY SEASON STATS</span>
+      </div>
+
+      <div id="team-quirks-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+        <!-- Dynamic Quirk Badges injected here -->
+      </div>
+    </section>
+
+    <!-- TEAM CATEGORY LEADERS ROW -->
+    <section class="space-y-2">
+      <div class="flex items-center justify-between border-b border-white/10 pb-1">
+        <h2 class="font-teko text-2xl font-bold text-cyan-300 tracking-wider flex items-center gap-2 uppercase">
+          <span>⚡</span> TEAM STAT LEADERS ACROSS CATEGORIES
+        </h2>
+        <div class="flex items-center gap-1 font-mono text-[11px]">
+          <button onclick="setTeamStatTab('hitting')" id="team-stat-tab-hitting" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded font-bold">HITTING</button>
+          <button onclick="setTeamStatTab('pitching')" id="team-stat-tab-pitching" class="hover:bg-slate-800 text-gray-400 px-2.5 py-0.5 rounded font-bold">PITCHING</button>
+        </div>
+      </div>
+
+      <div id="team-category-leaders-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        <!-- Dynamic 1st place cards injected here -->
+      </div>
+    </section>
+
+    <!-- FULL ROSTER SPREADSHEET BREAKDOWN -->
+    <section class="glass-card p-3 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📊</span>
+          <h3 class="font-teko text-2xl font-bold text-white uppercase tracking-wider leading-none">
+            ROSTER STATISTICAL SPREADSHEET
+          </h3>
+        </div>
+
+        <!-- Search, Roster Pool Toggle & Table Type Toggles -->
+        <div class="flex flex-wrap items-center gap-2 text-xs font-chakra">
+          
+          <!-- Active 26-man vs All Season Roster toggle -->
+          <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg p-0.5 font-mono text-[11px]">
+            <button onclick="setRosterFilter('active')" id="roster-filter-active" class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded font-bold">
+              26-MAN ACTIVE
+            </button>
+            <button onclick="setRosterFilter('all')" id="roster-filter-all" class="text-gray-400 hover:text-white px-2.5 py-1 rounded font-bold">
+              ALL SEASON
+            </button>
+          </div>
+
+          <input type="text" id="roster-search" oninput="filterRosterTable(this.value)" placeholder="🔍 Search player..." class="bg-slate-900 border border-white/15 px-3 py-1 rounded-lg text-cyan-300 font-mono text-xs focus:outline-none focus:border-cyan-400 w-36 sm:w-48" />
+          
+          <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg p-0.5">
+            <button onclick="setRosterTableType('hitting')" id="roster-type-hitting" class="bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded font-bold">HITTERS</button>
+            <button onclick="setRosterTableType('pitching')" id="roster-type-pitching" class="text-gray-400 hover:text-white px-3 py-1 rounded font-bold">PITCHERS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Table Container -->
+      <div class="overflow-x-auto max-h-[500px] border border-white/10 rounded-lg">
+        <table class="w-full text-left text-xs font-chakra border-collapse">
+          <thead id="roster-table-head" class="sticky-th text-gray-400 font-mono text-[11px] border-b border-white/15 uppercase">
+            <!-- Dynamic Headers -->
+          </thead>
+          <tbody id="roster-table-body" class="divide-y divide-white/5 text-gray-200">
+            <!-- Dynamic Rows -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- PLAYER SCOUTING MODAL -->
+  <div id="player-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 hidden opacity-0 transition-opacity duration-200">
+    <div class="glass-card w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border-cyan-500/40 shadow-2xl">
+      <div class="p-3 bg-slate-950 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">👤</span>
+          <h2 class="font-teko text-2xl font-bold text-cyan-300 uppercase leading-none" id="modal-player-title">PLAYER SCOUTING CARD</h2>
+        </div>
+        <button onclick="closePlayerModal()" class="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg">✕</button>
+      </div>
+      <div id="modal-player-body" class="p-4 overflow-y-auto space-y-4 text-xs font-chakra">
+        <!-- Dynamic Player Payload -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT & MLB STATS API INTEGRATION -->
+  <script>
+    
+    // MLB Teams Dictionary (All 30 Teams with Primary Colors & League/Division info)
+    const MLB_TEAMS = [
+      { id: 110, name: "Baltimore Orioles", code: "BAL", league: "AL", primary: "#DF4601" },
+      { id: 111, name: "Boston Red Sox", code: "BOS", league: "AL", primary: "#BD3039" },
+      { id: 147, name: "New York Yankees", code: "NYY", league: "AL", primary: "#0C2340" },
+      { id: 139, name: "Tampa Bay Rays", code: "TB", league: "AL", primary: "#092C5C" },
+      { id: 141, name: "Toronto Blue Jays", code: "TOR", league: "AL", primary: "#134A8E" },
+      { id: 145, name: "Chicago White Sox", code: "CWS", league: "AL", primary: "#27251F" },
+      { id: 114, name: "Cleveland Guardians", code: "CLE", league: "AL", primary: "#0C2340" },
+      { id: 116, name: "Detroit Tigers", code: "DET", league: "AL", primary: "#0C2340" },
+      { id: 118, name: "Kansas City Royals", code: "KC", league: "AL", primary: "#004687" },
+      { id: 142, name: "Minnesota Twins", code: "MIN", league: "AL", primary: "#D31145" },
+      { id: 117, name: "Houston Astros", code: "HOU", league: "AL", primary: "#EB6E1F" },
+      { id: 108, name: "Los Angeles Angels", code: "LAA", league: "AL", primary: "#BA0021" },
+      { id: 133, name: "Oakland Athletics", code: "OAK", league: "AL", primary: "#003831" },
+      { id: 136, name: "Seattle Mariners", code: "SEA", league: "AL", primary: "#005C5C" },
+      { id: 140, name: "Texas Rangers", code: "TEX", league: "AL", primary: "#003278" },
+
+      { id: 144, name: "Atlanta Braves", code: "ATL", league: "NL", primary: "#CE1141" },
+      { id: 146, name: "Miami Marlins", code: "MIA", league: "NL", primary: "#00A3E0" },
+      { id: 121, name: "New York Mets", code: "NYM", league: "NL", primary: "#FF5910" },
+      { id: 143, name: "Philadelphia Phillies", code: "PHI", league: "NL", primary: "#E31837" },
+      { id: 120, name: "Washington Nationals", code: "WSH", league: "NL", primary: "#AB0003" },
+      { id: 112, name: "Chicago Cubs", code: "CHC", league: "NL", primary: "#0E3386" },
+      { id: 113, name: "Cincinnati Reds", code: "CIN", league: "NL", primary: "#C6011F" },
+      { id: 158, name: "Milwaukee Brewers", code: "MIL", league: "NL", primary: "#12284C" },
+      { id: 134, name: "Pittsburgh Pirates", code: "PIT", league: "NL", primary: "#FDB827" },
+      { id: 138, name: "St. Louis Cardinals", code: "STL", league: "NL", primary: "#C41E3A" },
+      { id: 109, name: "Arizona Diamondbacks", code: "ARI", league: "NL", primary: "#A71930" },
+      { id: 115, name: "Colorado Rockies", code: "COL", league: "NL", primary: "#333366" },
+      { id: 119, name: "Los Angeles Dodgers", code: "LAD", league: "NL", primary: "#005A9C" },
+      { id: 135, name: "San Diego Padres", code: "SD", league: "NL", primary: "#2F241D" },
+      { id: 137, name: "San Francisco Giants", code: "SF", league: "NL", primary: "#FD5A1E" }
+    ];
+
+    // Hitting & Pitching Category Definitions (Standardized key mapping)
+    const HITTING_CATEGORIES = [
+      { key: 'homeRuns', label: 'HOME RUNS', icon: '💥', short: 'HR' },
+      { key: 'battingAverage', label: 'BATTING AVERAGE', icon: '🎯', short: 'AVG' },
+      { key: 'runsBattedIn', label: 'RUNS BATTED IN', icon: '🚀', short: 'RBI' },
+      { key: 'onBasePlusSlugging', label: 'ON-BASE + SLUGGING', icon: '🔥', short: 'OPS' },
+      { key: 'hits', label: 'HITS', icon: '⚡', short: 'H' },
+      { key: 'stolenBases', label: 'STOLEN BASES', icon: '🏎️', short: 'SB' },
+      { key: 'onBasePercentage', label: 'ON-BASE %', icon: '👁️', short: 'OBP' },
+      { key: 'sluggingPercentage', label: 'SLUGGING %', icon: '💣', short: 'SLG' }
+    ];
+
+    const PITCHING_CATEGORIES = [
+      { key: 'earnedRunAverage', label: 'EARNED RUN AVG', icon: '🛡️', short: 'ERA' },
+      { key: 'strikeouts', label: 'STRIKEOUTS', icon: '⚡', short: 'SO' },
+      { key: 'wins', label: 'WINS', icon: '🏆', short: 'W' },
+      { key: 'whip', label: 'WHIP', icon: '🔒', short: 'WHIP' },
+      { key: 'saves', label: 'SAVES', icon: '🚨', short: 'SV' },
+      { key: 'inningsPitched', label: 'INNINGS PITCHED', icon: '⚾', short: 'IP' },
+      { key: 'strikeoutsPer9Inn', label: 'STRIKEOUTS / 9 IP', icon: '🔥', short: 'K/9' },
+      { key: 'battingAverageAgainst', label: 'OPPONENT AVG', icon: '🛑', short: 'BAA' }
+    ];
+
+    // App State
+    let currentViewMode = 'LEADERS'; // 'LEADERS' or 'TEAM'
+    let currentSeason = '2025';
+    let currentLeagueFilter = 'MLB'; // 'MLB', 'AL', 'NL'
+    let currentStatGroup = 'hitting'; // 'hitting', 'pitching'
+    let selectedTeamId = 147; // Default: NYY
+    let teamStatTab = 'hitting'; // 'hitting' or 'pitching'
+    let rosterTableType = 'hitting';
+    let rosterScopeFilter = 'active'; // 'active' (26-man) or 'all'
+    let active26ManPlayerIds = new Set();
+    let rawTeamHittingStats = [];
+    let rawTeamPitchingStats = [];
+    let sortColumn = 'homeRuns';
+    let sortAscending = false;
+    let syncCountdownSeconds = 900; // 15 minutes
+    let countdownInterval = null;
+
+    // Helper: Unified stat value extractor to fix key discrepancies between API & objects
+    function getStatValue(p, key) {
+      if (!p) return 0;
+      switch(key) {
+        case 'homeRuns': return p.homeRuns ?? 0;
+        case 'battingAverage': case 'avg': return p.avg ?? p.battingAverage ?? 0;
+        case 'runsBattedIn': case 'rbi': return p.rbi ?? p.runsBattedIn ?? 0;
+        case 'onBasePlusSlugging': case 'ops': return p.ops ?? p.onBasePlusSlugging ?? 0;
+        case 'hits': return p.hits ?? 0;
+        case 'stolenBases': return p.stolenBases ?? 0;
+        case 'onBasePercentage': case 'obp': return p.obp ?? p.onBasePercentage ?? 0;
+        case 'sluggingPercentage': case 'slg': return p.slg ?? p.sluggingPercentage ?? 0;
+        case 'earnedRunAverage': case 'era': return p.era ?? p.earnedRunAverage ?? 99.9;
+        case 'strikeouts': return p.strikeouts ?? 0;
+        case 'wins': return p.wins ?? 0;
+        case 'whip': return p.whip ?? 99.9;
+        case 'saves': return p.saves ?? 0;
+        case 'inningsPitched': return p.inningsPitched ?? 0;
+        case 'strikeoutsPer9Inn': case 'k9': return p.strikeoutsPer9Inn ?? p.k9 ?? 0;
+        case 'battingAverageAgainst': case 'baa': return p.battingAverageAgainst ?? p.baa ?? 0;
+        default: return p[key] ?? 0;
+      }
+    }
+
+    // Helper: Format stat value for display
+    function formatStatValue(key, val) {
+      if (val === undefined || val === null) return '0';
+      if (key === 'earnedRunAverage' || key === 'era' || key === 'whip') {
+        return typeof val === 'number' ? val.toFixed(2) : val;
+      }
+      if (key === 'battingAverage' || key === 'avg' || key === 'onBasePercentage' || key === 'obp' || key === 'sluggingPercentage' || key === 'slg' || key === 'onBasePlusSlugging' || key === 'ops' || key === 'battingAverageAgainst' || key === 'baa') {
+        const num = typeof val === 'number' ? val : parseFloat(val || '0');
+        if (num < 1) {
+          return '.' + Math.round(num * 1000).toString().padStart(3, '0');
+        }
+        return num.toFixed(3);
+      }
+      if (key === 'strikeoutsPer9Inn' || key === 'k9') {
+        return typeof val === 'number' ? val.toFixed(1) : val;
+      }
+      return val.toString();
+    }
+
+    // Helper: Headshot URL
+    function getPlayerHeadshot(playerId) {
+      if (!playerId) return 'https://placehold.co/100x100/111827/ffffff?text=MLB';
+      return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_420,q_auto:best/v1/people/${playerId}/headshot/67/current`;
+    }
+
+    // Helper: Team Logo URL
+    function getTeamLogo(teamId) {
+      return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+    }
+
+    // Fetch League Leaders with multi-category handling
+    async function fetchLeagueLeaders() {
+      const container = document.getElementById('leaders-cards-grid');
+      container.innerHTML = `
+        <div class="col-span-full py-16 text-center font-mono text-cyan-400 flex flex-col items-center gap-2">
+          <div class="text-3xl animate-spin">↻</div>
+          <div>LOADING ${currentLeagueFilter} ${currentStatGroup.toUpperCase()} LEADERS FOR ${currentSeason}...</div>
+        </div>
+      `;
+
+      const categories = currentStatGroup === 'hitting' ? HITTING_CATEGORIES : PITCHING_CATEGORIES;
+      let leagueParam = '';
+      if (currentLeagueFilter === 'AL') leagueParam = '&leagueId=103';
+      if (currentLeagueFilter === 'NL') leagueParam = '&leagueId=104';
+
+      try {
+        const catKeys = categories.map(c => c.key).join(',');
+        const url = `https://statsapi.mlb.com/api/v1/stats/leaders?leaderCategories=${catKeys}&season=${currentSeason}&limit=5&statGroup=${currentStatGroup}${leagueParam}`;
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        const data = await res.json();
+
+        container.innerHTML = '';
+        const leaderDataByCat = {};
+
+        if (data.leagueLeaders) {
+          data.leagueLeaders.forEach(item => {
+            leaderDataByCat[item.leaderCategory] = item.leaders || [];
+          });
+        }
+
+        categories.forEach(cat => {
+          const leaders = leaderDataByCat[cat.key] || [];
+          const cardHTML = renderLeaderCard(cat, leaders);
+          container.appendChild(cardHTML);
+        });
+
+      } catch (err) {
+        console.error("Error fetching leaders:", err);
+        container.innerHTML = `
+          <div class="col-span-full glass-card p-8 text-center text-rose-400 font-mono">
+            ⚠️ FAILED TO LOAD STATS LEADERS. PLEASE VERIFY CONNECTION OR CHANGE SEASON.
+          </div>
+        `;
+      }
+    }
+
+    function renderLeaderCard(catObj, leaders) {
+      const card = document.createElement('div');
+      card.className = "glass-card p-3 flex flex-col justify-between h-full space-y-2 border-cyan-500/20";
+
+      let playersListHTML = '';
+
+      if (!leaders || leaders.length === 0) {
+        playersListHTML = `<div class="text-xs text-gray-500 font-mono py-8 text-center">NO DATA RECORDED FOR SEASON</div>`;
+      } else {
+        leaders.slice(0, 5).forEach((p, idx) => {
+          const isTop = idx === 0;
+          const rankNum = idx + 1;
+          const pName = p.person?.fullName || 'Player';
+          const pId = p.person?.id;
+          const tCode = p.team?.abbreviation || p.team?.name || '';
+          const statVal = p.value ?? '0';
+
+          playersListHTML += `
+            <div onclick="openPlayerModal(${pId}, '${pName.replace(/'/g, "\\'")}')" class="flex items-center justify-between p-1.5 rounded-lg ${isTop ? 'bg-gradient-to-r from-amber-500/20 via-slate-900 to-slate-900 border border-amber-500/40 shadow-md' : 'hover:bg-slate-800/80'} cursor-pointer transition-all">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="font-teko text-lg font-bold ${isTop ? 'text-amber-400 text-xl' : 'text-gray-400'} w-4 text-center">${rankNum}</span>
+                <img src="${getPlayerHeadshot(pId)}" class="${isTop ? 'w-10 h-10 border-amber-400' : 'w-7 h-7 border-slate-700'} rounded-full object-cover border bg-slate-950 flex-shrink-0" alt="P" />
+                <div class="min-w-0">
+                  <div class="font-bold text-xs ${isTop ? 'text-white' : 'text-gray-200'} truncate leading-tight">${pName}</div>
+                  <div class="text-[10px] text-gray-400 font-mono leading-none">${tCode}</div>
+                </div>
+              </div>
+              <div class="font-teko ${isTop ? 'text-amber-300 text-2xl font-bold' : 'text-cyan-300 text-xl'} font-bold ml-2">
+                ${statVal}
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between border-b border-white/10 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${catObj.icon}</span>
+            <span class="font-teko text-xl font-bold text-white tracking-wide uppercase">${catObj.label}</span>
+          </div>
+          <span class="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-1.5 py-0.5 rounded font-bold">${catObj.short}</span>
+        </div>
+        <div class="space-y-1 flex-1">
+          ${playersListHTML}
+        </div>
+      `;
+
+      return card;
+    }
+
+    // Fetch and calculate full team scouting stats
+    async function loadTeamDashboard(teamId) {
+      selectedTeamId = teamId;
+      const teamObj = MLB_TEAMS.find(t => t.id == teamId) || MLB_TEAMS[0];
+      
+      // Update Banner
+      const banner = document.getElementById('team-banner');
+      banner.style.background = `linear-gradient(135deg, ${teamObj.primary}77 0%, rgba(3,7,18,0.92) 60%)`;
+      banner.innerHTML = `
+        <div class="flex items-center gap-4">
+          <img src="${getTeamLogo(teamObj.id)}" class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-xl" alt="${teamObj.code}" />
+          <div>
+            <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-500/40 px-2 py-0.5 rounded font-bold uppercase">${teamObj.league} LEAGUE</span>
+            <h2 class="font-teko text-3xl sm:text-5xl font-bold text-white leading-none mt-1 uppercase">${teamObj.name}</h2>
+            <div class="text-xs font-mono text-gray-300 mt-0.5">TEAM SCOUTING REPORT & ACTIVE 26-MAN TELEMETRY • SEASON ${currentSeason}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="bg-slate-950/80 p-2.5 px-4 rounded-xl border border-white/10 text-center">
+            <div class="text-[10px] text-gray-400 font-mono">PRIMARY COLOR</div>
+            <div class="w-6 h-6 rounded-full mx-auto mt-1 border border-white/30" style="background:${teamObj.primary}"></div>
+          </div>
+        </div>
+      `;
+
+      // Fetch 26-Man Active Roster + Team Hitting & Pitching Data
+      try {
+        const rosterUrl = `https://statsapi.mlb.com/api/v1/teams/${teamId}/roster?rosterType=active&season=${currentSeason}`;
+        const hitUrl = `https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&teamId=${teamId}&season=${currentSeason}&playerPool=ALL`;
+        const pitUrl = `https://statsapi.mlb.com/api/v1/stats?stats=season&group=pitching&teamId=${teamId}&season=${currentSeason}&playerPool=ALL`;
+
+        const [rosterRes, hitRes, pitRes] = await Promise.all([
+          fetch(rosterUrl).catch(() => null),
+          fetch(hitUrl),
+          fetch(pitUrl)
+        ]);
+
+        // Process 26-Man Active Roster
+        active26ManPlayerIds.clear();
+        if (rosterRes && rosterRes.ok) {
+          const rosterData = await rosterRes.json();
+          (rosterData.roster || []).forEach(entry => {
+            if (entry.person?.id) active26ManPlayerIds.add(entry.person.id);
+          });
+        }
+
+        const badgeEl = document.getElementById('roster-count-badge');
+        if (badgeEl) {
+          const count = active26ManPlayerIds.size;
+          badgeEl.innerText = count > 0 ? `26-MAN ACTIVE ROSTER: ${count} PLAYERS` : `26-MAN ACTIVE ROSTER LOADED`;
+        }
+
+        const hitData = await hitRes.json();
+        const pitData = await pitRes.json();
+
+        rawTeamHittingStats = (hitData.stats?.[0]?.splits || []).map(s => {
+          const pId = s.player?.id;
+          const avg = parseFloat(s.stat?.avg || '0');
+          const obp = parseFloat(s.stat?.obp || '0');
+          const slg = parseFloat(s.stat?.slg || '0');
+          const ops = parseFloat(s.stat?.ops || '0');
+          return {
+            id: pId,
+            name: s.player?.fullName || 'Unknown Batter',
+            pos: s.position?.abbreviation || 'UT',
+            isActive26: active26ManPlayerIds.has(pId),
+            games: s.stat?.gamesPlayed || 0,
+            atBats: s.stat?.atBats || 0,
+            hits: s.stat?.hits || 0,
+            homeRuns: s.stat?.homeRuns || 0,
+            rbi: s.stat?.rbi || 0,
+            stolenBases: s.stat?.stolenBases || 0,
+            walks: s.stat?.baseOnBalls || 0,
+            avg: avg,
+            battingAverage: avg,
+            obp: obp,
+            onBasePercentage: obp,
+            slg: slg,
+            sluggingPercentage: slg,
+            ops: ops,
+            onBasePlusSlugging: ops
+          };
+        });
+
+        rawTeamPitchingStats = (pitData.stats?.[0]?.splits || []).map(s => {
+          const pId = s.player?.id;
+          const era = parseFloat(s.stat?.era || '0.00');
+          const whip = parseFloat(s.stat?.whip || '0.00');
+          const k9 = parseFloat(s.stat?.strikeoutsPer9Inn || '0.00');
+          const baa = parseFloat(s.stat?.avg || s.stat?.battingAverageAgainst || '0.00');
+          const strikeouts = s.stat?.strikeouts ?? s.stat?.strikeOuts ?? s.stat?.so ?? 0;
+          return {
+            id: pId,
+            name: s.player?.fullName || 'Unknown Pitcher',
+            pos: s.position?.abbreviation || 'P',
+            isActive26: active26ManPlayerIds.has(pId),
+            wins: s.stat?.wins || 0,
+            losses: s.stat?.losses || 0,
+            era: era,
+            earnedRunAverage: era,
+            strikeouts: strikeouts,
+            strikeOuts: strikeouts,
+            saves: s.stat?.saves || 0,
+            inningsPitched: parseFloat(s.stat?.inningsPitched || '0'),
+            whip: whip,
+            strikeoutsPer9Inn: k9,
+            k9: k9,
+            battingAverageAgainst: baa,
+            baa: baa,
+            games: s.stat?.gamesPitched || 0
+          };
+        });
+
+        renderTeamQuirks();
+        renderTeamCategoryLeaders();
+        renderRosterTable();
+
+      } catch (e) {
+        console.error("Error loading team dashboard:", e);
+      }
+    }
+
+    // Generate Team Quirk Badges with robust fallbacks
+    function renderTeamQuirks() {
+      const container = document.getElementById('team-quirks-container');
+      container.innerHTML = '';
+
+      if (rawTeamHittingStats.length === 0 && rawTeamPitchingStats.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 font-mono py-4">NO ROSTER STATS AVAILABLE FOR THIS SEASON</div>`;
+        return;
+      }
+
+      // Find top performers for quirks
+      const topHR = [...rawTeamHittingStats].sort((a,b) => b.homeRuns - a.homeRuns)[0];
+      const topHits = [...rawTeamHittingStats].sort((a,b) => b.hits - a.hits)[0];
+      const topSB = [...rawTeamHittingStats].sort((a,b) => b.stolenBases - a.stolenBases)[0];
+      const topRBI = [...rawTeamHittingStats].sort((a,b) => b.rbi - a.rbi)[0];
+      const topOBP = [...rawTeamHittingStats].filter(p => p.atBats > 30).sort((a,b) => b.obp - a.obp)[0] || rawTeamHittingStats[0];
+      
+      const topSO = [...rawTeamPitchingStats].sort((a,b) => (b.strikeouts || 0) - (a.strikeouts || 0))[0];
+      const topERA = [...rawTeamPitchingStats].filter(p => p.inningsPitched > 10).sort((a,b) => a.era - b.era)[0] || rawTeamPitchingStats[0];
+      const topSV = [...rawTeamPitchingStats].sort((a,b) => b.saves - a.saves)[0];
+      const topIP = [...rawTeamPitchingStats].sort((a,b) => b.inningsPitched - a.inningsPitched)[0];
+
+      const quirks = [
+        { title: "THE BOMBER", emoji: "💣", player: topHR, val: `${topHR?.homeRuns || 0} HR`, desc: "Team Leader in Home Runs" },
+        { title: "HIT MACHINE", emoji: "⚡", player: topHits, val: `${topHits?.hits || 0} HITS`, desc: "Team Leader in Total Base Hits" },
+        { title: "THE SPEEDSTER", emoji: "🏎️", player: topSB, val: `${topSB?.stolenBases || 0} SB`, desc: "Team Speed Demon in Stolen Bases" },
+        { title: "CLUTCH TITAN", emoji: "🚀", player: topRBI, val: `${topRBI?.rbi || 0} RBI`, desc: "Team Run Producer Leader" },
+        { title: "THE EYE", emoji: "👁️", player: topOBP, val: `.${Math.round((topOBP?.obp || 0)*1000)} OBP`, desc: "Highest On-Base Percentage" },
+        { title: "DOCTOR K", emoji: "🔥", player: topSO, val: `${topSO?.strikeouts ?? topSO?.strikeOuts ?? 0} SO`, desc: "Strikeout King on Pitching Staff" },
+        { title: "ACE OF STAFF", emoji: "🛡️", player: topERA, val: `${topERA?.era?.toFixed(2) || '0.00'} ERA`, desc: "Lowest Earned Run Average" },
+        { title: "THE FIREMAN", emoji: "🚨", player: topSV, val: `${topSV?.saves || 0} SV`, desc: "Bullpen Leader in Saves" },
+        { title: "WORKHORSE", emoji: "⚾", player: topIP, val: `${topIP?.inningsPitched || 0} IP`, desc: "Most Innings Pitched" },
+        { title: "WHIP LOCK", emoji: "🔒", player: topERA, val: `${topERA?.whip?.toFixed(2) || '0.00'} WHIP`, desc: "Pitches Minimum Walk/Hit Traffic" }
+      ];
+
+      quirks.forEach(q => {
+        if (!q.player) return;
+        const div = document.createElement('div');
+        div.onclick = () => openPlayerModal(q.player.id, q.player.name);
+        div.className = "quirk-badge p-2 rounded-xl flex flex-col justify-between cursor-pointer hover:scale-[1.03] transition-all";
+        div.innerHTML = `
+          <div class="flex items-center justify-between border-b border-amber-500/20 pb-1">
+            <span class="text-xs font-bold text-amber-300 font-teko uppercase tracking-wider">${q.emoji} ${q.title}</span>
+            ${q.player.isActive26 ? '<span class="text-[9px] font-mono text-emerald-400 bg-emerald-950 px-1 rounded border border-emerald-500/30 font-bold">26-MAN</span>' : ''}
+          </div>
+          <div class="flex items-center gap-2 my-1.5">
+            <img src="${getPlayerHeadshot(q.player.id)}" class="w-8 h-8 rounded-full border border-amber-400/60 object-cover bg-slate-950 flex-shrink-0" alt="P" />
+            <div class="min-w-0">
+              <div class="font-bold text-xs text-white truncate leading-tight">${q.player.name}</div>
+              <div class="font-teko text-amber-400 font-bold text-lg leading-none">${q.val}</div>
+            </div>
+          </div>
+          <div class="text-[9px] font-mono text-gray-400 truncate">${q.desc}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderTeamCategoryLeaders() {
+      const container = document.getElementById('team-category-leaders-grid');
+      container.innerHTML = '';
+
+      const cats = teamStatTab === 'hitting' ? HITTING_CATEGORIES : PITCHING_CATEGORIES;
+      const stats = teamStatTab === 'hitting' ? rawTeamHittingStats : rawTeamPitchingStats;
+
+      cats.forEach(c => {
+        let sorted = [...stats];
+        const key = c.key;
+
+        if (key === 'earnedRunAverage' || key === 'era' || key === 'whip' || key === 'battingAverageAgainst' || key === 'baa') {
+          sorted = sorted.filter(p => (p.inningsPitched || 0) > 5).sort((a,b) => getStatValue(a, key) - getStatValue(b, key));
+        } else {
+          sorted = sorted.sort((a,b) => getStatValue(b, key) - getStatValue(a, key));
+        }
+
+        const leader = sorted[0];
+        const div = document.createElement('div');
+        div.className = "glass-card p-2 flex flex-col justify-between text-center border-cyan-500/20";
+
+        if (!leader) {
+          div.innerHTML = `<div class="text-[10px] text-gray-500 font-mono py-2">NO DATA</div>`;
+        } else {
+          const rawVal = getStatValue(leader, key);
+          const formattedVal = formatStatValue(key, rawVal);
+
+          div.onclick = () => openPlayerModal(leader.id, leader.name);
+          div.className += " cursor-pointer hover:border-cyan-400/50";
+          div.innerHTML = `
+            <div class="text-[10px] font-mono text-cyan-400 border-b border-white/10 pb-1 font-bold uppercase truncate">
+              ${c.short}
+            </div>
+            <img src="${getPlayerHeadshot(leader.id)}" class="w-10 h-10 rounded-full mx-auto my-1 object-cover border border-cyan-500/40 bg-slate-950" alt="P" />
+            <div class="font-bold text-xs text-white truncate">${leader.name}</div>
+            <div class="font-teko text-2xl font-bold text-cyan-300 leading-none mt-0.5">${formattedVal}</div>
+          `;
+        }
+        container.appendChild(div);
+      });
+    }
+
+    // Render Full Roster Spreadsheet Table
+    function renderRosterTable() {
+      const head = document.getElementById('roster-table-head');
+      const body = document.getElementById('roster-table-body');
+
+      let list = rosterTableType === 'hitting' ? [...rawTeamHittingStats] : [...rawTeamPitchingStats];
+
+      // Filter by 26-Man Active Roster scope if enabled
+      if (rosterScopeFilter === 'active' && active26ManPlayerIds.size > 0) {
+        list = list.filter(p => p.isActive26);
+      }
+
+      // Sort
+      list.sort((a, b) => {
+        let valA = getStatValue(a, sortColumn);
+        let valB = getStatValue(b, sortColumn);
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA < valB) return sortAscending ? -1 : 1;
+        if (valA > valB) return sortAscending ? 1 : -1;
+        return 0;
+      });
+
+      if (rosterTableType === 'hitting') {
+        head.innerHTML = `
+          <tr>
+            <th class="p-2">PLAYER</th>
+            <th class="p-2">ROSTER</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('pos')">POS</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('games')">G</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('atBats')">AB</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('hits')">H</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('homeRuns')">HR</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('rbi')">RBI</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('stolenBases')">SB</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('walks')">BB</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('avg')">AVG</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('obp')">OBP</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('slg')">SLG</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('ops')">OPS</th>
+          </tr>
+        `;
+
+        body.innerHTML = list.map(p => `
+          <tr onclick="openPlayerModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')" class="hover:bg-slate-800/80 cursor-pointer transition-colors">
+            <td class="p-2 font-bold text-white flex items-center gap-2">
+              <img src="${getPlayerHeadshot(p.id)}" class="w-6 h-6 rounded-full object-cover border border-slate-700 bg-slate-950" alt="P" />
+              <span>${p.name}</span>
+            </td>
+            <td class="p-2 font-mono">
+              ${p.isActive26 ? '<span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">26-MAN</span>' : '<span class="text-[10px] text-gray-500">RES</span>'}
+            </td>
+            <td class="p-2 font-mono text-cyan-400 font-bold">${p.pos}</td>
+            <td class="p-2 font-mono">${p.games}</td>
+            <td class="p-2 font-mono">${p.atBats}</td>
+            <td class="p-2 font-mono font-bold text-cyan-300">${p.hits}</td>
+            <td class="p-2 font-mono font-bold text-amber-400">${p.homeRuns}</td>
+            <td class="p-2 font-mono font-bold text-rose-400">${p.rbi}</td>
+            <td class="p-2 font-mono">${p.stolenBases}</td>
+            <td class="p-2 font-mono">${p.walks}</td>
+            <td class="p-2 font-mono font-bold text-emerald-400">${formatStatValue('avg', p.avg)}</td>
+            <td class="p-2 font-mono">${formatStatValue('obp', p.obp)}</td>
+            <td class="p-2 font-mono">${formatStatValue('slg', p.slg)}</td>
+            <td class="p-2 font-mono font-extrabold text-amber-300">${formatStatValue('ops', p.ops)}</td>
+          </tr>
+        `).join('');
+
+      } else {
+        head.innerHTML = `
+          <tr>
+            <th class="p-2">PITCHER</th>
+            <th class="p-2">ROSTER</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('wins')">W</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('losses')">L</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('era')">ERA</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('games')">G</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('saves')">SV</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('inningsPitched')">IP</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('strikeouts')">SO</th>
+            <th class="p-2 cursor-pointer hover:text-cyan-300" onclick="sortBy('whip')">WHIP</th>
+          </tr>
+        `;
+
+        body.innerHTML = list.map(p => `
+          <tr onclick="openPlayerModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')" class="hover:bg-slate-800/80 cursor-pointer transition-colors">
+            <td class="p-2 font-bold text-white flex items-center gap-2">
+              <img src="${getPlayerHeadshot(p.id)}" class="w-6 h-6 rounded-full object-cover border border-slate-700 bg-slate-950" alt="P" />
+              <span>${p.name}</span>
+            </td>
+            <td class="p-2 font-mono">
+              ${p.isActive26 ? '<span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">26-MAN</span>' : '<span class="text-[10px] text-gray-500">RES</span>'}
+            </td>
+            <td class="p-2 font-mono font-bold text-emerald-400">${p.wins}</td>
+            <td class="p-2 font-mono">${p.losses}</td>
+            <td class="p-2 font-mono font-bold text-amber-400">${p.era.toFixed(2)}</td>
+            <td class="p-2 font-mono">${p.games}</td>
+            <td class="p-2 font-mono font-bold text-rose-400">${p.saves}</td>
+            <td class="p-2 font-mono font-bold text-cyan-300">${p.inningsPitched}</td>
+            <td class="p-2 font-mono font-bold text-purple-400">${p.strikeouts}</td>
+            <td class="p-2 font-mono">${p.whip.toFixed(2)}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function sortBy(col) {
+      if (sortColumn === col) {
+        sortAscending = !sortAscending;
+      } else {
+        sortColumn = col;
+        sortAscending = false;
+      }
+      renderRosterTable();
+    }
+
+    function filterRosterTable(query) {
+      const q = query.toLowerCase();
+      const rows = document.querySelectorAll('#roster-table-body tr');
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        r.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    async function openPlayerModal(playerId, playerName) {
+      const modal = document.getElementById('player-modal');
+      const title = document.getElementById('modal-player-title');
+      const body = document.getElementById('modal-player-body');
+
+      title.innerText = `${playerName.toUpperCase()} - SCOUTING CARD`;
+      body.innerHTML = `<div class="py-12 text-center text-cyan-400 font-mono animate-spin text-2xl">↻ Loading player profile...</div>`;
+
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.classList.remove('opacity-0'), 10);
+
+      try {
+        const url = `https://statsapi.mlb.com/api/v1/people/${playerId}?hydrate=stats(type=[season],season=${currentSeason})`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const person = data.people?.[0] || {};
+        const pos = person.primaryPosition?.name || 'Baseball Player';
+        const bats = person.batSide?.description || 'R';
+        const throws = person.pitchHand?.description || 'R';
+        const age = person.currentAge || '--';
+        const height = person.height || '--';
+        const weight = person.weight || '--';
+        const is26Man = active26ManPlayerIds.has(playerId);
+
+        const statsSplits = person.stats?.[0]?.splits?.[0]?.stat || {};
+
+        body.innerHTML = `
+          <div class="flex items-center gap-4 bg-slate-900 border border-white/10 p-3 rounded-xl">
+            <img src="${getPlayerHeadshot(playerId)}" class="w-20 h-20 rounded-xl object-cover border-2 border-cyan-400 bg-slate-950 shadow-xl" alt="P" />
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-mono text-cyan-400 font-bold uppercase">${pos} • AGE ${age}</span>
+                ${is26Man ? '<span class="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">26-MAN ROSTER</span>' : ''}
+              </div>
+              <h3 class="font-teko text-3xl font-bold text-white leading-none mt-1">${person.fullName || playerName}</h3>
+              <div class="text-xs text-gray-300 font-mono mt-1">BATS: ${bats} | THROWS: ${throws} | ${height}, ${weight} lbs</div>
+            </div>
+          </div>
+
+          <div class="text-sm font-bold text-amber-400 font-teko text-xl tracking-wider uppercase border-b border-white/10 pb-1 mt-2">
+            ${currentSeason} SEASON STATISTICAL HIGHLIGHTS
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-slate-950 p-2 rounded-lg border border-white/10">
+              <div class="text-[10px] text-gray-400 font-mono">GAMES</div>
+              <div class="font-teko text-2xl font-bold text-cyan-300">${statsSplits.gamesPlayed || statsSplits.gamesPitched || 0}</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded-lg border border-white/10">
+              <div class="text-[10px] text-gray-400 font-mono">AVG / ERA</div>
+              <div class="font-teko text-2xl font-bold text-amber-400">${statsSplits.avg ? '.'+Math.round(statsSplits.avg*1000) : (statsSplits.era || '0.00')}</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded-lg border border-white/10">
+              <div class="text-[10px] text-gray-400 font-mono">HR / SO</div>
+              <div class="font-teko text-2xl font-bold text-rose-400">${statsSplits.homeRuns ?? statsSplits.strikeouts ?? 0}</div>
+            </div>
+          </div>
+        `;
+
+      } catch (e) {
+        console.error("Error loading player profile:", e);
+        body.innerHTML = `<div class="p-4 text-center text-rose-400 font-mono">Unable to load deep telemetry for player.</div>`;
+      }
+    }
+
+    function closePlayerModal() {
+      const modal = document.getElementById('player-modal');
+      modal.classList.add('opacity-0');
+      setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    // View Navigation & Event Listeners
+    function switchViewMode(mode) {
+      currentViewMode = mode;
+      const leaderBtn = document.getElementById('tab-btn-leaders');
+      const teamBtn = document.getElementById('tab-btn-team');
+      const viewLeaders = document.getElementById('view-leaders');
+      const viewTeam = document.getElementById('view-team');
+      const statusBadge = document.getElementById('view-status-badge');
+
+      if (mode === 'LEADERS') {
+        leaderBtn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-sm";
+        teamBtn.className = "hover:bg-slate-800 text-gray-400 hover:text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm";
+        viewLeaders.classList.remove('hidden');
+        viewTeam.classList.add('hidden');
+        statusBadge.innerText = `${currentLeagueFilter} ${currentStatGroup.toUpperCase()} LEADERS`;
+        fetchLeagueLeaders();
+      } else {
+        teamBtn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-sm";
+        leaderBtn.className = "hover:bg-slate-800 text-gray-400 hover:text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm";
+        viewTeam.classList.remove('hidden');
+        viewLeaders.classList.add('hidden');
+        statusBadge.innerText = `TEAM SCOUTING & 26-MAN ROSTER`;
+        loadTeamDashboard(selectedTeamId);
+      }
+    }
+
+    function setLeagueFilter(league) {
+      currentLeagueFilter = league;
+      ['MLB', 'AL', 'NL'].forEach(l => {
+        const btn = document.getElementById(`btn-league-${l}`);
+        if (l === league) {
+          btn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-md font-bold";
+        } else {
+          btn.className = "hover:bg-slate-800 text-gray-400 px-3 py-1 rounded-md font-bold";
+        }
+      });
+      fetchLeagueLeaders();
+    }
+
+    function setStatGroup(group) {
+      currentStatGroup = group;
+      const hitBtn = document.getElementById('btn-group-hitting');
+      const pitBtn = document.getElementById('btn-group-pitching');
+      if (group === 'hitting') {
+        hitBtn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-md";
+        pitBtn.className = "text-gray-400 hover:text-white px-3 py-1 rounded-md";
+      } else {
+        pitBtn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-md";
+        hitBtn.className = "text-gray-400 hover:text-white px-3 py-1 rounded-md";
+      }
+      fetchLeagueLeaders();
+    }
+
+    function setTeamStatTab(tab) {
+      teamStatTab = tab;
+      const hitBtn = document.getElementById('team-stat-tab-hitting');
+      const pitBtn = document.getElementById('team-stat-tab-pitching');
+      if (tab === 'hitting') {
+        hitBtn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded font-bold";
+        pitBtn.className = "hover:bg-slate-800 text-gray-400 px-2.5 py-0.5 rounded font-bold";
+      } else {
+        pitBtn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded font-bold";
+        hitBtn.className = "hover:bg-slate-800 text-gray-400 px-2.5 py-0.5 rounded font-bold";
+      }
+      renderTeamCategoryLeaders();
+    }
+
+    function setRosterTableType(type) {
+      rosterTableType = type;
+      sortColumn = type === 'hitting' ? 'homeRuns' : 'era';
+      sortAscending = type === 'pitching';
+      const hitBtn = document.getElementById('roster-type-hitting');
+      const pitBtn = document.getElementById('roster-type-pitching');
+      if (type === 'hitting') {
+        hitBtn.className = "bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded font-bold";
+        pitBtn.className = "text-gray-400 hover:text-white px-3 py-1 rounded font-bold";
+      } else {
+        pitBtn.className = "bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded font-bold";
+        hitBtn.className = "text-gray-400 hover:text-white px-3 py-1 rounded font-bold";
+      }
+      renderRosterTable();
+    }
+
+    function setRosterFilter(filter) {
+      rosterScopeFilter = filter;
+      const actBtn = document.getElementById('roster-filter-active');
+      const allBtn = document.getElementById('roster-filter-all');
+      if (filter === 'active') {
+        actBtn.className = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded font-bold";
+        allBtn.className = "text-gray-400 hover:text-white px-2.5 py-1 rounded font-bold";
+      } else {
+        allBtn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-1 rounded font-bold";
+        actBtn.className = "text-gray-400 hover:text-white px-2.5 py-1 rounded font-bold";
+      }
+      renderRosterTable();
+    }
+
+    function onTeamSelected(val) {
+      loadTeamDashboard(parseInt(val));
+    }
+
+    function onSeasonChanged(val) {
+      currentSeason = val;
+      refreshCurrentView();
+    }
+
+    function refreshCurrentView() {
+      const spinner = document.getElementById('refresh-spinner');
+      if (spinner) spinner.classList.add('animate-spin');
+      
+      syncCountdownSeconds = 900; // reset 15 min timer
+
+      if (currentViewMode === 'LEADERS') {
+        fetchLeagueLeaders().then(() => spinner.classList.remove('animate-spin'));
+      } else {
+        loadTeamDashboard(selectedTeamId).then(() => spinner.classList.remove('animate-spin'));
+      }
+    }
+
+    // Populate Team Selector Dropdown
+    function initTeamDropdown() {
+      const select = document.getElementById('team-selector');
+      select.innerHTML = '';
+
+      const alGroup = document.createElement('optgroup');
+      alGroup.label = "AMERICAN LEAGUE (AL)";
+      alGroup.className = "bg-slate-900 text-cyan-400 font-bold";
+
+      const nlGroup = document.createElement('optgroup');
+      nlGroup.label = "NATIONAL LEAGUE (NL)";
+      nlGroup.className = "bg-slate-900 text-cyan-400 font-bold";
+
+      MLB_TEAMS.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.innerText = `${t.name} (${t.code})`;
+        opt.className = "bg-slate-900 text-white font-normal";
+        if (t.id === selectedTeamId) opt.selected = true;
+
+        if (t.league === 'AL') alGroup.appendChild(opt);
+        else nlGroup.appendChild(opt);
+      });
+
+      select.appendChild(alGroup);
+      select.appendChild(nlGroup);
+    }
+
+    // Auto Refresh Timer (15 Minutes)
+    function startCountdownTimer() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        syncCountdownSeconds--;
+        if (syncCountdownSeconds <= 0) {
+          refreshCurrentView();
+        } else {
+          const mins = Math.floor(syncCountdownSeconds / 60);
+          const secs = syncCountdownSeconds % 60;
+          const display = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+          const el = document.getElementById('sync-countdown');
+          if (el) el.innerText = display;
+        }
+      }, 1000);
+    }
+
+    // Init App
+    window.addEventListener('load', () => {
+      initTeamDropdown();
+      fetchLeagueLeaders();
+      startCountdownTimer();
+    });
+  </script>
+</body>
+</html>

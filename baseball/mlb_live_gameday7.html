@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MLB Live Gameday Telemetry & Matchup Tracker</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Teko:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-dark: #04070d;
+      --panel-bg: rgba(13, 19, 32, 0.92);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --neon-blue: #00d2ff;
+      --neon-green: #10b981;
+      --neon-red: #ff2a5f;
+      --gold-accent: #ffb703;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 15%, #0f172a 0%, var(--bg-dark) 85%);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .font-teko { font-family: 'Teko', sans-serif; }
+    .font-chakra { font-family: 'Chakra Petch', sans-serif; }
+
+    header {
+      background: linear-gradient(90deg, rgba(0, 210, 255, 0.1), rgba(255, 42, 95, 0.1));
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .glass-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(12px);
+      border-radius: 8px;
+    }
+
+    .pulse-dot {
+      width: 8px; height: 8px;
+      background-color: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neon-green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .diamond-baserunners {
+      position: relative;
+      width: 38px;
+      height: 38px;
+    }
+
+    .base {
+      position: absolute;
+      width: 11px;
+      height: 11px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      transform: rotate(45deg);
+      transition: all 0.3s ease;
+    }
+
+    .base.active {
+      background: var(--gold-accent);
+      box-shadow: 0 0 10px var(--gold-accent);
+      border-color: #ffffff;
+    }
+
+    .base.b1 { right: 2px; top: 13px; }
+    .base.b2 { left: 13px; top: 2px; }
+    .base.b3 { left: 2px; top: 13px; }
+
+    .play-log-container {
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    /* Custom Sleek Dark Mode Scrollbars */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0, 210, 255, 0.25);
+      border-radius: 4px;
+      transition: background 0.25s ease;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 210, 255, 0.6);
+    }
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 210, 255, 0.25) rgba(15, 23, 42, 0.3);
+    }
+
+    .play-card {
+      transition: all 0.25s ease;
+      border-left: 4px solid var(--neon-blue);
+    }
+
+    .play-card.pinned-top {
+      background: rgba(0, 210, 255, 0.08);
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 15px rgba(0, 210, 255, 0.15);
+    }
+
+    .play-card.out { border-left-color: var(--neon-red); }
+    .play-card.hit { border-left-color: var(--neon-green); }
+    .play-card.walk { border-left-color: var(--gold-accent); }
+
+    .pitch-dot {
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+
+    .pitch-dot:hover {
+      transform: scale(1.5);
+    }
+
+    .boxscore-table th {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 4px 6px;
+      text-align: right;
+    }
+
+    .boxscore-table th:first-child { text-align: left; }
+
+    .boxscore-table td {
+      padding: 5px 6px;
+      font-size: 0.82rem;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .boxscore-table td:first-child { text-align: left; }
+
+    /* Count indicator circles */
+    .count-dot {
+      transition: all 0.2s ease;
+    }
+    .count-dot.b-dot.active {
+      background-color: #00d2ff;
+      border-color: #00d2ff;
+      box-shadow: 0 0 6px rgba(0, 210, 255, 0.8);
+    }
+    .count-dot.s-dot.active {
+      background-color: #ffb703;
+      border-color: #ffb703;
+      box-shadow: 0 0 6px rgba(255, 183, 3, 0.8);
+    }
+    .count-dot.o-dot.active {
+      background-color: #ff2a5f;
+      border-color: #ff2a5f;
+      box-shadow: 0 0 6px rgba(255, 42, 95, 0.8);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="px-4 py-2 flex items-center justify-between h-[6vh] flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="font-teko text-3xl tracking-wide uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-400 font-bold">
+        MLB GAMEDAY TELEMETRY
+      </div>
+      <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs px-2 py-0.5 rounded font-mono font-bold">
+        STATCAST API
+      </span>
+    </div>
+
+    <!-- Live Game Picker Controls -->
+    <div class="flex items-center gap-4 text-xs font-chakra font-semibold">
+      <div class="flex items-center gap-2">
+        <label for="game-selector" class="text-gray-400 font-mono hidden sm:inline">SELECT GAME:</label>
+        <select id="game-selector" onchange="onGameSelected(this.value)" class="bg-slate-900 text-cyan-300 border border-cyan-500/30 text-xs rounded px-2 py-1 font-mono focus:outline-none focus:border-cyan-400">
+          <option value="">Fetching today's schedule...</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2 text-gray-300">
+        <span class="pulse-dot" id="live-indicator-dot"></span>
+        <span id="connection-status">CONNECTING TO MLB API...</span>
+      </div>
+      <div id="sync-time" class="text-gray-400 font-mono">SYNC: --:--:--</div>
+
+      <button id="btn-refresh" onclick="fetchLiveMLBData()" class="bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 border border-cyan-500/40 px-2.5 py-1 rounded text-xs font-bold transition-all">
+        ↻ REFRESH
+      </button>
+    </div>
+  </header>
+
+  <section class="scoreboard-banner grid grid-cols-3 items-center px-6 py-2 bg-slate-950/80 border-b border-white/10 h-[12vh] flex-shrink-0">
+    <!-- Away Team -->
+    <div class="flex items-center gap-4 justify-start">
+      <img id="away-logo" class="w-12 h-12 object-contain rounded" src="" alt="Away Team" />
+      <div>
+        <div class="flex items-center gap-2">
+          <div class="font-teko text-3xl font-bold leading-none" id="away-name">---</div>
+          <div id="away-challenges" class="flex items-center gap-0.5 text-[10px] font-mono bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 px-1.5 py-0.5 rounded" title="Manager Challenges Remaining">
+            <span class="text-gray-400 mr-0.5">CHAL:</span>
+            <span id="away-chal-dots" class="flex gap-1">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_5px_#00d2ff]"></span>
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_5px_#00d2ff]"></span>
+            </span>
+          </div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono" id="away-record">-- | AWAY</div>
+      </div>
+      <div class="font-teko text-5xl font-bold text-white ml-4" id="away-score">-</div>
+    </div>
+
+    <!-- Center Game State -->
+    <div class="flex flex-col items-center justify-center">
+      <div class="font-teko text-2xl text-amber-400 leading-tight font-bold tracking-wider" id="inning-badge">--</div>
+      
+      <div class="diamond-baserunners my-1">
+        <div class="base b2" id="base-2"></div>
+        <div class="base b3" id="base-3"></div>
+        <div class="base b1" id="base-1"></div>
+      </div>
+
+      <!-- Visual Count Indicator (4 Balls, 3 Strikes, 3 Outs) -->
+      <div class="flex items-center gap-3 text-xs font-chakra font-bold text-gray-300 mt-0.5">
+        <div class="flex items-center gap-1" title="Balls">
+          <span class="text-[10px] text-cyan-400 font-mono font-bold">B</span>
+          <div class="flex gap-1" id="balls-dots">
+            <span class="count-dot b-dot w-2.5 h-2.5 rounded-full border border-cyan-400/40 bg-slate-800"></span>
+            <span class="count-dot b-dot w-2.5 h-2.5 rounded-full border border-cyan-400/40 bg-slate-800"></span>
+            <span class="count-dot b-dot w-2.5 h-2.5 rounded-full border border-cyan-400/40 bg-slate-800"></span>
+            <span class="count-dot b-dot w-2.5 h-2.5 rounded-full border border-cyan-400/40 bg-slate-800"></span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1" title="Strikes">
+          <span class="text-[10px] text-amber-400 font-mono font-bold">S</span>
+          <div class="flex gap-1" id="strikes-dots">
+            <span class="count-dot s-dot w-2.5 h-2.5 rounded-full border border-amber-400/40 bg-slate-800"></span>
+            <span class="count-dot s-dot w-2.5 h-2.5 rounded-full border border-amber-400/40 bg-slate-800"></span>
+            <span class="count-dot s-dot w-2.5 h-2.5 rounded-full border border-amber-400/40 bg-slate-800"></span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1" title="Outs">
+          <span class="text-[10px] text-rose-500 font-mono font-bold">O</span>
+          <div class="flex gap-1" id="outs-dots">
+            <span class="count-dot o-dot w-2.5 h-2.5 rounded-full border border-rose-500/40 bg-slate-800"></span>
+            <span class="count-dot o-dot w-2.5 h-2.5 rounded-full border border-rose-500/40 bg-slate-800"></span>
+            <span class="count-dot o-dot w-2.5 h-2.5 rounded-full border border-rose-500/40 bg-slate-800"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Home Team -->
+    <div class="flex items-center gap-4 justify-end">
+      <div class="font-teko text-5xl font-bold text-white mr-4" id="home-score">-</div>
+      <div class="text-right">
+        <div class="flex items-center gap-2 justify-end">
+          <div id="home-challenges" class="flex items-center gap-0.5 text-[10px] font-mono bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 px-1.5 py-0.5 rounded" title="Manager Challenges Remaining">
+            <span class="text-gray-400 mr-0.5">CHAL:</span>
+            <span id="home-chal-dots" class="flex gap-1">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_5px_#00d2ff]"></span>
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_5px_#00d2ff]"></span>
+            </span>
+          </div>
+          <div class="font-teko text-3xl font-bold leading-none" id="home-name">---</div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono" id="home-record">-- | HOME</div>
+      </div>
+      <img id="home-logo" class="w-12 h-12 object-contain rounded" src="" alt="Home Team" />
+    </div>
+  </section>
+
+  <main class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 p-3 overflow-hidden h-[82vh]">
+    
+    <!-- LEFT COLUMN: Play-by-Play Event Log -->
+    <section class="md:col-span-4 glass-card p-3 flex flex-col overflow-hidden">
+      <div class="font-teko text-2xl text-white flex justify-between items-center border-b border-white/10 pb-1 mb-2">
+        <span>PLAY-BY-PLAY EVENT LOG</span>
+        <span class="text-xs font-mono font-normal text-cyan-400" id="play-count-tag">0 EVENTS</span>
+      </div>
+
+      <div class="play-log-container custom-scrollbar flex-1 space-y-3 pr-1" id="play-log-list">
+        <!-- Dynamic Cards Inserted Here via JS -->
+      </div>
+    </section>
+
+    <!-- CENTER COLUMN: Matchup & Interactive Strike Zone -->
+    <section class="md:col-span-5 glass-card p-3 flex flex-col justify-between overflow-hidden relative">
+      <div class="font-teko text-2xl text-white flex justify-between items-center border-b border-white/10 pb-1">
+        <span>CURRENT MATCHUP TELEMETRY</span>
+        <span class="text-amber-400 font-mono font-bold text-lg" id="current-pitch-speed">-- MPH</span>
+      </div>
+
+      <!-- Player Headshots & Stats -->
+      <div class="grid grid-cols-2 gap-3 my-2">
+        <!-- Pitcher Card -->
+        <div class="flex items-center gap-2.5 bg-slate-900/90 border border-white/10 p-2 rounded-lg">
+          <img id="pitcher-headshot" class="w-12 h-12 rounded-full border-2 border-rose-500/50 bg-black object-cover flex-shrink-0" 
+               src="https://placehold.co/100x100/111827/ffffff?text=PITCHER" 
+               alt="Pitcher" onerror="this.src='https://placehold.co/100x100/111827/ffffff?text=PITCHER'" />
+          <div class="overflow-hidden min-w-0 flex-1">
+            <div class="text-[10px] text-rose-400 font-bold uppercase tracking-wider flex items-center justify-between">
+              <span>ON THE MOUND</span>
+              <span id="pitcher-hand" class="text-gray-300 bg-rose-950/80 border border-rose-500/40 px-1 rounded text-[9px] font-mono">--</span>
+            </div>
+            <div class="font-bold text-sm text-white truncate" id="pitcher-name">--</div>
+            <div class="text-[11px] text-cyan-300 font-mono font-bold truncate" id="pitcher-count">PITCHES: 0</div>
+            <div class="text-[10px] text-gray-400 font-mono truncate" id="pitcher-stats">--</div>
+          </div>
+        </div>
+
+        <!-- Batter Card -->
+        <div class="flex items-center gap-2.5 bg-slate-900/90 border border-white/10 p-2 rounded-lg">
+          <img id="batter-headshot" class="w-12 h-12 rounded-full border-2 border-cyan-400/50 bg-black object-cover flex-shrink-0" 
+               src="https://placehold.co/100x100/111827/ffffff?text=BATTER" 
+               alt="Batter" onerror="this.src='https://placehold.co/100x100/111827/ffffff?text=BATTER'" />
+          <div class="overflow-hidden min-w-0 flex-1">
+            <div class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider flex items-center justify-between">
+              <span>AT THE PLATE</span>
+              <span id="batter-side" class="text-gray-300 bg-cyan-950/80 border border-cyan-500/40 px-1 rounded text-[9px] font-mono">--</span>
+            </div>
+            <div class="font-bold text-sm text-white truncate" id="batter-name">--</div>
+            <div class="text-[11px] text-amber-300 font-mono font-bold truncate" id="batter-day-stats">DAY: 0-0</div>
+            <div class="text-[10px] text-gray-400 font-mono truncate" id="batter-stats">--</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strike Zone SVG Box -->
+      <div class="flex-1 bg-slate-950/80 rounded-lg border border-white/10 flex flex-col items-center justify-center p-2 relative">
+        <svg id="strikezone-svg" class="w-full max-w-[280px] h-[240px] overflow-visible" viewBox="0 0 200 200">
+          <!-- Home Plate -->
+          <polygon points="70,182 130,182 130,190 100,200 70,190" fill="#ffffff" opacity="0.85"/>
+          
+          <!-- Outer Zone Boundary -->
+          <rect x="50" y="35" width="100" height="125" fill="rgba(15, 23, 42, 0.7)" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" rx="3"/>
+          
+          <!-- Inner 3x3 Grid Lines -->
+          <line x1="83.3" y1="35" x2="83.3" y2="160" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <line x1="116.6" y1="35" x2="116.6" y2="160" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <line x1="50" y1="76.6" x2="150" y2="76.6" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <line x1="50" y1="118.3" x2="150" y2="118.3" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+          <!-- Pitch Dots Layer -->
+          <g id="pitch-dots-layer"></g>
+        </svg>
+
+        <div id="pitch-desc-pill" class="mt-2 bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-xs font-bold font-chakra px-3 py-1 rounded-full shadow-lg text-center">
+          WAITING FOR PITCH TELEMETRY...
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Live Full Box Score & Lineups -->
+    <section class="md:col-span-3 glass-card p-3 flex flex-col overflow-hidden">
+      <div class="font-teko text-2xl text-white border-b border-white/10 pb-1 mb-2 flex justify-between items-center">
+        <span>LIVE BOX SCORE</span>
+        <div class="text-xs font-mono text-gray-400" id="game-id-tag">GAME PK: --</div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
+        <!-- Away Team Batting Table -->
+        <div>
+          <div class="font-teko text-lg text-cyan-400 font-bold mb-1 flex justify-between">
+            <span id="away-lineup-header">AWAY BATTING</span>
+            <span class="text-xs text-gray-400 font-mono" id="away-lineup-code">AWAY</span>
+          </div>
+          <table class="w-full boxscore-table">
+            <thead>
+              <tr><th>PLAYER</th><th>AB</th><th>R</th><th>H</th><th>RBI</th></tr>
+            </thead>
+            <tbody id="away-lineup-body">
+              <tr><td colspan="5" class="text-center text-gray-500 py-2">Loading lineup...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Home Team Batting Table -->
+        <div>
+          <div class="font-teko text-lg text-amber-400 font-bold mb-1 flex justify-between">
+            <span id="home-lineup-header">HOME BATTING</span>
+            <span class="text-xs text-gray-400 font-mono" id="home-lineup-code">HOME</span>
+          </div>
+          <table class="w-full boxscore-table">
+            <thead>
+              <tr><th>PLAYER</th><th>AB</th><th>R</th><th>H</th><th>RBI</th></tr>
+            </thead>
+            <tbody id="home-lineup-body">
+              <tr><td colspan="5" class="text-center text-gray-500 py-2">Loading lineup...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pitching Lines Section -->
+        <div class="pt-2 border-t border-white/10">
+          <div class="font-teko text-xl text-white font-bold mb-2 tracking-wide uppercase">PITCHING LINES</div>
+          
+          <!-- Away Pitching Table -->
+          <div class="mb-3">
+            <div class="text-xs font-mono font-bold text-cyan-400 mb-1" id="away-pitching-header">AWAY PITCHERS</div>
+            <table class="w-full boxscore-table">
+              <thead>
+                <tr><th>PITCHER</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>SO</th><th>HR</th></tr>
+              </thead>
+              <tbody id="away-pitching-body">
+                <tr><td colspan="8" class="text-center text-gray-500 py-2">Loading pitchers...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Home Pitching Table -->
+          <div>
+            <div class="text-xs font-mono font-bold text-amber-400 mb-1" id="home-pitching-header">HOME PITCHERS</div>
+            <table class="w-full boxscore-table">
+              <thead>
+                <tr><th>PITCHER</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>SO</th><th>HR</th></tr>
+              </thead>
+              <tbody id="home-pitching-body">
+                <tr><td colspan="8" class="text-center text-gray-500 py-2">Loading pitchers...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Game Info & Extra Base Hits / Details -->
+        <div class="pt-2 border-t border-white/10 space-y-2 text-xs font-mono">
+          <div class="font-teko text-xl text-white font-bold tracking-wide uppercase">GAME NOTES & DETAILS</div>
+          
+          <div class="bg-slate-900/80 p-2 rounded border border-white/5 space-y-1 text-[11px]" id="game-batting-notes">
+            <div class="text-gray-400"><span class="text-cyan-400 font-bold">2B:</span> <span id="notes-2b">None</span></div>
+            <div class="text-gray-400"><span class="text-amber-400 font-bold">3B:</span> <span id="notes-3b">None</span></div>
+            <div class="text-gray-400"><span class="text-rose-400 font-bold">HR:</span> <span id="notes-hr">None</span></div>
+            <div class="text-gray-400"><span class="text-emerald-400 font-bold">RBI:</span> <span id="notes-rbi">None</span></div>
+          </div>
+
+          <div class="bg-slate-900/80 p-2 rounded border border-white/5 space-y-1 text-[10px] text-gray-300" id="game-info-meta">
+            <div><span class="text-gray-400">VENUE:</span> <span id="meta-venue" class="font-bold text-white">--</span></div>
+            <div><span class="text-gray-400">ATTENDANCE:</span> <span id="meta-attendance" class="font-bold text-white">--</span></div>
+            <div><span class="text-gray-400">WEATHER:</span> <span id="meta-weather" class="text-cyan-300">--</span></div>
+            <div><span class="text-gray-400">FIRST PITCH:</span> <span id="meta-start" class="text-amber-300">--</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let selectedGamePk = null;
+    let autoPollTimer = null;
+
+    function getOrdinal(n) {
+      const s = ["TH", "ST", "ND", "RD"], v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    const liveState = {
+      gamePk: null,
+      status: "",
+      inning: "--",
+      outs: 0,
+      balls: 0,
+      strikes: 0,
+      bases: { b1: false, b2: false, b3: false },
+      awayTeam: { id: null, name: "AWAY", code: "AWY", score: 0, record: "", challenges: 2 },
+      homeTeam: { id: null, name: "HOME", code: "HOM", score: 0, record: "", challenges: 2 },
+      currentBatter: { id: null, name: "Waiting...", dayStats: "DAY: 0-0", stats: "AVG --", batSide: "BATS: --" },
+      currentPitcher: { id: null, name: "Waiting...", pitchCount: "PITCHES: 0", stats: "ERA --", pitchHand: "RHP" },
+      playLogGrouped: [],
+      awayLineup: [],
+      homeLineup: [],
+      awayPitching: [],
+      homePitching: [],
+      gameNotes: { '2b': "None", '3b': "None", hr: "None", rbi: "None" },
+      gameMeta: { venue: "--", attendance: "--", weather: "--", start: "--" }
+    };
+
+    async function loadSchedule() {
+      const select = document.getElementById('game-selector');
+      select.innerHTML = `<option value="">Loading schedule...</option>`;
+      
+      const nowLocal = new Date();
+      const year = nowLocal.getFullYear();
+      const month = String(nowLocal.getMonth() + 1).padStart(2, '0');
+      const day = String(nowLocal.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
+      
+      try {
+        let res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}`);
+        let data = await res.json();
+        let games = [];
+
+        if (data.dates && data.dates.length > 0 && data.dates[0].games.length > 0) {
+          games = data.dates[0].games;
+        } else {
+          const pastDate = "2024-09-29";
+          res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${pastDate}`);
+          data = await res.json();
+          if (data.dates && data.dates.length > 0) {
+            games = data.dates[0].games;
+          }
+        }
+
+        if (!games || games.length === 0) {
+          select.innerHTML = `<option value="">No games found</option>`;
+          return;
+        }
+
+        select.innerHTML = '';
+        games.forEach((g) => {
+          const opt = document.createElement('option');
+          opt.value = g.gamePk;
+
+          let statusStr = '';
+          if (g.status.abstractGameState === 'Live') {
+            statusStr = '🟢 LIVE';
+          } else if (g.status.abstractGameState === 'Final') {
+            statusStr = 'FINAL';
+          } else {
+            if (g.gameDate) {
+              const gameStartTime = new Date(g.gameDate);
+              statusStr = gameStartTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            } else {
+              statusStr = g.status.detailedState || 'SCHEDULED';
+            }
+          }
+
+          opt.textContent = `${g.teams.away.team.name} @ ${g.teams.home.team.name} (${statusStr})`;
+          select.appendChild(opt);
+        });
+
+        const liveGame = games.find(g => g.status.abstractGameState === 'Live');
+        selectedGamePk = liveGame ? liveGame.gamePk : games[0].gamePk;
+        select.value = selectedGamePk;
+
+        fetchLiveMLBData();
+
+      } catch (err) {
+        console.error("Failed to load MLB schedule:", err);
+        select.innerHTML = `<option value="">Error loading games</option>`;
+      }
+    }
+
+    function onGameSelected(gamePk) {
+      if (!gamePk) return;
+      selectedGamePk = gamePk;
+      fetchLiveMLBData();
+    }
+
+    async function fetchLiveMLBData() {
+      if (!selectedGamePk) return;
+
+      document.getElementById('connection-status').innerText = "FETCHING MLB FEED...";
+      document.getElementById('live-indicator-dot').className = "pulse-dot opacity-50";
+
+      try {
+        const res = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${selectedGamePk}/feed/live`);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        
+        const feed = await res.json();
+        parseLiveMLBFeed(feed);
+
+        document.getElementById('connection-status').innerText = "STREAM SYNCED";
+        document.getElementById('live-indicator-dot').className = "pulse-dot";
+        updateTimestamp();
+
+        if (autoPollTimer) clearInterval(autoPollTimer);
+        autoPollTimer = setInterval(fetchLiveMLBData, 8000);
+
+      } catch (err) {
+        console.warn("Error parsing MLB live feed:", err);
+        document.getElementById('connection-status').innerText = "FEED ERROR / OFFLINE";
+      }
+    }
+
+    function parseLiveMLBFeed(feed) {
+      if (!feed || !feed.liveData || !feed.gameData) return;
+
+      const gameData = feed.gameData;
+      const liveData = feed.liveData;
+      const linescore = liveData.linescore;
+      const boxscore = liveData.boxscore;
+      const players = gameData.players || {};
+
+      liveState.gamePk = selectedGamePk;
+
+      const away = gameData.teams.away;
+      const home = gameData.teams.home;
+
+      liveState.awayTeam = {
+        id: away.id,
+        name: away.name ? away.name.toUpperCase() : "AWAY",
+        code: away.abbreviation || "AWY",
+        score: linescore.teams?.away?.runs ?? 0,
+        record: `${away.record?.leagueRecord?.wins || 0}-${away.record?.leagueRecord?.losses || 0}`,
+        challenges: boxscore?.teams?.away?.info?.find(i => i.title?.includes("Challenges")) ? 1 : 2
+      };
+
+      liveState.homeTeam = {
+        id: home.id,
+        name: home.name ? home.name.toUpperCase() : "HOME",
+        code: home.abbreviation || "HOM",
+        score: linescore.teams?.home?.runs ?? 0,
+        record: `${home.record?.leagueRecord?.wins || 0}-${home.record?.leagueRecord?.losses || 0}`,
+        challenges: boxscore?.teams?.home?.info?.find(i => i.title?.includes("Challenges")) ? 1 : 2
+      };
+
+      const stateStr = gameData.status?.detailedState?.toUpperCase() || "";
+      const innState = linescore.inningState?.toUpperCase() || "";
+      const currentOrd = linescore.currentInningOrdinal || (linescore.currentInning ? getOrdinal(linescore.currentInning) : '');
+
+      if (innState === "MIDDLE" || innState === "MID" || (linescore.isTopInning && linescore.outs === 3)) {
+        liveState.inning = `MID ${currentOrd}`;
+      } else if (innState === "END" || (!linescore.isTopInning && linescore.outs === 3)) {
+        liveState.inning = `END ${currentOrd}`;
+      } else if (stateStr === "IN PROGRESS" || stateStr === "LIVE") {
+        liveState.inning = `${linescore.isTopInning ? 'TOP' : 'BOT'} ${currentOrd}`;
+      } else {
+        liveState.inning = stateStr || "FINAL";
+      }
+
+      liveState.balls = linescore.balls ?? 0;
+      liveState.strikes = linescore.strikes ?? 0;
+      liveState.outs = linescore.outs ?? 0;
+
+      liveState.bases = {
+        b1: !!linescore.offense?.first,
+        b2: !!linescore.offense?.second,
+        b3: !!linescore.offense?.third
+      };
+
+      const currentBatterObj = linescore.offense?.batter;
+      const currentPitcherObj = linescore.defense?.pitcher;
+
+      if (currentBatterObj && players[`ID${currentBatterObj.id}`]) {
+        const p = players[`ID${currentBatterObj.id}`];
+        const sideKey = linescore.isTopInning ? 'away' : 'home';
+        const pBox = boxscore?.teams?.[sideKey]?.players?.[`ID${currentBatterObj.id}`];
+        const bStats = pBox?.stats?.batting || p.stats?.batting || {};
+        
+        const hits = bStats.hits ?? 0;
+        const ab = bStats.atBats ?? 0;
+        const hr = bStats.homeRuns ?? 0;
+        const rbi = bStats.rbi ?? 0;
+        const bb = bStats.baseOnBalls ?? 0;
+
+        let dayString = `DAY: ${hits}-${ab}`;
+        if (hr > 0) dayString += `, ${hr} HR`;
+        if (rbi > 0) dayString += `, ${rbi} RBI`;
+        if (bb > 0) dayString += `, ${bb} BB`;
+
+        const batSideCode = p.batSide?.code || (p.batSide?.description ? p.batSide.description.substring(0, 1) : '');
+        const batSideText = batSideCode ? `BATS: ${batSideCode.toUpperCase()}` : 'BATS: --';
+
+        liveState.currentBatter = {
+          id: p.id,
+          name: p.fullName || p.boxscoreName,
+          dayStats: dayString,
+          stats: bStats.avg ? `. ${bStats.avg} AVG • ${bStats.homeRuns || 0} HR` : 'ACTIVE BATTER',
+          batSide: batSideText
+        };
+      } else {
+        liveState.currentBatter = { id: null, name: "No Active Batter", dayStats: "DAY: 0-0", stats: "---", batSide: "BATS: --" };
+      }
+
+      if (currentPitcherObj && players[`ID${currentPitcherObj.id}`]) {
+        const p = players[`ID${currentPitcherObj.id}`];
+        const sideKey = linescore.isTopInning ? 'home' : 'away';
+        const pBox = boxscore?.teams?.[sideKey]?.players?.[`ID${currentPitcherObj.id}`];
+        const pitStats = pBox?.stats?.pitching || p.stats?.pitching || {};
+        
+        let np = pitStats.numberOfPitches ?? pitStats.pitchesThrown ?? 0;
+        let st = pitStats.strikes ?? 0;
+
+        if (np === 0 && feed.liveData?.plays?.allPlays) {
+          feed.liveData.plays.allPlays.forEach(play => {
+            if (play.matchup?.pitcher?.id === currentPitcherObj.id && play.playEvents) {
+              play.playEvents.forEach(evt => {
+                if (evt.isPitch) {
+                  np++;
+                  if (evt.details?.isStrike || evt.details?.call?.code === "S" || evt.details?.call?.code === "C" || evt.details?.call?.code === "F" || evt.details?.call?.code === "W" || evt.details?.call?.code === "X" || evt.details?.call?.code === "D") {
+                    st++;
+                  }
+                }
+              });
+            }
+          });
+        }
+
+        const throwCode = p.pitchHand?.code || (p.pitchHand?.description ? p.pitchHand.description.charAt(0) : '');
+        const pitchHandText = throwCode ? `${throwCode.toUpperCase()}HP` : '';
+
+        liveState.currentPitcher = {
+          id: p.id,
+          name: p.fullName || p.boxscoreName || "Pitcher",
+          pitchCount: `PITCHES: ${np}${st > 0 ? ` (${st} S)` : ''}`,
+          stats: pitStats.era ? `${pitStats.era} ERA • ${pitStats.strikeOuts || 0} SO` : 'ACTIVE PITCHER',
+          pitchHand: pitchHandText
+        };
+      } else {
+        liveState.currentPitcher = { id: null, name: "No Active Pitcher", pitchCount: "PITCHES: 0", stats: "---", pitchHand: "" };
+      }
+
+      const allPlays = liveData.plays?.allPlays || [];
+      const playLogGroupedMap = new Map();
+
+      for (let i = allPlays.length - 1; i >= 0; i--) {
+        const play = allPlays[i];
+        const about = play.about || {};
+        const result = play.result || {};
+        const matchup = play.matchup || {};
+
+        const innNum = about.inning || 1;
+        const isTop = about.isTopInning;
+        const inningLabel = `${isTop ? 'TOP' : 'BOT'} ${getOrdinal(innNum)}`;
+
+        const eventType = (result.eventType || '').toLowerCase();
+        let cardType = 'walk';
+        if (result.isOut || eventType.includes('out') || eventType.includes('strikeout') || eventType.includes('groundout') || eventType.includes('flyout') || eventType.includes('popout') || eventType.includes('lineout')) {
+          cardType = 'out';
+        } else if (eventType.includes('hit') || eventType.includes('single') || eventType.includes('double') || eventType.includes('triple') || eventType.includes('home_run')) {
+          cardType = 'hit';
+        }
+
+        const playEvents = play.playEvents || [];
+        const pitchList = [];
+
+        playEvents.forEach(evt => {
+          if (evt.isPitch && evt.pitchData) {
+            const pData = evt.pitchData;
+            const px = pData.coordinates?.pX;
+            const pz = pData.coordinates?.pZ;
+
+            let svgX = 100;
+            let svgY = 97.5;
+
+            if (px !== undefined && px !== null) {
+              svgX = 100 + (px / 1.5) * 50;
+              svgX = Math.max(15, Math.min(185, svgX));
+            }
+
+            if (pz !== undefined && pz !== null) {
+              const topZ = pData.strikeZoneTop || 3.5;
+              const botZ = pData.strikeZoneBottom || 1.5;
+              const zRange = Math.max(0.5, topZ - botZ);
+              const normRatio = (pz - botZ) / zRange;
+              svgY = 160 - normRatio * 125;
+              svgY = Math.max(15, Math.min(185, svgY));
+            }
+
+            const callCode = evt.details?.call?.code;
+            const callDesc = evt.details?.call?.description || evt.details?.description || 'Pitch';
+            const pitchName = evt.details?.type?.description || evt.details?.type?.code || 'Pitch';
+            const speed = pData.startSpeed ? `${Math.round(pData.startSpeed)}` : '--';
+
+            let pitchColor = '#ffb703';
+            if (evt.details?.isBall || callCode === 'B' || callCode === '*B') {
+              pitchColor = '#00d2ff';
+            } else if (evt.details?.isStrike || callCode === 'S' || callCode === 'C' || callCode === 'F' || callCode === 'W') {
+              pitchColor = '#ff2a5f';
+            } else if (callCode === 'X' || callCode === 'D') {
+              pitchColor = '#10b981';
+            }
+
+            pitchList.push({
+              x: svgX,
+              y: svgY,
+              speed: `${speed} MPH`,
+              type: pitchName,
+              result: callDesc,
+              color: pitchColor
+            });
+          }
+        });
+
+        const playItem = {
+          title: result.event ? result.event.toUpperCase() : 'PLAY',
+          desc: result.description || 'No description available.',
+          type: cardType,
+          outsTag: `${about.outs ?? 0} OUT${about.outs === 1 ? '' : 'S'}`,
+          batterName: matchup.batter?.fullName || 'Batter',
+          batterId: matchup.batter?.id,
+          pitches: pitchList
+        };
+
+        if (!playLogGroupedMap.has(inningLabel)) {
+          playLogGroupedMap.set(inningLabel, []);
+        }
+        playLogGroupedMap.get(inningLabel).push(playItem);
+      }
+
+      liveState.playLogGrouped = Array.from(playLogGroupedMap.entries()).map(([label, plays]) => ({
+        inningLabel: label,
+        plays: plays
+      }));
+
+      liveState.awayLineup = parseTeamLineup(boxscore?.teams?.away, players);
+      liveState.homeLineup = parseTeamLineup(boxscore?.teams?.home, players);
+
+      liveState.awayPitching = parseTeamPitching(boxscore?.teams?.away, players);
+      liveState.homePitching = parseTeamPitching(boxscore?.teams?.home, players);
+
+      parseGameInfoAndNotes(boxscore, gameData);
+
+      renderAllUI();
+    }
+
+    function parseTeamLineup(teamBoxscore, playersDict) {
+      if (!teamBoxscore || !teamBoxscore.batters) return [];
+      
+      const lineup = [];
+      teamBoxscore.batters.slice(0, 9).forEach((id, idx) => {
+        const playerObj = teamBoxscore.players[`ID${id}`] || playersDict[`ID${id}`];
+        if (playerObj) {
+          const stats = playerObj.stats?.batting || {};
+          lineup.push({
+            id: id,
+            name: `${idx + 1}. ${playerObj.person?.fullName || playerObj.boxscoreName || 'Batter'}`,
+            pos: playerObj.position?.abbreviation || "DH",
+            ab: stats.atBats ?? 0,
+            r: stats.runs ?? 0,
+            h: stats.hits ?? 0,
+            rbi: stats.rbi ?? 0
+          });
+        }
+      });
+      return lineup;
+    }
+
+    function parseTeamPitching(teamBoxscore, playersDict) {
+      if (!teamBoxscore || !teamBoxscore.pitchers) return [];
+
+      const pitchers = [];
+      teamBoxscore.pitchers.forEach((id) => {
+        const playerObj = teamBoxscore.players[`ID${id}`] || playersDict[`ID${id}`];
+        if (playerObj) {
+          const stats = playerObj.stats?.pitching || {};
+          pitchers.push({
+            id: id,
+            name: playerObj.person?.fullName || playerObj.boxscoreName || 'Pitcher',
+            ip: stats.inningsPitched || "0.0",
+            h: stats.hits ?? 0,
+            r: stats.runs ?? 0,
+            er: stats.earnedRuns ?? 0,
+            bb: stats.baseOnBalls ?? 0,
+            so: stats.strikeOuts ?? 0,
+            hr: stats.homeRuns ?? 0
+          });
+        }
+      });
+      return pitchers;
+    }
+
+    function parseGameInfoAndNotes(boxscore, gameData) {
+      const gatherNotes = (title) => {
+        const notes = [];
+        ['away', 'home'].forEach(side => {
+          const infoArr = boxscore?.teams?.[side]?.info || [];
+          infoArr.forEach(item => {
+            if (item.title === title && item.description) {
+              notes.push(item.description);
+            }
+          });
+        });
+        return notes.length > 0 ? notes.join('; ') : 'None';
+      };
+
+      liveState.gameNotes = {
+        '2b': gatherNotes('2B'),
+        '3b': gatherNotes('3B'),
+        'hr': gatherNotes('HR'),
+        'rbi': gatherNotes('RBI')
+      };
+
+      const venueName = gameData?.venue?.name || '--';
+      const attendance = gameData?.gameInfo?.attendance ? gameData.gameInfo.attendance.toLocaleString() : 'N/A';
+      const weatherCond = gameData?.weather?.condition || '';
+      const weatherTemp = gameData?.weather?.temp ? `${gameData.weather.temp}°F` : '';
+      const weatherStr = [weatherTemp, weatherCond].filter(Boolean).join(', ') || 'N/A';
+      
+      let startStr = '--';
+      if (gameData?.gameInfo?.firstPitch) {
+        startStr = gameData.gameInfo.firstPitch;
+      } else if (gameData?.datetime?.dateTime) {
+        startStr = new Date(gameData.datetime.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      }
+
+      liveState.gameMeta = {
+        venue: venueName,
+        attendance: attendance,
+        weather: weatherStr,
+        start: startStr
+      };
+    }
+
+    function updateTimestamp() {
+      const now = new Date();
+      document.getElementById('sync-time').innerText = `SYNC: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+    }
+
+    function renderStrikeZone() {
+      const dotsLayer = document.getElementById('pitch-dots-layer');
+      dotsLayer.innerHTML = '';
+
+      const firstGroup = liveState.playLogGrouped[0];
+      const latestPlay = firstGroup && firstGroup.plays ? firstGroup.plays[0] : null;
+
+      if (!latestPlay || !latestPlay.pitches || latestPlay.pitches.length === 0) {
+        document.getElementById('current-pitch-speed').innerText = "-- MPH";
+        document.getElementById('pitch-desc-pill').innerText = "NO PITCH DATA AVAILABLE";
+        return;
+      }
+
+      latestPlay.pitches.forEach((p, index) => {
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", p.x);
+        circle.setAttribute("cy", p.y);
+        circle.setAttribute("r", index === 0 ? "8" : "6");
+        circle.setAttribute("fill", p.color);
+        circle.setAttribute("stroke", "#ffffff");
+        circle.setAttribute("stroke-width", "2");
+        circle.setAttribute("class", "pitch-dot");
+
+        circle.addEventListener('mouseenter', () => {
+          document.getElementById('current-pitch-speed').innerText = p.speed;
+          document.getElementById('pitch-desc-pill').innerText = `${p.type.toUpperCase()} • ${p.speed} (${p.result.toUpperCase()})`;
+        });
+
+        dotsLayer.appendChild(circle);
+      });
+
+      const lastP = latestPlay.pitches[0];
+      document.getElementById('current-pitch-speed').innerText = lastP.speed;
+      document.getElementById('pitch-desc-pill').innerText = `${lastP.type.toUpperCase()} • ${lastP.speed} (${lastP.result.toUpperCase()})`;
+    }
+
+    function renderPlayLog() {
+      const container = document.getElementById('play-log-list');
+      
+      let totalEvents = 0;
+      liveState.playLogGrouped.forEach(g => totalEvents += g.plays.length);
+      document.getElementById('play-count-tag').innerText = `${totalEvents} EVENTS`;
+
+      if (liveState.playLogGrouped.length === 0) {
+        container.innerHTML = `<div class="text-center text-gray-500 py-6 font-mono text-xs">NO PLAY EVENTS RECORDED YET</div>`;
+        return;
+      }
+
+      let isFirstOverall = true;
+      container.innerHTML = liveState.playLogGrouped.map((group) => {
+        const isTop = group.inningLabel.startsWith('TOP');
+        const teamId = isTop ? liveState.awayTeam.id : liveState.homeTeam.id;
+        const teamCode = isTop ? liveState.awayTeam.code : liveState.homeTeam.code;
+        const logoUrl = teamId ? `https://www.mlbstatic.com/team-logos/${teamId}.svg` : '';
+
+        return `
+        <div class="inning-group space-y-2">
+          <div class="sticky top-0 z-10 bg-slate-950/95 backdrop-blur border-y border-cyan-500/30 px-2.5 py-1.5 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="text-amber-400 font-bold text-sm">❖</span>
+              <span class="font-teko text-xl font-bold text-cyan-300 tracking-wider uppercase">${group.inningLabel}</span>
+              ${logoUrl ? `<img src="${logoUrl}" class="w-5 h-5 object-contain rounded" alt="${teamCode}" title="${teamCode}" />` : ''}
+            </div>
+            <span class="text-xs font-mono text-gray-400 font-normal">${group.plays.length} PLAYS</span>
+          </div>
+
+          ${group.plays.map((play) => {
+            const isPinned = isFirstOverall;
+            isFirstOverall = false;
+
+            const batterHeadshot = play.batterId 
+              ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_420,q_auto:best/v1/people/${play.batterId}/headshot/67/current`
+              : `https://placehold.co/100x100/111827/ffffff?text=BATTER`;
+
+            return `
+              <div class="play-card ${play.type} ${isPinned ? 'pinned-top' : ''} p-2.5 rounded bg-slate-900/60 border border-white/5 flex gap-2.5 items-start">
+                <img class="w-9 h-9 rounded-full border border-cyan-400/40 bg-slate-950 object-cover flex-shrink-0 mt-0.5" 
+                     src="${batterHeadshot}" 
+                     alt="${play.batterName}" 
+                     title="${play.batterName}"
+                     onerror="this.src='https://placehold.co/100x100/111827/ffffff?text=BATTER'" />
+
+                <div class="flex-1 min-w-0">
+                  <div class="font-teko text-lg leading-none font-bold text-amber-400 flex justify-between items-center">
+                    <span class="truncate">${play.title}</span>
+                    <span class="text-[11px] font-mono font-normal ${play.type === 'out' ? 'text-rose-400' : 'text-emerald-400'} ml-1 flex-shrink-0">${play.outsTag}</span>
+                  </div>
+                  <div class="text-xs text-gray-200 mt-1 leading-snug font-chakra">${play.desc}</div>
+                  
+                  ${play.pitches && play.pitches.length > 0 ? `
+                    <div class="mt-1.5 pt-1.5 border-t border-white/10 space-y-0.5">
+                      ${play.pitches.map(p => `
+                        <div class="flex justify-between text-[10px] font-mono text-gray-400">
+                          <span class="text-gray-300 font-bold">${p.result}</span>
+                          <span>${p.speed} ${p.type}</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      }).join('');
+    }
+
+    function renderLineups() {
+      const renderTable = (tbodyId, lineup) => {
+        const tbody = document.getElementById(tbodyId);
+        if (!lineup || lineup.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-2">Lineup unannounced</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = lineup.map(p => `
+          <tr class="${p.id === liveState.currentBatter.id ? 'bg-cyan-500/10 text-cyan-300' : 'text-gray-300'}">
+            <td>${p.name} (${p.pos})</td>
+            <td>${p.ab}</td>
+            <td>${p.r}</td>
+            <td>${p.h}</td>
+            <td>${p.rbi}</td>
+          </tr>
+        `).join('');
+      };
+
+      const renderPitchingTable = (tbodyId, pitchers) => {
+        const tbody = document.getElementById(tbodyId);
+        if (!pitchers || pitchers.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500 py-2">No pitching data</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = pitchers.map(p => `
+          <tr class="${p.id === liveState.currentPitcher.id ? 'bg-amber-500/10 text-amber-300' : 'text-gray-300'}">
+            <td>${p.name}</td>
+            <td>${p.ip}</td>
+            <td>${p.h}</td>
+            <td>${p.r}</td>
+            <td>${p.er}</td>
+            <td>${p.bb}</td>
+            <td>${p.so}</td>
+            <td>${p.hr}</td>
+          </tr>
+        `).join('');
+      };
+
+      document.getElementById('away-lineup-header').innerText = `${liveState.awayTeam.name} BATTING`;
+      document.getElementById('away-lineup-code').innerText = liveState.awayTeam.code;
+      renderTable('away-lineup-body', liveState.awayLineup);
+
+      document.getElementById('home-lineup-header').innerText = `${liveState.homeTeam.name} BATTING`;
+      document.getElementById('home-lineup-code').innerText = liveState.homeTeam.code;
+      renderTable('home-lineup-body', liveState.homeLineup);
+
+      document.getElementById('away-pitching-header').innerText = `${liveState.awayTeam.name} PITCHERS`;
+      renderPitchingTable('away-pitching-body', liveState.awayPitching);
+
+      document.getElementById('home-pitching-header').innerText = `${liveState.homeTeam.name} PITCHERS`;
+      renderPitchingTable('home-pitching-body', liveState.homePitching);
+
+      document.getElementById('notes-2b').innerText = liveState.gameNotes['2b'];
+      document.getElementById('notes-3b').innerText = liveState.gameNotes['3b'];
+      document.getElementById('notes-hr').innerText = liveState.gameNotes['hr'];
+      document.getElementById('notes-rbi').innerText = liveState.gameNotes['rbi'];
+
+      document.getElementById('meta-venue').innerText = liveState.gameMeta.venue;
+      document.getElementById('meta-attendance').innerText = liveState.gameMeta.attendance;
+      document.getElementById('meta-weather').innerText = liveState.gameMeta.weather;
+      document.getElementById('meta-start').innerText = liveState.gameMeta.start;
+    }
+
+    function renderAllUI() {
+      document.getElementById('away-name').innerText = liveState.awayTeam.name;
+      document.getElementById('away-record').innerText = `${liveState.awayTeam.record} | AWAY`;
+      document.getElementById('away-score').innerText = liveState.awayTeam.score;
+      if (liveState.awayTeam.id) {
+        document.getElementById('away-logo').src = `https://www.mlbstatic.com/team-logos/${liveState.awayTeam.id}.svg`;
+      }
+
+      document.getElementById('home-name').innerText = liveState.homeTeam.name;
+      document.getElementById('home-record').innerText = `${liveState.homeTeam.record} | HOME`;
+      document.getElementById('home-score').innerText = liveState.homeTeam.score;
+      if (liveState.homeTeam.id) {
+        document.getElementById('home-logo').src = `https://www.mlbstatic.com/team-logos/${liveState.homeTeam.id}.svg`;
+      }
+
+      const renderChallengeDots = (containerId, count) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+          const dot = document.createElement('span');
+          dot.className = 'w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_5px_#00d2ff]';
+          container.appendChild(dot);
+        }
+        if (count === 0) {
+          container.innerHTML = '<span class="text-[9px] text-rose-400 font-bold">USED</span>';
+        }
+      };
+
+      renderChallengeDots('away-chal-dots', liveState.awayTeam.challenges);
+      renderChallengeDots('home-chal-dots', liveState.homeTeam.challenges);
+
+      document.getElementById('inning-badge').innerText = liveState.inning;
+
+      const updateDots = (containerId, count) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const dots = container.querySelectorAll('.count-dot');
+        dots.forEach((dot, idx) => {
+          if (idx < count) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+      };
+
+      updateDots('balls-dots', liveState.balls);
+      updateDots('strikes-dots', liveState.strikes);
+      updateDots('outs-dots', liveState.outs);
+
+      const b1 = document.getElementById('base-1');
+      const b2 = document.getElementById('base-2');
+      const b3 = document.getElementById('base-3');
+      if (b1) b1.className = `base b1 ${liveState.bases.b1 ? 'active' : ''}`;
+      if (b2) b2.className = `base b2 ${liveState.bases.b2 ? 'active' : ''}`;
+      if (b3) b3.className = `base b3 ${liveState.bases.b3 ? 'active' : ''}`;
+
+      const p = liveState.currentPitcher;
+      document.getElementById('pitcher-name').innerText = p.name;
+      document.getElementById('pitcher-count').innerText = p.pitchCount;
+      document.getElementById('pitcher-stats').innerText = p.stats;
+      document.getElementById('pitcher-hand').innerText = p.pitchHand || 'RHP';
+      if (p.id) {
+        document.getElementById('pitcher-headshot').src = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_420,q_auto:best/v1/people/${p.id}/headshot/67/current`;
+      } else {
+        document.getElementById('pitcher-headshot').src = `https://placehold.co/100x100/111827/ffffff?text=PITCHER`;
+      }
+
+      const b = liveState.currentBatter;
+      document.getElementById('batter-name').innerText = b.name;
+      document.getElementById('batter-day-stats').innerText = b.dayStats;
+      document.getElementById('batter-stats').innerText = b.stats;
+      document.getElementById('batter-side').innerText = b.batSide || 'BATS: --';
+      if (b.id) {
+        document.getElementById('batter-headshot').src = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_420,q_auto:best/v1/people/${b.id}/headshot/67/current`;
+      } else {
+        document.getElementById('batter-headshot').src = `https://placehold.co/100x100/111827/ffffff?text=BATTER`;
+      }
+
+      document.getElementById('game-id-tag').innerText = `GAME PK: ${liveState.gamePk || '--'}`;
+
+      renderStrikeZone();
+      renderPlayLog();
+      renderLineups();
+    }
+
+    window.addEventListener('load', () => {
+      loadSchedule();
+    });
+  </script>
+</body>
+</html>

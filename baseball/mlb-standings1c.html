@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MLB Digital Signage Standings</title>
+  
+  <!-- High-impact condensed sports typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #05080c;
+      --panel-bg: rgba(12, 17, 28, 0.95);
+      --border-color: rgba(255, 255, 255, 0.15);
+      --neon-blue: #00d2ff;
+      --neon-red: #ff2a5f;
+      --gold-accent: #ffb703;
+      --text-main: #ffffff;
+      --text-muted: #a0aec0;
+      --font-shadow: 0px 2px 4px rgba(0, 0, 0, 0.9);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #111827 0%, var(--bg-dark) 85%);
+      color: var(--text-main);
+      font-family: 'Chakra Petch', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5vw;
+      background: linear-gradient(90deg, rgba(0, 210, 255, 0.12), rgba(255, 42, 95, 0.12));
+      border-bottom: 2px solid var(--border-color);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+      height: 7vh;
+    }
+
+    .brand-title {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(2.2rem, 4.5vh, 4rem);
+      line-height: 1;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ffffff, var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: var(--font-shadow);
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 1.5vw;
+      font-size: clamp(0.75rem, 1.3vh, 1.1rem);
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+      animation: blink 2s infinite;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Main Grid Layout */
+    main {
+      flex: 1;
+      padding: 0.5vh 0.5vw;
+      display: grid;
+      gap: 0.5vh 0.5vw;
+      height: 93vh;
+      width: 100vw;
+    }
+
+    @media (orientation: landscape) {
+      main {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+      }
+    }
+
+    @media (orientation: portrait) {
+      main {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+      }
+    }
+
+    /* Clean Card Box Styling */
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.5vh 0.6vw;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--gold-accent), var(--neon-red));
+      z-index: 7;
+      box-shadow: 0 0 8px var(--neon-blue);
+    }
+
+    .card-title {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(2rem, 3.8vh, 3rem);
+      line-height: 1;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 0.6vh;
+      padding-bottom: 0.6vh;
+      margin-bottom: 0.3vh;
+      color: #ffffff;
+      text-shadow: var(--font-shadow);
+      position: relative;
+      z-index: 8;
+    }
+
+    .card-title .league-tag {
+      font-size: clamp(0.75rem, 1.3vh, 1rem);
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.5);
+    }
+
+    .tag-al { background: rgba(0, 210, 255, 0.25); color: var(--neon-blue); border: 1px solid rgba(0, 210, 255, 0.4); }
+    .tag-nl { background: rgba(255, 42, 95, 0.25); color: var(--neon-red); border: 1px solid rgba(255, 42, 95, 0.4); }
+    .tag-wc { background: rgba(255, 183, 3, 0.25); color: var(--gold-accent); border: 1px solid rgba(255, 183, 3, 0.4); }
+
+    /* Table Layout */
+    table {
+      width: 100%;
+      height: 100%;
+      border-collapse: separate;
+      border-spacing: 0 2px;
+      table-layout: fixed;
+    }
+
+    col.col-team { width: 42%; }
+    col.col-wl { width: 22%; }
+    col.col-pct { width: 18%; }
+    col.col-gb { width: 18%; }
+
+    th {
+      text-align: right;
+      color: var(--text-muted);
+      font-size: clamp(0.7rem, 1.2vh, 0.95rem);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 0.2vh;
+      padding-right: 0.3vw;
+      font-weight: 700;
+    }
+
+    th.col-team {
+      text-align: left;
+      padding-left: 10px;
+    }
+
+    th:last-child {
+      padding-right: 10px;
+    }
+
+    td {
+      padding: 0 0.3vw 0 0;
+      font-size: clamp(1.05rem, 2.2vh, 1.5rem);
+      font-weight: 700;
+      text-align: right;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+      position: relative;
+      text-shadow: var(--font-shadow);
+      z-index: 3;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Tight W-L Column Styling */
+    td.col-wl-cell {
+      letter-spacing: -0.03em;
+    }
+
+    td.col-team-cell {
+      text-align: left;
+      padding-left: 10px;
+    }
+
+    td:last-child {
+      padding-right: 10px;
+    }
+
+    /* Team Row Base */
+    tr.team-row {
+      position: relative;
+    }
+
+    /* Dark overlay tint for visual separation */
+    tr.team-row td::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.4vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      z-index: 3;
+    }
+
+    .team-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.02em;
+      margin-left: 15px;
+      color: #ffffff;
+      font-size: clamp(1.1rem, 2.4vh, 1.65rem);
+      font-weight: 700;
+      text-shadow: var(--font-shadow);
+    }
+
+    /* Flush Left Team Logo */
+    .team-logo {
+      width: clamp(33px, 4.8vh, 54px);
+      height: clamp(33px, 4.8vh, 54px);
+      object-fit: contain;
+      flex-shrink: 0;
+      filter: drop-shadow(0px 3px 5px rgba(0, 0, 0, 0.85));
+    }
+
+    .gb-text {
+      color: var(--gold-accent) !important;
+      font-weight: 700;
+    }
+
+    .wc-cutoff td {
+      border-bottom: 2px dashed var(--gold-accent) !important;
+    }
+
+    /* Screen Saver / Loader Overlay */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Teko', sans-serif;
+      font-size: 3rem;
+      letter-spacing: 3px;
+      color: var(--neon-blue);
+      z-index: 99;
+      transition: opacity 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loader">POLLING MLB DATA FEEDS...</div>
+
+  <header>
+    <div class="brand-title">MLB LIVE STANDINGS</div>
+    <div class="status-bar">
+      <div><span class="pulse-dot"></span>LIVE FEED</div>
+      <div>NEXT UPDATE: <span id="timer">60:00</span></div>
+      <div id="last-updated">UPDATED: --:--</div>
+    </div>
+  </header>
+
+  <main id="standings-grid">
+    <!-- Rendered Dynamically -->
+  </main>
+
+  <script>
+    const API_URL = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&hydrate=division,team";
+    let refreshCountdown = 3600;
+
+    // Primary Team Colors Mapping (Hex)
+    const TEAM_COLORS = {
+      108: '#A71930', // D-backs
+      144: '#13274F', // Braves
+      110: '#DF4601', // Orioles
+      111: '#BD3039', // Red Sox
+      112: '#0E3386', // Cubs
+      145: '#27251F', // White Sox
+      113: '#C6011F', // Reds
+      114: '#0C2340', // Guardians
+      115: '#333366', // Rockies
+      116: '#0C2340', // Tigers
+      117: '#002D62', // Astros
+      118: '#004687', // Royals
+      108: '#BA0021', // Angels
+      119: '#005A9C', // Dodgers
+      146: '#00A3E0', // Marlins
+      158: '#122A50', // Brewers
+      142: '#D31145', // Twins
+      121: '#002D62', // Mets
+      147: '#001C43', // Yankees
+      133: '#003831', // Athletics
+      143: '#E31837', // Phillies
+      134: '#870042', // Pirates
+      135: '#2F241D', // Padres
+      137: '#FD5A1E', // Giants
+      136: '#005C5C', // Mariners
+      138: '#C41E3A', // Cardinals
+      139: '#092C5C', // Rays
+      140: '#003278', // Rangers
+      141: '#134A8E', // Blue Jays
+      120: '#AB0003'  // Nationals
+    };
+
+    function getShortTeamName(fullTeamName) {
+      if (!fullTeamName) return '';
+      const exceptions = {
+        'New York Yankees': 'Yankees',
+        'New York Mets': 'Mets',
+        'Boston Red Sox': 'Red Sox',
+        'Chicago White Sox': 'White Sox',
+        'Chicago Cubs': 'Cubs',
+        'St. Louis Cardinals': 'Cardinals',
+        'LA Dodgers': 'Dodgers',
+        'Los Angeles Dodgers': 'Dodgers',
+        'LA Angels': 'Angels',
+        'Los Angeles Angels': 'Angels',
+        'Tampa Bay Rays': 'Rays',
+        'San Francisco Giants': 'Giants',
+        'San Diego Padres': 'Padres',
+        'Kansas City Royals': 'Royals',
+        'Toronto Blue Jays': 'Blue Jays'
+      };
+
+      if (exceptions[fullTeamName]) return exceptions[fullTeamName];
+      const parts = fullTeamName.trim().split(' ');
+      return parts.length > 1 ? parts.slice(1).join(' ') : fullTeamName;
+    }
+
+    async function fetchStandings() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        renderDashboard(data.records);
+        updateLastRefreshedTime();
+        
+        const loader = document.getElementById('loader');
+        if (loader) {
+          loader.style.opacity = '0';
+          setTimeout(() => loader.style.display = 'none', 500);
+        }
+      } catch (err) {
+        console.error("Error fetching MLB data:", err);
+      }
+    }
+
+    function getLogoUrl(teamId) {
+      return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+    }
+
+    function getTeamGradientStyle(teamId) {
+      const baseHex = TEAM_COLORS[teamId] || '#1a233a';
+      return `style="background: linear-gradient(90deg, ${baseHex}ee 0%, ${baseHex}aa 60%, ${baseHex}ee 100%);"`;
+    }
+
+    function buildDivisionCard(record) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const leagueClass = record.league.id === 103 ? 'tag-al' : 'tag-nl';
+      const leagueLabel = record.league.id === 103 ? 'AL' : 'NL';
+
+      let rowsHTML = record.teamRecords.map((team) => {
+        const shortName = getShortTeamName(team.team.name);
+        const logoUrl = getLogoUrl(team.team.id);
+
+        return `
+          <tr class="team-row" ${getTeamGradientStyle(team.team.id)}>
+            <td class="col-team-cell">
+              <div class="team-cell">
+                <img class="team-logo" src="${logoUrl}" alt="" />
+                <span class="team-name">${shortName}</span>
+              </div>
+            </td>
+            <td class="col-wl-cell">${team.leagueRecord.wins}-${team.leagueRecord.losses}</td>
+            <td>${team.winningPercentage}</td>
+            <td class="gb-text">
+              ${team.gamesBack === '-' ? '—' : team.gamesBack}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="card-title">
+          <span>${record.division.nameShort || record.division.name}</span>
+          <span class="league-tag ${leagueClass}">${leagueLabel}</span>
+        </div>
+        <table>
+          <colgroup>
+            <col class="col-team">
+            <col class="col-wl">
+            <col class="col-pct">
+            <col class="col-gb">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="col-team">Team</th>
+              <th>W-L</th>
+              <th>PCT</th>
+              <th>GB</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      `;
+      return card;
+    }
+
+    function buildWildCardCard(records, leagueId) {
+      const wcCard = document.createElement('div');
+      wcCard.className = 'card';
+      const isAL = leagueId === 103;
+      const leagueName = isAL ? 'AL Wild Card' : 'NL Wild Card';
+
+      let wcTeams = [];
+      records.filter(r => r.league.id === leagueId && r.standingsType === 'regularSeason')
+             .forEach(div => {
+               div.teamRecords.forEach(tr => {
+                 if (tr.wildCardRank) {
+                   wcTeams.push(tr);
+                 }
+               });
+             });
+
+      wcTeams.sort((a, b) => parseInt(a.wildCardRank) - parseInt(b.wildCardRank));
+
+      let wcRowsHTML = wcTeams.slice(0, 5).map((team, idx) => {
+        const borderClass = idx === 2 ? 'wc-cutoff' : '';
+        const shortName = getShortTeamName(team.team.name);
+        const logoUrl = getLogoUrl(team.team.id);
+
+        return `
+          <tr class="team-row ${borderClass}" ${getTeamGradientStyle(team.team.id)}>
+            <td class="col-team-cell">
+              <div class="team-cell">
+                <img class="team-logo" src="${logoUrl}" alt="" />
+                <span class="team-name">${shortName}</span>
+              </div>
+            </td>
+            <td class="col-wl-cell">${team.leagueRecord.wins}-${team.leagueRecord.losses}</td>
+            <td>${team.winningPercentage}</td>
+            <td class="gb-text">
+              ${team.wildCardGamesBack === '-' ? '—' : team.wildCardGamesBack}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      wcCard.innerHTML = `
+        <div class="card-title">
+          <span>${leagueName}</span>
+          <span class="league-tag tag-wc">PLAYOFF RACE</span>
+        </div>
+        <table>
+          <colgroup>
+            <col class="col-team">
+            <col class="col-wl">
+            <col class="col-pct">
+            <col class="col-gb">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="col-team">Team</th>
+              <th>W-L</th>
+              <th>PCT</th>
+              <th>WCGB</th>
+            </tr>
+          </thead>
+          <tbody>${wcRowsHTML}</tbody>
+        </table>
+      `;
+      return wcCard;
+    }
+
+    function renderDashboard(records) {
+      const grid = document.getElementById('standings-grid');
+      grid.innerHTML = '';
+
+      const regularRecords = records.filter(r => r.standingsType === 'regularSeason');
+      const divMap = {};
+      regularRecords.forEach(r => divMap[r.division.id] = r);
+
+      // AL Block: AL East, AL Central, AL West, AL Wild Card
+      if (divMap[201]) grid.appendChild(buildDivisionCard(divMap[201]));
+      if (divMap[202]) grid.appendChild(buildDivisionCard(divMap[202]));
+      if (divMap[200]) grid.appendChild(buildDivisionCard(divMap[200]));
+      grid.appendChild(buildWildCardCard(records, 103));
+
+      // NL Block: NL East, NL Central, NL West, NL Wild Card
+      if (divMap[204]) grid.appendChild(buildDivisionCard(divMap[204]));
+      if (divMap[205]) grid.appendChild(buildDivisionCard(divMap[205]));
+      if (divMap[203]) grid.appendChild(buildDivisionCard(divMap[203]));
+      grid.appendChild(buildWildCardCard(records, 104));
+    }
+
+    function updateLastRefreshedTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('last-updated').innerText = `UPDATED: ${timeString}`;
+    }
+
+    setInterval(() => {
+      refreshCountdown--;
+      if (refreshCountdown <= 0) {
+        refreshCountdown = 3600;
+        fetchStandings();
+      }
+      
+      const mins = Math.floor(refreshCountdown / 60).toString().padStart(2, '0');
+      const secs = (refreshCountdown % 60).toString().padStart(2, '0');
+      document.getElementById('timer').innerText = `${mins}:${secs}`;
+    }, 1000);
+
+    fetchStandings();
+  </script>
+</body>
+</html>

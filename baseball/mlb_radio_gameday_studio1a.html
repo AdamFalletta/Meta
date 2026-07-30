@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Audio Gameday Radio Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;600;700&family=Share+Tech+Mono&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f1f5f9;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        .font-teko { font-family: 'Teko', sans-serif; }
+        .font-chakra { font-family: 'Chakra Petch', sans-serif; }
+        .font-mono-tech { font-family: 'Share Tech Mono', monospace; }
+
+        .radio-card {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(239, 68, 68, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+        }
+
+        .studio-glow {
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.35);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.8); }
+        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 3px; }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.9; }
+        }
+        .on-air-pulse {
+            animation: pulse-ring 1.8s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 pb-12">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        class BallparkAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.crowdHumNode = null;
+                this.crowdGainNode = null;
+                this.isCrowdHumPlaying = false;
+            }
+
+            initCtx() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // Continuous Sustained Crowd Hum Ambient Noise
+            toggleCrowdHum(enable, volume = 0.12) {
+                this.initCtx();
+                if (enable) {
+                    if (this.isCrowdHumPlaying) {
+                        if (this.crowdGainNode) this.crowdGainNode.gain.value = volume;
+                        return;
+                    }
+
+                    const bufferSize = this.ctx.sampleRate * 4;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    let lastOut = 0.0;
+                    
+                    for (let i = 0; i < bufferSize; i++) {
+                        const white = Math.random() * 2 - 1;
+                        data[i] = (lastOut + (0.02 * white)) / 1.02;
+                        lastOut = data[i];
+                    }
+
+                    this.crowdHumNode = this.ctx.createBufferSource();
+                    this.crowdHumNode.buffer = buffer;
+                    this.crowdHumNode.loop = true;
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 400; 
+
+                    this.crowdGainNode = this.ctx.createGain();
+                    this.crowdGainNode.gain.value = volume;
+
+                    this.crowdHumNode.connect(filter);
+                    filter.connect(this.crowdGainNode);
+                    this.crowdGainNode.connect(this.ctx.destination);
+
+                    this.crowdHumNode.start(0);
+                    this.isCrowdHumPlaying = true;
+                } else {
+                    if (this.crowdHumNode) {
+                        try { this.crowdHumNode.stop(); } catch(e){}
+                        this.crowdHumNode.disconnect();
+                        this.crowdHumNode = null;
+                    }
+                    this.isCrowdHumPlaying = false;
+                }
+            }
+
+            // Home Team Cheer SFX
+            playCheer() {
+                this.initCtx();
+                const now = this.ctx.currentTime;
+                const duration = 2.2;
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(650, now);
+                filter.Q.setValueAtTime(1.2, now);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.01, now);
+                gain.gain.linearRampToValueAtTime(0.35, now + 0.4);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start(now);
+                noise.stop(now + duration);
+            }
+
+            // Away Team Boo SFX
+            playBoo() {
+                this.initCtx();
+                const now = this.ctx.currentTime;
+                const duration = 2.2;
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(220, now);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.01, now);
+                gain.gain.linearRampToValueAtTime(0.35, now + 0.5);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start(now);
+                noise.stop(now + duration);
+            }
+
+            // Bat Crack SFX
+            playBatCrack() {
+                this.initCtx();
+                const now = this.ctx.currentTime;
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(980, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 0.07);
+
+                gain.gain.setValueAtTime(0.7, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.07);
+            }
+
+            // Mitt Thump SFX
+            playMittThump() {
+                this.initCtx();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.09);
+
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.09);
+            }
+
+            // Radio AM Static Tuning Pulse
+            playRadioStatic() {
+                this.initCtx();
+                const now = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.12;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.06;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                noise.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start(now);
+                noise.stop(now + 0.12);
+            }
+        }
+
+        const audioFX = new BallparkAudioEngine();
+
+        // Helper to format date in America/New_York
+        const getNyTodayStr = () => {
+            const d = new Date();
+            return d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+        };
+
+        // Format speed: convert float speeds (like 98.4) strictly to integer string "98"
+        const formatSpeedInt = (rawSpeed) => {
+            if (!rawSpeed) return null;
+            const num = Math.round(Number(rawSpeed));
+            return isNaN(num) ? null : `${num}`;
+        };
+
+        const getRandomPhrase = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        // Real MLB Live Game In-Game Play-by-Play Script Generator
+        const generateLivePlayScript = (play, liveData, gameData, lastAnnouncedAtBatIndexRef = { current: null }, forcePA = false) => {
+            const homeTeam = gameData?.gameData?.teams?.home?.name || 'Home Team';
+            const awayTeam = gameData?.gameData?.teams?.away?.name || 'Away Team';
+
+            if (!play) {
+                return {
+                    pa: null,
+                    pbp: `We are live, waiting for the next pitch between the ${awayTeam} and ${homeTeam}.`,
+                    analyst: `Both teams are locked in and ready on the field.`,
+                    isHit: false,
+                    isHomeTeamBatting: true
+                };
+            }
+
+            // Player Info & Handedness Matchups
+            const batter = play.matchup?.batter?.fullName || 'The batter';
+            const batterNum = play.matchup?.batter?.primaryNumber ? `#${play.matchup.batter.primaryNumber}` : '';
+            const batSide = play.matchup?.batSide?.description || '';
+            const pitcher = play.matchup?.pitcher?.fullName || 'The pitcher';
+            const pitchHand = play.matchup?.pitchHand?.description || '';
+            const atBatIndex = play.atBatIndex ?? play.about?.atBatIndex ?? 0;
+            
+            // Inning & Game Context
+            const inning = play.about?.inning || 1;
+            const isTop = play.about?.halfInning === 'top';
+            const halfInningStr = isTop ? `top of the ${inning}th` : `bottom of the ${inning}th`;
+            const activeTeam = isTop ? awayTeam : homeTeam;
+            const isHomeTeamBatting = !isTop;
+
+            // Pitch & Count Data Extraction
+            const playEvents = play.playEvents || [];
+            const pitchEvents = playEvents.filter(e => e.isPitch);
+            const lastPitch = pitchEvents.length > 0 ? pitchEvents[pitchEvents.length - 1] : null;
+            const totalPitchesInAtBat = pitchEvents.length || 1;
+
+            // Accurate Balls/Strikes extraction:
+            // MLB API note: play.count holds the updated count AFTER the pitch.
+            // lastPitch.count inside playEvents holds the count BEFORE that pitch was thrown.
+            let balls = 0;
+            let strikes = 0;
+            let outs = play.count?.outs ?? 0;
+
+            if (play.count && typeof play.count.balls === 'number') {
+                balls = play.count.balls;
+                strikes = play.count.strikes;
+            } else if (lastPitch && lastPitch.count) {
+                balls = lastPitch.count.balls ?? 0;
+                strikes = lastPitch.count.strikes ?? 0;
+                const desc = (lastPitch.details?.description || '').toLowerCase();
+                const callCode = lastPitch.details?.call?.code || '';
+                if (desc.includes('ball') || callCode === 'B' || callCode === '*B') {
+                    balls = Math.min(4, balls + 1);
+                } else if (desc.includes('strike') || desc.includes('foul') || callCode === 'C' || callCode === 'S' || callCode === 'F') {
+                    if (desc.includes('foul') && strikes >= 2) {
+                        // Count stays at 2 strikes on fouls with 2 strikes
+                    } else {
+                        strikes = Math.min(3, strikes + 1);
+                    }
+                }
+            }
+
+            const formatCountSpeech = (b, s) => {
+                if (b === 3 && s === 2) return "The count is now full at 3 and 2.";
+                if (b === 0 && s === 0) return "Fresh count, 0 and 0.";
+                const bStr = b === 0 ? "no balls" : (b === 1 ? "1 ball" : `${b} balls`);
+                const sStr = s === 0 ? "no strikes" : (s === 1 ? "1 strike" : `${s} strikes`);
+                return `Count is now ${b} and ${s} — ${bStr}, ${sStr}.`;
+            };
+
+            const rawSpeed = lastPitch?.pitchData?.startSpeed;
+            const speedInt = formatSpeedInt(rawSpeed);
+            const pitchType = lastPitch?.details?.type?.description || lastPitch?.details?.description || 'pitch';
+            const pitchResultDesc = lastPitch?.details?.description || '';
+
+            // At-Bat Outcome & Play Results
+            const isAtBatComplete = play.about?.isComplete || false;
+            const eventResult = play.result?.event || '';
+            const resultDesc = play.result?.description || pitchResultDesc || 'delivers to the plate.';
+
+            const isHit = play.result?.type === 'hit' || /single|double|triple|home run/i.test(resultDesc);
+            const isHomeRun = /home run/i.test(resultDesc);
+            const isStrikeout = eventResult.includes('Strikeout') || /called out on strikes|strikes out|swinging strikeout/i.test(resultDesc);
+            const isWalk = eventResult.includes('Walk') || /walks|base on balls/i.test(resultDesc);
+
+            // PA Announcer: Speaks ONCE per New Batter / At-Bat
+            let paScript = null;
+            if (lastAnnouncedAtBatIndexRef.current !== atBatIndex || forcePA) {
+                const paIntros = [
+                    `Now stepping into the batter's box for ${activeTeam}, ${batterNum} ${batter}!`,
+                    `Digging in now for the ${activeTeam}, ${batterNum} ${batter}!`,
+                    `Now batting for ${activeTeam}, ${batterNum} ${batter}!`,
+                    `Next up at the plate for ${activeTeam}, ${batter}!`
+                ];
+                paScript = getRandomPhrase(paIntros);
+                lastAnnouncedAtBatIndexRef.current = atBatIndex;
+            }
+
+            // Play-By-Play Script
+            let speedClause = speedInt ? `at ${speedInt} miles per hour` : '';
+            let pbpScript = '';
+
+            if (isAtBatComplete) {
+                if (isHomeRun) {
+                    pbpScript = `${pitcher} fires a ${speedInt ? speedInt + ' mph ' : ''}${pitchType}... AND ${batter} CRUSHES IT! HIGH AND DEEP TO LEFT FIELD! THAT BALL IS OUT OF HERE! HOME RUN ${activeTeam.toUpperCase()}!`;
+                } else if (isStrikeout) {
+                    pbpScript = `${pitcher} comes set in the ${halfInningStr}. Here's the ${speedInt ? speedInt + ' mph ' : ''}${pitchType}... ${pitchResultDesc || 'Strike three!'} ${batter} is down on strikes!`;
+                } else if (isWalk) {
+                    pbpScript = `${pitcher} delivers the pitch... ${pitchResultDesc || 'Ball four!'} ${batter} draws the walk and takes first base.`;
+                } else if (isHit) {
+                    pbpScript = `${pitcher} fires the ${pitchType} ${speedClause}... Ripped by ${batter}! ${resultDesc}`;
+                } else {
+                    pbpScript = `${pitcher} offers the ${pitchType}... ${resultDesc}`;
+                }
+            } else {
+                const pitchAction = pitchResultDesc ? `Result: ${pitchResultDesc}.` : 'delivers to the plate.';
+                pbpScript = `${pitcher} works from the mound in the ${halfInningStr}, pitch #${totalPitchesInAtBat}. Fires a ${speedInt ? speedInt + ' mph ' : ''}${pitchType}... ${pitchAction}`;
+            }
+
+            // Analyst Script - Reaction to the specific outcome of the pitch or play
+            let analystScript = '';
+            
+            if (isAtBatComplete || (play.result && play.result.description)) {
+                const lowerResult = resultDesc.toLowerCase();
+                const lowerEvent = eventResult.toLowerCase();
+
+                if (isHomeRun) {
+                    analystScript = `What a blast! ${batter} jumped all over that ${pitchType} ${speedClause}. That ball was crushed from the moment it left the bat.`;
+                } else if (isHit) {
+                    if (lowerEvent.includes('double')) {
+                        analystScript = `Driven deep into the gap for a double! ${batter} read the release point on that ${pitchType} perfectly.`;
+                    } else if (lowerEvent.includes('triple')) {
+                        analystScript = `Ripped all the way to the wall for a triple! Great speed around the bases by ${batter}.`;
+                    } else {
+                        analystScript = `Clean single by ${batter}! Found a hole in the defense on that ${pitchType} ${speedClause}.`;
+                    }
+                } else if (isStrikeout) {
+                    analystScript = `Got him swinging! ${pitcher} blew that ${pitchType} ${speedClause} right past ${batter} for the out.`;
+                } else if (isWalk) {
+                    analystScript = `Ball four! Excellent patience from ${batter} to draw the walk after laying off some tough pitches.`;
+                } else if (lowerEvent.includes('ground') || lowerResult.includes('ground')) {
+                    analystScript = `Ground ball outcome on that ${pitchType}. ${pitcher} induced weak contact right to the defense.`;
+                } else if (lowerEvent.includes('fly') || lowerResult.includes('fly')) {
+                    analystScript = `Elevated into the air for a flyout. ${batter} got under that ${pitchType} just a bit too much.`;
+                } else if (lowerEvent.includes('line') || lowerResult.includes('line')) {
+                    analystScript = `Hard line drive, but right at the defender. Tough luck for ${batter} on a well-hit ball.`;
+                } else if (lowerEvent.includes('pop') || lowerResult.includes('pop')) {
+                    analystScript = `Popped up in the infield. Jammed ${batter} on the hands with the ${pitchType}.`;
+                } else {
+                    analystScript = `That completes the play: ${resultDesc}`;
+                }
+            } else {
+                // Specific pitch-by-pitch outcome commentary
+                const lowerPitchDesc = pitchResultDesc.toLowerCase();
+                let pitchOutcomeComment = '';
+
+                if (lowerPitchDesc.includes('swinging strike')) {
+                    pitchOutcomeComment = `Swinging strike on the ${pitchType} ${speedClause}. ${batter} swung right through it.`;
+                } else if (lowerPitchDesc.includes('called strike')) {
+                    pitchOutcomeComment = `Called strike on the corner with the ${pitchType} ${speedClause}. ${pitcher} painted the edge.`;
+                } else if (lowerPitchDesc.includes('foul')) {
+                    pitchOutcomeComment = `Fouled off. ${batter} got a piece of that ${pitchType} to stay alive.`;
+                } else if (lowerPitchDesc.includes('ball')) {
+                    pitchOutcomeComment = `Outside for a ball. ${pitcher} missed with the ${pitchType} ${speedClause}.`;
+                } else if (lowerPitchDesc.includes('in play')) {
+                    pitchOutcomeComment = `Ball put in play on the ${pitchType}.`;
+                } else {
+                    pitchOutcomeComment = `${pitchResultDesc || 'Pitch delivered'}.`;
+                }
+
+                const countStr = formatCountSpeech(balls, strikes);
+                analystScript = `${pitchOutcomeComment} ${countStr}`;
+            }
+
+            return {
+                pa: paScript,
+                pbp: pbpScript,
+                analyst: analystScript,
+                isHit,
+                isHomeTeamBatting
+            };
+        };
+
+        // Pre-Game Broadcast Script Builder
+        const generatePreGameScript = (gameData) => {
+            const away = gameData?.gameData?.teams?.away?.name || 'Away Team';
+            const home = gameData?.gameData?.teams?.home?.name || 'Home Team';
+            const venue = gameData?.gameData?.venue?.name || 'Ballpark';
+            const awayProbable = gameData?.gameData?.probablePitchers?.away?.fullName || 'TBD';
+            const homeProbable = gameData?.gameData?.probablePitchers?.home?.fullName || 'TBD';
+
+            return {
+                pa: `Welcome baseball fans to ${venue}! Get set for today's battle between the ${away} and your ${home}!`,
+                pbp: `Good day everyone! Welcome to MLB Radio Gameday. We are live from ${venue}. On the mound today, ${awayProbable} faces off against ${homeProbable}.`,
+                analyst: `Key storyline today is pitch command early in the ballgame. Expect both managers to rely heavily on their bullpen if pitch counts climb.`
+            };
+        };
+
+        // Post-Game Broadcast Script Builder
+        const generatePostGameScript = (gameData) => {
+            const away = gameData?.gameData?.teams?.away?.name || 'Away Team';
+            const home = gameData?.gameData?.teams?.home?.name || 'Home Team';
+            const awayRuns = gameData?.liveData?.linescore?.teams?.away?.runs ?? 0;
+            const homeRuns = gameData?.liveData?.linescore?.teams?.home?.runs ?? 0;
+            const winner = homeRuns > awayRuns ? home : away;
+
+            return {
+                pa: `Attention fans, that wraps up today's contest. Final score: ${away} ${awayRuns}, ${home} ${homeRuns}. Safe travels!`,
+                pbp: `And that is your ballgame! The ${winner} seal the victory with a final score of ${homeRuns} to ${awayRuns}. What a battle!`,
+                analyst: `The key factor was clutch execution in the late frames. ${winner} earned every bit of this win today.`
+            };
+        };
+
+        function App() {
+            const [searchDate, setSearchDate] = React.useState(getNyTodayStr());
+            const [dateGames, setDateGames] = React.useState([]);
+            const [selectedGamePk, setSelectedGamePk] = React.useState('');
+            const [gameData, setGameData] = React.useState(null);
+            const [isLoading, setIsLoading] = React.useState(false);
+            const [nyClockTime, setNyClockTime] = React.useState('');
+            
+            const [isAutoSync, setIsAutoSync] = React.useState(true);
+            const [isContinuousChatter, setIsContinuousChatter] = React.useState(true);
+            const [lastSyncTime, setLastSyncTime] = React.useState(null);
+            
+            const lastSpokenPlayKeyRef = React.useRef('');
+            const lastAnnouncedAtBatIndexRef = React.useRef(null);
+
+            const [voices, setVoices] = React.useState([]);
+            const [voicePBPIndex, setVoicePBPIndex] = React.useState(0);
+            const [voiceAnalystIndex, setVoiceAnalystIndex] = React.useState(0);
+            const [voicePAIndex, setVoicePAIndex] = React.useState(0);
+
+            const [isCrowdHumOn, setIsCrowdHumOn] = React.useState(true);
+            const [crowdVolume, setCrowdVolume] = React.useState(0.12);
+            const [speakingSpeaker, setSpeakingSpeaker] = React.useState(null);
+            
+            const [activeTeleprompter, setActiveTeleprompter] = React.useState({
+                speaker: 'SYSTEM',
+                text: 'MLB Radio Gameday Studio Live. Audio Engine & Sequential Speech Ensemble Loaded.'
+            });
+
+            const canvasRef = React.useRef(null);
+            const animFrameRef = React.useRef(null);
+            const activeUtterancesRef = React.useRef([]);
+
+            React.useEffect(() => {
+                const loadAndMapVoices = () => {
+                    if (!('speechSynthesis' in window)) return;
+                    const avail = window.speechSynthesis.getVoices();
+                    if (!avail || avail.length === 0) return;
+
+                    const enVoices = avail.filter(v => v.lang.startsWith('en'));
+                    const pool = enVoices.length > 0 ? enVoices : avail;
+                    setVoices(pool);
+
+                    let pbpIdx = pool.findIndex(v => v.name.includes('Microsoft Mark') || v.name.includes('Mark'));
+                    if (pbpIdx === -1) pbpIdx = pool.findIndex(v => v.name.toLowerCase().includes('male') && !v.name.includes('Ryan'));
+                    if (pbpIdx === -1) pbpIdx = 0;
+
+                    let analystIdx = pool.findIndex(v => v.name.includes('Microsoft Libby') || v.name.includes('Libby'));
+                    if (analystIdx === -1) analystIdx = pool.findIndex(v => v.name.includes('UK') && v.name.toLowerCase().includes('female'));
+                    if (analystIdx === -1) analystIdx = pool.findIndex(v => v.lang.includes('GB') || v.name.includes('Hazel') || v.name.includes('Zira'));
+                    if (analystIdx === -1) analystIdx = pool.length > 1 ? 1 : 0;
+
+                    let paIdx = pool.findIndex(v => v.name.includes('Microsoft Ryan') || v.name.includes('Ryan'));
+                    if (paIdx === -1) paIdx = pool.findIndex(v => v.name.includes('UK') && v.name.toLowerCase().includes('male'));
+                    if (paIdx === -1) paIdx = pool.findIndex(v => v.name.includes('George') || v.name.includes('David'));
+                    if (paIdx === -1) paIdx = pool.length > 2 ? 2 : 0;
+
+                    setVoicePBPIndex(pbpIdx);
+                    setVoiceAnalystIndex(analystIdx);
+                    setVoicePAIndex(paIdx);
+                };
+
+                loadAndMapVoices();
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.onvoiceschanged = loadAndMapVoices;
+                }
+            }, []);
+
+            React.useEffect(() => {
+                const interval = setInterval(() => {
+                    if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+                        window.speechSynthesis.resume();
+                    }
+                }, 5000);
+                return () => clearInterval(interval);
+            }, []);
+
+            React.useEffect(() => {
+                const timer = setInterval(() => {
+                    const now = new Date();
+                    setNyClockTime(now.toLocaleTimeString('en-US', {
+                        timeZone: 'America/New_York',
+                        hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    }) + ' ET');
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const fetchSchedule = React.useCallback(async (dateStr) => {
+                try {
+                    const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${dateStr}&timeZone=America/New_York`);
+                    const data = await res.json();
+                    const games = data.dates?.[0]?.games || [];
+
+                    const formatted = games.map(g => {
+                        const away = g.teams?.away?.team?.name || 'Away';
+                        const home = g.teams?.home?.team?.name || 'Home';
+                        const awayScore = g.teams?.away?.score ?? 0;
+                        const homeScore = g.teams?.home?.score ?? 0;
+                        const state = g.status?.detailedState || '';
+
+                        let label = `${away} @ ${home}`;
+                        if (state.includes('Final')) {
+                            label = `${away} ${awayScore} @ ${home} ${homeScore} (Final)`;
+                        } else if (state.includes('Progress') || state.includes('Live') || state.includes('In')) {
+                            label = `🔴 LIVE: ${away} ${awayScore} @ ${home} ${homeScore}`;
+                        } else if (g.gameDate) {
+                            const time = new Date(g.gameDate).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit' });
+                            label = `${away} @ ${home} (${time} ET)`;
+                        }
+
+                        return { id: String(g.gamePk), label, status: state };
+                    });
+
+                    setDateGames(formatted);
+                    if (formatted.length > 0 && (!selectedGamePk || !formatted.some(g => g.id === selectedGamePk))) {
+                        setSelectedGamePk(formatted[0].id);
+                    }
+                } catch(e) {
+                    console.error("MLB Schedule fetch error:", e);
+                }
+            }, [selectedGamePk]);
+
+            const fetchGameFeed = React.useCallback(async (gamePk) => {
+                if (!gamePk) return;
+                setIsLoading(true);
+                try {
+                    const res = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+                    const data = await res.json();
+                    setGameData(data);
+                    setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                } catch(e) {
+                    console.error("MLB Feed fetch error:", e);
+                } finally {
+                    setIsLoading(false);
+                }
+            }, []);
+
+            React.useEffect(() => {
+                if (searchDate) fetchSchedule(searchDate);
+            }, [searchDate, fetchSchedule]);
+
+            React.useEffect(() => {
+                if (selectedGamePk) fetchGameFeed(selectedGamePk);
+            }, [selectedGamePk, fetchGameFeed]);
+
+            React.useEffect(() => {
+                if (!isAutoSync || !selectedGamePk) return;
+                const interval = setInterval(() => {
+                    fetchGameFeed(selectedGamePk);
+                }, 5000); 
+                return () => clearInterval(interval);
+            }, [isAutoSync, selectedGamePk, fetchGameFeed]);
+
+            const speakBroadcasterSequence = React.useCallback((scriptObj) => {
+                if (!('speechSynthesis' in window)) return;
+                
+                audioFX.initCtx();
+                audioFX.playRadioStatic();
+
+                const queue = [];
+
+                if (scriptObj.pa) {
+                    const uPA = new SpeechSynthesisUtterance(scriptObj.pa);
+                    if (voices[voicePAIndex]) uPA.voice = voices[voicePAIndex];
+                    uPA.rate = 0.95;
+                    uPA.pitch = 1.05;
+                    uPA.volume = 1.0;
+
+                    uPA.onstart = () => {
+                        setSpeakingSpeaker('PA');
+                        setActiveTeleprompter({ speaker: '📢 STADIUM PA ANNOUNCER', text: scriptObj.pa });
+                    };
+                    queue.push(uPA);
+                }
+
+                if (scriptObj.pbp) {
+                    const uPBP = new SpeechSynthesisUtterance(scriptObj.pbp);
+                    if (voices[voicePBPIndex]) uPBP.voice = voices[voicePBPIndex];
+                    uPBP.rate = 1.02;
+                    uPBP.pitch = 1.0;
+                    uPBP.volume = 1.0;
+
+                    uPBP.onstart = () => {
+                        setSpeakingSpeaker('PBP');
+                        setActiveTeleprompter({ speaker: '🎙️ PLAY-BY-PLAY ANNOUNCER', text: scriptObj.pbp });
+
+                        if (scriptObj.isHit) {
+                            audioFX.playBatCrack();
+                            setTimeout(() => {
+                                if (scriptObj.isHomeTeamBatting !== false) audioFX.playCheer();
+                                else audioFX.playBoo();
+                            }, 120);
+                        } else {
+                            audioFX.playMittThump();
+                        }
+                    };
+                    queue.push(uPBP);
+                }
+
+                if (scriptObj.analyst) {
+                    const uAnalyst = new SpeechSynthesisUtterance(scriptObj.analyst);
+                    if (voices[voiceAnalystIndex]) uAnalyst.voice = voices[voiceAnalystIndex];
+                    uAnalyst.rate = 0.98;
+                    uAnalyst.pitch = 0.95;
+                    uAnalyst.volume = 1.0;
+
+                    uAnalyst.onstart = () => {
+                        setSpeakingSpeaker('ANALYST');
+                        setActiveTeleprompter({ speaker: '📊 COLOR ANALYST', text: scriptObj.analyst });
+                    };
+                    queue.push(uAnalyst);
+                }
+
+                activeUtterancesRef.current = queue;
+
+                // Stop active speech smoothly before triggering new sequence
+                window.speechSynthesis.cancel();
+
+                // Sequential speech runner with fallback safety timeouts to guarantee full completion
+                const playNextInQueue = (index) => {
+                    if (index >= queue.length) {
+                        setSpeakingSpeaker(null);
+                        return;
+                    }
+                    const currentUtterance = queue[index];
+                    let hasEnded = false;
+
+                    const advance = () => {
+                        if (!hasEnded) {
+                            hasEnded = true;
+                            playNextInQueue(index + 1);
+                        }
+                    };
+
+                    currentUtterance.onend = advance;
+                    currentUtterance.onerror = advance;
+
+                    // Fallback duration guard so browser speech synth doesn't freeze or truncate
+                    const durationEstimate = Math.max(2800, currentUtterance.text.length * 90);
+                    setTimeout(() => {
+                        if (!hasEnded && window.speechSynthesis.speaking) {
+                            advance();
+                        }
+                    }, durationEstimate);
+
+                    window.speechSynthesis.speak(currentUtterance);
+                };
+
+                setTimeout(() => {
+                    playNextInQueue(0);
+                }, 120);
+            }, [voices, voicePBPIndex, voiceAnalystIndex, voicePAIndex]);
+
+            React.useEffect(() => {
+                if (!gameData || !isContinuousChatter) return;
+                const plays = gameData?.liveData?.plays?.allPlays || [];
+                if (plays.length === 0) return;
+
+                const currentPlay = plays[plays.length - 1];
+                const playKey = `${currentPlay?.atBatIndex}-${currentPlay?.playEvents?.length || 0}-${currentPlay?.about?.isComplete ? 'complete' : 'in-progress'}`;
+
+                if (playKey !== lastSpokenPlayKeyRef.current) {
+                    lastSpokenPlayKeyRef.current = playKey;
+                    const script = generateLivePlayScript(currentPlay, gameData.liveData, gameData, lastAnnouncedAtBatIndexRef, false);
+                    speakBroadcasterSequence(script);
+                }
+            }, [gameData, isContinuousChatter, speakBroadcasterSequence]);
+
+            const handleBroadcastCurrentPlay = () => {
+                if (!gameData) return;
+                const status = gameData?.gameData?.status?.detailedState || '';
+
+                if (status.includes('Preview') || status.includes('Pre-Game') || status.includes('Scheduled')) {
+                    const script = generatePreGameScript(gameData);
+                    speakBroadcasterSequence(script);
+                } else if (status.includes('Final')) {
+                    const script = generatePostGameScript(gameData);
+                    speakBroadcasterSequence(script);
+                } else {
+                    const plays = gameData?.liveData?.plays?.allPlays || [];
+                    const currentPlay = plays.length > 0 ? plays[plays.length - 1] : gameData?.liveData?.plays?.currentPlay;
+                    const script = generateLivePlayScript(currentPlay, gameData?.liveData, gameData, lastAnnouncedAtBatIndexRef, true);
+                    speakBroadcasterSequence(script);
+                }
+            };
+
+            React.useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                let phase = 0;
+
+                const render = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const bars = 28;
+                    const w = canvas.width / bars;
+
+                    for (let i = 0; i < bars; i++) {
+                        let h = 4;
+                        if (speakingSpeaker) {
+                            h = Math.sin(phase + i * 0.35) * 18 + Math.random() * 16 + 6;
+                        } else if (isCrowdHumOn) {
+                            h = Math.sin(phase + i * 0.2) * 5 + 6;
+                        }
+
+                        const x = i * w;
+                        const y = (canvas.height - h) / 2;
+
+                        let color = '#334155';
+                        if (speakingSpeaker === 'PBP') color = '#ef4444';
+                        if (speakingSpeaker === 'ANALYST') color = '#38bdf8';
+                        if (speakingSpeaker === 'PA') color = '#f59e0b';
+
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x + 1, y, w - 2, h);
+                    }
+                    phase += 0.18;
+                    animFrameRef.current = requestAnimationFrame(render);
+                };
+                render();
+                return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+            }, [speakingSpeaker, isCrowdHumOn]);
+
+            const statusText = gameData?.gameData?.status?.detailedState || 'Ready';
+            const playsList = gameData?.liveData?.plays?.allPlays || [];
+            
+            const awayTeamName = gameData?.gameData?.teams?.away?.name || 'Away';
+            const homeTeamName = gameData?.gameData?.teams?.home?.name || 'Home';
+            const awayRuns = gameData?.liveData?.linescore?.teams?.away?.runs ?? 0;
+            const homeRuns = gameData?.liveData?.linescore?.teams?.home?.runs ?? 0;
+            
+            const currentInning = gameData?.liveData?.linescore?.currentInning || 1;
+            const isTopInning = gameData?.liveData?.linescore?.isTopInning ?? true;
+            const outsCount = gameData?.liveData?.linescore?.outs ?? 0;
+            
+            const activeBatter = gameData?.liveData?.plays?.currentPlay?.matchup?.batter?.fullName || 'At Bat';
+            const activePitcher = gameData?.liveData?.plays?.currentPlay?.matchup?.pitcher?.fullName || 'On Mound';
+            const offenseTeam = isTopInning ? awayTeamName : homeTeamName;
+
+            return (
+                <div className="max-w-6xl mx-auto px-4 py-6">
+                    
+                    {/* TOP HEADER & GAME SELECTOR */}
+                    <header className="mb-6 radio-card p-4 studio-glow flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 via-orange-600 to-amber-500 flex items-center justify-center text-2xl shadow-lg border border-red-400">
+                                🎙️
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold font-chakra text-red-400 tracking-wider flex items-center gap-2">
+                                    MLB GAMEDAY RADIO STUDIO
+                                    <span className="text-[10px] bg-red-950 text-red-300 border border-red-500/80 px-2 py-0.5 rounded font-mono flex items-center gap-1">
+                                        <span className={`w-2 h-2 rounded-full ${speakingSpeaker ? 'bg-red-500 on-air-pulse' : 'bg-slate-600'}`}></span>
+                                        {speakingSpeaker ? `ON AIR (${speakingSpeaker})` : 'STUDIO READY'}
+                                    </span>
+                                </h1>
+                                <p className="text-xs font-mono text-slate-400">
+                                    5s Live MLB API Sync • Mark / Libby / Ryan Voice Ensemble • Ballpark Audio Engine
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* NY Clock & Game Date Pickers */}
+                        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+                            <button
+                                onClick={() => setIsAutoSync(!isAutoSync)}
+                                className={`px-3 py-1.5 rounded-lg border font-mono text-xs font-bold transition flex items-center gap-1.5 ${
+                                    isAutoSync 
+                                    ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-lg' 
+                                    : 'bg-slate-900 text-slate-400 border-slate-700'
+                                }`}
+                            >
+                                <span className={`w-2 h-2 rounded-full ${isAutoSync ? 'bg-emerald-400 on-air-pulse' : 'bg-slate-500'}`}></span>
+                                {isAutoSync ? 'AUTO-SYNC 5S' : 'SYNC PAUSED'}
+                            </button>
+
+                            <div className="bg-slate-950 border border-red-500/40 rounded-lg px-3 py-1 font-mono text-center">
+                                <span className="text-[9px] text-red-400 block font-bold">NY RADIO CLOCK</span>
+                                <span className="text-xs font-bold text-yellow-400">{nyClockTime || '00:00:00 ET'}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                                <input
+                                    type="date"
+                                    value={searchDate}
+                                    onChange={(e) => setSearchDate(e.target.value)}
+                                    className="bg-slate-950 border border-slate-700 text-xs text-red-200 px-2 py-1.5 rounded font-mono outline-none focus:border-red-400"
+                                />
+                                <button
+                                    onClick={() => setSearchDate(getNyTodayStr())}
+                                    className="px-2.5 py-1.5 bg-red-600 hover:bg-red-500 font-mono font-bold text-xs rounded text-white transition shadow"
+                                >
+                                    TODAY
+                                </button>
+                            </div>
+
+                            <select
+                                value={selectedGamePk}
+                                onChange={(e) => setSelectedGamePk(e.target.value)}
+                                className="bg-slate-950 border border-red-500/50 text-xs text-red-200 px-3 py-1.5 rounded font-mono outline-none focus:border-red-400 min-w-[220px]"
+                            >
+                                {dateGames.length > 0 ? (
+                                    dateGames.map(g => <option key={g.id} value={g.id}>{g.label}</option>)
+                                ) : (
+                                    <option value="">No Scheduled Games Found</option>
+                                )}
+                            </select>
+                        </div>
+                    </header>
+
+                    {/* REAL-TIME LIVE SCOREBOARD BANNER */}
+                    <div className="radio-card p-4 mb-6 border border-red-500/50 flex flex-col md:flex-row items-center justify-between gap-4 font-mono">
+                        <div className="flex items-center gap-4 flex-1 justify-start">
+                            <span className="text-xl md:text-2xl font-bold font-chakra text-slate-100">{awayTeamName}</span>
+                            <span className="text-3xl font-bold font-teko text-yellow-400 bg-slate-950 px-4 py-1 rounded border border-slate-800">{awayRuns}</span>
+                        </div>
+
+                        <div className="text-center px-4 py-2 bg-slate-950/80 rounded-xl border border-red-500/30 shrink-0 min-w-[200px]">
+                            <div className="text-xs text-red-400 font-bold tracking-wider">
+                                {statusText.includes('In Progress') || statusText.includes('Live') ? (
+                                    `${isTopInning ? 'TOP' : 'BOT'} ${currentInning} • ${outsCount} ${outsCount === 1 ? 'OUT' : 'OUTS'}`
+                                ) : statusText}
+                            </div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">
+                                P: <span className="text-slate-200 font-bold">{activePitcher}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-400">
+                                B: <span className="text-yellow-300 font-bold">{activeBatter}</span> ({offenseTeam})
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 flex-1 justify-end">
+                            <span className="text-3xl font-bold font-teko text-yellow-400 bg-slate-950 px-4 py-1 rounded border border-slate-800">{homeRuns}</span>
+                            <span className="text-xl md:text-2xl font-bold font-chakra text-slate-100">{homeTeamName}</span>
+                        </div>
+                    </div>
+
+                    {/* MAIN BROADCASTER DECK */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        
+                        {/* LEFT COLUMN: VOICE BOOTH & CROWD SFX CONTROLS */}
+                        <div className="lg:col-span-5 flex flex-col gap-6">
+                            
+                            {/* ANNOUNCER ENSEMBLE VOICE SELECTOR */}
+                            <div className="radio-card p-4 space-y-3 font-mono text-xs">
+                                <h2 className="text-sm font-bold font-chakra text-red-400 border-b border-slate-800 pb-2 flex items-center justify-between">
+                                    <span>🎙️ ANNOUNCER ENSEMBLE (3 VOICES)</span>
+                                </h2>
+
+                                <div className="space-y-2">
+                                    <div>
+                                        <label className="text-[10px] text-red-300 font-bold block mb-1">
+                                            #1 PLAY-BY-PLAY (MICROSOFT MARK)
+                                        </label>
+                                        <select
+                                            value={voicePBPIndex}
+                                            onChange={(e) => setVoicePBPIndex(Number(e.target.value))}
+                                            className="w-full bg-slate-950 text-slate-200 p-2 rounded border border-slate-700 outline-none"
+                                        >
+                                            {voices.map((v, i) => (
+                                                <option key={i} value={i}>{v.name} ({v.lang})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] text-sky-300 font-bold block mb-1">
+                                            #2 COLOR ANALYST (MICROSOFT LIBBY UK)
+                                        </label>
+                                        <select
+                                            value={voiceAnalystIndex}
+                                            onChange={(e) => setVoiceAnalystIndex(Number(e.target.value))}
+                                            className="w-full bg-slate-950 text-slate-200 p-2 rounded border border-slate-700 outline-none"
+                                        >
+                                            {voices.map((v, i) => (
+                                                <option key={i} value={i}>{v.name} ({v.lang})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] text-amber-300 font-bold block mb-1">
+                                            #3 STADIUM PA ANNOUNCER (MICROSOFT RYAN UK)
+                                        </label>
+                                        <select
+                                            value={voicePAIndex}
+                                            onChange={(e) => setVoicePAIndex(Number(e.target.value))}
+                                            className="w-full bg-slate-950 text-slate-200 p-2 rounded border border-slate-700 outline-none"
+                                        >
+                                            {voices.map((v, i) => (
+                                                <option key={i} value={i}>{v.name} ({v.lang})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CROWD AMBIENT & STADIUM AUDIO ENGINE */}
+                            <div className="radio-card p-4 space-y-3 font-mono text-xs">
+                                <h2 className="text-sm font-bold font-chakra text-red-400 border-b border-slate-800 pb-2 flex items-center justify-between">
+                                    <span>🏟️ STADIUM CROWD & SOUNDBOARD</span>
+                                </h2>
+
+                                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
+                                    <div>
+                                        <span className="font-bold text-slate-200 block">NON-STOP CHATTER MODE</span>
+                                        <span className="text-[10px] text-slate-400">Auto-speaks every pitch on arrival</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsContinuousChatter(!isContinuousChatter)}
+                                        className={`px-3 py-1.5 rounded font-bold transition ${
+                                            isContinuousChatter 
+                                            ? 'bg-amber-600 text-white shadow-lg' 
+                                            : 'bg-slate-800 text-slate-400'
+                                        }`}
+                                    >
+                                        {isContinuousChatter ? '⚡ AUTO ON' : '⏸ AUTO OFF'}
+                                    </button>
+                                </div>
+
+                                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
+                                    <div>
+                                        <span className="font-bold text-slate-200 block">SUSTAINED CROWD HUM</span>
+                                        <span className="text-[10px] text-slate-400">Continuous ballpark ambient roar</span>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const next = !isCrowdHumOn;
+                                            setIsCrowdHumOn(next);
+                                            audioFX.toggleCrowdHum(next, crowdVolume);
+                                        }}
+                                        className={`px-3 py-1.5 rounded font-bold transition ${
+                                            isCrowdHumOn 
+                                            ? 'bg-emerald-600 text-white shadow-lg' 
+                                            : 'bg-slate-800 text-slate-400'
+                                        }`}
+                                    >
+                                        {isCrowdHumOn ? '🔊 CROWD ON' : '🔇 CROWD OFF'}
+                                    </button>
+                                </div>
+
+                                {isCrowdHumOn && (
+                                    <div className="flex items-center gap-3 bg-slate-950 p-2 rounded border border-slate-800">
+                                        <span className="text-[10px] text-slate-400">HUM VOL</span>
+                                        <input
+                                            type="range" min="0.05" max="0.3" step="0.01"
+                                            value={crowdVolume}
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value);
+                                                setCrowdVolume(val);
+                                                audioFX.toggleCrowdHum(true, val);
+                                            }}
+                                            className="w-full accent-red-500 cursor-pointer"
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <button
+                                        onClick={() => audioFX.playCheer()}
+                                        className="p-2 bg-emerald-950 text-emerald-300 border border-emerald-600 rounded hover:bg-emerald-900 transition flex items-center justify-center gap-1 font-bold"
+                                    >
+                                        👏 Home Cheer
+                                    </button>
+                                    <button
+                                        onClick={() => audioFX.playBoo()}
+                                        className="p-2 bg-red-950 text-red-300 border border-red-600 rounded hover:bg-red-900 transition flex items-center justify-center gap-1 font-bold"
+                                    >
+                                        👎 Away Boo
+                                    </button>
+                                    <button
+                                        onClick={() => audioFX.playBatCrack()}
+                                        className="p-2 bg-amber-950 text-amber-300 border border-amber-600 rounded hover:bg-amber-900 transition flex items-center justify-center gap-1 font-bold"
+                                    >
+                                        💥 Bat Crack
+                                    </button>
+                                    <button
+                                        onClick={() => audioFX.playMittThump()}
+                                        className="p-2 bg-sky-950 text-sky-300 border border-sky-600 rounded hover:bg-sky-900 transition flex items-center justify-center gap-1 font-bold"
+                                    >
+                                        ⚾ Mitt Thump
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* EQUALIZER CANVAS */}
+                            <div className="radio-card p-3 flex flex-col items-center justify-center">
+                                <span className="text-[10px] font-mono text-slate-400 mb-1">RADIO TRANSMISSION SPECTRUM</span>
+                                <canvas ref={canvasRef} width="320" height="40" className="w-full bg-slate-950 rounded border border-slate-800"></canvas>
+                            </div>
+
+                        </div>
+
+                        {/* RIGHT COLUMN: TELEPROMPTER & LIVE PLAY FEED */}
+                        <div className="lg:col-span-7 flex flex-col gap-6">
+
+                            {/* TELEPROMPTER / ON-AIR DISPLAY */}
+                            <div className="radio-card p-5 border-2 border-red-500/60 studio-glow">
+                                <div className="flex justify-between items-center border-b border-red-500/30 pb-2 mb-3 font-mono">
+                                    <span className="text-xs font-bold font-chakra text-red-400 tracking-widest uppercase">
+                                        {activeTeleprompter.speaker}
+                                    </span>
+                                    <span className="text-[10px] text-yellow-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                                        SYNC: {lastSyncTime ? `LIVE @ ${lastSyncTime}` : 'FETCHING'}
+                                    </span>
+                                </div>
+
+                                <div className="bg-slate-950 p-4 rounded-xl border border-red-500/30 min-h-[110px] flex items-center justify-center">
+                                    <p className="font-mono-tech text-base md:text-lg text-yellow-300 leading-relaxed text-center">
+                                        "{activeTeleprompter.text}"
+                                    </p>
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                                    <button
+                                        onClick={handleBroadcastCurrentPlay}
+                                        className="flex-1 py-3 bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-mono font-bold text-xs rounded-xl shadow-lg border border-red-300 transition flex items-center justify-center gap-2"
+                                    >
+                                        🎙️ BROADCAST LATEST LIVE PITCH
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                                            setSpeakingSpeaker(null);
+                                        }}
+                                        className="px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono font-bold text-xs rounded-xl border border-slate-700 transition"
+                                    >
+                                        ⏹ STOP VOICE
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* PLAY TIMELINE & MANUAL RE-BROADCAST FEED */}
+                            <div className="radio-card p-4 flex flex-col gap-3">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                    <h2 className="text-sm font-bold font-chakra text-red-400">
+                                        ⚾ LIVE GAME TIMELINE ({playsList.length} PLAYS)
+                                    </h2>
+                                    <span className="text-[10px] font-mono text-slate-400">
+                                        Click any play to broadcast live audio
+                                    </span>
+                                </div>
+
+                                <div className="max-h-[300px] overflow-y-auto space-y-2 font-mono text-xs pr-1">
+                                    {playsList.length > 0 ? (
+                                        playsList.slice().reverse().map((play, idx) => {
+                                            const batter = play.matchup?.batter?.fullName || 'Batter';
+                                            const pitcher = play.matchup?.pitcher?.fullName || 'Pitcher';
+                                            const eventDesc = play.result?.description || 'Play completed';
+                                            const isHit = play.result?.type === 'hit' || (eventDesc && eventDesc.includes('hit'));
+                                            const inning = play.about?.inning || 1;
+                                            const isTop = play.about?.halfInning === 'top';
+
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    onClick={() => {
+                                                        const script = generateLivePlayScript(play, gameData?.liveData, gameData, lastAnnouncedAtBatIndexRef, true);
+                                                        speakBroadcasterSequence(script);
+                                                    }}
+                                                    className={`p-2.5 rounded-lg border transition cursor-pointer flex items-start justify-between gap-2 ${
+                                                        isHit 
+                                                        ? 'bg-emerald-950/60 border-emerald-600/60 hover:border-emerald-400' 
+                                                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-600'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <div className="font-bold text-slate-200 flex items-center gap-2">
+                                                            <span className="text-[10px] text-red-400 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
+                                                                {isTop ? 'TOP' : 'BOT'} {inning}
+                                                            </span>
+                                                            {batter} <span className="text-slate-500 font-normal">vs</span> {pitcher}
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                                                            {eventDesc}
+                                                        </div>
+                                                    </div>
+                                                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold shrink-0 text-[10px]">
+                                                        🔊 ANNOUNCE
+                                                    </span>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center py-8 text-slate-500">
+                                            {isLoading ? 'Fetching live game pitch data...' : 'No live pitch timeline data found for this game date.'}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>

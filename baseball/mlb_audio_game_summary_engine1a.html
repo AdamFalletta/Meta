@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MLB Daily Gameday - Audio Summary & Morning Recap Engine</title>
+  
+  <!-- Fonts & Tailwind CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-dark: #030712;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --neon-blue: #00d2ff;
+      --neon-green: #10b981;
+      --neon-amber: #ffb703;
+      --neon-red: #ff2a5f;
+      --text-main: #f9fafb;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 10%, #0f172a 0%, var(--bg-dark) 90%);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .font-teko { font-family: 'Teko', sans-serif; }
+    .font-chakra { font-family: 'Chakra Petch', sans-serif; }
+
+    .glass-card {
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border-radius: 10px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .glass-card:hover {
+      border-color: rgba(0, 210, 255, 0.4);
+      box-shadow: 0 6px 24px -2px rgba(0, 210, 255, 0.2);
+    }
+
+    /* Equalizer Waveform Animation */
+    .eq-bar {
+      width: 4px;
+      height: 16px;
+      background: var(--neon-blue);
+      border-radius: 2px;
+      animation: eq-bounce 0.8s ease-in-out infinite alternate;
+    }
+    .eq-bar:nth-child(2) { animation-delay: 0.2s; background: var(--neon-green); }
+    .eq-bar:nth-child(3) { animation-delay: 0.4s; background: var(--neon-amber); }
+    .eq-bar:nth-child(4) { animation-delay: 0.1s; background: var(--neon-blue); }
+    .eq-bar:nth-child(5) { animation-delay: 0.3s; background: var(--neon-green); }
+
+    @keyframes eq-bounce {
+      0% { height: 6px; }
+      100% { height: 28px; }
+    }
+
+    .pulse-live {
+      width: 8px;
+      height: 8px;
+      background-color: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neon-green);
+      animation: pulse-ring 1.8s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+
+    .team-logo-md {
+      width: clamp(48px, 5vw, 68px);
+      height: clamp(48px, 5vw, 68px);
+    }
+
+    /* Sentence Highlighting in Teleprompter */
+    .active-sentence {
+      background: rgba(0, 210, 255, 0.2);
+      color: #ffffff;
+      border-left: 3px solid var(--neon-blue);
+      padding-left: 6px;
+      border-radius: 2px;
+      font-weight: 600;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(3, 7, 18, 0.8); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+  </style>
+</head>
+<body class="p-2 gap-2 h-screen overflow-hidden flex flex-col">
+
+  <header class="glass-card p-2 px-3 flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <div class="p-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-400 font-bold text-2xl leading-none">
+        🎙️
+      </div>
+      <div>
+        <h1 class="font-teko text-2xl sm:text-3xl leading-none uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-cyan-400 font-bold">
+          MLB MORNING RECAP AUDIO ENGINE
+        </h1>
+        <p class="text-[10px] text-gray-400 font-chakra uppercase">DAILY BROADCAST • VOICE ENGINE: MICROSOFT MARK</p>
+      </div>
+    </div>
+
+    <!-- Controls & Date Selector -->
+    <div class="flex flex-wrap items-center gap-2 text-xs font-chakra">
+      
+      <!-- Date Picker Input -->
+      <div class="flex items-center gap-1 bg-slate-900/90 border border-white/15 px-2.5 py-1 rounded focus-within:border-cyan-400 transition-colors">
+        <label for="date-selector" class="text-gray-400 font-mono text-[10px] uppercase">DATE:</label>
+        <input type="date" id="date-selector" onchange="onDateChanged(this.value)" class="bg-transparent text-cyan-300 font-mono text-xs focus:outline-none cursor-pointer" />
+      </div>
+
+      <!-- Quick Date Button -->
+      <button onclick="setTodayDate()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold px-3 py-1 rounded shadow-md transition-all flex items-center gap-1 text-[11px]">
+        <span>📅</span> TODAY
+      </button>
+
+      <!-- Refresh Button -->
+      <button onclick="fetchDailyBoard()" class="bg-slate-800 hover:bg-slate-700 border border-white/10 text-cyan-300 font-semibold px-2.5 py-1 rounded transition-all flex items-center gap-1 text-[11px]">
+        <span id="refresh-icon">↻</span> REFRESH
+      </button>
+
+      <!-- Sync Pill -->
+      <div class="hidden lg:flex items-center gap-1.5 bg-slate-900/90 border border-white/10 px-2.5 py-1 rounded text-gray-300 font-mono text-[10px]">
+        <span class="pulse-live"></span>
+        <span id="sync-time">SYNCED</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="glass-card p-3 flex flex-col md:flex-row gap-3 items-stretch justify-between flex-shrink-0 border-cyan-500/30 bg-slate-950/80">
+    
+    <!-- Announcer Profile & Visualizer -->
+    <div class="flex flex-col gap-2 md:w-5/12 border-b md:border-b-0 md:border-r border-white/10 pb-2 md:pb-0 md:pr-3">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-11 h-11 rounded-full bg-slate-900 border-2 border-cyan-400 flex items-center justify-center text-xl font-bold text-cyan-300 shadow-lg">
+            👨‍💼
+          </div>
+          <div id="live-audio-dot" class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-950 rounded-full hidden"></div>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <span class="font-teko text-xl font-bold text-cyan-300 tracking-wide uppercase leading-none">HOST: MARK</span>
+            <!-- Voice selection option -->
+            <select id="voice-select" onchange="onVoiceSelected()" class="bg-slate-900 text-gray-300 text-[10px] font-mono border border-white/10 rounded px-1 py-0.5 max-w-[120px]">
+              <option value="">Searching voices...</option>
+            </select>
+          </div>
+          <div class="text-[10px] text-gray-400 font-chakra truncate" id="broadcast-status-label">Ready to broadcast</div>
+          
+          <!-- Equalizer Animation (Shown during playback) -->
+          <div id="audio-eq" class="flex items-end gap-1 mt-1 h-3.5 opacity-30">
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cadence & Speech Tuning Controls -->
+      <div class="bg-slate-900/90 border border-white/10 p-2 rounded-lg text-[10px] font-mono space-y-1.5">
+        <div class="flex items-center justify-between text-cyan-400 font-bold uppercase tracking-wider text-[9px] border-b border-white/10 pb-1">
+          <span>⚙️ CADENCE & AUDIO CONTROLS</span>
+          <span id="rate-val" class="text-amber-300 font-mono font-bold">1.00x</span>
+        </div>
+
+        <!-- Speed / Rate Slider -->
+        <div class="space-y-0.5">
+          <div class="flex justify-between text-gray-400">
+            <label for="rate-slider">SPEED (READING RATE):</label>
+            <div class="flex items-center gap-1">
+              <button onclick="setRatePreset(1.0)" class="px-1 py-0.2 bg-slate-800 hover:bg-cyan-600/40 rounded text-[9px] text-cyan-300">1.0x</button>
+              <button onclick="setRatePreset(1.25)" class="px-1 py-0.2 bg-slate-800 hover:bg-cyan-600/40 rounded text-[9px] text-cyan-300">1.25x</button>
+              <button onclick="setRatePreset(1.5)" class="px-1 py-0.2 bg-slate-800 hover:bg-cyan-600/40 rounded text-[9px] text-cyan-300">1.5x</button>
+              <button onclick="setRatePreset(2.0)" class="px-1 py-0.2 bg-slate-800 hover:bg-cyan-600/40 rounded text-[9px] text-cyan-300">2.0x</button>
+            </div>
+          </div>
+          <input type="range" id="rate-slider" min="0.5" max="2.5" step="0.05" value="1.0" oninput="onRateChange(this.value)" class="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none" />
+        </div>
+
+        <!-- Pitch & Sentence Pause Gap Sliders -->
+        <div class="grid grid-cols-3 gap-2 pt-0.5">
+          <div>
+            <div class="flex justify-between text-gray-400 text-[9px]">
+              <span>PITCH:</span>
+              <span id="pitch-val" class="text-cyan-300">1.0</span>
+            </div>
+            <input type="range" id="pitch-slider" min="0.5" max="1.5" step="0.1" value="1.0" oninput="onPitchChange(this.value)" class="w-full accent-cyan-400 cursor-pointer h-1 bg-slate-950 rounded-lg" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-gray-400 text-[9px]">
+              <span>PAUSE GAP:</span>
+              <span id="gap-val" class="text-amber-300">0.3s</span>
+            </div>
+            <input type="range" id="gap-slider" min="0" max="1200" step="100" value="300" oninput="onGapChange(this.value)" class="w-full accent-amber-400 cursor-pointer h-1 bg-slate-950 rounded-lg" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-gray-400 text-[9px]">
+              <span>VOLUME:</span>
+              <span id="volume-val" class="text-emerald-300">100%</span>
+            </div>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1.0" oninput="onVolumeChange(this.value)" class="w-full accent-emerald-400 cursor-pointer h-1 bg-slate-950 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Announcer Teleprompter Screen -->
+    <div class="flex-1 flex flex-col justify-between min-w-0">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1">
+          <span>📡</span> TELEPROMPTER READOUT
+        </span>
+        
+        <!-- Teleprompter Controls & Slide Indicator -->
+        <div class="flex items-center gap-1.5">
+          <button onclick="skipPrevSentence()" title="Previous slide/sentence" class="bg-slate-800 hover:bg-cyan-600/30 hover:border-cyan-400 text-cyan-300 px-2 py-0.5 rounded text-[10px] font-mono border border-white/10 transition-all flex items-center gap-0.5">
+            <span>⏮</span> PREV
+          </button>
+          <span class="text-[10px] font-mono text-cyan-300 font-semibold px-1" id="teleprompter-progress">0 / 0</span>
+          <button onclick="skipNextSentence()" title="Next slide/sentence" class="bg-slate-800 hover:bg-cyan-600/30 hover:border-cyan-400 text-cyan-300 px-2 py-0.5 rounded text-[10px] font-mono border border-white/10 transition-all flex items-center gap-0.5">
+            NEXT <span>⏭</span>
+          </button>
+        </div>
+      </div>
+      <div id="teleprompter-text" class="bg-slate-900/90 border border-white/10 p-2.5 rounded-lg text-xs font-chakra leading-relaxed text-gray-200 h-28 overflow-y-auto italic">
+        Select a date and click "PLAY FULL MORNING BROADCAST" to hear Mark break down all today's games!
+      </div>
+    </div>
+
+    <!-- Audio Player Action Buttons -->
+    <div class="flex flex-row md:flex-col items-center justify-center gap-1.5 md:w-40 border-t md:border-t-0 md:border-l border-white/10 pt-2 md:pt-0 md:pl-3 flex-shrink-0">
+      <button id="btn-play-all" onclick="playFullRecap()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2 px-3 rounded-lg text-xs font-chakra tracking-wide shadow-lg transition-all flex items-center justify-center gap-1.5">
+        <span>▶</span> PLAY RECAP
+      </button>
+      <div class="flex items-center gap-1 w-full">
+        <button id="btn-pause" onclick="togglePauseSpeech()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold py-1.5 rounded text-[11px] font-mono transition-all border border-white/10">
+          ⏸ PAUSE
+        </button>
+        <button id="btn-stop" onclick="stopSpeech()" class="flex-1 bg-rose-950/80 hover:bg-rose-900 text-rose-300 font-semibold py-1.5 rounded text-[11px] font-mono transition-all border border-rose-500/30">
+          ⏹ STOP
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter & Slate Info Bar -->
+  <div class="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] font-mono text-gray-400 flex-shrink-0">
+    <div class="flex items-center gap-1.5">
+      <span class="text-gray-500">SLATE FILTER:</span>
+      <button onclick="setGameFilter('ALL')" id="filter-btn-ALL" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded font-bold">ALL (<span id="cnt-all">0</span>)</button>
+      <button onclick="setGameFilter('LIVE')" id="filter-btn-LIVE" class="hover:bg-slate-800 px-2 py-0.5 rounded">IN-PROGRESS (<span id="cnt-live">0</span>)</button>
+      <button onclick="setGameFilter('FINAL')" id="filter-btn-FINAL" class="hover:bg-slate-800 px-2 py-0.5 rounded">COMPLETED (<span id="cnt-final">0</span>)</button>
+      <button onclick="setGameFilter('UPCOMING')" id="filter-btn-UPCOMING" class="hover:bg-slate-800 px-2 py-0.5 rounded">UPCOMING (<span id="cnt-upcoming">0</span>)</button>
+    </div>
+    <div id="board-date-label" class="font-semibold text-cyan-400 tracking-wider font-chakra text-xs uppercase">
+      LOADING GAME SLATE...
+    </div>
+  </div>
+
+  <main class="flex-1 min-h-0 overflow-hidden w-full">
+    <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 h-full w-full overflow-y-auto pr-1">
+      <!-- Game Cards rendered here (ONLY team names, logos, start time, and play audio button) -->
+    </div>
+  </main>
+
+  <script>
+    let selectedDate = getLocalDateString();
+    let activeFilter = 'ALL';
+    let gamesCache = [];
+    let liveDataMap = {};
+    let standingsMap = {};
+
+    // Web Speech API state & persistent voice setting
+    const synth = window.speechSynthesis;
+    let selectedVoice = null;
+    let savedVoiceName = localStorage.getItem('mlb_recap_preferred_voice') || null;
+    let speechQueue = [];
+    let currentSentenceIndex = 0;
+    let isSpeaking = false;
+    let isPaused = false;
+    let currentUtterance = null;
+    let speechGapTimeout = null;
+
+    // Cadence & Audio Settings
+    let speechRate = parseFloat(localStorage.getItem('mlb_recap_rate')) || 1.0;
+    let speechPitch = parseFloat(localStorage.getItem('mlb_recap_pitch')) || 1.0;
+    let speechVolume = parseFloat(localStorage.getItem('mlb_recap_volume')) || 1.0;
+    let sentenceGap = parseInt(localStorage.getItem('mlb_recap_gap')) || 300;
+
+    function onRateChange(val) {
+      speechRate = parseFloat(val);
+      document.getElementById('rate-val').innerText = `${speechRate.toFixed(2)}x`;
+      try { localStorage.setItem('mlb_recap_rate', speechRate); } catch (e) {}
+    }
+
+    function setRatePreset(val) {
+      document.getElementById('rate-slider').value = val;
+      onRateChange(val);
+    }
+
+    function onPitchChange(val) {
+      speechPitch = parseFloat(val);
+      document.getElementById('pitch-val').innerText = `${speechPitch.toFixed(1)}`;
+      try { localStorage.setItem('mlb_recap_pitch', speechPitch); } catch (e) {}
+    }
+
+    function onGapChange(val) {
+      sentenceGap = parseInt(val);
+      document.getElementById('gap-val').innerText = `${(sentenceGap / 1000).toFixed(1)}s`;
+      try { localStorage.setItem('mlb_recap_gap', sentenceGap); } catch (e) {}
+    }
+
+    function onVolumeChange(val) {
+      speechVolume = parseFloat(val);
+      document.getElementById('volume-val').innerText = `${Math.round(speechVolume * 100)}%`;
+      try { localStorage.setItem('mlb_recap_volume', speechVolume); } catch (e) {}
+    }
+
+    function initCadenceControlsUI() {
+      document.getElementById('rate-slider').value = speechRate;
+      document.getElementById('rate-val').innerText = `${speechRate.toFixed(2)}x`;
+
+      document.getElementById('pitch-slider').value = speechPitch;
+      document.getElementById('pitch-val').innerText = `${speechPitch.toFixed(1)}`;
+
+      document.getElementById('gap-slider').value = sentenceGap;
+      document.getElementById('gap-val').innerText = `${(sentenceGap / 1000).toFixed(1)}s`;
+
+      document.getElementById('volume-slider').value = speechVolume;
+      document.getElementById('volume-val').innerText = `${Math.round(speechVolume * 100)}%`;
+    }
+
+    // Convert number to ordinal string for speech (e.g., 15 -> 15th, 1 -> 1st)
+    function toOrdinal(n) {
+      const num = parseInt(n, 10);
+      if (isNaN(num)) return n;
+      const s = ["th", "st", "nd", "rd"];
+      const v = num % 100;
+      return num + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    // Transform raw play descriptions into conversational speech
+    function formatHighlightForSpeech(text) {
+      if (!text) return "";
+      // Replaces "Trea Turner homers (15)" -> "Trea Turner homers, his 15th of the season,"
+      return text.replace(/homers?\s*\((\d+)\)/gi, (match, count) => {
+        const ord = toOrdinal(count);
+        return `homers, his ${ord} of the season,`;
+      });
+    }
+
+    function getLocalDateString(d = new Date()) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
+
+    const ANNOUNCER_SCRIPTS = {
+      // Intro templates
+      intros: [
+        "Good morning baseball fans! Welcome to today's MLB morning recap with Mark. Let's get right into the action from around the diamond.",
+        "Hey everyone, Mark here bringing you all the highlights, stats, and game recaps from across Major League Baseball.",
+        "Welcome into the sports desk! I'm Mark, and here is your daily morning rundown of yesterday and today's Major League Baseball slate."
+      ],
+
+      // Completed game summary templates
+      completed: [
+        "In our first matchup, {away} took on {home} at {venue}. {pitcherHighlight} {batterHighlight} {keyPlay} {resultPhrase}.",
+        "Moving over to {venue}, where we had {away} facing off against {home}. {pitcherHighlight} {batterHighlight} {resultPhrase}.",
+        "Next up, {away} squared off against {home}. {keyPlay} {pitcherHighlight} {resultPhrase}."
+      ],
+
+      // Live game summary templates (Games in play during the day)
+      live: [
+        "We have live action currently underway at {venue}, where {away} are battling {home}. We are currently in the {inning}. {batterHighlight} {pitcherHighlight} Right now, {scoreString}.",
+        "Out at {venue}, {away} and {home} are mid-game, currently playing in the {inning}. {keyPlay} Currently, {scoreString}."
+      ],
+
+      // Upcoming game templates
+      upcoming: [
+        "Looking ahead on the schedule, {away} visit {home} at {venue}, scheduled for {gameTime}. {pitcherPreview} {standingsContext}",
+        "Later today at {venue}, {away} take on {home} at {gameTime}. {pitcherPreview} Stay tuned for updates on this matchup."
+      ],
+
+      // Outro templates
+      outros: [
+        "That wraps up today's MLB recap! Thanks for listening to Mark on the morning roundup. Check back later for live score updates!",
+        "And that is your full Major League Baseball morning recap! Keep it tuned here for more updates as the season unfolds."
+      ]
+    };
+
+    function initVoice() {
+      if (!('speechSynthesis' in window)) {
+        document.getElementById('broadcast-status-label').innerText = "Speech API not supported in this browser";
+        return;
+      }
+
+      const populateVoices = () => {
+        const voices = synth.getVoices();
+        const voiceSelect = document.getElementById('voice-select');
+        voiceSelect.innerHTML = '';
+
+        if (voices.length === 0) return;
+
+        let matchedVoice = null;
+
+        // 1. Try restoring user's explicitly saved voice selection
+        if (savedVoiceName) {
+          matchedVoice = voices.find(v => v.name === savedVoiceName);
+        }
+
+        // 2. Default to Microsoft Mark if no saved preference exists
+        if (!matchedVoice) {
+          matchedVoice = voices.find(v => v.name.includes("Microsoft Mark") || (v.name.includes("Mark") && v.lang.startsWith("en"))) ||
+                        voices.find(v => v.lang.startsWith("en-US") && v.name.toLowerCase().includes("male")) ||
+                        voices.find(v => v.lang.startsWith("en")) ||
+                        voices[0];
+        }
+
+        voices.forEach((v, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.innerText = `${v.name} (${v.lang})`;
+          if (matchedVoice && v.name === matchedVoice.name) {
+            opt.selected = true;
+          }
+          voiceSelect.appendChild(opt);
+        });
+
+        selectedVoice = matchedVoice;
+        document.getElementById('broadcast-status-label').innerText = `Voice loaded: ${selectedVoice ? selectedVoice.name : 'System Default'}`;
+      };
+
+      populateVoices();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoices;
+      }
+    }
+
+    function onVoiceSelected() {
+      const voices = synth.getVoices();
+      const idx = document.getElementById('voice-select').value;
+      if (voices[idx]) {
+        selectedVoice = voices[idx];
+        savedVoiceName = selectedVoice.name;
+        try {
+          localStorage.setItem('mlb_recap_preferred_voice', savedVoiceName);
+        } catch (e) {
+          console.warn("Could not save voice to localStorage", e);
+        }
+        document.getElementById('broadcast-status-label').innerText = `Voice set & saved: ${selectedVoice.name}`;
+      }
+    }
+
+    async function fetchDailyBoard() {
+      const dateLabel = document.getElementById('board-date-label');
+      const refreshIcon = document.getElementById('refresh-icon');
+
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
+      dateLabel.innerText = `FETCHING MLB DATA FOR ${formatDateDisplay(selectedDate)}...`;
+
+      try {
+        // Fetch schedule & standings concurrently
+        const [schedRes, standingsRes] = await Promise.all([
+          fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${selectedDate}&timeZone=${encodeURIComponent(userTimeZone)}&hydrate=team,probablePitcher`),
+          fetch(`https://statsapi.mlb.com/api/v1/standings?leagueId=103,104`)
+        ]);
+
+        if (standingsRes.ok) {
+          const stData = await standingsRes.json();
+          parseStandings(stData);
+        }
+
+        if (!schedRes.ok) throw new Error(`HTTP error ${schedRes.status}`);
+        const schedData = await schedRes.json();
+        let games = schedData.dates?.[0]?.games || [];
+
+        if (games.length === 0) {
+          renderEmptyState();
+          dateLabel.innerText = `NO GAMES SCHEDULED ON ${formatDateDisplay(selectedDate)}`;
+          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+          return;
+        }
+
+        gamesCache = games;
+
+        // Hydrate feed details for each game
+        const fetchPromises = games.map(async (g) => {
+          try {
+            const feedRes = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${g.gamePk}/feed/live`);
+            if (feedRes.ok) {
+              const feed = await feedRes.json();
+              liveDataMap[g.gamePk] = parseGameFeed(g, feed);
+            } else {
+              liveDataMap[g.gamePk] = parseBasicGameData(g);
+            }
+          } catch (e) {
+            liveDataMap[g.gamePk] = parseBasicGameData(g);
+          }
+        });
+
+        await Promise.all(fetchPromises);
+
+        updateCounters();
+        renderGrid();
+
+        dateLabel.innerText = `${formatDateDisplay(selectedDate)} • ${games.length} GAMES`;
+        document.getElementById('sync-time').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      } catch (err) {
+        console.error("Error loading MLB schedule:", err);
+        dateLabel.innerText = "ERROR LOADING SCHEDULE";
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
+    }
+
+    function parseStandings(stData) {
+      standingsMap = {};
+      if (!stData.records) return;
+      stData.records.forEach(rec => {
+        rec.teamRecords?.forEach(tr => {
+          standingsMap[tr.team.id] = {
+            rank: tr.divisionRank,
+            wins: tr.wins,
+            losses: tr.losses,
+            streak: tr.streak?.streakCode || ''
+          };
+        });
+      });
+    }
+
+    function parseGameFeed(gameObj, feed) {
+      const gameData = feed.gameData || {};
+      const liveData = feed.liveData || {};
+      const linescore = liveData.linescore || {};
+      const boxscore = liveData.boxscore || {};
+
+      const awayObj = gameData.teams?.away || {};
+      const homeObj = gameData.teams?.home || {};
+      const statusState = gameObj.status.abstractGameState || "Preview";
+      const detailedState = gameObj.status.detailedState || "";
+      const awayName = awayObj.name || gameObj.teams.away.team.name;
+      const homeName = homeObj.name || gameObj.teams.home.team.name;
+      const awayRuns = linescore.teams?.away?.runs ?? gameObj.teams.away.score ?? 0;
+      const homeRuns = linescore.teams?.home?.runs ?? gameObj.teams.home.score ?? 0;
+      const gameTime = new Date(gameObj.gameDate).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+      // Construct natural spoken inning text (e.g., "Top of the 7th inning")
+      let inningText = "";
+      if (linescore.currentInningOrdinal) {
+        const half = linescore.inningState || linescore.inningHalf || "";
+        if (half) {
+          inningText = `${half} of the ${linescore.currentInningOrdinal} inning`;
+        } else {
+          inningText = `${linescore.currentInningOrdinal} inning`;
+        }
+      } else if (linescore.currentInning) {
+        inningText = `${toOrdinal(linescore.currentInning)} inning`;
+      } else {
+        inningText = "game";
+      }
+
+      // Extract highlights / notable plays (ONLY from winning/leading team)
+      let keyHighlights = [];
+      if (liveData.plays?.allPlays) {
+        const isAwayWinning = awayRuns > homeRuns;
+        const isHomeWinning = homeRuns > awayRuns;
+
+        const scoringPlays = liveData.plays.allPlays.filter(p => {
+          const isScoring = p.result?.runsScored > 0 || p.result?.event?.includes("Home Run");
+          if (!isScoring) return false;
+
+          // Only include key plays belonging to the winning/leading team
+          const isTop = p.about?.halfInning === 'top' || p.about?.isTopInning === true;
+          if (isAwayWinning) return isTop;       // Top of inning = Away team batting
+          if (isHomeWinning) return !isTop;      // Bottom of inning = Home team batting
+          return true; // If tied, include either
+        });
+
+        scoringPlays.slice(-3).forEach(p => {
+          if (p.result?.description) {
+            // Apply humanized home run formatting
+            const formattedSpeechDesc = formatHighlightForSpeech(p.result.description);
+            keyHighlights.push(formattedSpeechDesc);
+          }
+        });
+      }
+
+      // Pitching performances
+      let pitchingSummary = "";
+      if (statusState === 'Final' && liveData.decisions) {
+        const winner = liveData.decisions.winner?.fullName;
+        const loser = liveData.decisions.loser?.fullName;
+        const save = liveData.decisions.save?.fullName;
+        if (winner) pitchingSummary += `Winning pitcher was ${winner}. `;
+        if (loser) pitchingSummary += `Losing pitcher was ${loser}. `;
+        if (save) pitchingSummary += `${save} picked up the save. `;
+      } else if (gameData.probablePitchers) {
+        const awayProb = gameData.probablePitchers.away?.fullName;
+        const homeProb = gameData.probablePitchers.home?.fullName;
+        if (awayProb && homeProb) {
+          pitchingSummary = `Probable pitching matchup features ${awayProb} for ${awayName} against ${homeProb} for ${homeName}.`;
+        } else if (awayProb) {
+          pitchingSummary = `Probable starting pitcher for ${awayName} is ${awayProb}.`;
+        } else if (homeProb) {
+          pitchingSummary = `Probable starting pitcher for ${homeName} is ${homeProb}.`;
+        }
+      }
+
+      return {
+        gamePk: gameObj.gamePk,
+        statusState,
+        detailedState,
+        gameTime,
+        venue: gameObj.venue?.name || 'the ballpark',
+        away: {
+          id: awayObj.id || gameObj.teams.away.team.id,
+          name: awayName,
+          score: awayRuns
+        },
+        home: {
+          id: homeObj.id || gameObj.teams.home.team.id,
+          name: homeName,
+          score: homeRuns
+        },
+        inningText,
+        highlights: keyHighlights,
+        pitchingSummary
+      };
+    }
+
+    function parseBasicGameData(g) {
+      const gameTime = new Date(g.gameDate).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      return {
+        gamePk: g.gamePk,
+        statusState: g.status.abstractGameState || "Preview",
+        detailedState: g.status.detailedState.toUpperCase(),
+        gameTime,
+        venue: g.venue?.name || 'the ballpark',
+        away: {
+          id: g.teams.away.team.id,
+          name: g.teams.away.team.name,
+          score: g.teams.away.score ?? 0
+        },
+        home: {
+          id: g.teams.home.team.id,
+          name: g.teams.home.team.name,
+          score: g.teams.home.score ?? 0
+        },
+        inningText: "game",
+        highlights: [],
+        pitchingSummary: ""
+      };
+    }
+
+    function generateGameSpeechScript(data) {
+      let script = "";
+
+      if (data.statusState === 'Final') {
+        const isAwayWinner = data.away.score > data.home.score;
+        const winner = isAwayWinner ? data.away.name : data.home.name;
+        const loser = isAwayWinner ? data.home.name : data.away.name;
+        const winnerScore = Math.max(data.away.score, data.home.score);
+        const loserScore = Math.min(data.away.score, data.home.score);
+
+        // Result phrases stating higher score first: e.g. "Mets lose to Braves 3 to 1" or "White Sox beat the Yanks 6 to 5"
+        const resultPhrases = [
+          `${winner} beat ${loser}, ${winnerScore} to ${loserScore}`,
+          `${loser} lose to ${winner}, ${winnerScore} to ${loserScore}`,
+          `${winner} came out on top over ${loser}, ${winnerScore} to ${loserScore}`
+        ];
+        const resultPhrase = resultPhrases[Math.floor(Math.random() * resultPhrases.length)];
+
+        const template = ANNOUNCER_SCRIPTS.completed[Math.floor(Math.random() * ANNOUNCER_SCRIPTS.completed.length)];
+        let highlightText = data.highlights.length > 0 ? `Key play: ${data.highlights[0]}` : "";
+
+        script = template
+          .replace(/{away}/g, data.away.name)
+          .replace(/{home}/g, data.home.name)
+          .replace(/{venue}/g, data.venue)
+          .replace(/{pitcherHighlight}/g, data.pitchingSummary)
+          .replace(/{batterHighlight}/g, highlightText)
+          .replace(/{keyPlay}/g, data.highlights[1] ? `Also of note, ${data.highlights[1]}` : "")
+          .replace(/{resultPhrase}/g, resultPhrase);
+
+      } else if (data.statusState === 'Live') {
+        const template = ANNOUNCER_SCRIPTS.live[Math.floor(Math.random() * ANNOUNCER_SCRIPTS.live.length)];
+        let highlightText = data.highlights.length > 0 ? `Latest highlight: ${data.highlights[0]}` : "";
+
+        const awayScore = data.away.score;
+        const homeScore = data.home.score;
+        let scoreString = "";
+
+        if (awayScore > homeScore) {
+          scoreString = `${data.away.name} lead ${data.home.name}, ${awayScore} to ${homeScore}`;
+        } else if (homeScore > awayScore) {
+          scoreString = `${data.home.name} lead ${data.away.name}, ${homeScore} to ${awayScore}`;
+        } else {
+          scoreString = `the game is tied, ${awayScore} to ${homeScore}`;
+        }
+
+        script = template
+          .replace(/{away}/g, data.away.name)
+          .replace(/{home}/g, data.home.name)
+          .replace(/{venue}/g, data.venue)
+          .replace(/{inning}/g, data.inningText)
+          .replace(/{batterHighlight}/g, highlightText)
+          .replace(/{pitcherHighlight}/g, data.pitchingSummary)
+          .replace(/{keyPlay}/g, "")
+          .replace(/{scoreString}/g, scoreString);
+
+      } else {
+        const template = ANNOUNCER_SCRIPTS.upcoming[Math.floor(Math.random() * ANNOUNCER_SCRIPTS.upcoming.length)];
+        let standingsText = "";
+        if (standingsMap[data.away.id]) {
+          const st = standingsMap[data.away.id];
+          standingsText = `${data.away.name} enter with a record of ${st.wins} wins and ${st.losses} losses.`;
+        }
+
+        script = template
+          .replace(/{away}/g, data.away.name)
+          .replace(/{home}/g, data.home.name)
+          .replace(/{venue}/g, data.venue)
+          .replace(/{gameTime}/g, data.gameTime)
+          .replace(/{pitcherPreview}/g, data.pitchingSummary)
+          .replace(/{standingsContext}/g, standingsText);
+      }
+
+      return script.replace(/\s+/g, ' ').trim();
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('games-grid');
+      grid.innerHTML = '';
+
+      const filteredGames = gamesCache.filter(g => {
+        const item = liveDataMap[g.gamePk];
+        if (!item) return true;
+        if (activeFilter === 'LIVE') return item.statusState === 'Live';
+        if (activeFilter === 'FINAL') return item.statusState === 'Final';
+        if (activeFilter === 'UPCOMING') return item.statusState === 'Preview';
+        return true;
+      });
+
+      if (filteredGames.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-gray-500 font-mono">
+            NO GAMES MATCH THE SELECTED FILTER ("${activeFilter}")
+          </div>
+        `;
+        return;
+      }
+
+      filteredGames.forEach(g => {
+        const data = liveDataMap[g.gamePk] || parseBasicGameData(g);
+        const card = createPureAudioGameCard(data);
+        grid.appendChild(card);
+      });
+    }
+
+    function createPureAudioGameCard(data) {
+      const div = document.createElement('div');
+      const isLive = data.statusState === 'Live';
+      const isFinal = data.statusState === 'Final';
+
+      div.className = "glass-card p-3 flex flex-col justify-between relative overflow-hidden bg-slate-900/80 border-white/10 hover:border-cyan-400 transition-all";
+
+      // Card Header: Status & Game Time ONLY (NO VISUAL SCORES)
+      div.innerHTML = `
+        <div class="flex items-center justify-between border-b border-white/10 pb-1.5 mb-2">
+          <div class="flex items-center gap-1.5">
+            ${isLive ? '<span class="pulse-live"></span>' : ''}
+            <span class="font-teko text-lg font-bold ${isLive ? 'text-emerald-400' : isFinal ? 'text-gray-400' : 'text-cyan-300'} uppercase tracking-wide">
+              ${isLive ? 'LIVE IN-PROGRESS' : isFinal ? 'COMPLETED GAME' : `SCHEDULED • ${data.gameTime}`}
+            </span>
+          </div>
+          <span class="text-[9px] font-mono bg-slate-950 text-cyan-300 border border-white/10 px-2 py-0.5 rounded font-bold uppercase">
+            ${data.statusState}
+          </span>
+        </div>
+
+        <!-- Centerpiece: Who Played (Logos and Team Names ONLY) -->
+        <div class="flex items-center justify-around my-2 py-1 bg-slate-950/60 rounded-lg border border-white/5">
+          
+          <!-- Away Team -->
+          <div class="flex flex-col items-center justify-center p-1 text-center w-5/12">
+            <img src="https://www.mlbstatic.com/team-logos/${data.away.id}.svg" class="team-logo-md object-contain mb-1" alt="Away Logo" onerror="this.style.opacity='0.3'" />
+            <span class="font-bold text-xs text-white tracking-tight leading-tight line-clamp-2">${data.away.name}</span>
+            <span class="text-[9px] text-gray-400 font-mono mt-0.5">AWAY</span>
+          </div>
+
+          <div class="font-teko text-xl font-bold text-gray-500 uppercase tracking-widest">VS</div>
+
+          <!-- Home Team -->
+          <div class="flex flex-col items-center justify-center p-1 text-center w-5/12">
+            <img src="https://www.mlbstatic.com/team-logos/${data.home.id}.svg" class="team-logo-md object-contain mb-1" alt="Home Logo" onerror="this.style.opacity='0.3'" />
+            <span class="font-bold text-xs text-white tracking-tight leading-tight line-clamp-2">${data.home.name}</span>
+            <span class="text-[9px] text-gray-400 font-mono mt-0.5">HOME</span>
+          </div>
+        </div>
+
+        <!-- Audio Action Button -->
+        <button onclick="playSingleGameAudio(${data.gamePk})" class="mt-2 w-full bg-slate-800 hover:bg-cyan-600/30 hover:border-cyan-400 border border-white/10 text-cyan-300 hover:text-white font-bold py-1.5 px-2 rounded text-xs font-chakra tracking-wide transition-all flex items-center justify-center gap-1.5">
+          <span>🎧</span> PLAY GAME RECAP AUDIO
+        </button>
+      `;
+
+      return div;
+    }
+
+    function playFullRecap() {
+      if (gamesCache.length === 0) return;
+
+      stopSpeech();
+
+      const introText = ANNOUNCER_SCRIPTS.intros[Math.floor(Math.random() * ANNOUNCER_SCRIPTS.intros.length)];
+      const outroText = ANNOUNCER_SCRIPTS.outros[Math.floor(Math.random() * ANNOUNCER_SCRIPTS.outros.length)];
+
+      speechQueue = [introText];
+
+      gamesCache.forEach(g => {
+        const data = liveDataMap[g.gamePk] || parseBasicGameData(g);
+        const script = generateGameSpeechScript(data);
+        speechQueue.push(script);
+      });
+
+      speechQueue.push(outroText);
+
+      currentSentenceIndex = 0;
+      speakQueue();
+    }
+
+    function playSingleGameAudio(gamePk) {
+      stopSpeech();
+      const data = liveDataMap[gamePk];
+      if (!data) return;
+
+      const script = generateGameSpeechScript(data);
+      speechQueue = [script];
+      currentSentenceIndex = 0;
+      speakQueue();
+    }
+
+    function stopCurrentUtterance() {
+      if (speechGapTimeout) {
+        clearTimeout(speechGapTimeout);
+        speechGapTimeout = null;
+      }
+      if (currentUtterance) {
+        currentUtterance.onend = null;
+        currentUtterance.onerror = null;
+        currentUtterance = null;
+      }
+      synth.cancel();
+    }
+
+    function speakQueue() {
+      if (currentSentenceIndex >= speechQueue.length) {
+        stopSpeech();
+        document.getElementById('teleprompter-text').innerText = "Broadcast recap complete! Select another date or replay.";
+        return;
+      }
+
+      isSpeaking = true;
+      isPaused = false;
+      updateAudioUI(true);
+
+      const text = speechQueue[currentSentenceIndex];
+      document.getElementById('teleprompter-text').innerHTML = `<span class="active-sentence">${text}</span>`;
+      document.getElementById('teleprompter-progress').innerText = `${currentSentenceIndex + 1} / ${speechQueue.length}`;
+
+      stopCurrentUtterance();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      currentUtterance = utterance;
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.rate = speechRate;
+      utterance.pitch = speechPitch;
+      utterance.volume = speechVolume;
+
+      utterance.onend = () => {
+        if (currentUtterance === utterance && isSpeaking && !isPaused) {
+          currentUtterance = null;
+          currentSentenceIndex++;
+          if (sentenceGap > 0) {
+            speechGapTimeout = setTimeout(() => {
+              if (isSpeaking && !isPaused) speakQueue();
+            }, sentenceGap);
+          } else {
+            speakQueue();
+          }
+        }
+      };
+
+      utterance.onerror = (e) => {
+        console.warn("Speech synthesis error:", e);
+        if (currentUtterance === utterance) {
+          currentUtterance = null;
+          currentSentenceIndex++;
+          speakQueue();
+        }
+      };
+
+      synth.speak(utterance);
+    }
+
+    function skipPrevSentence() {
+      if (speechQueue.length === 0) return;
+      stopCurrentUtterance();
+      if (currentSentenceIndex > 0) {
+        currentSentenceIndex--;
+      }
+      speakQueue();
+    }
+
+    function skipNextSentence() {
+      if (speechQueue.length === 0) return;
+      stopCurrentUtterance();
+      if (currentSentenceIndex < speechQueue.length - 1) {
+        currentSentenceIndex++;
+        speakQueue();
+      } else {
+        stopSpeech();
+        document.getElementById('teleprompter-text').innerText = "Broadcast recap complete! Select another date or replay.";
+      }
+    }
+
+    function togglePauseSpeech() {
+      if (!synth.speaking) return;
+      if (synth.paused) {
+        synth.resume();
+        isPaused = false;
+        updateAudioUI(true);
+        document.getElementById('btn-pause').innerText = "⏸ PAUSE";
+      } else {
+        synth.pause();
+        isPaused = true;
+        updateAudioUI(false);
+        document.getElementById('btn-pause').innerText = "▶ RESUME";
+      }
+    }
+
+    function stopSpeech() {
+      stopCurrentUtterance();
+      isSpeaking = false;
+      isPaused = false;
+      currentSentenceIndex = 0;
+      updateAudioUI(false);
+      document.getElementById('btn-pause').innerText = "⏸ PAUSE";
+      document.getElementById('teleprompter-progress').innerText = "0 / 0";
+    }
+
+    function updateAudioUI(active) {
+      const eq = document.getElementById('audio-eq');
+      const dot = document.getElementById('live-audio-dot');
+      const status = document.getElementById('broadcast-status-label');
+
+      if (active) {
+        eq.classList.remove('opacity-30');
+        dot.classList.remove('hidden');
+        status.innerText = `ON AIR: Broadcast In Progress (${selectedVoice ? selectedVoice.name : 'Mark'})`;
+      } else {
+        eq.classList.add('opacity-30');
+        dot.classList.add('hidden');
+        status.innerText = "Broadcast paused / idle";
+      }
+    }
+
+    function updateCounters() {
+      let live = 0, final = 0, upcoming = 0;
+      Object.values(liveDataMap).forEach(d => {
+        if (d.statusState === 'Live') live++;
+        else if (d.statusState === 'Final') final++;
+        else upcoming++;
+      });
+
+      document.getElementById('cnt-all').innerText = gamesCache.length;
+      document.getElementById('cnt-live').innerText = live;
+      document.getElementById('cnt-final').innerText = final;
+      document.getElementById('cnt-upcoming').innerText = upcoming;
+    }
+
+    function renderEmptyState() {
+      const grid = document.getElementById('games-grid');
+      grid.innerHTML = `
+        <div class="col-span-full glass-card p-8 text-center max-w-xl mx-auto my-8 space-y-3">
+          <div class="text-4xl">⚾</div>
+          <h3 class="font-teko text-2xl font-bold text-white uppercase">NO GAMES SCHEDULED TODAY</h3>
+          <p class="text-gray-400 text-xs font-chakra">
+            There are no MLB games scheduled on <strong class="text-cyan-300">${formatDateDisplay(selectedDate)}</strong>. Switch dates using the calendar above.
+          </p>
+        </div>
+      `;
+    }
+
+    function setGameFilter(filter) {
+      activeFilter = filter;
+      ['ALL', 'LIVE', 'FINAL', 'UPCOMING'].forEach(f => {
+        const btn = document.getElementById(`filter-btn-${f}`);
+        if (f === filter) {
+          btn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded font-bold";
+        } else {
+          btn.className = "hover:bg-slate-800 px-2 py-0.5 rounded text-gray-400";
+        }
+      });
+      renderGrid();
+    }
+
+    function formatDateDisplay(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', weekday: 'short' }).toUpperCase();
+    }
+
+    function onDateChanged(val) {
+      if (!val) return;
+      selectedDate = val;
+      stopSpeech();
+      fetchDailyBoard();
+    }
+
+    function setTodayDate() {
+      const today = getLocalDateString();
+      selectedDate = today;
+      document.getElementById('date-selector').value = today;
+      stopSpeech();
+      fetchDailyBoard();
+    }
+
+    window.addEventListener('load', () => {
+      const dateInput = document.getElementById('date-selector');
+      const today = getLocalDateString();
+      dateInput.value = today;
+      selectedDate = today;
+
+      initCadenceControlsUI();
+      initVoice();
+      fetchDailyBoard();
+    });
+  </script>
+</body>
+</html>

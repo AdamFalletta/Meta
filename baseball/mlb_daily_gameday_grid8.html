@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MLB Daily Gameday - Multi-Game Real-Time Monitor</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,500&family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-dark: #030712;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --neon-blue: #00d2ff;
+      --neon-green: #10b981;
+      --neon-red: #ff2a5f;
+      --gold-accent: #ffb703;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 10%, #0f172a 0%, var(--bg-dark) 90%);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .font-teko { font-family: 'Teko', sans-serif; }
+    .font-chakra { font-family: 'Chakra Petch', sans-serif; }
+
+    /* Custom Glassmorphism Cards with Dynamic Team Gradient Overlay */
+    .glass-card {
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border-radius: 8px;
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease, border-color 0.15s ease;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.05);
+    }
+
+    .pulse-live {
+      width: 8px;
+      height: 8px;
+      background-color: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neon-green);
+      animation: pulse-ring 1.8s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.8); }
+    }
+
+    /* Fluid & Enlarged Baserunners Diamond */
+    .diamond-baserunners {
+      position: relative;
+      width: clamp(38px, 3.4vw, 54px);
+      height: clamp(38px, 3.4vw, 54px);
+      flex-shrink: 0;
+      margin: 0 auto;
+    }
+
+    .base {
+      position: absolute;
+      width: clamp(12px, 1.2vw, 17px);
+      height: clamp(12px, 1.2vw, 17px);
+      background: rgba(255, 255, 255, 0.18);
+      border: 1.5px solid rgba(255, 255, 255, 0.5);
+      transform: rotate(45deg);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .base.active {
+      background: var(--gold-accent);
+      box-shadow: 0 0 14px var(--gold-accent);
+      border-color: #ffffff;
+    }
+
+    .base.b1 { right: 1px; top: 35%; }
+    .base.b2 { left: 35%; top: 1px; }
+    .base.b3 { left: 1px; top: 35%; }
+
+    /* Maximized Elements & Fluid Sizes */
+    .team-logo-lg {
+      width: clamp(42px, 4.5vw, 76px);
+      height: clamp(42px, 4.5vw, 76px);
+    }
+
+    .score-text-lg {
+      font-size: clamp(1.8rem, 3.2vw, 3.8rem);
+      line-height: 0.9;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(3, 7, 18, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+    }
+
+    .glow-border-live {
+      border-color: rgba(16, 185, 129, 0.45);
+      box-shadow: 0 0 18px -3px rgba(16, 185, 129, 0.2);
+    }
+  </style>
+</head>
+<body class="p-2 gap-1.5 h-screen overflow-hidden flex flex-col">
+
+  <header class="glass-card p-2 px-3 flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
+    <!-- Branding & Title -->
+    <div class="flex items-center gap-2">
+      <div class="p-1 bg-cyan-500/10 border border-cyan-500/30 rounded text-cyan-400 font-bold text-xl leading-none">
+        ⚾
+      </div>
+      <div>
+        <h1 class="font-teko text-2xl sm:text-3xl leading-none uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-cyan-400 font-bold">
+          MLB DAILY GAMEDAY GRID
+        </h1>
+      </div>
+    </div>
+
+    <!-- Date Navigation & Controls -->
+    <div class="flex flex-wrap items-center gap-2 text-xs font-chakra">
+      
+      <!-- Date Picker Input -->
+      <div class="flex items-center gap-1 bg-slate-900/90 border border-white/15 px-2 py-1 rounded focus-within:border-cyan-400 transition-colors">
+        <label for="date-selector" class="text-gray-400 font-mono text-[10px] uppercase">DATE:</label>
+        <input type="date" id="date-selector" onchange="onDateChanged(this.value)" class="bg-transparent text-cyan-300 font-mono text-xs focus:outline-none cursor-pointer" />
+      </div>
+
+      <!-- Quick Date Buttons -->
+      <button onclick="setTodayDate()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold px-2.5 py-1 rounded shadow-md transition-all flex items-center gap-1 text-[11px]">
+        <span>📅</span> TODAY
+      </button>
+
+      <!-- Refresh Button -->
+      <button onclick="fetchDailyBoard()" class="bg-slate-800 hover:bg-slate-700 border border-white/10 text-cyan-300 font-semibold px-2.5 py-1 rounded transition-all flex items-center gap-1 text-[11px]">
+        <span id="refresh-icon">↻</span> REFRESH
+      </button>
+
+      <!-- Status & Auto-Sync Pill -->
+      <div class="hidden md:flex items-center gap-1.5 bg-slate-900/90 border border-white/10 px-2.5 py-1 rounded text-gray-300 font-mono text-[10px]">
+        <span class="pulse-live" id="sync-pulse"></span>
+        <span id="sync-time">SYNCING...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter & Summary Status Bar -->
+  <div class="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] font-mono text-gray-400 flex-shrink-0">
+    <div class="flex items-center gap-1.5">
+      <span class="text-gray-500">FILTER:</span>
+      <button onclick="setGameFilter('ALL')" id="filter-btn-ALL" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded font-bold">ALL (<span id="cnt-all">0</span>)</button>
+      <button onclick="setGameFilter('LIVE')" id="filter-btn-LIVE" class="hover:bg-slate-800 px-2 py-0.5 rounded">LIVE (<span id="cnt-live">0</span>)</button>
+      <button onclick="setGameFilter('FINAL')" id="filter-btn-FINAL" class="hover:bg-slate-800 px-2 py-0.5 rounded">FINAL (<span id="cnt-final">0</span>)</button>
+      <button onclick="setGameFilter('UPCOMING')" id="filter-btn-UPCOMING" class="hover:bg-slate-800 px-2 py-0.5 rounded">UPCOMING (<span id="cnt-upcoming">0</span>)</button>
+    </div>
+    <div id="board-date-label" class="font-semibold text-cyan-400 tracking-wider font-chakra text-xs">
+      LOADING SCHEDULE...
+    </div>
+  </div>
+
+  <!-- Strict 16-Grid Container without Vertical Page Scrolling -->
+  <main class="flex-1 min-h-0 overflow-hidden w-full">
+    <div id="games-grid" class="grid grid-cols-2 md:grid-cols-4 grid-rows-8 md:grid-rows-4 gap-1.5 h-full w-full">
+      <!-- Dynamic Game Cards populated here -->
+    </div>
+  </main>
+
+  <!-- Modal for In-Depth Game Focus -->
+  <div id="game-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 hidden opacity-0 transition-opacity duration-200">
+    <div class="glass-card w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border-cyan-500/40 shadow-2xl">
+      <div class="p-3 sm:p-4 bg-slate-950/90 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📊</span>
+          <h2 class="font-teko text-2xl sm:text-3xl font-bold text-cyan-300 uppercase leading-none" id="modal-title">GAME DETAILS</h2>
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg">✕</button>
+      </div>
+      <div id="modal-body" class="p-4 overflow-y-auto space-y-4 text-xs font-chakra">
+        <!-- Dynamic detail payload -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Helper: Get YYYY-MM-DD date string in the host machine / browser local timezone
+    function getLocalDateString(d = new Date()) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Detect user / host machine local timezone (e.g. "America/New_York")
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
+
+    // Official Primary Hex Colors for all 30 MLB Teams
+    const TEAM_COLORS = {
+      108: { primary: '#BA0021' }, // Angels
+      109: { primary: '#A71930' }, // D-backs
+      110: { primary: '#DF4601' }, // Orioles
+      111: { primary: '#BD3039' }, // Red Sox
+      112: { primary: '#0E3386' }, // Cubs
+      113: { primary: '#C6011F' }, // Reds
+      114: { primary: '#0C2340' }, // Guardians
+      115: { primary: '#333366' }, // Rockies
+      116: { primary: '#0C2340' }, // Tigers
+      117: { primary: '#EB6E1F' }, // Astros
+      118: { primary: '#004687' }, // Royals
+      119: { primary: '#005A9C' }, // Dodgers
+      120: { primary: '#AB0003' }, // Nationals
+      121: { primary: '#FF5910' }, // Mets
+      133: { primary: '#003831' }, // Athletics
+      134: { primary: '#FDB827' }, // Pirates
+      135: { primary: '#2F241D' }, // Padres
+      136: { primary: '#005C5C' }, // Mariners
+      137: { primary: '#FD5A1E' }, // Giants
+      138: { primary: '#C41E3A' }, // Cardinals
+      139: { primary: '#092C5C' }, // Rays
+      140: { primary: '#003278' }, // Rangers
+      141: { primary: '#134A8E' }, // Blue Jays
+      142: { primary: '#D31145' }, // Twins
+      143: { primary: '#E31837' }, // Phillies
+      144: { primary: '#CE1141' }, // Braves
+      145: { primary: '#27251F' }, // White Sox
+      146: { primary: '#00A3E0' }, // Marlins
+      147: { primary: '#0C2340' }, // Yankees
+      158: { primary: '#12284C' }  // Brewers
+    };
+
+    // Helper: Convert Hex color to RGBA string with opacity
+    function hexToRgba(hex, alpha = 0.5) {
+      if (!hex) return `rgba(15, 23, 42, ${alpha})`;
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+    }
+
+    // Generate dual-team blending gradient string
+    function getTeamGradient(awayId, homeId) {
+      const awayHex = TEAM_COLORS[awayId]?.primary || '#0284c7';
+      const homeHex = TEAM_COLORS[homeId]?.primary || '#0f766e';
+      const awayRgb = hexToRgba(awayHex, 0.48);
+      const homeRgb = hexToRgba(homeHex, 0.48);
+      return `linear-gradient(135deg, ${awayRgb} 0%, rgba(8, 12, 22, 0.88) 50%, ${homeRgb} 100%)`;
+    }
+
+    let selectedDate = getLocalDateString();
+    let activeFilter = 'ALL';
+    let gamesCache = [];
+    let liveDataMap = {};
+    let autoRefreshInterval = null;
+
+    // Helper: Extract team nickname, stripping city and state names
+    function getTeamNickname(teamObj, fallbackName = "") {
+      if (!teamObj) return fallbackName;
+      if (teamObj.teamName) return teamObj.teamName;
+      if (teamObj.clubName) return teamObj.clubName;
+      
+      const fullName = teamObj.name || fallbackName;
+      if (!fullName) return "TEAM";
+
+      return fullName
+        .replace(/^(New York|Los Angeles|San Francisco|San Diego|St\. Louis|Kansas City|Tampa Bay|Chicago|Boston|Houston|Philadelphia|Atlanta|Miami|Washington|Baltimore|Toronto|Cleveland|Detroit|Minnesota|Milwaukee|Cincinnati|Pittsburgh|Colorado|Arizona|Texas|Oakland|Seattle)\s+/i, '')
+        .trim();
+    }
+
+    function formatDateDisplay(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', weekday: 'short' }).toUpperCase();
+    }
+
+    function getOrdinal(n) {
+      const s = ["TH", "ST", "ND", "RD"], v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    async function fetchDailyBoard() {
+      const grid = document.getElementById('games-grid');
+      const dateLabel = document.getElementById('board-date-label');
+      const refreshIcon = document.getElementById('refresh-icon');
+
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
+      dateLabel.innerText = `FETCHING GAMES FOR ${formatDateDisplay(selectedDate)}...`;
+
+      try {
+        const schedRes = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${selectedDate}&timeZone=${encodeURIComponent(userTimeZone)}`);
+        if (!schedRes.ok) throw new Error(`HTTP error ${schedRes.status}`);
+        
+        const schedData = await schedRes.json();
+        let games = [];
+
+        if (schedData.dates && schedData.dates.length > 0) {
+          games = schedData.dates[0].games || [];
+        }
+
+        if (games.length === 0) {
+          renderEmptyState();
+          dateLabel.innerText = `NO GAMES SCHEDULED ON ${formatDateDisplay(selectedDate)}`;
+          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+          return;
+        }
+
+        gamesCache = games;
+
+        const fetchPromises = games.map(async (g) => {
+          try {
+            const feedRes = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${g.gamePk}/feed/live`);
+            if (feedRes.ok) {
+              const feed = await feedRes.json();
+              liveDataMap[g.gamePk] = parseGameFeed(g, feed);
+            } else {
+              liveDataMap[g.gamePk] = parseBasicGameData(g);
+            }
+          } catch (e) {
+            console.warn(`Failed feed fetch for game ${g.gamePk}:`, e);
+            liveDataMap[g.gamePk] = parseBasicGameData(g);
+          }
+        });
+
+        await Promise.all(fetchPromises);
+
+        updateCounters();
+        renderGrid();
+
+        dateLabel.innerText = `${formatDateDisplay(selectedDate)} • ${games.length} GAMES`;
+        document.getElementById('sync-time').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      } catch (err) {
+        console.error("Error loading daily gameday grid:", err);
+        dateLabel.innerText = "ERROR LOADING SCHEDULE - CHECK CONNECTION";
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
+    }
+
+    function parseGameFeed(gameObj, feed) {
+      const gameData = feed.gameData || {};
+      const liveData = feed.liveData || {};
+      const linescore = liveData.linescore || {};
+      const boxscore = liveData.boxscore || {};
+      const players = gameData.players || {};
+
+      const awayObj = gameData.teams?.away || {};
+      const homeObj = gameData.teams?.home || {};
+
+      const statusState = gameData.status?.abstractGameState || "Preview";
+      const detailedState = gameData.status?.detailedState?.toUpperCase() || "SCHEDULED";
+
+      const awayRuns = linescore.teams?.away?.runs ?? gameObj.teams?.away?.score ?? 0;
+      const homeRuns = linescore.teams?.home?.runs ?? gameObj.teams?.home?.score ?? 0;
+
+      const awayNickname = getTeamNickname(awayObj, gameObj.teams.away.team.name);
+      const homeNickname = getTeamNickname(homeObj, gameObj.teams.home.team.name);
+
+      let inningText = detailedState;
+      const innState = linescore.inningState?.toUpperCase() || "";
+      const currentOrd = linescore.currentInningOrdinal || (linescore.currentInning ? getOrdinal(linescore.currentInning) : '');
+
+      if (statusState === 'Live') {
+        if (innState === "MIDDLE" || innState === "MID" || (linescore.isTopInning && linescore.outs === 3)) {
+          inningText = `MID ${currentOrd}`;
+        } else if (innState === "END" || (!linescore.isTopInning && linescore.outs === 3)) {
+          inningText = `END ${currentOrd}`;
+        } else {
+          inningText = `${linescore.isTopInning ? '▲ TOP' : '▼ BOT'} ${currentOrd}`;
+        }
+      } else if (statusState === 'Preview') {
+        const gameTime = new Date(gameObj.gameDate).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        inningText = `⏰ ${gameTime}`;
+      } else if (statusState === 'Final') {
+        inningText = detailedState.includes("FINAL") ? detailedState : `FINAL / ${currentOrd || '9'}`;
+      }
+
+      const balls = linescore.balls ?? 0;
+      const strikes = linescore.strikes ?? 0;
+      const outs = linescore.outs ?? 0;
+
+      const bases = {
+        b1: !!linescore.offense?.first,
+        b2: !!linescore.offense?.second,
+        b3: !!linescore.offense?.third
+      };
+
+      // Current Batter
+      let batterData = { id: null, name: "At Bat: --", stats: "--", dayLine: "--" };
+      const currentBatterObj = linescore.offense?.batter;
+      if (currentBatterObj && players[`ID${currentBatterObj.id}`]) {
+        const p = players[`ID${currentBatterObj.id}`];
+        const sideKey = linescore.isTopInning ? 'away' : 'home';
+        const pBox = boxscore.teams?.[sideKey]?.players?.[`ID${currentBatterObj.id}`];
+        const bStats = pBox?.stats?.batting || p.stats?.batting || {};
+
+        let dayLine = `${bStats.hits ?? 0}-${bStats.atBats ?? 0}`;
+        if (bStats.homeRuns > 0) dayLine += `, ${bStats.homeRuns}HR`;
+        if (bStats.rbi > 0) dayLine += `, ${bStats.rbi}RBI`;
+
+        batterData = {
+          id: p.id,
+          name: p.boxscoreName || p.fullName || "Batter",
+          stats: bStats.avg ? `. ${bStats.avg}` : '',
+          dayLine: dayLine
+        };
+      }
+
+      // Current Pitcher
+      let pitcherData = { id: null, name: "Pitching: --", stats: "--", pitches: "0 P" };
+      const currentPitcherObj = linescore.defense?.pitcher;
+      if (currentPitcherObj && players[`ID${currentPitcherObj.id}`]) {
+        const p = players[`ID${currentPitcherObj.id}`];
+        const sideKey = linescore.isTopInning ? 'home' : 'away';
+        const pBox = boxscore.teams?.[sideKey]?.players?.[`ID${currentPitcherObj.id}`];
+        const pitStats = pBox?.stats?.pitching || p.stats?.pitching || {};
+
+        pitcherData = {
+          id: p.id,
+          name: p.boxscoreName || p.fullName || "Pitcher",
+          stats: pitStats.era ? `${pitStats.era} ERA` : '',
+          pitches: `${pitStats.numberOfPitches ?? pitStats.pitchesThrown ?? 0} P`
+        };
+      }
+
+      let lastPlayText = "Game scheduled.";
+      if (liveData.plays?.currentPlay?.result?.description) {
+        lastPlayText = liveData.plays.currentPlay.result.description;
+      } else if (statusState === 'Final') {
+        lastPlayText = "Game completed.";
+      } else if (gameObj.venue?.name) {
+        lastPlayText = `Venue: ${gameObj.venue.name}`;
+      }
+
+      return {
+        gamePk: gameObj.gamePk,
+        statusState,
+        detailedState,
+        inningText,
+        venue: gameObj.venue?.name || '',
+        away: {
+          id: awayObj.id || gameObj.teams.away.team.id,
+          name: awayNickname,
+          code: awayObj.abbreviation || gameObj.teams.away.team.name.substring(0, 3).toUpperCase(),
+          score: awayRuns,
+          wins: awayObj.record?.leagueRecord?.wins ?? gameObj.teams.away.leagueRecord?.wins ?? 0,
+          losses: awayObj.record?.leagueRecord?.losses ?? gameObj.teams.away.leagueRecord?.losses ?? 0
+        },
+        home: {
+          id: homeObj.id || gameObj.teams.home.team.id,
+          name: homeNickname,
+          code: homeObj.abbreviation || gameObj.teams.home.team.name.substring(0, 3).toUpperCase(),
+          score: homeRuns,
+          wins: homeObj.record?.leagueRecord?.wins ?? gameObj.teams.home.leagueRecord?.wins ?? 0,
+          losses: homeObj.record?.leagueRecord?.losses ?? gameObj.teams.home.leagueRecord?.losses ?? 0
+        },
+        balls,
+        strikes,
+        outs,
+        bases,
+        batter: batterData,
+        pitcher: pitcherData,
+        lastPlay: lastPlayText,
+        feed: feed
+      };
+    }
+
+    function parseBasicGameData(g) {
+      const gameTime = new Date(g.gameDate).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      const statusState = g.status.abstractGameState || "Preview";
+      const awayNickname = getTeamNickname(g.teams.away.team, g.teams.away.team.name);
+      const homeNickname = getTeamNickname(g.teams.home.team, g.teams.home.team.name);
+
+      return {
+        gamePk: g.gamePk,
+        statusState,
+        detailedState: g.status.detailedState.toUpperCase(),
+        inningText: statusState === 'Preview' ? `⏰ ${gameTime}` : g.status.detailedState.toUpperCase(),
+        venue: g.venue?.name || '',
+        away: {
+          id: g.teams.away.team.id,
+          name: awayNickname,
+          code: g.teams.away.team.name.substring(0,3).toUpperCase(),
+          score: g.teams.away.score ?? 0,
+          wins: g.teams.away.leagueRecord?.wins ?? 0,
+          losses: g.teams.away.leagueRecord?.losses ?? 0
+        },
+        home: {
+          id: g.teams.home.team.id,
+          name: homeNickname,
+          code: g.teams.home.team.name.substring(0,3).toUpperCase(),
+          score: g.teams.home.score ?? 0,
+          wins: g.teams.home.leagueRecord?.wins ?? 0,
+          losses: g.teams.home.leagueRecord?.losses ?? 0
+        },
+        balls: 0, strikes: 0, outs: 0,
+        bases: { b1: false, b2: false, b3: false },
+        batter: { id: null, name: "At Bat: --", stats: "--", dayLine: "--" },
+        pitcher: { id: null, name: "Pitching: --", stats: "--", pitches: "0 P" },
+        lastPlay: `Venue: ${g.venue?.name || 'MLB Stadium'}`
+      };
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('games-grid');
+      grid.innerHTML = '';
+
+      const filteredGames = gamesCache.filter(g => {
+        const item = liveDataMap[g.gamePk];
+        if (!item) return true;
+        if (activeFilter === 'LIVE') return item.statusState === 'Live';
+        if (activeFilter === 'FINAL') return item.statusState === 'Final';
+        if (activeFilter === 'UPCOMING') return item.statusState === 'Preview';
+        return true;
+      });
+
+      if (filteredGames.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-gray-500 font-mono">
+            NO GAMES MATCH THE SELECTED FILTER ("${activeFilter}")
+          </div>
+        `;
+        return;
+      }
+
+      filteredGames.forEach(g => {
+        const data = liveDataMap[g.gamePk] || parseBasicGameData(g);
+        const card = createGameCardHTML(data);
+        grid.appendChild(card);
+      });
+    }
+
+    function createGameCardHTML(data) {
+      const div = document.createElement('div');
+      const isLive = data.statusState === 'Live';
+      const isFinal = data.statusState === 'Final';
+
+      div.className = `glass-card p-1.5 sm:p-2 flex flex-col justify-between cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden h-full min-h-0 ${isLive ? 'glow-border-live' : ''}`;
+      
+      div.style.background = getTeamGradient(data.away.id, data.home.id);
+      div.onclick = () => openModal(data.gamePk);
+
+      // Player Headshot URLs
+      const pitcherImg = data.pitcher.id 
+        ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_420,q_auto:best/v1/people/${data.pitcher.id}/headshot/67/current`
+        : `https://placehold.co/100x100/111827/ffffff?text=P`;
+
+      const batterImg = data.batter.id 
+        ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_420,q_auto:best/v1/people/${data.batter.id}/headshot/67/current`
+        : `https://placehold.co/100x100/111827/ffffff?text=B`;
+
+      // Scoring color rules (Gold for Final Game Winner)
+      const isAwayWinner = isFinal && data.away.score > data.home.score;
+      const isHomeWinner = isFinal && data.home.score > data.away.score;
+
+      const awayScoreClass = isAwayWinner 
+        ? 'text-amber-400 drop-shadow-[0_0_10px_rgba(255,183,3,0.5)] font-extrabold' 
+        : (data.away.score > data.home.score ? 'text-cyan-300' : 'text-gray-200');
+
+      const homeScoreClass = isHomeWinner 
+        ? 'text-amber-400 drop-shadow-[0_0_10px_rgba(255,183,3,0.5)] font-extrabold' 
+        : (data.home.score > data.away.score ? 'text-cyan-300' : 'text-gray-200');
+
+      // Helper: Generate Dot Indicator Rows for Balls (4), Strikes (3), Outs (3)
+      const renderDotRow = (label, current, total, activeBg, labelColor) => {
+        let dots = '';
+        for (let i = 0; i < total; i++) {
+          const isActive = i < current;
+          dots += `<div class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${isActive ? activeBg : 'bg-slate-800 border border-white/20'} transition-all"></div>`;
+        }
+        return `
+          <div class="flex items-center gap-1">
+            <span class="${labelColor} font-bold text-[9px] sm:text-[10px] w-2.5 text-right font-mono">${label}</span>
+            <div class="flex items-center gap-0.5 sm:gap-1">${dots}</div>
+          </div>
+        `;
+      };
+
+      div.innerHTML = `
+        <!-- Card Header (Status & Inning) -->
+        <div class="flex items-center justify-between border-b border-white/10 pb-0.5 mb-0.5 flex-shrink-0">
+          <div class="flex items-center gap-1.5 min-w-0">
+            ${isLive ? '<span class="pulse-live"></span>' : ''}
+            <span class="font-teko text-lg sm:text-xl font-bold ${isLive ? 'text-emerald-400' : isFinal ? 'text-gray-400' : 'text-cyan-300'} uppercase tracking-wider leading-none truncate">
+              ${data.inningText}
+            </span>
+          </div>
+          <span class="text-[9px] sm:text-[10px] font-mono ${isLive ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40' : 'bg-slate-900 text-gray-300 border border-white/10'} px-1.5 py-0.2 rounded uppercase font-bold flex-shrink-0">
+            ${data.statusState.toUpperCase()}
+          </span>
+        </div>
+
+        <!-- Centerpiece Matchup Block: Big Logos, Centered Score, Bigger UI -->
+        <div class="flex items-center justify-between gap-1 my-auto flex-1 min-h-0 py-0.5">
+          
+          <!-- Away Team Block -->
+          <div class="flex items-center justify-between gap-1.5 flex-1 min-w-0 pr-1">
+            <div class="flex flex-col items-center flex-shrink-0">
+              <img src="https://www.mlbstatic.com/team-logos/${data.away.id}.svg" class="team-logo-lg object-contain drop-shadow-lg" alt="${data.away.code}" onerror="this.style.opacity='0.3'" />
+              <span class="text-[10px] sm:text-[11px] font-extrabold text-white tracking-tight leading-none mt-1 truncate max-w-[70px] text-center">${data.away.name}</span>
+              <span class="text-[8px] sm:text-[9px] text-gray-400 font-mono leading-none mt-0.5">${data.away.wins}-${data.away.losses}</span>
+            </div>
+            <!-- Score Centered Next to Logo -->
+            <div class="font-teko score-text-lg ${awayScoreClass} text-center flex-1">
+              ${data.away.score}
+            </div>
+          </div>
+
+          <!-- Center Field Situation: Larger Diamond Baserunners & 4-3-3 Dot Count Indicators -->
+          <div class="flex flex-col items-center justify-center flex-shrink-0 px-1 border-x border-white/5">
+            ${isLive ? `
+              <div class="diamond-baserunners mb-1">
+                <div class="base b2 ${data.bases.b2 ? 'active' : ''}"></div>
+                <div class="base b3 ${data.bases.b3 ? 'active' : ''}"></div>
+                <div class="base b1 ${data.bases.b1 ? 'active' : ''}"></div>
+              </div>
+              <div class="flex flex-col gap-0.5 bg-slate-950/90 p-1 px-1.5 rounded-md border border-white/10 shadow-inner">
+                ${renderDotRow('B', data.balls, 4, 'bg-cyan-400 shadow-[0_0_8px_#00d2ff]', 'text-cyan-400')}
+                ${renderDotRow('S', data.strikes, 3, 'bg-amber-400 shadow-[0_0_8px_#ffb703]', 'text-amber-400')}
+                ${renderDotRow('O', data.outs, 3, 'bg-rose-500 shadow-[0_0_8px_#ff2a5f]', 'text-rose-400')}
+              </div>
+            ` : `
+              <div class="font-teko text-2xl sm:text-3xl font-bold text-gray-500 uppercase tracking-widest my-auto">VS</div>
+            `}
+          </div>
+
+          <!-- Home Team Block -->
+          <div class="flex items-center justify-between gap-1.5 flex-1 min-w-0 pl-1">
+            <!-- Score Centered Next to Logo -->
+            <div class="font-teko score-text-lg ${homeScoreClass} text-center flex-1">
+              ${data.home.score}
+            </div>
+            <div class="flex flex-col items-center flex-shrink-0">
+              <img src="https://www.mlbstatic.com/team-logos/${data.home.id}.svg" class="team-logo-lg object-contain drop-shadow-lg" alt="${data.home.code}" onerror="this.style.opacity='0.3'" />
+              <span class="text-[10px] sm:text-[11px] font-extrabold text-white tracking-tight leading-none mt-1 truncate max-w-[70px] text-center">${data.home.name}</span>
+              <span class="text-[8px] sm:text-[9px] text-gray-400 font-mono leading-none mt-0.5">${data.home.wins}-${data.home.losses}</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Enlarged Pitcher vs Batter Compact Cards -->
+        <div class="grid grid-cols-2 gap-1 my-0.5 pt-0.5 border-t border-white/10 flex-shrink-0">
+          <!-- Pitcher -->
+          <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 px-1.5 rounded-lg border border-white/5 overflow-hidden">
+            <img src="${pitcherImg}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-950 border border-rose-500/60 object-cover flex-shrink-0" alt="P" onerror="this.src='https://placehold.co/100x100/111827/ffffff?text=P'" />
+            <div class="min-w-0 flex-1">
+              <div class="text-[8px] sm:text-[9px] text-rose-400 font-bold uppercase tracking-wider leading-none">PITCHER</div>
+              <div class="font-bold text-[10px] sm:text-[11px] text-white truncate leading-tight mt-0.5">${data.pitcher.name}</div>
+              <div class="text-[8px] sm:text-[9px] text-gray-300 font-mono truncate">${data.pitcher.pitches}</div>
+            </div>
+          </div>
+
+          <!-- Batter -->
+          <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 px-1.5 rounded-lg border border-white/5 overflow-hidden">
+            <img src="${batterImg}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-950 border border-cyan-400/60 object-cover flex-shrink-0" alt="B" onerror="this.src='https://placehold.co/100x100/111827/ffffff?text=B'" />
+            <div class="min-w-0 flex-1">
+              <div class="text-[8px] sm:text-[9px] text-cyan-400 font-bold uppercase tracking-wider leading-none">AT BAT</div>
+              <div class="font-bold text-[10px] sm:text-[11px] text-white truncate leading-tight mt-0.5">${data.batter.name}</div>
+              <div class="text-[8px] sm:text-[9px] text-amber-300 font-mono truncate">${data.batter.dayLine}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Last Play Callout Footer -->
+        <div class="mt-0.5 bg-slate-950/90 border border-white/10 p-0.5 px-1.5 rounded text-[9px] sm:text-[10px] text-gray-200 font-chakra truncate leading-tight flex-shrink-0">
+          <span class="text-cyan-400 font-bold mr-1">❖</span>${data.lastPlay}
+        </div>
+      `;
+
+      return div;
+    }
+
+    function openModal(gamePk) {
+      const modal = document.getElementById('game-modal');
+      const title = document.getElementById('modal-title');
+      const body = document.getElementById('modal-body');
+
+      const data = liveDataMap[gamePk];
+      if (!data) return;
+
+      title.innerText = `${data.away.name} vs ${data.home.name}`;
+
+      const feed = data.feed;
+      let playEventsHTML = `<p class="text-gray-400 font-mono">No expanded play-by-play telemetry available for this game state.</p>`;
+
+      if (feed && feed.liveData && feed.liveData.plays && feed.liveData.plays.allPlays) {
+        const plays = feed.liveData.plays.allPlays.slice(-8).reverse();
+        playEventsHTML = plays.map(p => `
+          <div class="bg-slate-900/90 border-l-4 border-cyan-400 p-2.5 rounded mb-2">
+            <div class="flex justify-between items-center font-bold text-amber-300 font-teko text-lg">
+              <span>${p.about?.isTopInning ? 'TOP' : 'BOT'} ${p.about?.inningOrdinal || p.about?.inning} - ${p.result?.event || 'PLAY'}</span>
+              <span class="text-xs text-gray-400 font-mono font-normal">${p.count?.outs || 0} OUTS</span>
+            </div>
+            <p class="text-gray-200 mt-1">${p.result?.description || ''}</p>
+          </div>
+        `).join('');
+      }
+
+      body.innerHTML = `
+        <!-- Matchup Overview Banner -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-950/80 border border-white/10 p-3 rounded-lg text-center">
+          <div>
+            <div class="text-gray-400 text-[10px] font-mono uppercase">AWAY TEAM</div>
+            <div class="font-teko text-3xl font-bold text-white">${data.away.name}</div>
+            <div class="font-teko text-4xl text-cyan-400 font-bold">${data.away.score}</div>
+          </div>
+          <div>
+            <div class="text-gray-400 text-[10px] font-mono uppercase">HOME TEAM</div>
+            <div class="font-teko text-3xl font-bold text-white">${data.home.name}</div>
+            <div class="font-teko text-4xl text-cyan-400 font-bold">${data.home.score}</div>
+          </div>
+        </div>
+
+        <div class="text-sm font-bold text-cyan-300 font-teko text-xl tracking-wider uppercase border-b border-white/10 pb-1 mt-4">
+          RECENT REPLAY & EVENT STREAM
+        </div>
+        <div class="max-h-60 overflow-y-auto pr-1">
+          ${playEventsHTML}
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('game-modal');
+      modal.classList.add('opacity-0');
+      setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    function renderEmptyState() {
+      const grid = document.getElementById('games-grid');
+      grid.innerHTML = `
+        <div class="col-span-full glass-card p-8 text-center max-w-xl mx-auto my-12 space-y-4">
+          <div class="text-5xl">⚾</div>
+          <h3 class="font-teko text-3xl font-bold text-white uppercase">NO MLB GAMES SCHEDULED TODAY</h3>
+          <p class="text-gray-400 text-xs font-chakra leading-relaxed">
+            There are no official MLB regular season or postseason games scheduled on <strong class="text-cyan-300">${formatDateDisplay(selectedDate)}</strong>. You can switch dates or jump directly to a full match slate day below!
+          </p>
+          <button onclick="setSampleDate()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold px-4 py-2 rounded-lg text-xs font-mono shadow-lg transition-all">
+            👉 JUMP TO FULL SLATE DATE (2024-09-29)
+          </button>
+        </div>
+      `;
+
+      document.getElementById('cnt-all').innerText = '0';
+      document.getElementById('cnt-live').innerText = '0';
+      document.getElementById('cnt-final').innerText = '0';
+      document.getElementById('cnt-upcoming').innerText = '0';
+    }
+
+    function updateCounters() {
+      let live = 0, final = 0, upcoming = 0;
+      Object.values(liveDataMap).forEach(d => {
+        if (d.statusState === 'Live') live++;
+        else if (d.statusState === 'Final') final++;
+        else upcoming++;
+      });
+
+      document.getElementById('cnt-all').innerText = gamesCache.length;
+      document.getElementById('cnt-live').innerText = live;
+      document.getElementById('cnt-final').innerText = final;
+      document.getElementById('cnt-upcoming').innerText = upcoming;
+    }
+
+    function setGameFilter(filter) {
+      activeFilter = filter;
+      ['ALL', 'LIVE', 'FINAL', 'UPCOMING'].forEach(f => {
+        const btn = document.getElementById(`filter-btn-${f}`);
+        if (f === filter) {
+          btn.className = "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded font-bold";
+        } else {
+          btn.className = "hover:bg-slate-800 px-2.5 py-0.5 rounded text-gray-400";
+        }
+      });
+      renderGrid();
+    }
+
+    function onDateChanged(val) {
+      if (!val) return;
+      selectedDate = val;
+      fetchDailyBoard();
+    }
+
+    function setTodayDate() {
+      const today = getLocalDateString();
+      selectedDate = today;
+      document.getElementById('date-selector').value = today;
+      fetchDailyBoard();
+    }
+
+    function setSampleDate() {
+      const sample = '2024-09-29';
+      selectedDate = sample;
+      document.getElementById('date-selector').value = sample;
+      fetchDailyBoard();
+    }
+
+    // App Initialization & Polling Setup
+    window.addEventListener('load', () => {
+      const dateInput = document.getElementById('date-selector');
+      const today = getLocalDateString();
+      dateInput.value = today;
+      selectedDate = today;
+
+      fetchDailyBoard();
+
+      // Refresh every 12 seconds
+      autoRefreshInterval = setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          fetchDailyBoard();
+        }
+      }, 12000);
+    });
+  </script>
+</body>
+</html>
