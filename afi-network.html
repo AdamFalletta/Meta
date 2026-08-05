@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNBC Prime Live TV Network Broadcast</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,700;0,900;1,700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Chakra Petch', 'sans-serif'],
+                    },
+                    colors: {
+                        cnbc: {
+                            navy: '#010512',
+                            card: '#06112e',
+                            border: '#1a2e5a',
+                            blue: '#0055ff',
+                            cyan: '#00e5ff',
+                            gold: '#ffb700',
+                            red: '#ff1744',
+                            green: '#00e676',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #01030a;
+            color: #ffffff;
+            overflow: hidden; /* HARD LOCK: No page scrollbars */
+            height: 100vh;
+            width: 100vw;
+            font-size: 22px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .cnbc-tv-bg {
+            background: radial-gradient(circle at 50% 0%, #0a2052 0%, #020716 65%, #000208 100%);
+        }
+
+        /* Moving Gradient Glow FX */
+        .glow-card {
+            position: relative;
+            background: rgba(6, 17, 46, 0.92);
+            backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .glow-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent 0%, rgba(0, 229, 255, 0.4) 25%, transparent 50%, rgba(0, 85, 255, 0.5) 75%, transparent 100%);
+            animation: rotateGlow 10s linear infinite;
+            z-index: -2;
+        }
+        .glow-card::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: rgba(4, 11, 30, 0.95);
+            border-radius: 1.35rem;
+            z-index: -1;
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.35) 50%,
+                rgba(0, 0, 0, 0.35)
+            );
+            background-size: 100% 6px;
+        }
+
+        /* TV Slide Flip & Staggered Fade Transitions */
+        .slide-flip-enter {
+            animation: slideFlipIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slideFlipIn {
+            0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Offset Fade Delays for Staggered Visual Effect */
+        .stagger-1 { animation-delay: 0ms; }
+        .stagger-2 { animation-delay: 120ms; }
+        .stagger-3 { animation-delay: 240ms; }
+
+        .tv-progress-fill {
+            transition: width 0.1s linear;
+        }
+
+
+
+
+
+    </style>
+</head>
+<body class="cnbc-tv-bg font-sans min-h-screen flex flex-col justify-between select-none overflow-hidden p-4 gap-4">
+
+    <!-- MAIN 3-SECTION HARD LOCKED LAYOUT (NO HEADER) -->
+    <main class="flex-grow grid grid-cols-12 gap-5 h-[calc(100vh-7.5rem)] overflow-hidden">
+
+        <!-- SECTION 1: MAIN CONTENT AREA (HERO SLIDE + 2 SUB CARDS - 8 COLS) -->
+        <section class="col-span-8 flex flex-col gap-4 h-full overflow-hidden">
+            
+            <!-- HERO WIDGET WITH FULL BACKGROUND IMAGE COVER & MOVING GLOW -->
+            <div id="hero-slide-container" class="glow-card border-2 border-cnbc-border shadow-2xl relative flex-grow flex flex-col justify-end slide-flip-enter group">
+                
+                <!-- Full Background Image Cover -->
+                <div class="absolute inset-0 z-0 overflow-hidden">
+                    <img id="hero-image" src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=80" 
+                        alt="Hero News" class="w-full h-full object-cover transform scale-105 transition-transform duration-1000">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/20"></div>
+                    <div class="scanlines absolute inset-0 pointer-events-none opacity-30"></div>
+                </div>
+
+                <!-- Lower Third Content Graphic Overlay -->
+                <div class="relative z-10 p-8 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent">
+                    <div class="flex items-center space-x-4 mb-3">
+                        <!-- Source Logo & Time -->
+                        <div id="hero-source-logo" class="flex items-center bg-slate-900 border border-slate-700 px-3 py-1 rounded-lg">
+                            <!-- Injected dynamically -->
+                        </div>
+                        <span id="hero-source" class="font-display font-black text-xl text-cnbc-gold tracking-wide">CNBC INTERNATIONAL</span>
+                        <span class="text-slate-500 font-bold">•</span>
+                        <span id="hero-time" class="font-mono text-lg font-bold text-cnbc-cyan">JUST NOW</span>
+                        <span id="hero-impact-tag" class="bg-emerald-950 border border-emerald-500 text-cnbc-green font-mono text-sm px-3 py-0.5 rounded-md font-bold">HIGH IMPACT</span>
+                    </div>
+
+                    <h1 id="hero-title" class="font-display font-black text-4xl xl:text-5xl text-white leading-tight mb-4 drop-shadow-lg">
+                        Connecting to Satellite News Feeds...
+                    </h1>
+
+                    <p id="hero-description" class="text-slate-200 text-xl xl:text-2xl font-medium leading-relaxed line-clamp-3">
+                        Streaming global economic indicators, enterprise earnings, central bank decisions, and high-frequency trading data.
+                    </p>
+
+                    <!-- Auto-Progress Timer Bar for TV Slides -->
+                    <div class="w-full bg-slate-900/90 h-3 rounded-full overflow-hidden mt-6 border border-slate-700">
+                        <div id="hero-timer-bar" class="bg-gradient-to-r from-cnbc-blue via-blue-500 to-cnbc-gold h-full w-0 tv-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TWO BIG SUB-HEADLINE WIDGET CARDS -->
+            <div id="sub-cards-grid" class="grid grid-cols-2 gap-4 h-[35%] shrink-0">
+                <!-- Sub cards dynamically injected with background image covers -->
+            </div>
+        </section>
+
+        <!-- SECTION 2: SIDEBAR AREA (MARKET RADAR, FAST WIRE & LIVE CLOCK - 4 COLS) -->
+        <section class="col-span-4 flex flex-col gap-4 h-full overflow-hidden">
+
+            <!-- REAL-TIME MARKET WATCH CANVAS CARD (ANIMATED MODULE ROTATOR) -->
+            <div class="glow-card border-2 border-cnbc-border p-4 shrink-0">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-3.5 h-3.5 bg-cnbc-green rounded-full animate-ping"></span>
+                        <h2 style="font-size:2.5rem" class="font-display font-black text-2xl text-white uppercase tracking-wider">MARKET RADAR</h2>
+                    </div>
+                    <span id="radar-module-badge" class="text-xs font-mono font-bold text-cnbc-gold bg-amber-950 border border-amber-800 px-3 py-1 rounded-lg">
+                        INDEX 1 / 6
+                    </span>
+                </div>
+
+                <div id="radar-chart-container" class="bg-slate-950/90 p-3 rounded-2xl border-2 border-cnbc-border mb-2 slide-flip-enter">
+                    <div class="flex justify-between items-end mb-1">
+                        <div>
+                            <div id="radar-symbol-title" class="text-xs text-slate-400 font-mono font-bold uppercase tracking-wider">S&P 500 FUTURES</div>
+                            <div id="radar-symbol-val" class="text-3xl font-black font-mono text-cnbc-green">5,912.20 <span id="radar-symbol-change" class="text-lg">+1.14%</span></div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-400 font-mono font-bold">DIRECTION</div>
+                            <div id="radar-direction-tag" class="text-sm font-black font-mono text-cnbc-green bg-emerald-950 border border-emerald-800 px-2 py-0.5 rounded">BULLISH ▲</div>
+                        </div>
+                    </div>
+                    <canvas id="market-chart-canvas" class="w-full h-20 rounded-xl bg-slate-900/80 mt-1"></canvas>
+                </div>
+
+                <!-- Stock Watchlist Rows -->
+                <div id="watchlist-box" class="space-y-1.5">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <!-- AUTO-FLIPPING FAST MONEY WIRE SLIDE STACK -->
+            <div class="glow-card border-2 border-cnbc-border p-4 flex flex-col justify-between flex-grow overflow-hidden">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b-2 border-cnbc-border shrink-0">
+                    <h2 style="font-size:2.5rem" class="font-display font-black text-xl text-white uppercase tracking-wider flex items-center space-x-2">
+                        <svg class="w-6 h-6 text-cnbc-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span>FAST WIRE SLIDES</span>
+                    </h2>
+                    <span id="wire-slide-counter" class="text-xs text-cnbc-gold font-mono font-bold bg-amber-950 border border-amber-800 px-3 py-1 rounded-lg">
+                        BATCH 1 / 8
+                    </span>
+                </div>
+
+                <!-- Wire Cards (Enriched content, logos, details - spaced to avoid crunch) -->
+                <div id="fast-wire-slide-container" class="space-y-2 flex-grow flex flex-col justify-between overflow-hidden">
+                    <!-- Wire cards injected by JS -->
+                </div>
+
+                <!-- Auto wire progress bar -->
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden mt-2 border border-slate-800 shrink-0">
+                    <div id="wire-timer-bar" class="bg-cnbc-gold h-full w-0 tv-progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- BOTTOM SIDEBAR LIVE CLOCK PANEL -->
+            <div class="glow-card border-2 border-cnbc-border p-3 shrink-0 flex items-center justify-between bg-gradient-to-r from-slate-950 to-cnbc-navy">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3.5 h-3.5 rounded-full bg-cnbc-green animate-ping"></div>
+                    <div>
+                        <div class="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest">EASTERN STANDARD TIME</div>
+                        <div id="sidebar-live-clock" class="text-3xl font-black font-mono text-cnbc-cyan">00:00:00 EST</div>
+                    </div>
+                </div>
+                <span class="text-xs font-mono font-bold text-cnbc-gold bg-slate-900 border border-slate-700 px-3 py-1 rounded-lg uppercase">
+                    LIVE FEED
+                </span>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- SECTION 3: FOOTER MARQUEE (SHORTER, FLOATING WITH WHITESPACE & ADVERTISEMENT SECTION) -->
+    <footer class="h-18 mx-5 shrink-0 bg-slate-950 border-2 border-cnbc-border relative z-50 shadow-2xl flex items-center overflow-hidden rounded-2xl">
+        
+        <!-- AFI Digital Futuristic Broadcast Badge -->
+        <div class="bg-gradient-to-r from-blue-900 via-blue-700 to-cnbc-blue text-white font-display font-black px-6 h-full flex items-center shrink-0 z-20 space-x-3 text-3xl tracking-widest uppercase shadow-2xl border-r-2 border-blue-400">
+            <span class="w-4 h-4 rounded-full bg-cnbc-cyan animate-pulse"></span>
+            <span class="text-[#eeeeee] font-display italic tracking-wider drop-shadow-md">AFI</span>
+        </div>
+        
+        <!-- Marquee News Ticker Track -->
+        <div class="overflow-hidden w-full h-full relative flex items-center bg-slate-950" id="marquee-news-container">
+            <div id="marquee-news-track" class="smooth-ticker whitespace-nowrap flex items-center space-x-16 text-3xl font-black text-white py-2">
+                <!-- News marquee items injected by JS -->
+            </div>
+        </div>
+
+        <!-- Bottom Right Advertisement Panel Slot -->
+        <div class="bg-gradient-to-l from-amber-950/90 via-slate-950 to-slate-950 border-l-2 border-cnbc-gold/60 px-5 h-full flex items-center shrink-0 z-20 space-x-4 shadow-2xl min-w-[320px] justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-cnbc-gold text-slate-950 text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider font-display">
+                    AD
+                </div>
+                <div>
+                    <div class="text-sm font-bold text-white tracking-tight">ROLEX FINANCIAL HOUR</div>
+                    <div class="text-xs font-mono text-amber-300">Official CNBC Timekeeper</div>
+                </div>
+            </div>
+            <svg class="w-6 h-6 text-cnbc-gold shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.8-3.7 5.3-.8z"/>
+            </svg>
+        </div>
+
+    </footer>
+
+    <script>
+        /**
+         * CNBC Modular TV Network Engine - Passive 10-Foot Display Edition
+         * 25 Live Reports | Source Logos | Background Image Covers | 60fps RAF Marquee
+         */
+
+        const SOURCE_LOGOS = {
+            CNBC: `<svg class="w-6 h-6 text-cnbc-cyan" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#0055FF"/><path d="M50 20 L80 80 L20 80 Z" fill="#FFB700"/></svg>`,
+            BLOOMBERG: `<svg class="w-6 h-6 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h18v18H3z"/></svg>`,
+            WSJ: `<svg class="w-6 h-6 text-slate-200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20z"/></svg>`,
+            REUTERS: `<svg class="w-6 h-6 text-orange-500" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>`,
+            FT: `<svg class="w-6 h-6 text-pink-400" viewBox="0 0 24 24" fill="currentColor"><rect width="20" height="20" x="2" y="2"/></svg>`,
+            TECHCRUNCH: `<svg class="w-6 h-6 text-emerald-400" viewBox="0 0 24 24" fill="currentColor"><path d="M2 4h9v16H2zM13 4h9v8h-9z"/></svg>`,
+            DEFAULT: `<svg class="w-6 h-6 text-cnbc-gold" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l10 20H2z"/></svg>`
+        };
+
+        const MARKET_CHARTS = [
+            { name: "S&P 500 FUTURES", value: "5,912.20", change: "+1.14%", points: [15, 25, 20, 38, 32, 50, 42, 68, 62, 85, 78, 95], isUp: true, direction: "BULLISH ▲" },
+            { name: "NASDAQ 100", value: "20,540.80", change: "+1.42%", points: [30, 28, 45, 40, 55, 52, 70, 65, 82, 80, 92, 98], isUp: true, direction: "SURGING ▲" },
+            { name: "DOW JONES", value: "43,280.50", change: "+0.45%", points: [50, 48, 52, 58, 55, 62, 60, 68, 65, 72, 70, 75], isUp: true, direction: "STEADY ▲" },
+            { name: "BITCOIN / USD", value: "$68,920.00", change: "+5.10%", points: [20, 35, 28, 55, 48, 72, 65, 88, 80, 94, 90, 99], isUp: true, direction: "RALLY ▲" },
+            { name: "GOLD (OUNCE)", value: "$2,745.30", change: "+0.85%", points: [40, 45, 42, 50, 52, 58, 60, 66, 70, 75, 74, 82], isUp: true, direction: "GAIN ▲" },
+            { name: "CRUDE OIL WTI", value: "$71.40", change: "-1.20%", points: [80, 75, 78, 70, 65, 68, 58, 52, 55, 48, 42, 38], isUp: false, direction: "BEARISH ▼" }
+        ];
+
+        // TOP 25 DETAILED NEWS REPORTS FOR TV BROADCAST
+        const TOP_25_REPORTS = [
+            {
+                title: "Federal Reserve Signals Rate Adjustments as Core Inflation Index Cools Below Forecasts",
+                source: "CNBC",
+                time: "2m ago",
+                image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=1600&q=80",
+                description: "Central Bank officials highlighted data-driven easing trajectories amidst stabilizing employment numbers and shifting long-term bond yields across key debt markets.",
+                category: "BUSINESS",
+                impact: "MARKET MOVER"
+            },
+            {
+                title: "S&P 500 Surges to Record Highs Led by Semiconductor & AI Hardware Sector Capital Inflows",
+                source: "BLOOMBERG",
+                time: "8m ago",
+                image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1600&q=80",
+                description: "Enterprise computing giants propel market valuation benchmarks as institutional investors reallocate funds into next-generation infrastructure technology.",
+                category: "MARKETS",
+                impact: "SURGE +1.8%"
+            },
+            {
+                title: "Global Offshore Energy Infrastructure Allocations Reach Historical Peak of $420 Billion",
+                source: "REUTERS",
+                time: "14m ago",
+                image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=1600&q=80",
+                description: "Sovereign wealth funds expand long-term energy resilience portfolios across North Sea and Asia-Pacific deepwater energy grids.",
+                category: "ENERGY",
+                impact: "RECORD HIGH"
+            },
+            {
+                title: "Quantum Computing Lab Breakthrough Achieves 10x Coherence Benchmark in Commercial Tests",
+                source: "TECHCRUNCH",
+                time: "22m ago",
+                image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80", description: "Engineers unveil fault-tolerant qubit processing arrays capable of performing complex cryptographic and molecular modeling operations.",
+                category: "TECH",
+                impact: "BREAKTHROUGH"
+            },
+            {
+                title: "Treasury Yield Curve Steepens Following Unprecedented Demand for 10-Year Bond Issuance",
+                source: "WSJ",
+                time: "31m ago",
+                image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80",
+                description: "Fixed income traders adjust long-term portfolio hedge ratios following primary dealer auction metrics.",
+                category: "FINANCE",
+                impact: "YIELD SHIFT"
+            },
+            {
+                title: "Automotive Giants Form Joint Venture for European Next-Gen Battery Gigafactories",
+                source: "FT",
+                time: "38m ago",
+                image: "https://images.unsplash.com/photo-1558441719-6705166e2106?auto=format&fit=crop&w=1600&q=80",
+                description: "A $12 billion capital commitment aims to localize supply chain logistics for electric freight and commercial transit fleets.",
+                category: "GLOBAL",
+                impact: "$12B DEAL"
+            },
+            {
+                title: "E-Commerce Velocity Index Surges 18% Year-Over-Year Driven by High-Frequency Consumer Spending",
+                source: "CNBC",
+                time: "45m ago",
+                image: "https://images.unsplash.com/photo-1555421689-491a97ff2040?auto=format&fit=crop&w=1600&q=80",
+                description: "Digital storefront analytics reveal robust retail purchasing patterns across household durables and consumer electronics.",
+                category: "BUSINESS",
+                impact: "VOL +18%"
+            },
+            {
+                title: "Autonomous Robotics Venture Capital Inflows Double as Industrial Factory Automation Scaled",
+                source: "TECHCRUNCH",
+                time: "52m ago",
+                image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1600&q=80",
+                description: "Series C funding rounds reach historic valuations as automated logistics hubs reduce operational overhead.",
+                category: "TECH",
+                impact: "FUNDING RUSH"
+            },
+            {
+                title: "Aviation Consortium Unveils Zero-Emission Hydrogen Commercial Flight Test Results",
+                source: "BLOOMBERG",
+                time: "1h ago",
+                image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1600&q=80",
+                description: "Prototype flights demonstrate high fuel efficiency performance with zero carbon emissions across transcontinental corridors.",
+                category: "TRANSPORT",
+                impact: "PASSED TESTS"
+            },
+            {
+                title: "Central Banks Expand Digital Currency Interoperability Framework for Cross-Border Settlement",
+                source: "REUTERS",
+                time: "1h 10m ago",
+                image: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=1600&q=80",
+                description: "Real-time gross settlement trials reduce international money transfer latency from days to sub-second transactions.",
+                category: "FINANCE",
+                impact: "INSTANT FX"
+            },
+            {
+                title: "Commercial Real Estate Securitization Market Rebounds as Institutional Investors Acquire Prime Units",
+                source: "WSJ",
+                time: "1h 25m ago",
+                image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80",
+                description: "High-density urban commercial towers witness renewed lease commitments from technology and financial enterprise tenants.",
+                category: "PROPERTY",
+                impact: "REBOUND"
+            },
+            {
+                title: "Global Microchip Packaging Hubs Expand Infrastructure Capacity to Meet Cloud Demand",
+                source: "FT",
+                time: "1h 35m ago",
+                image: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=1600&q=80",
+                description: "Advanced 3D stacking fabrication plants come online in East Asia to prevent global supply chain bottlenecks.",
+                category: "TECH",
+                impact: "CAPACITY x2"
+            },
+            {
+                title: "Liquefied Natural Gas Tanker Fleet Expansion Reaches All-Time Record to Secure European Energy Supplies",
+                source: "BLOOMBERG",
+                time: "1h 45m ago",
+                image: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=1600&q=80",
+                description: "Maritime trade routes register peak vessel throughput as winter supply reserves build across key European terminals.",
+                category: "ENERGY",
+                impact: "PEAK FLEET"
+            },
+            {
+                title: "Cybersecurity Enterprise Spending Surges as Cloud Native Threat Vectors Multiply",
+                source: "CNBC",
+                time: "1h 55m ago",
+                image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1600&q=80",
+                description: "Fortune 500 CISOs allocate record capital toward automated zero-trust security architecture frameworks.",
+                category: "BUSINESS",
+                impact: "SPEND +24%"
+            },
+            {
+                title: "Pharmaceutical Giant Announces Phase III Clinical Success for Breakthrough Metabolic Therapy",
+                source: "REUTERS",
+                time: "2h ago",
+                image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1600&q=80",
+                description: "Regulatory fast-track approval expected following overwhelming positive efficacy metrics in multi-center trials.",
+                category: "HEALTH",
+                impact: "FDA FAST-TRACK"
+            },
+            {
+                title: "Luxury Goods Conglomerate Posts Record Quarterly Operating Margins in Asian Markets",
+                source: "WSJ",
+                time: "2h 15m ago",
+                image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80",
+                description: "High-net-worth consumer demand drives premium brand revenues beyond market consensus expectations.",
+                category: "MARKETS",
+                impact: "BEAT EST."
+            },
+            {
+                title: "Renewables Grid Storage Battery Capacity Triples Across Western Power Grids",
+                source: "FT",
+                time: "2h 30m ago",
+                image: "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=1600&q=80",
+                description: "Grid-scale lithium iron phosphate storage units stabilize peak hour electricity prices and grid load distribution.",
+                category: "ENERGY",
+                impact: "GRID STABLE"
+            },
+            {
+                title: "Sovereign Wealth Funds Increase Allocation to AI Compute Datacenters",
+                source: "BLOOMBERG",
+                time: "2h 45m ago",
+                image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1600&q=80",
+                description: "Multi-billion dollar co-investments back massive water-cooled datacenter campuses globally.",
+                category: "FINANCE",
+                impact: "$50B ALLOCATED"
+            },
+            {
+                title: "Global Supply Chain Congestion Index Drops to 5-Year Low as Port Automation Matures",
+                source: "CNBC",
+                time: "3h ago",
+                image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1600&q=80",
+                description: "Automated container crane handling and predictive AI logistics software reduce freight dwell time.",
+                category: "BUSINESS",
+                impact: "EFFICIENT"
+            },
+            {
+                title: "Venture Debt Financing Reaches New High as Founders Avoid Dilutive Equity Rounds",
+                source: "TECHCRUNCH",
+                time: "3h 15m ago",
+                image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1600&q=80",
+                description: "Growth-stage technology startups leverage credit facilities to fuel international expansion plans.",
+                category: "TECH",
+                impact: "DEBT RUSH"
+            },
+            {
+                title: "Space Launch Commercial Satellite Payload Volume Double Prior Annual Record",
+                source: "REUTERS",
+                time: "3h 30m ago",
+                image: "https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&w=1600&q=80",
+                description: "Low-Earth orbit communications constellations achieve full global broadband coverage milestones.",
+                category: "GLOBAL",
+                impact: "ORBITAL RUN"
+            },
+            {
+                title: "Global Commodity Derivatives Volume Surges Amid Metal Shortage Worries",
+                source: "WSJ",
+                time: "3h 45m ago",
+                image: "https://images.unsplash.com/photo-1618042164219-62c820f10723?auto=format&fit=crop&w=1600&q=80",
+                description: "Copper and nickel futures spike on international exchanges as industrial demand picks up velocity.",
+                category: "MARKETS",
+                impact: "COPPER +4.2%"
+            },
+            {
+                title: "Deep-Sea Telecommunication Cable Networks Upgrade to 800G Fiber Tech",
+                source: "FT",
+                time: "4h ago",
+                image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1600&q=80",
+                description: "Transatlantic fiber infrastructure upgrades reduce intercontinental latency for financial algorithmic traders.",
+                category: "TECH",
+                impact: "LOW LATENCY"
+            },
+            {
+                title: "Agricultural Tech Startups Secure Capital for AI-Driven Precision Crop Yields",
+                source: "CNBC",
+                time: "4h 15m ago",
+                image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1600&q=80",
+                description: "Automated drone spraying and soil sensor networks optimize crop production while reducing water consumption.",
+                category: "BUSINESS",
+                impact: "AG-TECH"
+            },
+            {
+                title: "Central Bank Gold Reserves Reach 50-Year High Amid Currency Diversification Strategies",
+                source: "BLOOMBERG",
+                time: "4h 30m ago",
+                image: "https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1600&q=80",
+                description: "Monetary authorities continue net bullion purchases to reinforce sovereign balance sheet resilience.",
+                category: "FINANCE",
+                impact: "GOLD RECORD"
+            }
+        ];
+
+        const MOCK_STOCKS = [
+            { symbol: "S&P 500", price: "5,912.20", change: "+1.14%", isUp: true, icon: "📊" },
+            { symbol: "NASDAQ", price: "20,540.80", change: "+1.42%", isUp: true, icon: "💻" },
+            { symbol: "DOW", price: "43,280.50", change: "+0.45%", isUp: true, icon: "🏛️" },
+            { symbol: "NVDA", price: "142.80", change: "+4.12%", isUp: true, icon: "🟩" },
+            { symbol: "AAPL", price: "235.60", change: "+1.05%", isUp: true, icon: "🍏" },
+            { symbol: "BTC/USD", price: "68,920.00", change: "+5.10%", isUp: true, icon: "₿" },
+            { symbol: "CRUDE OIL", price: "71.40", change: "-1.20%", isUp: false, icon: "🛢️" }
+        ];
+
+        class TVSignageApp {
+            constructor() {
+                this.reports = TOP_25_REPORTS;
+                this.heroSlideIndex = 0;
+                this.wireSlideIndex = 0;
+                this.radarChartIndex = 0;
+                
+                // LONGER TIME ON SLIDES: 14 SECONDS FOR MAIN STORIES
+                this.heroIntervalMs = 14000;
+                this.wireIntervalMs = 4500;
+                this.radarIntervalMs = 5000;
+
+                this.newsMarqueePos = 0;
+                this.tickerAnimFrame = null;
+
+                this.heroStartTime = Date.now();
+                this.wireStartTime = Date.now();
+
+                this.init();
+            }
+
+            init() {
+                this.startClock();
+                this.renderMarketRadarModule();
+                this.renderHeroSlide();
+                this.renderSubCardsSlide();
+                this.renderFastWireSlide();
+                this.renderWatchlist();
+                this.populateMarqueeData();
+                this.startAutomatedTVFlipEngine();
+
+                window.addEventListener('resize', () => this.drawRadarChart());
+            }
+
+            startClock() {
+                const clockEl = document.getElementById('sidebar-live-clock');
+                setInterval(() => {
+                    const now = new Date();
+                    // Eastern Standard Time Format
+                    const estString = now.toLocaleTimeString('en-US', {
+                        timeZone: 'America/New_York',
+                        hour12: true,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    clockEl.innerText = estString + ' EST';
+                }, 1000);
+            }
+
+            renderMarketRadarModule() {
+                const chartData = MARKET_CHARTS[this.radarChartIndex];
+                
+                const container = document.getElementById('radar-chart-container');
+                if (container) {
+                    container.classList.remove('slide-flip-enter');
+                    void container.offsetWidth; // force reflow
+                    container.classList.add('slide-flip-enter');
+                }
+
+                document.getElementById('radar-module-badge').innerText = `INDEX ${this.radarChartIndex + 1} / ${MARKET_CHARTS.length}`;
+                document.getElementById('radar-symbol-title').innerText = chartData.name;
+                
+                const valEl = document.getElementById('radar-symbol-val');
+                valEl.innerHTML = `${chartData.value} <span id="radar-symbol-change" class="text-lg ${chartData.isUp ? 'text-cnbc-green' : 'text-cnbc-red'}">${chartData.change}</span>`;
+                
+                const dirEl = document.getElementById('radar-direction-tag');
+                dirEl.innerText = chartData.direction;
+                dirEl.className = `text-sm font-black font-mono px-2 py-0.5 rounded ${chartData.isUp ? 'text-cnbc-green bg-emerald-950 border border-emerald-800' : 'text-cnbc-red bg-red-950 border border-red-800'}`;
+
+                this.drawRadarChart();
+            }
+
+            drawRadarChart() {
+                const canvas = document.getElementById('market-chart-canvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight || 100;
+
+                const chartData = MARKET_CHARTS[this.radarChartIndex];
+                const points = chartData.points;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // RICH VIBRANT GRADIENT FILL
+                const fillGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                if (chartData.isUp) {
+                    fillGradient.addColorStop(0, 'rgba(0, 230, 118, 0.5)');
+                    fillGradient.addColorStop(0.5, 'rgba(0, 229, 255, 0.2)');
+                    fillGradient.addColorStop(1, 'rgba(0, 230, 118, 0)');
+                } else {
+                    fillGradient.addColorStop(0, 'rgba(255, 23, 68, 0.5)');
+                    fillGradient.addColorStop(1, 'rgba(255, 23, 68, 0)');
+                }
+
+                const strokeColor = chartData.isUp ? '#00e676' : '#ff1744';
+
+                ctx.beginPath();
+                const stepX = canvas.width / (points.length - 1);
+                points.forEach((pt, i) => {
+                    const x = i * stepX;
+                    const y = canvas.height - (pt / 100) * (canvas.height - 10) - 5;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 4;
+                ctx.shadowColor = strokeColor;
+                ctx.shadowBlur = 12;
+                ctx.stroke();
+
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.lineTo(0, canvas.height);
+                ctx.fillStyle = fillGradient;
+                ctx.shadowBlur = 0;
+                ctx.fill();
+            }
+
+            renderHeroSlide() {
+                const article = this.reports[this.heroSlideIndex];
+
+                const container = document.getElementById('hero-slide-container');
+                container.classList.remove('slide-flip-enter');
+                void container.offsetWidth; // Force reflow
+                container.classList.add('slide-flip-enter');
+
+                document.getElementById('hero-title').innerText = article.title;
+                document.getElementById('hero-description').innerText = article.description;
+                document.getElementById('hero-source').innerText = article.source;
+                document.getElementById('hero-time').innerText = article.time;
+                document.getElementById('hero-impact-tag').innerText = article.impact;
+
+                // Set Source Logo SVG
+                const logoContainer = document.getElementById('hero-source-logo');
+                logoContainer.innerHTML = SOURCE_LOGOS[article.source] || SOURCE_LOGOS.DEFAULT;
+
+                const img = document.getElementById('hero-image');
+                if (article.image) img.src = article.image;
+
+                this.heroStartTime = Date.now();
+            }
+
+            renderSubCardsSlide() {
+                const grid = document.getElementById('sub-cards-grid');
+                // Pick next 2 articles following current hero
+                const idx1 = (this.heroSlideIndex + 1) % this.reports.length;
+                const idx2 = (this.heroSlideIndex + 2) % this.reports.length;
+                const items = [this.reports[idx1], this.reports[idx2]];
+
+                grid.innerHTML = items.map((art, idx) => `
+                    <div class="glow-card border-2 border-cnbc-border p-5 flex flex-col justify-end slide-flip-enter stagger-${idx + 1} relative overflow-hidden group">
+                        <!-- Full Cover Background Image -->
+                        <img src="${art.image}" class="absolute inset-0 w-full h-full object-cover opacity-60 transform group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex items-center space-x-3 mb-2 text-sm font-mono font-bold">
+                                <span class="text-cnbc-gold">${art.source}</span>
+                                <span class="text-slate-500">•</span>
+                                <span class="text-cnbc-cyan">${art.time}</span>
+                                <span class="bg-cyan-950 text-cnbc-cyan border border-cyan-800 text-xs px-2 py-0.5 rounded font-bold">${art.category}</span>
+                            </div>
+                            <h3 class="font-display font-black text-2xl xl:text-3xl text-white line-clamp-2 leading-snug drop-shadow-md mb-2">${art.title}</h3>
+                            <p class="text-slate-300 text-base line-clamp-1 font-medium">${art.description}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderFastWireSlide() {
+                const container = document.getElementById('fast-wire-slide-container');
+                const batchSize = 3;
+                const totalBatches = Math.ceil(this.reports.length / batchSize);
+                const start = (this.wireSlideIndex % totalBatches) * batchSize;
+                const batchItems = this.reports.slice(start, start + batchSize);
+
+                document.getElementById('wire-slide-counter').innerText = `BATCH ${(this.wireSlideIndex % totalBatches) + 1} / ${totalBatches}`;
+
+                container.innerHTML = batchItems.map((art, idx) => `
+                    <div class="p-3 bg-slate-950/90 rounded-2xl border-2 border-cnbc-border/80 slide-flip-enter stagger-${idx + 1} flex flex-col justify-between hover:border-cnbc-cyan transition-colors flex-1">
+                        <div class="flex items-center justify-between text-xs font-mono font-bold mb-1">
+                            <div class="flex items-center space-x-2 text-cnbc-gold">
+                                <span>${SOURCE_LOGOS[art.source] || SOURCE_LOGOS.DEFAULT}</span>
+                                <span>${art.source}</span>
+                            </div>
+                            <span class="text-cnbc-cyan">${art.time}</span>
+                        </div>
+                        <h4 class="text-base font-bold text-white line-clamp-1 leading-tight mb-1">${art.title}</h4>
+                        <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+                            <span class="text-slate-300 line-clamp-1">${art.description}</span>
+                            <span class="bg-red-950 border border-red-800 text-red-400 px-2 py-0.5 rounded shrink-0 ml-2 font-bold text-[10px]">${art.impact}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                this.wireStartTime = Date.now();
+            }
+
+            renderWatchlist() {
+                const container = document.getElementById('watchlist-box');
+                container.innerHTML = MOCK_STOCKS.slice(0, 3).map(stock => `
+                    <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950/80 border-2 border-cnbc-border/60 text-base font-mono">
+                        <div class="flex items-center space-x-2 font-bold text-white">
+                            <span>${stock.icon}</span>
+                            <span>${stock.symbol}</span>
+                        </div>
+                        <span class="text-slate-200 font-bold">${stock.price}</span>
+                        <span class="font-black ${stock.isUp ? 'text-cnbc-green' : 'text-cnbc-red'}">${stock.change}</span>
+                    </div>
+                `).join('');
+            }
+
+            populateMarqueeData() {
+                const newsTrack = document.getElementById('marquee-news-track');
+                const itemsHTML = this.reports.map(a => `
+                    <span class="inline-flex items-center space-x-4">
+                        <span class="text-cnbc-cyan font-black">[${a.source}]</span>
+                        <span class="text-white font-extrabold">${a.title}</span>
+                        <span class="text-cnbc-gold font-bold font-mono">(${a.impact})</span>
+                        <span class="text-slate-600 font-black">///</span>
+                    </span>
+                `).join('');
+
+                newsTrack.innerHTML = `
+                    <div class="inline-flex space-x-16 items-center shrink-0" id="news-block-a">${itemsHTML}</div>
+                    <div class="inline-flex space-x-16 items-center shrink-0" id="news-block-b">${itemsHTML}</div>
+                `;
+
+                this.newsMarqueePos = 0;
+                this.startRAFMarquee();
+            }
+
+            startRAFMarquee() {
+                const newsTrack = document.getElementById('marquee-news-track');
+
+                const animate = () => {
+                    const speed = 2.4; // High visibility speed
+                    const newsBlockA = document.getElementById('news-block-a');
+                    if (newsBlockA && newsTrack) {
+                        const newsBlockWidth = newsBlockA.offsetWidth;
+                        this.newsMarqueePos += speed;
+                        if (this.newsMarqueePos >= newsBlockWidth) {
+                            this.newsMarqueePos = this.newsMarqueePos % newsBlockWidth;
+                        }
+                        newsTrack.style.transform = `translate3d(-${this.newsMarqueePos}px, 0, 0)`;
+                    }
+
+                    this.tickerAnimFrame = requestAnimationFrame(animate);
+                };
+
+                if (this.tickerAnimFrame) cancelAnimationFrame(this.tickerAnimFrame);
+                animate();
+            }
+
+            startAutomatedTVFlipEngine() {
+                // Hero Slide Rotation (Now 14 Seconds per main report)
+                setInterval(() => {
+                    this.heroSlideIndex = (this.heroSlideIndex + 1) % this.reports.length;
+                    this.renderHeroSlide();
+                    this.renderSubCardsSlide();
+                }, this.heroIntervalMs);
+
+                // Fast Wire Rotation (Every 4.5 Seconds)
+                setInterval(() => {
+                    const totalBatches = Math.ceil(this.reports.length / 3);
+                    this.wireSlideIndex = (this.wireSlideIndex + 1) % totalBatches;
+                    this.renderFastWireSlide();
+                }, this.wireIntervalMs);
+
+                // Market Radar Module Rotation (Every 5 Seconds)
+                setInterval(() => {
+                    this.radarChartIndex = (this.radarChartIndex + 1) % MARKET_CHARTS.length;
+                    this.renderMarketRadarModule();
+                }, this.radarIntervalMs);
+
+                // Progress Fill Bar updates
+                setInterval(() => {
+                    const now = Date.now();
+                    
+                    const heroElapsed = now - this.heroStartTime;
+                    const heroPct = Math.min(100, (heroElapsed / this.heroIntervalMs) * 100);
+                    const heroBar = document.getElementById('hero-timer-bar');
+                    if (heroBar) heroBar.style.width = `${heroPct}%`;
+
+                    const wireElapsed = now - this.wireStartTime;
+                    const wirePct = Math.min(100, (wireElapsed / this.wireIntervalMs) * 100);
+                    const wireBar = document.getElementById('wire-timer-bar');
+                    if (wireBar) wireBar.style.width = `${wirePct}%`;
+                }, 100);
+            }
+        }
+
+        let app;
+        window.onload = function() {
+            app = new TVSignageApp();
+        };
+    </script>
+</body>
+</html>
