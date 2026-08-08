@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Perfect Game - Arcade Baseball</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bungee+Inline&display=swap');
+
+        :root {
+            --neon-blue: #00f2ff;
+            --electric-blue: #0088ff; /* Adjusted: Vibrantly between teal and deep blue */
+            --neon-red: #ff0055;
+            --gold: #ffd700;
+            --arcade-bg: #050508;
+            --neutral-grey: rgba(100, 100, 110, 0.15);
+        }
+
+        body {
+            background-color: #000;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 1200px;
+            position: relative;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #050508 100%);
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            border: none;
+        }
+
+        /* Top Header UI */
+        .arcade-header {
+            background: #000;
+            padding: 22px 30px;
+            border-bottom: 6px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .team-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            font-size: 21px; 
+        }
+
+        .score-num {
+            color: var(--neon-blue);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .center-status {
+            text-align: center;
+            border-left: 3px solid #333;
+            border-right: 3px solid #333;
+            padding: 0 30px;
+        }
+
+        .game-field {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .timer-track {
+            width: 100%;
+            height: 9px;
+            background: #111;
+        }
+        #timer-fill {
+            width: 100%;
+            height: 100%;
+            background: var(--neon-blue);
+        }
+
+        /* Bases */
+        .diamond-container {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            padding: 30px 60px;
+            margin-bottom: 20px;
+        }
+
+        .diamond-ui {
+            position: relative;
+            width: 180px; 
+            height: 180px;
+            flex-shrink: 0;
+        }
+        .base {
+            width: 42px; 
+            height: 42px;
+            background: #1a1a1a;
+            border: 4px solid #444;
+            position: absolute;
+            transform: rotate(45deg);
+            transition: all 0.2s ease;
+        }
+        .base-1 { top: 69px; right: 0; }
+        .base-2 { top: 0; left: 69px; }
+        .base-3 { top: 69px; left: 0; }
+        .base.occupied { 
+            background: #ffea00; 
+            box-shadow: 0 0 35px #ffea00; 
+            border-color: #fff;
+        }
+
+        /* Result Burst Animation */
+        .fx-result {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-family: 'Bungee Inline', sans-serif;
+            font-size: 12rem; 
+            z-index: 100;
+            pointer-events: none;
+            text-align: center;
+            line-height: 1;
+            white-space: nowrap;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+        }
+
+        .animate-burst {
+            animation: burst 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes burst {
+            0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; filter: brightness(2) blur(10px); }
+            15% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; filter: brightness(1.5) blur(0px); }
+            100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; filter: brightness(1) blur(5px); }
+        }
+
+        /* Strikezone */
+        .strikezone-container {
+            position: relative;
+            width: 90%;
+            height: 70%;
+            max-width: 900px; 
+            max-height: 1000px;
+        }
+
+        .strikezone-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 0; 
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 20;
+        }
+
+        .zone-cell {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-sizing: border-box;
+            border: 11px solid transparent;
+            background-clip: padding-box;
+        }
+
+        .zone-cell::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--neutral-grey);
+            box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+            transition: inherit;
+        }
+        
+        .zone-cell:active::after { transform: scale(0.95); }
+
+        .zone-hot::after { background: rgba(255, 0, 85, 0.4) !important; box-shadow: inset 0 0 0 3px var(--neon-red), inset 0 0 45px var(--neon-red) !important; }
+        .zone-cold::after { background: rgba(0, 136, 255, 0.4) !important; box-shadow: inset 0 0 0 3px var(--electric-blue), inset 0 0 45px var(--electric-blue) !important; }
+        .zone-dp::after { background: rgba(255, 215, 0, 0.4) !important; box-shadow: inset 0 0 0 3px var(--gold), inset 0 0 45px var(--gold) !important; }
+
+        .inning-transition {
+            position: absolute;
+            inset: 0;
+            background: black;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+        .inning-transition.active { opacity: 1; pointer-events: all; }
+
+        .screen-shake { animation: shake 0.25s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-9px, 0, 0); }
+            20%, 80% { transform: translate3d(12px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-18px, 0, 0); }
+            40%, 60% { transform: translate3d(18px, 0, 0); }
+        }
+
+        .difficulty-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+        .difficulty-btn {
+            background: #111;
+            border: 3px solid #333;
+            padding: 18px 12px;
+            font-size: 12px; 
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .difficulty-btn:hover { border-color: var(--neon-blue); color: var(--neon-blue); }
+        .difficulty-btn.active { background: var(--neon-blue); color: #000; border-color: #fff; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Home Screen -->
+        <div id="screen-home" class="p-10 flex flex-col items-center justify-center h-full text-center">
+            <h1 class="text-8xl mb-6 italic text-yellow-400" style="font-family: 'Bungee Inline'">PERFECT GAME</h1>
+            <p class="text-[14px] tracking-[0.5em] mb-12 text-blue-300">ULTIMATE ARCADE SERIES</p>
+            
+            <div class="w-full max-w-lg mb-14">
+                <p class="text-[12px] mb-6 text-gray-500 uppercase">Select Hot Zones (1-8)</p>
+                <div id="difficulty-options" class="difficulty-grid">
+                    <button class="difficulty-btn" data-hot="1">LVL 1 (EASY)</button>
+                    <button class="difficulty-btn" data-hot="2">LVL 2</button>
+                    <button class="difficulty-btn active" data-hot="3">LVL 3 (PRO)</button>
+                    <button class="difficulty-btn" data-hot="4">LVL 4</button>
+                    <button class="difficulty-btn" data-hot="5">LVL 5</button>
+                    <button class="difficulty-btn" data-hot="6">LVL 6</button>
+                    <button class="difficulty-btn" data-hot="7">LVL 7</button>
+                    <button class="difficulty-btn" data-hot="8">LVL 8 (CHAOS)</button>
+                </div>
+            </div>
+
+            <button id="btn-start" class="bg-blue-600 text-white py-12 px-28 text-4xl border-b-8 border-blue-900 active:translate-y-2">START</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="screen-game" class="hidden flex flex-col h-full">
+            <div class="arcade-header">
+                <div class="team-box">
+                    <div class="score-row">
+                        <span class="text-[14px] text-gray-500">AWY</span>
+                        <span id="ui-score-away" class="score-num">0</span>
+                    </div>
+                    <div class="score-row">
+                        <span class="text-[14px] text-gray-500">HOM</span>
+                        <span id="ui-score-home" class="score-num">0</span>
+                    </div>
+                </div>
+
+                <div class="center-status">
+                    <div id="ui-frame" class="text-3xl italic text-yellow-400 mb-2">TOP 1</div>
+                    <div class="text-[14px] text-gray-500" id="ui-mode-text">PITCHING</div>
+                </div>
+
+                <div class="text-right">
+                    <div class="text-[14px] text-gray-500 mb-2">BATTER</div>
+                    <div id="ui-batter-count" class="text-3xl">1/10</div>
+                </div>
+            </div>
+
+            <div class="timer-track">
+                <div id="timer-fill"></div>
+            </div>
+
+            <div class="diamond-container">
+                <div class="diamond-ui">
+                    <div id="base-1" class="base base-1"></div>
+                    <div id="base-2" class="base base-2"></div>
+                    <div id="base-3" class="base base-3"></div>
+                </div>
+                <div class="flex-grow">
+                    <div id="ui-batter-name" class="text-5xl text-white uppercase italic tracking-tighter" style="font-family: 'Bungee Inline'">-</div>
+                </div>
+            </div>
+
+            <div class="game-field" id="game-field">
+                <div id="fx-result" class="fx-result"></div>
+                
+                <div class="strikezone-container" id="strikezone-container">
+                    <div class="strikezone-grid" id="strikezone">
+                        <div class="zone-cell" data-zone="1"></div>
+                        <div class="zone-cell" data-zone="2"></div>
+                        <div class="zone-cell" data-zone="3"></div>
+                        <div class="zone-cell" data-zone="4"></div>
+                        <div class="zone-cell" data-zone="5"></div>
+                        <div class="zone-cell" data-zone="6"></div>
+                        <div class="zone-cell" data-zone="7"></div>
+                        <div class="zone-cell" data-zone="8"></div>
+                        <div class="zone-cell" data-zone="9"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="screen-result" class="hidden p-10 flex flex-col items-center justify-center h-full text-center">
+            <h2 id="result-title" class="text-8xl mb-12">FINISH</h2>
+            <div id="result-score" class="text-7xl mb-24 text-yellow-400 font-bold"></div>
+            <button id="btn-restart" class="bg-white text-black py-12 px-28 font-bold text-3xl">REPLAY</button>
+        </div>
+
+        <!-- Transition Overlay -->
+        <div id="inning-transition" class="inning-transition">
+            <h2 id="trans-title" class="text-8xl italic text-yellow-400 mb-6" style="font-family: 'Bungee Inline'">TOP 1</h2>
+            <p id="trans-sub" class="text-3xl">PITCHING</p>
+        </div>
+    </div>
+
+<script>
+const CONFIG = {
+    MAX_FRAMES: 3,
+    BATTERS_PER_HALF: 10,
+    PITCH_TIME_LIMIT: 12,
+    RESULT_MAP: {
+        "SINGLE": "1B",
+        "DOUBLE": "2B",
+        "TRIPLE": "3B",
+        "HOME RUN": "HR",
+        "WALK": "BB",
+        "OUT": "OUT",
+        "DOUBLE PLAY": "DP"
+    },
+    BATTER_NAMES: ["S. MILLER", "B. JACKSON", "T. CRUISE", "K. GRIFFEY", "A. RODRIGUEZ", "S. OHTANI", "M. TROUT", "A. JUDGE"]
+};
+
+class AudioEngine {
+    constructor() { this.ctx = null; }
+    init() {
+        if (this.ctx) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.2;
+        this.master.connect(this.ctx.destination);
+    }
+    playTone(f, t='square', d=0.1) {
+        if (!this.ctx) return;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = t; o.frequency.value = f;
+        g.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d);
+        o.connect(g); g.connect(this.master);
+        o.start(); o.stop(this.ctx.currentTime + d);
+    }
+    good() { this.playTone(523); setTimeout(()=>this.playTone(659), 40); }
+    bad() { this.playTone(150, 'sawtooth', 0.3); }
+    hr() { 
+        this.playTone(440, 'sine', 0.5);
+        setTimeout(() => this.playTone(880, 'sine', 0.5), 100);
+    }
+    dp() {
+        this.playTone(880, 'square', 0.2);
+        setTimeout(() => this.playTone(440, 'square', 0.4), 100);
+    }
+}
+
+class GameModel {
+    constructor() { 
+        this.difficultyHotCount = 3; 
+        this.reset(); 
+    }
+    reset() {
+        this.frame = 1;
+        this.isTopInning = true; 
+        this.batterCount = 1;
+        this.scores = { cpu: 0, user: 0 }; 
+        this.bases = [false, false, false]; 
+        this.currentHitter = null;
+    }
+
+    generateHitter() {
+        const name = CONFIG.BATTER_NAMES[Math.floor(Math.random() * CONFIG.BATTER_NAMES.length)];
+        const zones = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        // Shuffle zones
+        for (let i = zones.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [zones[i], zones[j]] = [zones[j], zones[i]];
+        }
+        
+        const hot = zones.slice(0, this.difficultyHotCount);
+        const dpZone = zones[this.difficultyHotCount]; 
+        const greyZone = zones[this.difficultyHotCount + 1]; 
+        
+        return { name, hot, dpZone, greyZone };
+    }
+
+    advanceRunners(basesToAdvance, battingTeam) {
+        let scored = 0;
+        if (basesToAdvance === 'WALK') {
+            if (this.bases[0]) {
+                if (this.bases[1]) {
+                    if (this.bases[2]) scored++;
+                    this.bases[2] = true;
+                }
+                this.bases[1] = true;
+            }
+            this.bases[0] = true;
+        } else if (basesToAdvance === 4) {
+            scored = 1 + this.bases.filter(b => b).length;
+            this.bases = [false, false, false];
+        } else if (basesToAdvance === 'DP') {
+            // Standard DP: Runner on 1st is out + Batter is out
+            this.bases[0] = false; 
+            scored = 0;
+        } else {
+            for (let i = 2; i >= 0; i--) {
+                if (this.bases[i]) {
+                    if (i + basesToAdvance >= 3) scored++;
+                    else this.bases[i + basesToAdvance] = true;
+                    this.bases[i] = false;
+                }
+            }
+            this.bases[basesToAdvance - 1] = true;
+        }
+        if (battingTeam === 'cpu') this.scores.cpu += scored;
+        else this.scores.user += scored;
+        return scored;
+    }
+
+    processAction(zone) {
+        const h = this.currentHitter;
+        const battingTeam = this.isTopInning ? 'cpu' : 'user';
+        const runnerOnFirst = this.bases[0];
+
+        if (zone > 9) {
+            this.advanceRunners('WALK', battingTeam);
+            return "WALK";
+        }
+
+        // Hot Zones (Red)
+        if (h.hot.includes(zone)) {
+            const roll = Math.random();
+            let hitType = "SINGLE";
+            let bases = 1;
+            if (roll > 0.85) { hitType = "HOME RUN"; bases = 4; }
+            else if (roll > 0.70) { hitType = "TRIPLE"; bases = 3; }
+            else if (roll > 0.40) { hitType = "DOUBLE"; bases = 2; }
+            this.advanceRunners(bases, battingTeam);
+            return hitType;
+        }
+
+        // Guaranteed DP Zone (Gold) - Only if runner on first
+        if (runnerOnFirst && zone === h.dpZone) {
+            this.advanceRunners('DP', battingTeam);
+            return "DOUBLE PLAY";
+        }
+
+        // The Neutral Grey Zone
+        if (zone === h.greyZone) {
+            if (Math.random() > 0.4) {
+                this.advanceRunners(1, battingTeam);
+                return "SINGLE";
+            }
+            // If it's a failed neutral click and runner on 1st, it's a DP
+            if (runnerOnFirst) {
+                this.advanceRunners('DP', battingTeam);
+                return "DOUBLE PLAY";
+            }
+            return "OUT";
+        }
+        
+        // Everything else (Electric Blue)
+        // If runner on 1st, blue = auto double play. If no runner, blue = out.
+        if (runnerOnFirst) {
+            this.advanceRunners('DP', battingTeam);
+            return "DOUBLE PLAY";
+        }
+
+        return "OUT";
+    }
+}
+
+class App {
+    constructor() {
+        this.model = new GameModel();
+        this.audio = new AudioEngine();
+        this.timer = null;
+        this.busy = false;
+        this.currentScreen = 'home';
+        this.init();
+    }
+    init() {
+        this.screens = {
+            home: document.getElementById('screen-home'),
+            game: document.getElementById('screen-game'),
+            result: document.getElementById('screen-result'),
+            transition: document.getElementById('inning-transition')
+        };
+
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.onmousedown = () => {
+                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.model.difficultyHotCount = parseInt(btn.dataset.hot);
+            };
+        });
+
+        document.getElementById('btn-start').onmousedown = () => {
+            this.audio.init();
+            this.showScreen('game');
+            this.startInning();
+        };
+        document.getElementById('btn-restart').onmousedown = () => location.reload();
+        
+        const container = document.getElementById('game-container');
+        const trigger = (e) => {
+            if (this.currentScreen !== 'game' || this.busy) return;
+            if (this.screens.transition.classList.contains('active')) return;
+
+            const cell = e.target.closest('.zone-cell');
+            if (cell) {
+                e.preventDefault();
+                this.handleInput(parseInt(cell.dataset.zone), cell);
+            } else {
+                e.preventDefault();
+                this.handleInput(10, null);
+            }
+        };
+
+        container.onmousedown = trigger;
+        container.ontouchstart = trigger;
+    }
+
+    async startInning() {
+        this.model.batterCount = 1;
+        this.model.bases = [false, false, false];
+        
+        if (!this.model.isTopInning && this.model.frame === CONFIG.MAX_FRAMES) {
+            if (this.model.scores.user > this.model.scores.cpu) {
+                this.endGame();
+                return;
+            }
+        }
+
+        const side = this.model.isTopInning ? "TOP" : "BOT";
+        const title = `${side} ${this.model.frame}`;
+        const sub = this.model.isTopInning ? "PITCHING" : "BATTING";
+        
+        document.getElementById('trans-title').innerText = title;
+        document.getElementById('trans-sub').innerText = sub;
+        this.screens.transition.classList.add('active');
+        
+        await new Promise(r => setTimeout(r, 1500));
+        this.screens.transition.classList.remove('active');
+        this.nextBatter();
+    }
+
+    nextBatter() {
+        if (!this.model.isTopInning && this.model.frame === CONFIG.MAX_FRAMES) {
+            if (this.model.scores.user > this.model.scores.cpu) {
+                this.endGame();
+                return;
+            }
+        }
+
+        if (this.model.batterCount > CONFIG.BATTERS_PER_HALF) {
+            this.endHalf();
+            return;
+        }
+        this.model.currentHitter = this.model.generateHitter();
+        this.updateUI();
+        this.startTimer();
+    }
+
+    updateUI() {
+        const side = this.model.isTopInning ? "TOP" : "BOT";
+        const mode = this.model.isTopInning ? "PITCHING" : "BATTING";
+        const runnerOnFirst = this.model.bases[0];
+        const h = this.model.currentHitter;
+        
+        document.getElementById('ui-score-away').innerText = this.model.scores.cpu;
+        document.getElementById('ui-score-home').innerText = this.model.scores.user;
+        document.getElementById('ui-frame').innerText = `${side} ${this.model.frame}`;
+        document.getElementById('ui-mode-text').innerText = mode;
+        document.getElementById('ui-batter-count').innerText = `${this.model.batterCount}/${CONFIG.BATTERS_PER_HALF}`;
+        document.getElementById('ui-batter-name').innerText = h.name;
+        
+        document.querySelectorAll('.zone-cell').forEach(c => {
+            const z = parseInt(c.dataset.zone);
+            c.classList.remove('zone-hot', 'zone-cold', 'zone-dp', 'hit-pulse');
+            
+            if (h.hot.includes(z)) {
+                c.classList.add('zone-hot');
+            } else if (runnerOnFirst && z === h.dpZone) {
+                // Gold Double Play tile - Only visible if runner on 1st
+                c.classList.add('zone-dp');
+            } else if (z === h.greyZone) {
+                // Always one neutral grey zone
+            } else {
+                // All other zones are Electric Blue (Cold)
+                c.classList.add('zone-cold');
+            }
+        });
+
+        for(let i=1; i<=3; i++) {
+            document.getElementById(`base-${i}`).classList.toggle('occupied', this.model.bases[i-1]);
+        }
+    }
+
+    startTimer() {
+        clearInterval(this.timer);
+        let time = CONFIG.PITCH_TIME_LIMIT;
+        const fill = document.getElementById('timer-fill');
+        fill.style.transition = 'none';
+        fill.style.width = '100%';
+        fill.style.background = 'var(--neon-blue)';
+        this.timer = setInterval(() => {
+            time--;
+            fill.style.transition = 'width 1s linear';
+            fill.style.width = `${(time / CONFIG.PITCH_TIME_LIMIT) * 100}%`;
+            if (time <= 4) fill.style.background = 'var(--neon-red)';
+            if (time <= 0) { 
+                clearInterval(this.timer); 
+                this.handleInput(10, null); 
+            }
+        }, 1000);
+    }
+
+    handleInput(zone, el) {
+        if (this.busy) return;
+        this.busy = true;
+        clearInterval(this.timer);
+
+        if (el) {
+            el.classList.add('hit-pulse');
+            setTimeout(() => el.classList.remove('hit-pulse'), 1000);
+        }
+
+        const res = this.model.processAction(zone);
+        this.playFX(res);
+        
+        this.model.batterCount++;
+        
+        setTimeout(() => {
+            this.busy = false;
+            this.nextBatter();
+        }, 800);
+    }
+
+    playFX(res) {
+        const isHit = ["SINGLE", "DOUBLE", "TRIPLE", "HOME RUN", "WALK"].includes(res);
+        const isActionSuccess = this.model.isTopInning ? (res === "OUT" || res === "DOUBLE PLAY") : isHit;
+        const container = document.getElementById('game-container');
+        const fxText = document.getElementById('fx-result');
+        const displayVal = CONFIG.RESULT_MAP[res] || res;
+
+        fxText.classList.remove('animate-burst');
+        void fxText.offsetWidth;
+        fxText.innerText = displayVal;
+        
+        if (res === "DOUBLE PLAY") {
+            fxText.style.color = 'var(--gold)';
+            fxText.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
+        } else {
+            fxText.style.textShadow = 'none';
+            fxText.style.color = isActionSuccess ? 'var(--neon-blue)' : 'var(--neon-red)';
+        }
+        
+        fxText.classList.add('animate-burst');
+
+        container.classList.remove('screen-shake');
+        void container.offsetWidth;
+        container.classList.add('screen-shake');
+
+        if (res === "HOME RUN") this.audio.hr();
+        else if (res === "DOUBLE PLAY") this.audio.dp();
+        else if (isActionSuccess) this.audio.good(); 
+        else this.audio.bad();
+    }
+
+    endHalf() {
+        if (this.model.isTopInning) {
+            this.model.isTopInning = false;
+            this.startInning();
+        } else {
+            this.model.frame++;
+            this.model.isTopInning = true;
+            if (this.model.frame > CONFIG.MAX_FRAMES) this.endGame();
+            else this.startInning();
+        }
+    }
+
+    endGame() {
+        clearInterval(this.timer);
+        this.showScreen('result');
+        document.getElementById('result-score').innerText = `${this.model.scores.cpu} - ${this.model.scores.user}`;
+        const title = document.getElementById('result-title');
+        title.innerText = this.model.scores.user > this.model.scores.cpu ? "VICTORY" : 
+                        this.model.scores.user < this.model.scores.cpu ? "GAME OVER" : "TIE GAME";
+        title.style.color = this.model.scores.user > this.model.scores.cpu ? "var(--neon-blue)" : "var(--neon-red)";
+    }
+
+    showScreen(key) {
+        this.currentScreen = key;
+        Object.values(this.screens).forEach(s => { if(s && s.id !== 'inning-transition') s.classList.add('hidden'); });
+        this.screens[key].classList.remove('hidden');
+    }
+}
+
+window.onload = () => new App();
+</script>
+</body>
+</html>

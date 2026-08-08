@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEON STICK BALL - Arcade Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #050508;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .neon-glow-cyan {
+            text-shadow: 0 0 5px #00f0ff, 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+        }
+
+        .neon-glow-magenta {
+            text-shadow: 0 0 5px #ff007f, 0 0 10px #ff007f, 0 0 20px #ff007f;
+        }
+
+        .neon-glow-yellow {
+            text-shadow: 0 0 5px #ffea00, 0 0 10px #ffea00, 0 0 20px #ffea00;
+        }
+
+        .neon-box-cyan {
+            box-shadow: 0 0 10px #00f0ff, inset 0 0 10px #00f0ff;
+            border: 2px solid #00f0ff;
+        }
+
+        .neon-box-magenta {
+            box-shadow: 0 0 10px #ff007f, inset 0 0 10px #ff007f;
+            border: 2px solid #ff007f;
+        }
+
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.35) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
+        .crt-monitor-frame {
+            border: 12px solid #1a1b26;
+            border-radius: 24px;
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 0, 0, 0.9);
+            background-color: #050508;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: transparent;
+            touch-action: none;
+        }
+
+        .crt-flicker {
+            animation: flicker 0.15s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.98; }
+            100% { opacity: 1; }
+        }
+
+        .retro-btn {
+            transition: all 0.15s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .retro-btn:active {
+            transform: scale(0.95);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d0e15;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00f0ff;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between items-center bg-black overflow-hidden crt-flicker relative">
+
+    <div class="scanlines absolute inset-0 z-40 pointer-events-none"></div>
+
+    <!-- Main Game Container Frame -->
+    <div id="game-container" class="relative z-10 w-full h-full max-w-5xl flex flex-col items-center justify-between mx-auto my-auto p-1.5 sm:p-3 crt-monitor-frame overflow-hidden">
+        
+        <!-- Header HUD -->
+        <header class="w-full pt-1.5 pb-1 px-4 z-20 flex justify-between items-center bg-gradient-to-b from-black/95 to-transparent border-b border-cyan-500/30">
+            <div class="flex items-center gap-3">
+                <div>
+                    <div class="text-[11px] text-cyan-400 pixel-font tracking-widest">HIGH SCORE</div>
+                    <div id="ui-high-score" class="text-xl sm:text-2xl font-black text-cyan-300 neon-glow-cyan pixel-font">000000</div>
+                </div>
+            </div>
+
+            <div class="text-center flex flex-col items-center">
+                <div id="ui-team-badge" class="text-base sm:text-lg font-black text-pink-500 uppercase tracking-wider flex items-center justify-center gap-2">
+                    <img id="ui-team-logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-[0_0_8px_#ff007f]" src="https://www.mlbstatic.com/team-logos/147.svg" alt="Team Logo" onerror="this.style.display='none'">
+                    <span id="ui-current-team">MLB ALL-STARS</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-[11px] text-yellow-400 pixel-font tracking-widest">SCORE</div>
+                    <div id="ui-score" class="text-xl sm:text-2xl font-black text-yellow-300 neon-glow-yellow pixel-font">000000</div>
+                </div>
+                <button id="pause-btn" class="retro-btn p-3 rounded-xl bg-gray-900 border-2 border-cyan-400 text-cyan-300 hover:bg-cyan-900/60 text-sm font-bold shadow-md">
+                    <i class="fa-solid fa-pause"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Canvas Game Screen -->
+        <div class="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden my-0">
+            <canvas id="main-canvas" class="z-10"></canvas>
+
+            <div id="announcer-banner" class="absolute top-1/4 left-0 right-0 z-30 pointer-events-none flex flex-col items-center justify-center opacity-0 transition-all duration-150 transform scale-75">
+                <div id="announcer-text" class="text-6xl sm:text-8xl font-black italic text-yellow-300 neon-glow-yellow pixel-font transform -rotate-2 text-center px-4 drop-shadow-[0_10px_10px_rgba(0,0,0,0.9)] tracking-wider">
+                    GREAT!
+                </div>
+                <div id="announcer-subtext" class="text-2xl sm:text-3xl font-black text-cyan-300 neon-glow-cyan mt-3 pixel-font">
+                    +3000 PTS
+                </div>
+            </div>
+
+            <div class="absolute top-3 left-6 z-20 flex items-center gap-2 bg-black/80 px-4 py-2 rounded-full border-2 border-pink-500/60 shadow-xl">
+                <span class="text-xs sm:text-sm text-pink-400 font-black mr-1 pixel-font">STRIKES:</span>
+                <div id="strike-dot-1" class="w-5 h-5 rounded-full bg-gray-700 border-2 border-gray-500 transition-all"></div>
+                <div id="strike-dot-2" class="w-5 h-5 rounded-full bg-gray-700 border-2 border-gray-500 transition-all"></div>
+                <div id="strike-dot-3" class="w-5 h-5 rounded-full bg-gray-700 border-2 border-gray-500 transition-all"></div>
+            </div>
+
+            <div id="combo-container" class="absolute top-3 right-6 z-20 flex flex-col items-end opacity-0 transition-all transform scale-90">
+                <span class="text-xs text-cyan-300 pixel-font">COMBO</span>
+                <span id="ui-combo" class="text-4xl sm:text-6xl font-black text-pink-500 neon-glow-magenta pixel-font">x1</span>
+            </div>
+        </div>
+
+        <!-- Touch Controls & Footer -->
+        <footer class="w-full pb-1.5 pt-1 px-4 z-20 flex flex-col items-center gap-1.5 bg-gradient-to-t from-black/95 to-transparent border-t border-cyan-500/20">
+            <div class="flex w-full gap-4 max-w-3xl">
+                <button id="move-left-btn" class="retro-btn w-1/4 py-3.5 rounded-xl bg-gray-900 border-2 border-cyan-400 text-cyan-300 font-black text-xl active:bg-cyan-900/50 shadow-md">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> LEFT
+                </button>
+                <button id="swing-btn" class="retro-btn flex-1 py-4 rounded-xl bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600 text-white font-black text-2xl tracking-widest uppercase shadow-xl border-2 border-cyan-300 neon-box-cyan active:translate-y-1">
+                    <i class="fa-solid fa-bolt mr-2 text-yellow-300"></i> SWING [SPACE]
+                </button>
+                <button id="move-right-btn" class="retro-btn w-1/4 py-3.5 rounded-xl bg-gray-900 border-2 border-cyan-400 text-cyan-300 font-black text-xl active:bg-cyan-900/50 shadow-md">
+                    RIGHT <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+            <div class="flex justify-between w-full text-xs text-gray-400 px-2 font-mono">
+                <span><i class="fa-solid fa-keyboard mr-1"></i> ARROWS / A-D TO MOVE & ALIGN BAT</span>
+                <span class="text-pink-400 font-bold"><i class="fa-solid fa-crosshairs mr-1"></i> ALIGN PINK SWEET SPOT WITH BALL</span>
+                <span id="api-status-tag" class="text-green-400"><i class="fa-solid fa-wifi mr-1"></i> MLB STATS LIVE</span>
+            </div>
+        </footer>
+
+        <!-- Start Modal -->
+        <div id="start-modal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+            <h1 class="text-3xl sm:text-5xl font-black text-cyan-300 neon-glow-cyan pixel-font mb-2">NEON STICK BALL</h1>
+            <p class="text-xs sm:text-sm text-pink-400 font-bold tracking-widest mb-6">1980s ARCADE EDITION</p>
+
+            <div class="w-full max-w-md bg-gray-900/90 border-2 border-cyan-400/60 rounded-2xl p-4 shadow-2xl mb-6">
+                <div class="flex justify-center gap-4 mb-4">
+                    <button id="tab-play-btn" class="px-4 py-1.5 rounded-t-lg bg-pink-600 text-white font-bold text-xs border-b-2 border-pink-300">PLAY GAME</button>
+                    <button id="tab-scores-btn" class="px-4 py-1.5 rounded-t-lg bg-gray-800 text-cyan-300 font-bold text-xs hover:bg-gray-700">HIGH SCORES</button>
+                </div>
+
+                <div id="panel-team-select" class="space-y-3">
+                    <label class="block text-xs text-cyan-300 font-bold text-left">SELECT MLB TEAM:</label>
+                    <select id="team-select" class="w-full p-2.5 rounded-lg bg-black border border-cyan-400 text-yellow-300 font-bold text-sm focus:outline-none focus:border-pink-500">
+                        <option value="">Loading MLB Teams...</option>
+                    </select>
+                </div>
+
+                <div id="panel-high-scores" class="hidden flex-col h-44 overflow-y-auto">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead>
+                            <tr class="border-b border-cyan-500/40 text-pink-400">
+                                <th class="pb-1">TAG</th>
+                                <th class="pb-1">TEAM</th>
+                                <th class="pb-1 text-right">SCORE</th>
+                                <th class="pb-1 text-right">DATE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button id="start-game-btn" class="retro-btn px-8 py-4 rounded-xl bg-gradient-to-r from-yellow-400 via-pink-500 to-cyan-400 text-black font-black text-xl uppercase tracking-wider shadow-2xl neon-box-magenta">
+                <i class="fa-solid fa-play mr-2"></i> START GAME
+            </button>
+        </div>
+
+        <!-- Pause Modal -->
+        <div id="pause-modal" class="hidden absolute inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center">
+            <h2 class="text-4xl font-black text-cyan-300 neon-glow-cyan pixel-font mb-8">GAME PAUSED</h2>
+            <div class="w-full max-w-xs space-y-4">
+                <button id="resume-btn" class="retro-btn w-full py-4 rounded-xl bg-gradient-to-r from-yellow-400 to-pink-500 text-black font-black text-base uppercase tracking-wider shadow-lg">
+                    <i class="fa-solid fa-play mr-2"></i> RESUME
+                </button>
+                <button id="pause-menu-btn" class="retro-btn w-full py-3.5 rounded-xl bg-gray-900/90 text-cyan-300 font-bold text-sm uppercase tracking-wider border-2 border-cyan-400 hover:bg-cyan-900/40">
+                    <i class="fa-solid fa-house mr-2"></i> MAIN MENU
+                </button>
+            </div>
+        </div>
+
+        <!-- Initials Modal -->
+        <div id="initials-modal" class="hidden absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+            <h2 class="text-2xl sm:text-4xl font-black text-yellow-300 neon-glow-yellow pixel-font mb-2">NEW HIGH SCORE!</h2>
+            <div id="initials-score-display" class="text-3xl font-black text-pink-500 pixel-font mb-6">000000</div>
+            
+            <p class="text-xs text-cyan-300 font-bold mb-4">ENTER YOUR INITIALS:</p>
+            <div class="flex justify-center gap-3 mb-6">
+                <input id="initial-1" type="text" maxlength="1" class="w-12 h-14 bg-black border-2 border-pink-500 rounded-lg text-center text-2xl font-black text-yellow-300 uppercase focus:outline-none focus:border-cyan-400">
+                <input id="initial-2" type="text" maxlength="1" class="w-12 h-14 bg-black border-2 border-pink-500 rounded-lg text-center text-2xl font-black text-yellow-300 uppercase focus:outline-none focus:border-cyan-400">
+                <input id="initial-3" type="text" maxlength="1" class="w-12 h-14 bg-black border-2 border-pink-500 rounded-lg text-center text-2xl font-black text-yellow-300 uppercase focus:outline-none focus:border-cyan-400">
+            </div>
+
+            <button id="save-score-btn" class="retro-btn px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-cyan-400 text-black font-black text-sm uppercase tracking-wider shadow-lg">
+                SAVE SCORE
+            </button>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="game-over-modal" class="hidden absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+            <h2 class="text-3xl sm:text-4xl font-black text-pink-500 neon-glow-magenta pixel-font mb-6">GAME OVER</h2>
+
+            <div class="grid grid-cols-3 gap-3 w-full max-w-xs mb-6 text-center">
+                <div class="bg-gray-900 p-2 rounded-lg border border-cyan-500/30">
+                    <div class="text-[9px] text-cyan-400 font-bold">SCORE</div>
+                    <div id="final-score" class="text-sm font-black text-yellow-300">000000</div>
+                </div>
+                <div class="bg-gray-900 p-2 rounded-lg border border-cyan-500/30">
+                    <div class="text-[9px] text-cyan-400 font-bold">MAX COMBO</div>
+                    <div id="final-combo" class="text-sm font-black text-pink-400">x1</div>
+                </div>
+                <div class="bg-gray-900 p-2 rounded-lg border border-cyan-500/30">
+                    <div class="text-[9px] text-cyan-400 font-bold">PERFECTS</div>
+                    <div id="final-perfects" class="text-sm font-black text-cyan-300">0</div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-xs space-y-3">
+                <button id="restart-btn" class="retro-btn w-full py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-pink-500 text-black font-black text-sm uppercase tracking-wider shadow-lg">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> PLAY AGAIN
+                </button>
+                <button id="main-menu-btn" class="retro-btn w-full py-3 rounded-xl bg-gray-900 text-cyan-300 font-bold text-xs uppercase tracking-wider border-2 border-cyan-400 hover:bg-cyan-900/40">
+                    <i class="fa-solid fa-house mr-2"></i> MAIN MENU
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        class SynthAudio {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playPitchSound() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.2);
+                } catch(e) {}
+            }
+
+            playHitSound(isPerfect = false) {
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+
+                    // 1. Wood Bat Crack - Crisp high-frequency noise transient
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.04);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+
+                    const noiseFilter = this.ctx.createBiquadFilter();
+                    noiseFilter.type = 'highpass';
+                    noiseFilter.frequency.setValueAtTime(1200, now);
+
+                    const noiseGain = this.ctx.createGain();
+                    noiseGain.gain.setValueAtTime(0.8, now);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+                    noise.connect(noiseFilter);
+                    noiseFilter.connect(noiseGain);
+                    noiseGain.connect(this.ctx.destination);
+                    noise.start(now);
+
+                    // 2. Wood Resonance Pop
+                    const woodOsc = this.ctx.createOscillator();
+                    const woodGain = this.ctx.createGain();
+                    woodOsc.type = 'triangle';
+                    woodOsc.frequency.setValueAtTime(1100, now);
+                    woodOsc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+                    woodGain.gain.setValueAtTime(0.7, now);
+                    woodGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    woodOsc.connect(woodGain);
+                    woodGain.connect(this.ctx.destination);
+                    woodOsc.start(now);
+                    woodOsc.stop(now + 0.08);
+
+                    // 3. Classic Arcade Synthesizer Booop Pitch-bend
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = isPerfect ? 'triangle' : 'square';
+                    const startFreq = isPerfect ? 880 : 520;
+                    const endFreq = isPerfect ? 1760 : 260;
+                    osc.frequency.setValueAtTime(startFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(endFreq, now + (isPerfect ? 0.4 : 0.25));
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + (isPerfect ? 0.4 : 0.25));
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + (isPerfect ? 0.4 : 0.25));
+                } catch(e) {}
+            }
+
+            playStrikeSound() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(80, this.ctx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.3);
+                } catch(e) {}
+            }
+        }
+
+        const audio = new SynthAudio();
+
+        class MlbService {
+            constructor() {
+                this.baseUrl = "https://statsapi.mlb.org/api/v1";
+                this.selectedTeam = null;
+                this.isOffline = false;
+
+                // Full 30 MLB Team Fallback Database
+                this.fallbackTeams = [
+                    { id: 109, name: "Arizona Diamondbacks", abbreviation: "ARI" },
+                    { id: 144, name: "Atlanta Braves", abbreviation: "ATL" },
+                    { id: 110, name: "Baltimore Orioles", abbreviation: "BAL" },
+                    { id: 111, name: "Boston Red Sox", abbreviation: "BOS" },
+                    { id: 112, name: "Chicago Cubs", abbreviation: "CHC" },
+                    { id: 145, name: "Chicago White Sox", abbreviation: "CWS" },
+                    { id: 113, name: "Cincinnati Reds", abbreviation: "CIN" },
+                    { id: 114, name: "Cleveland Guardians", abbreviation: "CLE" },
+                    { id: 115, name: "Colorado Rockies", abbreviation: "COL" },
+                    { id: 116, name: "Detroit Tigers", abbreviation: "DET" },
+                    { id: 117, name: "Houston Astros", abbreviation: "HOU" },
+                    { id: 118, name: "Kansas City Royals", abbreviation: "KC" },
+                    { id: 108, name: "Los Angeles Angels", abbreviation: "LAA" },
+                    { id: 119, name: "Los Angeles Dodgers", abbreviation: "LAD" },
+                    { id: 146, name: "Miami Marlins", abbreviation: "MIA" },
+                    { id: 158, name: "Milwaukee Brewers", abbreviation: "MIL" },
+                    { id: 142, name: "Minnesota Twins", abbreviation: "MIN" },
+                    { id: 121, name: "New York Mets", abbreviation: "NYM" },
+                    { id: 147, name: "New York Yankees", abbreviation: "NYY" },
+                    { id: 133, name: "Oakland Athletics", abbreviation: "OAK" },
+                    { id: 143, name: "Philadelphia Phillies", abbreviation: "PHI" },
+                    { id: 134, name: "Pittsburgh Pirates", abbreviation: "PIT" },
+                    { id: 135, name: "San Diego Padres", abbreviation: "SD" },
+                    { id: 137, name: "San Francisco Giants", abbreviation: "SFG" },
+                    { id: 136, name: "Seattle Mariners", abbreviation: "SEA" },
+                    { id: 138, name: "St. Louis Cardinals", abbreviation: "STL" },
+                    { id: 139, name: "Tampa Bay Rays", abbreviation: "TB" },
+                    { id: 140, name: "Texas Rangers", abbreviation: "TEX" },
+                    { id: 141, name: "Toronto Blue Jays", abbreviation: "TOR" },
+                    { id: 120, name: "Washington Nationals", abbreviation: "WSN" }
+                ];
+            }
+
+            updateApiStatusTag(isLive) {
+                const tag = document.getElementById('api-status-tag');
+                if (tag) {
+                    if (isLive) {
+                        tag.className = "text-green-400";
+                        tag.innerHTML = `<i class="fa-solid fa-wifi mr-1"></i> MLB STATS LIVE`;
+                    } else {
+                        tag.className = "text-yellow-400";
+                        tag.innerHTML = `<i class="fa-solid fa-database mr-1"></i> MLB STATS (ARCADE CACHE)`;
+                    }
+                }
+            }
+
+            async fetchTeams() {
+                try {
+                    const res = await fetch(`${this.baseUrl}/teams?sportId=1`);
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    const data = await res.json();
+                    this.isOffline = false;
+                    this.updateApiStatusTag(true);
+                    return data.teams.map(t => ({
+                        id: t.id,
+                        name: t.name,
+                        abbreviation: t.abbreviation || t.teamCode || "MLB"
+                    })).sort((a,b) => a.name.localeCompare(b.name));
+                } catch (e) {
+                    console.warn("MLB API request failed. Using local arcade database fallback.", e);
+                    this.isOffline = true;
+                    this.updateApiStatusTag(false);
+                    return this.fallbackTeams;
+                }
+            }
+
+            getTeamLogoUrl(teamId) {
+                return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+            }
+        }
+
+        const mlbService = new MlbService();
+
+        class NeonBaseballGame {
+            constructor() {
+                this.canvas = document.getElementById('main-canvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                this.offscreenCanvas = document.createElement('canvas');
+                this.offscreenCtx = this.offscreenCanvas.getContext('2d');
+
+                this.width = 800;
+                this.height = 550;
+
+                this.isRunning = false;
+                this.isPaused = false;
+                this.score = 0;
+                this.highScore = 0;
+                this.strikes = 0;
+                this.combo = 1;
+                this.maxCombo = 1;
+                this.perfectHits = 0;
+                this.level = 1;
+
+                this.activeBall = null;
+                this.pitchTimer = 0;
+                this.pitchCooldown = 65;
+                this.particles = [];
+                this.floatingTexts = [];
+
+                this.gridOffset = 0;
+                this.gridSpeed = 1.2;
+                this.stars = [];
+                this.initStarfield();
+
+                // Hit zone and Batter positioning aligned to Home Plate
+                this.hitZoneY = 400;
+                this.hitZoneHeight = 55;
+                this.batterBaseX = 355;
+                this.batterX = 355;
+                this.batterSpeed = 7;
+                this.keysPressed = { left: false, right: false };
+                
+                // Batter scaling & customization (increased 1.5x from 7.2 to 10.8)
+                this.batterScale = 10.8;
+                this.batterColor = '#00f0ff';
+                this.batColor = '#ffea00';
+                this.stanceSign = 1; // 1 = Righty, -1 = Lefty
+
+                this.isSwinging = false;
+                this.swingFrame = 0;
+                this.swingDuration = 9;
+                this.batAngle = -Math.PI / 4;
+
+                this.shakeTime = 0;
+                this.shakeMagnitude = 0;
+
+                this.hasHitFirstBall = false;
+                this.sweetSpotAlpha = 1.0;
+
+                this.loadHighScores();
+                this.setupCanvasDimensions();
+                window.addEventListener('resize', () => this.setupCanvasDimensions());
+            }
+
+            initStarfield() {
+                this.stars = [];
+                const count = 45;
+                for (let i = 0; i < count; i++) {
+                    this.stars.push({
+                        x: Math.random() * 960,
+                        y: Math.random() * 120,
+                        size: Math.random() * 2 + 0.8,
+                        alpha: Math.random(),
+                        speed: Math.random() * 0.03 + 0.01,
+                        color: Math.random() > 0.5 ? '#00f0ff' : '#ff007f'
+                    });
+                }
+            }
+
+            setupCanvasDimensions() {
+                const container = this.canvas.parentElement;
+                const rect = container ? container.getBoundingClientRect() : { width: 800, height: 680 };
+                
+                const rawW = rect.width > 0 ? rect.width - 16 : 800;
+                const rawH = rect.height > 0 ? rect.height - 8 : 680;
+
+                this.width = Math.max(500, Math.min(rawW, 960));
+                this.height = Math.max(480, Math.min(rawH, 760));
+
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+
+                this.offscreenCanvas.width = this.width;
+                this.offscreenCanvas.height = this.height;
+
+                // Reverted to natural field proportions
+                this.hitZoneY = this.height * 0.48;
+                this.hitZoneHeight = this.height * 0.28;
+
+                // Set batter base position directly adjacent to Home Plate (Home Plate is at width/2)
+                const hpX = this.width / 2;
+                this.batterBaseX = hpX - 45;
+                this.batterX = this.batterBaseX;
+
+                this.initStarfield();
+                this.renderStaticOffscreenBackground();
+            }
+
+            renderStaticOffscreenBackground() {
+                const ctx = this.offscreenCtx;
+                const w = this.width;
+                const h = this.height;
+
+                ctx.fillStyle = '#05050a';
+                ctx.fillRect(0, 0, w, h);
+
+                const horizonY = h * 0.14;
+                const vanishX = w / 2;
+
+                ctx.strokeStyle = 'rgba(255, 0, 127, 0.4)';
+                ctx.lineWidth = 2;
+
+                const radiusX = Math.max(1, Math.abs(w * 0.45));
+                const radiusY = Math.max(1, Math.abs(h * 0.10));
+
+                ctx.beginPath();
+                ctx.ellipse(w / 2, horizonY, radiusX, radiusY, 0, Math.PI, 0);
+                ctx.stroke();
+
+                this.drawStaticTower(ctx, w * 0.12, horizonY - 35);
+                this.drawStaticTower(ctx, w * 0.88, horizonY - 35);
+
+                ctx.strokeStyle = 'rgba(255, 234, 0, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(vanishX, horizonY + 20);
+                ctx.lineTo(w * 0.08, h * 0.95);
+                ctx.moveTo(vanishX, horizonY + 20);
+                ctx.lineTo(w * 0.92, h * 0.95);
+                ctx.stroke();
+
+                const hpX = w / 2;
+                const hpY = this.hitZoneY + this.hitZoneHeight + 12;
+                
+                // Home Plate Parameters scaled to fit with margin
+                const hpWidth = 76;
+                const hpSideH = 26;
+                const hpPointH = 34;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 14;
+                ctx.beginPath();
+                ctx.moveTo(hpX - hpWidth / 2, hpY);
+                ctx.lineTo(hpX + hpWidth / 2, hpY);
+                ctx.lineTo(hpX + hpWidth / 2, hpY + hpSideH);
+                ctx.lineTo(hpX, hpY + hpSideH + hpPointH);
+                ctx.lineTo(hpX - hpWidth / 2, hpY + hpSideH);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.strokeStyle = 'rgba(255, 0, 127, 0.6)';
+                ctx.lineWidth = 2;
+                const boxW = w * 0.15;
+                const boxH = hpSideH + hpPointH + 12;
+                const boxY = hpY - 4;
+                ctx.strokeRect(hpX - (hpWidth / 2) - boxW - 8, boxY, boxW, boxH);
+                ctx.strokeRect(hpX + (hpWidth / 2) + 8, boxY, boxW, boxH);
+
+                // Strike Zone Box outline
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.strokeRect(hpX - (hpWidth * 0.9), this.hitZoneY, hpWidth * 1.8, this.hitZoneHeight);
+                ctx.setLineDash([]);
+            }
+
+            drawDynamicSynthwaveGridAndSky() {
+                const ctx = this.ctx;
+                const w = this.width;
+                const h = this.height;
+                const horizonY = h * 0.14;
+                const vanishX = w / 2;
+
+                for (let s of this.stars) {
+                    s.alpha += s.speed;
+                    const brightness = (Math.sin(s.alpha) + 1) / 2;
+                    ctx.fillStyle = s.color;
+                    ctx.globalAlpha = brightness * 0.85;
+                    ctx.fillRect(s.x % w, s.y, s.size, s.size);
+                }
+                ctx.globalAlpha = 1.0;
+
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+                ctx.lineWidth = 1.5;
+
+                const lineCount = 24;
+                for (let i = 0; i <= lineCount; i++) {
+                    const targetX = (w / lineCount) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(vanishX, horizonY);
+                    ctx.lineTo(targetX, h);
+                    ctx.stroke();
+                }
+
+                this.gridOffset = (this.gridOffset + this.gridSpeed) % 18;
+
+                for (let i = 0; i < 18; i++) {
+                    const progress = ((i + (this.gridOffset / 18)) / 18);
+                    const y = horizonY + Math.pow(progress, 2.2) * (h - horizonY);
+                    if (y >= horizonY && y <= h) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(w, y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            drawStaticTower(ctx, x, y) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(x - 12, y + 45);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x + 12, y + 45);
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(255, 234, 0, 0.85)';
+                ctx.fillRect(x - 14, y - 10, 28, 10);
+                ctx.restore();
+            }
+
+            async startNewGame() {
+                audio.init();
+                this.score = 0;
+                this.strikes = 0;
+                this.combo = 1;
+                this.maxCombo = 1;
+                this.perfectHits = 0;
+                this.level = 1;
+                this.activeBall = null;
+                this.pitchTimer = 0;
+                this.hasHitFirstBall = false;
+                this.sweetSpotAlpha = 1.0;
+
+                document.getElementById('start-modal').classList.add('hidden');
+                document.getElementById('game-over-modal').classList.add('hidden');
+                document.getElementById('pause-modal').classList.add('hidden');
+                document.getElementById('initials-modal').classList.add('hidden');
+
+                this.updateUI();
+
+                this.isRunning = true;
+                this.isPaused = false;
+                this.gameLoop();
+            }
+
+            spawnPitch() {
+                audio.playPitchSound();
+                const types = [
+                    { name: "FASTBALL", speed: 8.5, color: "#ffea00", trail: "#ffea00", behavior: "straight" },
+                    { name: "CURVEBALL", speed: 6.5, color: "#ff007f", trail: "#ff007f", behavior: "curve" },
+                    { name: "SLIDER", speed: 7.2, color: "#00f0ff", trail: "#00f0ff", behavior: "slider" },
+                    { name: "CHANGEUP", speed: 5.2, color: "#a855f7", trail: "#a855f7", behavior: "changeup" },
+                    { name: "SINKER", speed: 7.8, color: "#22c55e", trail: "#22c55e", behavior: "sinker" }
+                ];
+
+                const type = types[Math.floor(Math.random() * types.length)];
+                const hpX = this.width / 2;
+                // Pitch from top center (pitcher's mound)
+                const startX = hpX;
+                const startY = this.height * 0.14 + 15;
+
+                // Random target landing position across strike zone
+                const targetOffset = (Math.random() * 220) - 110;
+                const targetX = hpX + targetOffset;
+
+                this.activeBall = {
+                    x: startX,
+                    y: startY,
+                    startX: startX,
+                    targetX: targetX,
+                    speedY: type.speed + (this.level * 0.3),
+                    type: type,
+                    radius: 4,
+                    curveDir: Math.random() > 0.5 ? 1 : -1,
+                    trailHistory: [],
+                    opacity: 1.0,
+                    handled: false,
+                    swungAt: false
+                };
+            }
+
+            triggerSwing() {
+                if (!this.isRunning || this.isPaused || this.isSwinging) return;
+                this.isSwinging = true;
+                this.swingFrame = 0;
+                if (this.activeBall) {
+                    this.activeBall.swungAt = true;
+                }
+                
+                this.checkHitCollision();
+            }
+
+            checkHitCollision() {
+                if (!this.activeBall || this.activeBall.handled || !this.isSwinging) return;
+
+                const ball = this.activeBall;
+                const hitZoneCenterY = this.hitZoneY + (this.hitZoneHeight / 2);
+                
+                const batSweetSpotX = this.batterX + (145 * this.stanceSign); 
+                
+                const dy = Math.abs(ball.y - hitZoneCenterY);
+                const dx = Math.abs(ball.x - batSweetSpotX);
+
+                if (dy < 65 && dx < 36) {
+                    ball.handled = true;
+                    this.processHit(dy, dx);
+                } else if (dy < 80 && dx < 60) {
+                    ball.handled = true;
+                    this.processHit(dy, dx);
+                } else if (dy < 95 && dx < 90) {
+                    ball.handled = true;
+                    this.processStrike("FOUL / WEAK CONTACT");
+                }
+            }
+
+            processHit(dy, dx) {
+                let rating = "GOOD!";
+                let points = 500;
+                let color = "#00f0ff";
+                let isPerfect = false;
+
+                if (dy < 25 && dx < 18) {
+                    rating = "HOME RUN!";
+                    points = 3000;
+                    color = "#ffea00";
+                    isPerfect = true;
+                    this.perfectHits++;
+                    this.shakeScreen(12, 15);
+                } else if (dy < 45 && dx < 35) {
+                    rating = "GREAT HIT!";
+                    points = 1500;
+                    color = "#ff007f";
+                    this.shakeScreen(6, 8);
+                }
+
+                audio.playHitSound(isPerfect);
+                this.combo++;
+                this.maxCombo = Math.max(this.maxCombo, this.combo);
+                const totalPoints = points * this.combo;
+                this.score += totalPoints;
+                this.hasHitFirstBall = true;
+
+                this.spawnExplosion(this.activeBall.x, this.activeBall.y, color);
+                this.showAnnouncerBanner(rating, `+${totalPoints} PTS`, color);
+
+                this.activeBall = null;
+                this.updateUI();
+            }
+
+            processBall(reason) {
+                this.showAnnouncerBanner("BALL!", reason, "#22c55e");
+                this.activeBall = null;
+            }
+
+            processStrike(reason) {
+                audio.playStrikeSound();
+                this.strikes++;
+                this.combo = 1;
+                this.showAnnouncerBanner("STRIKE!", reason, "#ff007f");
+                this.updateUI();
+                this.activeBall = null;
+
+                if (this.strikes >= 3) {
+                    this.triggerGameOver();
+                }
+            }
+
+            shakeScreen(duration, mag) {
+                this.shakeTime = duration;
+                this.shakeMagnitude = mag;
+            }
+
+            spawnExplosion(x, y, color) {
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 8 + 2;
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        radius: Math.random() * 4 + 2,
+                        color: color,
+                        alpha: 1.0,
+                        decay: Math.random() * 0.03 + 0.02
+                    });
+                }
+            }
+
+            showAnnouncerBanner(mainText, subText, color) {
+                const banner = document.getElementById('announcer-banner');
+                const mainEl = document.getElementById('announcer-text');
+                const subEl = document.getElementById('announcer-subtext');
+
+                mainEl.innerText = mainText;
+                mainEl.style.color = color;
+                subEl.innerText = subText;
+
+                banner.classList.remove('opacity-0', 'scale-75');
+                banner.classList.add('opacity-100', 'scale-110');
+
+                setTimeout(() => {
+                    banner.classList.remove('opacity-100', 'scale-110');
+                    banner.classList.add('opacity-0', 'scale-75');
+                }, 800);
+            }
+
+            togglePause() {
+                if (!this.isRunning) return;
+                this.isPaused = !this.isPaused;
+                const modal = document.getElementById('pause-modal');
+                if (this.isPaused) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                    this.gameLoop();
+                }
+            }
+
+            returnToMainMenu() {
+                this.isRunning = false;
+                this.isPaused = false;
+                document.getElementById('pause-modal').classList.add('hidden');
+                document.getElementById('game-over-modal').classList.add('hidden');
+                document.getElementById('start-modal').classList.remove('hidden');
+            }
+
+            loadHighScores() {
+                const saved = localStorage.getItem('neon_baseball_scores');
+                if (saved) {
+                    this.highScores = JSON.parse(saved);
+                } else {
+                    this.highScores = [
+                        { tag: "AAA", team: "NYY", score: 25000, date: "2026-08-01" },
+                        { tag: "NEO", team: "LAD", score: 18500, date: "2026-08-02" },
+                        { tag: "SLG", team: "BOS", score: 12000, date: "2026-08-03" }
+                    ];
+                }
+                this.highScore = this.highScores.length > 0 ? this.highScores[0].score : 0;
+            }
+
+            isHighScore(score) {
+                return score > 0 && (this.highScores.length < 5 || score > this.highScores[this.highScores.length - 1].score);
+            }
+
+            addHighScore(tag, team, score) {
+                this.highScores.push({
+                    tag: tag,
+                    team: team,
+                    score: score,
+                    date: new Date().toISOString().split('T')[0]
+                });
+                this.highScores.sort((a, b) => b.score - a.score);
+                this.highScores = this.highScores.slice(0, 5);
+                localStorage.setItem('neon_baseball_scores', JSON.stringify(this.highScores));
+                this.highScore = this.highScores[0].score;
+                this.updateUI();
+            }
+
+            renderLeaderboardTable() {
+                const tbody = document.getElementById('leaderboard-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                this.highScores.forEach((s) => {
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-800 text-cyan-200 py-1";
+                    tr.innerHTML = `
+                        <td class="font-bold text-yellow-300">${s.tag}</td>
+                        <td>${s.team}</td>
+                        <td class="text-right text-pink-400 font-bold">${String(s.score).padStart(6, '0')}</td>
+                        <td class="text-right text-gray-500 text-[10px]">${s.date}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            triggerGameOver() {
+                this.isRunning = false;
+
+                document.getElementById('final-score').innerText = String(this.score).padStart(6, '0');
+                document.getElementById('final-combo').innerText = `x${this.maxCombo}`;
+                document.getElementById('final-perfects').innerText = `${this.perfectHits}`;
+
+                if (this.isHighScore(this.score)) {
+                    document.getElementById('initials-score-display').innerText = String(this.score).padStart(6, '0');
+                    document.getElementById('initials-modal').classList.remove('hidden');
+                    document.getElementById('initial-1').focus();
+                } else {
+                    document.getElementById('game-over-modal').classList.remove('hidden');
+                }
+            }
+
+            updateUI() {
+                document.getElementById('ui-score').innerText = String(this.score).padStart(6, '0');
+                document.getElementById('ui-high-score').innerText = String(this.highScore).padStart(6, '0');
+                
+                for (let i = 1; i <= 3; i++) {
+                    const dot = document.getElementById(`strike-dot-${i}`);
+                    if (i <= this.strikes) {
+                        dot.className = "w-5 h-5 rounded-full bg-pink-500 border border-pink-300 shadow-[0_0_8px_#ff007f]";
+                    } else {
+                        dot.className = "w-5 h-5 rounded-full bg-gray-700 border border-gray-500";
+                    }
+                }
+
+                const comboContainer = document.getElementById('combo-container');
+                const comboEl = document.getElementById('ui-combo');
+                if (this.combo > 1) {
+                    comboEl.innerText = `x${this.combo}`;
+                    comboContainer.classList.remove('opacity-0');
+                    comboContainer.classList.add('opacity-100', 'scale-100');
+                } else {
+                    comboContainer.classList.remove('opacity-100');
+                    comboContainer.classList.add('opacity-0');
+                }
+            }
+
+            gameLoop() {
+                if (!this.isRunning || this.isPaused) return;
+
+                this.ctx.save();
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                if (this.shakeTime > 0) {
+                    const dx = (Math.random() - 0.5) * this.shakeMagnitude;
+                    const dy = (Math.random() - 0.5) * this.shakeMagnitude;
+                    this.ctx.translate(dx, dy);
+                    this.shakeTime--;
+                }
+
+                this.ctx.drawImage(this.offscreenCanvas, 0, 0);
+                this.drawDynamicSynthwaveGridAndSky();
+
+                let currentMoveDir = 0;
+                if (this.keysPressed.left) currentMoveDir -= 1;
+                if (this.keysPressed.right) currentMoveDir += 1;
+
+                if (currentMoveDir !== 0) {
+                    this.batterX += currentMoveDir * this.batterSpeed;
+                    const hpX = this.width / 2;
+                    const minX = hpX - 250;
+                    const maxX = hpX + 130;
+                    this.batterX = Math.max(minX, Math.min(this.batterX, maxX));
+                }
+
+                if (this.isSwinging) {
+                    this.checkHitCollision();
+                }
+
+                this.updateAndDrawBall();
+                this.updateAndDrawBatter();
+                this.updateAndDrawParticles();
+
+                this.ctx.restore();
+
+                if (!this.activeBall) {
+                    this.pitchTimer++;
+                    if (this.pitchTimer >= this.pitchCooldown) {
+                        this.spawnPitch();
+                        this.pitchTimer = 0;
+                    }
+                }
+
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            updateAndDrawBall() {
+                if (!this.activeBall) return;
+
+                const ball = this.activeBall;
+                ball.y += ball.speedY;
+
+                const horizonY = this.height * 0.14;
+                const progress = Math.min(1.5, Math.max(0, (ball.y - horizonY) / (this.hitZoneY - horizonY)));
+                ball.radius = Math.max(3, 3 + progress * 11);
+
+                const baseX = ball.startX + (ball.targetX - ball.startX) * progress;
+
+                if (ball.type.behavior === 'curve') {
+                    ball.x = baseX + Math.sin(progress * Math.PI) * 50 * ball.curveDir;
+                } else if (ball.type.behavior === 'slider') {
+                    ball.x = baseX + (Math.pow(progress, 2) * 45 * ball.curveDir);
+                } else if (ball.type.behavior === 'changeup') {
+                    ball.x = baseX;
+                    if (progress > 0.4 && progress < 0.8) {
+                        ball.y -= ball.speedY * 0.35;
+                    }
+                } else if (ball.type.behavior === 'sinker') {
+                    ball.x = baseX;
+                    if (progress > 0.6) {
+                        ball.speedY += 0.25;
+                    }
+                } else {
+                    ball.x = baseX;
+                }
+
+                ball.trailHistory.push({ x: ball.x, y: ball.y, r: ball.radius });
+                if (ball.trailHistory.length > 10) ball.trailHistory.shift();
+
+                for (let i = 0; i < ball.trailHistory.length; i++) {
+                    const pt = ball.trailHistory[i];
+                    const alpha = (i + 1) / ball.trailHistory.length;
+                    this.ctx.save();
+                    this.ctx.globalAlpha = alpha * 0.6;
+                    this.ctx.fillStyle = ball.type.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(pt.x, pt.y, pt.r * 0.8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+
+                this.ctx.save();
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.shadowColor = ball.type.color;
+                this.ctx.shadowBlur = 15;
+                this.ctx.beginPath();
+                this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.strokeStyle = ball.type.color;
+                this.ctx.lineWidth = 1.5;
+                this.ctx.beginPath();
+                this.ctx.arc(ball.x, ball.y, ball.radius * 0.6, 0.2, Math.PI - 0.2);
+                this.ctx.stroke();
+                this.ctx.restore();
+
+                const missLimit = this.hitZoneY + this.hitZoneHeight + 35;
+                if (!ball.handled && ball.y > missLimit) {
+                    ball.handled = true;
+                    const hpX = this.width / 2;
+                    const strikeZoneHalfWidth = 84;
+                    const isInsideZone = Math.abs(ball.x - hpX) <= strikeZoneHalfWidth;
+
+                    if (ball.swungAt) {
+                        this.processStrike("SWING & MISS!");
+                    } else if (isInsideZone) {
+                        this.processStrike("CALLED STRIKE!");
+                    } else {
+                        this.processBall("GOOD TAKE!");
+                    }
+                }
+            }
+
+            updateAndDrawBatter() {
+                const s = this.batterScale;
+                const bX = this.batterX;
+                const bY = this.hitZoneY + this.hitZoneHeight + 10;
+
+                if (this.isSwinging) {
+                    this.swingFrame++;
+                    const swingProgress = this.swingFrame / this.swingDuration;
+                    this.batAngle = (-Math.PI / 4) + (swingProgress * Math.PI * 0.95);
+
+                    if (this.swingFrame >= this.swingDuration) {
+                        this.isSwinging = false;
+                        this.batAngle = -Math.PI / 4;
+                    }
+                } else {
+                    this.batAngle = -Math.PI / 4;
+                }
+
+                // Render Batter Stick Figure Body (proportionally scaled to sit nicely above bottom edge)
+                const bodyScale = s * 0.38;
+                this.ctx.save();
+                this.ctx.strokeStyle = '#00f0ff';
+                this.ctx.lineWidth = 5;
+                this.ctx.shadowColor = '#00f0ff';
+                this.ctx.shadowBlur = 10;
+
+                this.ctx.beginPath();
+                this.ctx.arc(bX, bY - (22 * bodyScale), 8 * bodyScale, 0, Math.PI * 2);
+                this.ctx.moveTo(bX, bY - (14 * bodyScale));
+                this.ctx.lineTo(bX, bY + (12 * bodyScale));
+                this.ctx.lineTo(bX - (12 * bodyScale), bY + (28 * bodyScale));
+                this.ctx.moveTo(bX, bY + (12 * bodyScale));
+                this.ctx.lineTo(bX + (12 * bodyScale), bY + (28 * bodyScale));
+                this.ctx.stroke();
+
+                // Move to Bat Pivot Point
+                this.ctx.translate(bX + (4 * bodyScale), bY - (8 * bodyScale));
+                this.ctx.rotate(this.batAngle);
+
+                const batTotalLen = 65 * bodyScale * 1.4;
+                const handleLen = 22 * bodyScale * 1.4;
+
+                // 1. Bat Handle (Neon Cyan Grip)
+                this.ctx.save();
+                this.ctx.fillStyle = '#0d1117';
+                this.ctx.strokeStyle = '#00f0ff';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.rect(-3, -handleLen, 6, handleLen);
+                this.ctx.fill();
+                this.ctx.stroke();
+
+                // 2. Bat Barrel (Electric Neon Gold / Yellow with Cyan Glow)
+                const barrelLen = batTotalLen - handleLen;
+                const batGrad = this.ctx.createLinearGradient(0, -handleLen, 0, -batTotalLen);
+                batGrad.addColorStop(0, '#ffea00');
+                batGrad.addColorStop(0.5, '#ffffff');
+                batGrad.addColorStop(1, '#ffea00');
+
+                this.ctx.fillStyle = batGrad;
+                this.ctx.shadowColor = '#ffea00';
+                this.ctx.shadowBlur = 15;
+                this.ctx.strokeStyle = '#00f0ff';
+                this.ctx.lineWidth = 2;
+
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, -handleLen - (barrelLen / 2), 6, barrelLen / 2, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.stroke();
+
+                // Sweet Spot Dot on Bat Barrel
+                this.ctx.fillStyle = '#00f0ff';
+                this.ctx.shadowColor = '#00f0ff';
+                this.ctx.shadowBlur = 10;
+                this.ctx.beginPath();
+                this.ctx.arc(0, -handleLen - (barrelLen * 0.65), 4, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                this.ctx.restore();
+                this.ctx.restore();
+
+                // Fading target reticle indicator on the field
+                if (this.hasHitFirstBall && this.sweetSpotAlpha > 0) {
+                    this.sweetSpotAlpha = Math.max(0, this.sweetSpotAlpha - 0.025);
+                }
+
+                if (this.sweetSpotAlpha > 0) {
+                    this.ctx.save();
+                    const sweetSpotWorldX = bX + (145 * this.stanceSign); 
+                    this.ctx.globalAlpha = this.sweetSpotAlpha;
+                    this.ctx.strokeStyle = '#ffea00';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([4, 4]);
+                    this.ctx.shadowColor = '#ffea00';
+                    this.ctx.shadowBlur = 14;
+                    this.ctx.beginPath();
+                    this.ctx.arc(sweetSpotWorldX, this.hitZoneY + (this.hitZoneHeight / 2), 18, 0, Math.PI * 2);
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = '#00f0ff';
+                    this.ctx.font = '10px Orbitron, sans-serif';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('SWEET SPOT', sweetSpotWorldX, this.hitZoneY + this.hitZoneHeight + 25);
+                    this.ctx.restore();
+                }
+            }
+
+            updateAndDrawParticles() {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.alpha -= p.decay;
+
+                    if (p.alpha <= 0) {
+                        this.particles.splice(i, 1);
+                        continue;
+                    }
+
+                    this.ctx.save();
+                    this.ctx.globalAlpha = p.alpha;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.shadowColor = p.color;
+                    this.ctx.shadowBlur = 8;
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+        }
+
+        const game = new NeonBaseballGame();
+    </script>
+
+    <!-- Event Handlers & Page Setup Script -->
+    <script>
+        window.addEventListener('load', async () => {
+            const teamSelect = document.getElementById('team-select');
+
+            const teams = await mlbService.fetchTeams();
+            if (teamSelect && teams.length > 0) {
+                teamSelect.innerHTML = '';
+                teams.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.innerText = t.name;
+                    teamSelect.appendChild(opt);
+                });
+
+                mlbService.selectedTeam = teams[0];
+                updateSelectedTeam(teams[0].id);
+
+                teamSelect.addEventListener('change', (e) => {
+                    const selected = teams.find(t => t.id == e.target.value);
+                    if (selected) mlbService.selectedTeam = selected;
+                    updateSelectedTeam(e.target.value);
+                });
+            } else if (teamSelect) {
+                teamSelect.innerHTML = '<option value="">Failed to load MLB Teams</option>';
+            }
+
+            function updateSelectedTeam(teamId) {
+                const teamObj = teams.find(t => t.id == teamId);
+                if (teamObj) {
+                    document.getElementById('ui-current-team').innerText = teamObj.name.toUpperCase();
+                    const logoUrl = mlbService.getTeamLogoUrl(teamId);
+                    document.getElementById('ui-team-logo').src = logoUrl;
+                }
+            }
+
+            document.getElementById('pause-btn').addEventListener('click', () => game.togglePause());
+            document.getElementById('resume-btn').addEventListener('click', () => game.togglePause());
+            document.getElementById('main-menu-btn').addEventListener('click', () => game.returnToMainMenu());
+            document.getElementById('pause-menu-btn').addEventListener('click', () => game.returnToMainMenu());
+
+            const tabPlay = document.getElementById('tab-play-btn');
+            const tabScores = document.getElementById('tab-scores-btn');
+            const panelTeam = document.getElementById('panel-team-select');
+            const panelScores = document.getElementById('panel-high-scores');
+
+            tabPlay.addEventListener('click', () => {
+                panelTeam.classList.remove('hidden');
+                panelScores.classList.add('hidden');
+                tabPlay.className = "px-4 py-1.5 rounded-t-lg bg-pink-600 text-white font-bold text-xs border-b-2 border-pink-300";
+                tabScores.className = "px-4 py-1.5 rounded-t-lg bg-gray-800 text-cyan-300 font-bold text-xs hover:bg-gray-700";
+            });
+
+            tabScores.addEventListener('click', () => {
+                panelTeam.classList.add('hidden');
+                panelScores.classList.remove('hidden');
+                panelScores.classList.add('flex');
+                tabScores.className = "px-4 py-1.5 rounded-t-lg bg-pink-600 text-white font-bold text-xs border-b-2 border-pink-300";
+                tabPlay.className = "px-4 py-1.5 rounded-t-lg bg-gray-800 text-cyan-300 font-bold text-xs hover:bg-gray-700";
+                game.renderLeaderboardTable();
+            });
+
+            game.renderLeaderboardTable();
+
+            const saveScoreBtn = document.getElementById('save-score-btn');
+            saveScoreBtn.addEventListener('click', () => {
+                const i1 = document.getElementById('initial-1').value || 'A';
+                const i2 = document.getElementById('initial-2').value || 'A';
+                const i3 = document.getElementById('initial-3').value || 'A';
+                const initials = (i1 + i2 + i3).toUpperCase();
+                const teamName = mlbService.selectedTeam ? mlbService.selectedTeam.abbreviation || mlbService.selectedTeam.name.slice(0, 4) : "MLB";
+
+                game.addHighScore(initials, teamName, game.score);
+
+                document.getElementById('initials-modal').classList.add('hidden');
+                document.getElementById('game-over-modal').classList.remove('hidden');
+            });
+
+            const initialInputs = ['initial-1', 'initial-2', 'initial-3'];
+            initialInputs.forEach((id, idx) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', (e) => {
+                        if (e.target.value && idx < initialInputs.length - 1) {
+                            document.getElementById(initialInputs[idx + 1]).focus();
+                            document.getElementById(initialInputs[idx + 1]).select();
+                        }
+                    });
+                    el.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                            document.getElementById(initialInputs[idx - 1]).focus();
+                        }
+                    });
+                }
+            });
+
+            document.getElementById('start-game-btn').addEventListener('click', () => game.startNewGame());
+            document.getElementById('restart-btn').addEventListener('click', () => game.startNewGame());
+
+            const moveLeftBtn = document.getElementById('move-left-btn');
+            const moveRightBtn = document.getElementById('move-right-btn');
+            const swingBtn = document.getElementById('swing-btn');
+
+            moveLeftBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); game.keysPressed.left = true; });
+            moveLeftBtn.addEventListener('pointerup', () => { game.keysPressed.left = false; });
+            moveLeftBtn.addEventListener('pointerleave', () => { game.keysPressed.left = false; });
+
+            moveRightBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); game.keysPressed.right = true; });
+            moveRightBtn.addEventListener('pointerup', () => { game.keysPressed.right = false; });
+            moveRightBtn.addEventListener('pointerleave', () => { game.keysPressed.right = false; });
+
+            swingBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); game.triggerSwing(); });
+            document.getElementById('main-canvas').addEventListener('pointerdown', (e) => { e.preventDefault(); game.triggerSwing(); });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                    game.keysPressed.left = true;
+                } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                    game.keysPressed.right = true;
+                } else if (e.code === 'Space') {
+                    e.preventDefault();
+                    game.triggerSwing();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                    game.keysPressed.left = false;
+                } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                    game.keysPressed.right = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

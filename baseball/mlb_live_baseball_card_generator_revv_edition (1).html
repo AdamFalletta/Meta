@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Live Baseball Card Generator - RevV Edition</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;700;800;900&family=Rajdhani:wght@600;700;800;900&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- html2canvas for card PNG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #070a12;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        .font-bebas { font-family: 'Bebas Neue', sans-serif; }
+        .font-teko { font-family: 'Teko', sans-serif; }
+        .font-rajdhani { font-family: 'Rajdhani', sans-serif; }
+
+        /* 3D Card Scene Setup */
+        .card-scene {
+            perspective: 1400px;
+        }
+
+        .card-container {
+            width: 380px;
+            height: 570px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            border-radius: 0 !important;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 0 !important;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            user-select: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+            transform-style: flat;
+        }
+
+        .card-front {
+            z-index: 2;
+            transform: rotateY(0deg);
+            border-radius: 0 !important;
+        }
+
+        .card-back {
+            z-index: 1;
+            transform: rotateY(180deg);
+            background: #0f172a;
+            color: #f3f4f6;
+            border-radius: 0 !important;
+        }
+
+        /* Prevent back/front bleed through during 3D flip */
+        .card-container.is-flipped .card-front {
+            visibility: hidden;
+        }
+        .card-container:not(.is-flipped) .card-back {
+            visibility: hidden;
+        }
+
+        /* Pattern Overlays Container */
+        .pattern-overlay-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            opacity: 0.75;
+            z-index: 1;
+        }
+
+        /* Vintage Film Grain Texture Overlay */
+        .vintage-grain-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 18;
+            opacity: 0.45;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.8'/%3E%3C/svg%3E");
+            mix-blend-mode: color-burn;
+            display: none;
+        }
+
+        .fx-vintage-active .vintage-grain-overlay {
+            display: block !important;
+        }
+
+        /* Vignette Border Frame Filter (Straight borders, no border-radius) */
+        .vignette-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 17;
+            box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.95);
+            border-radius: 0; /* Straight edges as requested */
+            display: none;
+        }
+
+        .fx-vignette-active .vignette-overlay {
+            display: block !important;
+        }
+
+        /* Lens Flare Center Background */
+        .lens-flare {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.25) 35%, transparent 70%);
+            filter: blur(12px);
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: color-dodge;
+            animation: pulseGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.85); }
+            100% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        /* Sheen Holographic Foil Motion Effect */
+        .foil-overlay {
+            position: absolute;
+            inset: -60%;
+            background: linear-gradient(
+                115deg, 
+                transparent 20%, 
+                rgba(255, 255, 255, 0.2) 42%, 
+                rgba(255, 255, 255, 0.6) 50%, 
+                rgba(255, 255, 255, 0.2) 58%, 
+                transparent 80%
+            );
+            background-size: 200% 200%;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            animation: foilSweep 4.5s ease-in-out infinite alternate;
+            z-index: 15;
+        }
+
+        @keyframes foilSweep {
+            0% { transform: translate(-30%, -30%) rotate(-6deg); }
+            100% { transform: translate(30%, 30%) rotate(6deg); }
+        }
+
+        /* 1. RevV Diamond Crystal Gradient */
+        .style-mlb-diamond {
+            background: radial-gradient(ellipse at 50% 25%, #2563eb 0%, #1d4ed8 35%, #1e1b4b 65%, #020617 100%);
+            border: 6px solid #38bdf8;
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        /* 2. Cosmic Nebula Gradient */
+        .style-cosmic-galaxy {
+            background: radial-gradient(circle at 30% 20%, #d8b4fe 0%, #a855f7 30%, #6b21a8 60%, #090514 100%);
+            border: 6px solid #f3e8ff;
+            box-shadow: 0 0 35px rgba(192, 132, 252, 0.6);
+        }
+
+        /* 3. Atomic Refractor Chrome Prism Gradient */
+        .style-modern-chrome {
+            background: radial-gradient(circle at 50% 20%, #38bdf8 0%, #a855f7 35%, #ec4899 65%, #0f172a 100%);
+            border: 6px solid #f8fafc;
+            box-shadow: 0 0 35px rgba(236, 72, 153, 0.5);
+        }
+
+        /* 4. Cyberpunk Neon 2099 Gradient */
+        .style-neon-cyber {
+            background: radial-gradient(circle at 70% 20%, #f43f5e 0%, #be185d 40%, #06b6d4 80%, #030712 100%);
+            border: 6px solid #f43f5e;
+            box-shadow: 0 0 35px rgba(244, 63, 94, 0.7);
+        }
+
+        /* 5. Liquid Gold Elite Gradient */
+        .style-gold-elite {
+            background: radial-gradient(circle at 50% 20%, #fef08a 0%, #eab308 35%, #854d0e 70%, #1c1002 100%);
+            border: 6px solid #fef08a;
+            box-shadow: 0 0 40px rgba(250, 204, 21, 0.6);
+        }
+
+        /* 6. Hyperfire Inferno Gradient */
+        .style-fire-embers {
+            background: radial-gradient(circle at 50% 80%, #f97316 0%, #c2410c 35%, #7f1d1d 70%, #180803 100%);
+            border: 6px solid #fb923c;
+            box-shadow: 0 0 35px rgba(249, 115, 22, 0.7);
+        }
+
+        /* 7. Vintage Heritage Gold Gradient */
+        .style-vintage-52 {
+            background: radial-gradient(circle at 50% 30%, #fef3c7 0%, #d97706 45%, #78350f 85%, #271302 100%);
+            border: 7px solid #fef3c7;
+            box-shadow: 0 0 30px rgba(217, 119, 6, 0.5);
+        }
+
+        /* 8. 1986 Fleer Retro Vintage Classic */
+        .style-retro-86 {
+            background: linear-gradient(135deg, #dc2626 0%, #1d4ed8 50%, #0f172a 100%);
+            border: 7px solid #f8fafc;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-cyan-500 selection:text-white">
+
+    <!-- Top Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30 font-black tracking-tighter text-xl font-rajdhani">
+                    RevV
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent font-rajdhani uppercase flex items-center gap-2">
+                        MLB LIVE CARD LAB <span class="text-xs px-2.5 py-1 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono">RevV EDITION</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Live Baseball Card Studio with Dense Crystal Facets, Base64 PNG Export & Real MLB Data</p>
+                </div>
+            </div>
+
+            <!-- Quick Player Presets -->
+            <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto py-1 text-xs">
+                <span class="text-slate-500 font-semibold uppercase tracking-wider text-[10px] mr-1">MLB Stars:</span>
+                <button onclick="loadPresetPlayer(545361)" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap font-bold">
+                    <i class="fa-solid fa-star text-amber-400 text-xs"></i> M. Trout
+                </button>
+                <button onclick="loadPresetPlayer(660271)" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap font-bold">
+                    S. Ohtani
+                </button>
+                <button onclick="loadPresetPlayer(665487)" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap font-bold">
+                    F. Tatis Jr.
+                </button>
+                <button onclick="loadPresetPlayer(592450)" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap font-bold">
+                    A. Judge
+                </button>
+                <button onclick="loadPresetPlayer(665742)" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap font-bold">
+                    J. Soto
+                </button>
+                <button onclick="loadPresetPlayer(660670)" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap font-bold">
+                    R. Acuña Jr.
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start flex-grow">
+        
+        <!-- LEFT CONTROL PANEL (5 Cols on LG) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Tab Navigation for Controls -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-md">
+                <div class="flex border-b border-slate-800 pb-3 mb-4 gap-2">
+                    <button id="tab-btn-player" onclick="switchTab('player')" class="tab-btn active px-3 py-2 rounded-lg text-xs font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 flex-1 flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-user text-sm"></i> Player Data
+                    </button>
+                    <button id="tab-btn-style" onclick="switchTab('style')" class="tab-btn px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 flex-1 flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-palette text-sm"></i> Themes & Patterns
+                    </button>
+                    <button id="tab-btn-custom" onclick="switchTab('custom')" class="tab-btn px-3 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 flex-1 flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-sliders text-sm"></i> Visual FX & Custom
+                    </button>
+                </div>
+
+                <!-- TAB 1: PLAYER SELECTION & SEARCH -->
+                <div id="tab-content-player" class="tab-content space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Search MLB Roster Database</label>
+                        <div class="relative">
+                            <input type="text" id="player-search-input" placeholder="Type player name (e.g., Fernando Tatis, Aaron Judge)..." 
+                                onkeyup="if(event.key === 'Enter') searchMLBPlayers()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                            <button onclick="searchMLBPlayers()" class="absolute right-2 top-2 px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold transition">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Results Dropdown -->
+                    <div id="search-results-container" class="hidden max-h-48 overflow-y-auto bg-slate-950 border border-slate-800 rounded-xl p-2 space-y-1">
+                    </div>
+
+                    <!-- Team Quick Selector -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Filter by MLB Team Roster</label>
+                        <select id="team-select" onchange="loadTeamRoster(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+                            <option value="">-- Select Team Roster --</option>
+                        </select>
+                    </div>
+
+                    <!-- Roster Player Select -->
+                    <div id="roster-container" class="hidden">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Select Roster Member</label>
+                        <select id="roster-select" onchange="loadPresetPlayer(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+                        </select>
+                    </div>
+
+                    <!-- Selected Player Info Card -->
+                    <div id="player-meta-box" class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
+                        <img id="meta-player-headshot" src="" class="w-12 h-12 rounded-full border border-slate-700 object-cover bg-slate-900" alt="Player">
+                        <div class="overflow-hidden">
+                            <h4 id="meta-player-name" class="font-bold text-sm text-slate-100 truncate">Loading...</h4>
+                            <p id="meta-player-team" class="text-xs text-cyan-400 font-mono truncate">MLB Superstar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: MODULAR CARD STYLES & PATTERN SELECTOR -->
+                <div id="tab-content-style" class="tab-content hidden space-y-5">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">1. Select Card Theme</label>
+                            <span id="style-count-badge" class="text-[10px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-800 font-mono">8 Themes</span>
+                        </div>
+                        <div id="styles-grid" class="grid grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                            <!-- Styles rendered dynamically from CARD_STYLES array -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">2. Background Pattern Overlay</label>
+                        <select id="pattern-select" onchange="changePatternOverlay(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+                            <option value="dense-facets">Dense Crystal Triangles (Refractor Shards)</option>
+                            <option value="hex-grid">Hex Prism Honeycomb Grid</option>
+                            <option value="glass-shatter">Shattered Glass Fragment Burst</option>
+                            <option value="laser-lines">Diagonal Laser Speed Rays</option>
+                            <option value="carbon-weave">Micro Carbon Fiber Grid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TAB 3: CUSTOMIZATION CONTROLS & FX TOGGLES -->
+                <div id="tab-content-custom" class="tab-content hidden space-y-4">
+                    <!-- OVR Rating Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Card Rating (OVR Score)</label>
+                            <span id="ovr-display" class="font-bold text-amber-400 text-base font-mono">99</span>
+                        </div>
+                        <input type="range" id="ovr-slider" min="60" max="99" value="99" oninput="updateCardOVR(this.value)" class="w-full accent-amber-400 h-2 bg-slate-800 rounded-lg cursor-pointer">
+                    </div>
+
+                    <!-- Level Badge Input -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Card Level Tag</label>
+                        <input type="text" id="level-input" value="Lv. 10/10" oninput="updateCardLevel(this.value)" 
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-mono">
+                    </div>
+
+                    <!-- Series Header Input -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Badge Series Title</label>
+                        <input type="text" id="series-title-input" value="DIAMOND" oninput="updateSeriesTitle(this.value)" 
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <!-- Visual Effects & Filter Switches -->
+                    <div class="pt-3 border-t border-slate-800 space-y-3">
+                        <label class="block text-xs font-bold text-cyan-400 uppercase tracking-wider">Visual Effects & Filters</label>
+                        
+                        <!-- Toggle Baseballs Motion Particles -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-300 block">3D Floating ⚾ Baseballs</span>
+                                <span class="text-[10px] text-slate-500 block">Animated floating baseball emojis</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-particles" checked onchange="toggleParticlesFX(this.checked)" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle Motion Sheen -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-300 block">Holographic Motion Sheen</span>
+                                <span class="text-[10px] text-slate-500 block">Continuous foil lighting motion sweep</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-motion" checked onchange="toggleMotionFX(this.checked)" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle Neon Flare -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-300 block">Radial Lens Flare Glow</span>
+                                <span class="text-[10px] text-slate-500 block">Pulsing center highlight shine</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-flare" checked onchange="toggleFlareFX(this.checked)" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle Vintage Grain -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-300 block">Vintage Film Grain Filter</span>
+                                <span class="text-[10px] text-slate-500 block">Cardboard grain texture overlay</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-vintage-filter" onchange="toggleVintageFilter(this.checked)" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Toggle Vignette Frame -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-300 block">Vignette Border Shadow</span>
+                                <span class="text-[10px] text-slate-500 block">Straight darkened edge framing filter</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-vignette-filter" onchange="toggleVignetteFilter(this.checked)" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Controls Panel -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <button onclick="triggerCardFlip()" class="w-full py-3.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl font-black text-sm uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-950">
+                    <i class="fa-solid fa-rotate text-base"></i> Flip Card (Front / Back)
+                </button>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="exportCardPNG('front')" class="py-3 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider border border-slate-700 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-download text-cyan-400"></i> Save Front PNG
+                    </button>
+                    <button onclick="exportCardPNG('back')" class="py-3 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider border border-slate-700 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-file-image text-cyan-400"></i> Save Back PNG
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT DISPLAY STAGE (7 Cols on LG) -->
+        <div class="lg:col-span-7 flex flex-col items-center justify-center min-h-[620px]">
+            
+            <!-- Dynamic Stage Container -->
+            <div id="stage-glow-box" class="relative w-full max-w-lg flex flex-col items-center justify-center p-6 rounded-3xl transition-all duration-700">
+                
+                <!-- Interaction Tip -->
+                <div class="mb-4 text-center">
+                    <span class="inline-flex items-center gap-2 text-xs font-bold px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-slate-200 backdrop-blur-md shadow-lg">
+                        <i class="fa-solid fa-hand-pointer text-cyan-400 animate-bounce"></i> Click card to flip • Hover for 3D Tilt FX
+                    </span>
+                </div>
+
+                <!-- 3D Card Scene Holder -->
+                <div class="card-scene">
+                    <div id="card-element" class="card-container style-mlb-diamond" onclick="handleCardClick(event)">
+                        
+                        <!-- ================= FRONT OF CARD ================= -->
+                        <div id="card-front" class="card-face card-front relative p-3.5 flex flex-col justify-between overflow-hidden">
+                            
+                            <!-- Dynamic Background Geometric Pattern Overlay -->
+                            <svg id="pattern-svg-container" class="pattern-overlay-svg" viewBox="0 0 380 570" preserveAspectRatio="none">
+                                <!-- Injected dynamically by updatePatternSVG() -->
+                            </svg>
+
+                            <!-- Vintage Worn Film Grain Texture Overlay -->
+                            <div id="vintage-grain" class="vintage-grain-overlay"></div>
+
+                            <!-- Vignette Frame Overlay -->
+                            <div id="vignette-frame" class="vignette-overlay"></div>
+
+                            <!-- Radial Lens Flare Behind Player Cutout -->
+                            <div id="flare-glow" class="lens-flare"></div>
+
+                            <!-- Continuous Foil Sheen Motion Layer -->
+                            <div id="foil-sheen-layer" class="foil-overlay"></div>
+
+                            <!-- Floating Baseballs Particle Canvas Overlay -->
+                            <canvas id="card-particle-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-10 opacity-80"></canvas>
+
+                            <!-- ================= CARD FRONT TOP HEADER BAR ================= -->
+                            <div class="relative z-20 flex justify-between items-center px-1 pt-1">
+                                <!-- Top Left Team Logo -->
+                                <div class="w-14 h-14 flex items-center justify-center filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]">
+                                    <img id="card-team-logo-top" src="https://www.mlbstatic.com/team-logos/108.svg" class="w-13 h-13 object-contain" alt="Team Logo">
+                                </div>
+
+                                <!-- Top Center RevV Series Badge -->
+                                <div id="card-series-badge" class="px-4 py-2 rounded-lg bg-slate-950/95 border-2 border-slate-700/80 shadow-xl backdrop-blur-md flex items-center gap-2.5">
+                                    <span class="text-sm font-black tracking-tighter bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">RevV</span>
+                                    <span id="card-series-text" class="text-sm font-black tracking-widest text-cyan-300 font-rajdhani uppercase">
+                                        DIAMOND
+                                    </span>
+                                </div>
+
+                                <!-- Top Right Gold OVR Score -->
+                                <div class="text-right">
+                                    <span id="card-ovr-number" class="text-5xl font-black leading-none text-amber-400 font-bebas drop-shadow-[0_4px_8px_rgba(0,0,0,0.95)]">
+                                        99
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- ================= CENTER PLAYER MULTI-PHOTO CUTOUT GRAPHIC ================= -->
+                            <div class="relative z-10 my-auto flex items-center justify-center w-full h-72 overflow-hidden">
+                                
+                                <!-- Background Flanking Zoomed Ghost Cutouts (Bigger, Edge-to-Center, Grayscale + 35% Blur) -->
+                                <img id="card-player-headshot-bg-left" src="" 
+                                    class="absolute left-0 top-1/2 -translate-y-1/2 w-1/2 h-full object-cover grayscale blur-[.5px] opacity-40 mix-blend-luminosity scale-150 pointer-events-none z-0 transform origin-left" 
+                                    alt="Player Left Silhouette">
+                                
+                                <img id="card-player-headshot-bg-right" src="" 
+                                    class="absolute right-0 top-1/2 -translate-y-1/2 w-1/2 h-full object-cover grayscale blur-[.5px] opacity-40 mix-blend-luminosity scale-150 pointer-events-none z-0 transform origin-right" 
+                                    alt="Player Right Silhouette">
+
+                                <!-- Grounding Dark Pedestal Mask (Insets 4px on each side aligning with bottom UI) -->
+                                <div class="absolute inset-x-1 bottom-0 h-28 bg-gradient-to-t from-slate-950/98 via-slate-950/70 to-transparent pointer-events-none z-10"></div>
+
+                                <!-- Main Center Front Cutout (With Enhanced Deep Radial & Directional Drop Shadows) -->
+                                <img id="card-player-headshot" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_600,q_auto:best/v1/people/545361/headshot/silo/current" 
+                                    class="relative z-20 max-h-72 object-contain filter saturate-[70%] drop-shadow-[0_20px_25px_rgba(0,0,0,0.98)] drop-shadow-[0_0_20px_rgba(0,0,0,0.95)] transform scale-110 transition-all duration-300 pointer-events-none" 
+                                    alt="Player Graphic">
+                            </div>
+
+                            <!-- ================= CARD FRONT BOTTOM INFO & REAL STATS ================= -->
+                            <div class="relative z-20 space-y-2">
+                                
+                                <!-- Mid-Bottom Badges Row (Positions & Level) -->
+                                <div class="flex items-center justify-between px-1 text-slate-100 font-rajdhani">
+                                    <!-- Position Tags -->
+                                    <div class="flex items-center gap-1.5">
+                                        <span id="card-pos-1" class="px-2.5 py-1 rounded-md bg-slate-950/95 border-2 border-slate-700 text-sm font-extrabold uppercase shadow-lg">
+                                            DH
+                                        </span>
+                                        <span id="card-pos-2" class="px-2.5 py-1 rounded-md bg-slate-900/95 border-2 border-slate-700/80 text-sm font-extrabold text-slate-300 uppercase shadow-lg">
+                                            RF
+                                        </span>
+                                    </div>
+                                    <!-- Card Level Tag -->
+                                    <span id="card-level-badge" class="text-sm font-extrabold text-slate-100 tracking-wider bg-slate-950/90 px-3 py-1 rounded-md border-2 border-slate-700 font-mono shadow-lg">
+                                        Lv. 10/10
+                                    </span>
+                                </div>
+
+                                <!-- Player Name Bar (Centered Title without RevV LIVE badge) -->
+                                <div class="bg-slate-950/95 border-2 border-slate-700/90 rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-2xl backdrop-blur-md">
+                                    <h2 id="card-player-name" class="text-3xl font-black tracking-wider text-white font-bebas uppercase drop-shadow-md leading-none text-center">
+                                        #27 M. TROUT '26
+                                    </h2>
+                                </div>
+
+                                <!-- REAL MLB LIVE STATS BAR WITH SLASHES (Enlarged Typography) -->
+                                <div class="bg-slate-950/95 border-2 border-slate-800 rounded-xl overflow-hidden shadow-2xl p-2.5">
+                                    <div id="front-real-stats-labels" class="text-center text-xs font-black text-slate-300 uppercase tracking-widest mb-1">
+                                        AVG &nbsp;/&nbsp; HR &nbsp;/&nbsp; RBI &nbsp;/&nbsp; OPS
+                                    </div>
+                                    <div id="front-real-stats-values" class="text-center text-lg font-black text-amber-400 font-mono tracking-wider">
+                                        .301 &nbsp;/&nbsp; 40 &nbsp;/&nbsp; 104 &nbsp;/&nbsp; .992
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- ================= BACK OF CARD ================= -->
+                        <div id="card-back" class="card-face card-back p-5 flex flex-col justify-between border-4 border-slate-700">
+                            
+                            <!-- Back Header -->
+                            <div class="border-b-2 border-slate-700 pb-2 flex justify-between items-center">
+                                <div>
+                                    <span id="back-card-number" class="text-xs font-bold font-mono text-cyan-400 block">RevV #545361</span>
+                                    <h3 id="back-player-name" class="text-2xl font-black font-bebas tracking-wider text-white uppercase leading-none">MIKE TROUT</h3>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-black tracking-tighter px-2.5 py-1 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">RevV</span>
+                                    <img id="back-team-logo" src="https://www.mlbstatic.com/team-logos/108.svg" class="w-9 h-9 object-contain" alt="Team">
+                                </div>
+                            </div>
+
+                            <!-- Player Physical Bio Grid -->
+                            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900 p-3 rounded-xl border border-slate-800 my-2">
+                                <div><span class="font-bold text-slate-400">HT:</span> <span id="back-ht" class="font-bold text-slate-200">6' 2"</span></div>
+                                <div><span class="font-bold text-slate-400">WT:</span> <span id="back-wt" class="font-bold text-slate-200">235 lbs</span></div>
+                                <div><span class="font-bold text-slate-400">B/T:</span> <span id="back-bt" class="font-bold text-slate-200">R/R</span></div>
+                                <div><span class="font-bold text-slate-400">AGE:</span> <span id="back-age" class="font-bold text-slate-200">32</span></div>
+                                <div class="col-span-2 truncate"><span class="font-bold text-slate-400">BORN:</span> <span id="back-born" class="font-bold text-slate-200">Vineland, NJ</span></div>
+                            </div>
+
+                            <!-- Career / Season Stats Table -->
+                            <div class="flex-1 my-1 flex flex-col justify-center">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <span class="text-xs font-black uppercase text-cyan-400 tracking-wider">Official MLB Live Career Stats</span>
+                                    <span class="text-[9px] text-slate-400 font-bold uppercase">RevV Verified</span>
+                                </div>
+                                <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
+                                    <table class="w-full text-center text-xs">
+                                        <thead id="back-stats-head" class="bg-slate-900 text-slate-300 font-bold border-b border-slate-800">
+                                            <!-- Injected dynamically -->
+                                        </thead>
+                                        <tbody id="back-stats-body" class="divide-y divide-slate-800 font-mono text-slate-200 font-bold">
+                                            <!-- Stats rows injected dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Scouting / Bio Highlight Snippet -->
+                            <div class="bg-cyan-950/40 border border-cyan-800/50 rounded-xl p-2.5 text-xs text-cyan-100 my-1 leading-snug font-serif italic">
+                                "<span id="back-bio-text">Consensus generational superstar featuring unmatched power, plate discipline, and dynamic playmaking.</span>"
+                            </div>
+
+                            <!-- Back Footer Info -->
+                            <div class="border-t border-slate-800 pt-2 flex justify-between items-center text-[9px] text-slate-500 font-mono">
+                                <span>MAJOR LEAGUE BASEBALL</span>
+                                <div class="flex items-center gap-1">
+                                    <i class="fa-solid fa-shield-halved text-cyan-500"></i>
+                                    <span>RevV EDITION LIVE CARD</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-4 px-4 text-center text-xs text-slate-500">
+        <p>MLB Live Baseball Card Generator • RevV Edition • Powered by MLB Stats API</p>
+    </footer>
+
+    <!-- Notification Toast -->
+    <div id="toast-notification" class="toast bg-slate-900 border border-cyan-500 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-cyan-400 text-lg"></i>
+        <span id="toast-message" class="text-xs font-semibold">Action completed successfully.</span>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           1. MODULAR CARD STYLES SYSTEM ARRAY
+           ========================================================================== */
+        const CARD_STYLES = [
+            {
+                id: 'mlb-diamond',
+                name: 'RevV Diamond Crystal',
+                category: 'Diamond',
+                icon: 'fa-gem',
+                containerClass: 'style-mlb-diamond',
+                accentColor: '#38bdf8',
+                bgGlow: 'rgba(56, 189, 248, 0.45)',
+                seriesDefault: 'DIAMOND',
+                isVintage: false
+            },
+            {
+                id: 'cosmic-galaxy',
+                name: 'Cosmic Nebula Gradient',
+                category: 'Galaxy',
+                icon: 'fa-atom',
+                containerClass: 'style-cosmic-galaxy',
+                accentColor: '#c084fc',
+                bgGlow: 'rgba(192, 132, 252, 0.5)',
+                seriesDefault: 'COSMIC',
+                isVintage: false
+            },
+            {
+                id: 'modern-chrome',
+                name: 'Atomic Refractor Prism',
+                category: 'Chrome',
+                icon: 'fa-wand-magic-sparkles',
+                containerClass: 'style-modern-chrome',
+                accentColor: '#ec4899',
+                bgGlow: 'rgba(236, 72, 153, 0.5)',
+                seriesDefault: 'REFRACTOR',
+                isVintage: false
+            },
+            {
+                id: 'neon-cyber',
+                name: 'Cyberpunk Neon 2099',
+                category: 'Cyber',
+                icon: 'fa-bolt-lightning',
+                containerClass: 'style-neon-cyber',
+                accentColor: '#f43f5e',
+                bgGlow: 'rgba(244, 63, 94, 0.55)',
+                seriesDefault: 'NEON 2099',
+                isVintage: false
+            },
+            {
+                id: 'gold-elite',
+                name: 'Liquid Gold Elite',
+                category: 'Gold',
+                icon: 'fa-crown',
+                containerClass: 'style-gold-elite',
+                accentColor: '#fef08a',
+                bgGlow: 'rgba(250, 204, 21, 0.55)',
+                seriesDefault: 'GOLD ELITE',
+                isVintage: false
+            },
+            {
+                id: 'fire-embers',
+                name: 'Hyperfire Inferno',
+                category: 'Fire',
+                icon: 'fa-fire',
+                containerClass: 'style-fire-embers',
+                accentColor: '#fb923c',
+                bgGlow: 'rgba(249, 115, 22, 0.6)',
+                seriesDefault: 'INFERNO',
+                isVintage: false
+            },
+            {
+                id: 'vintage-52',
+                name: '1952 Vintage Heritage',
+                category: 'Vintage',
+                icon: 'fa-box-archive',
+                containerClass: 'style-vintage-52',
+                accentColor: '#fef3c7',
+                bgGlow: 'rgba(217, 119, 6, 0.5)',
+                seriesDefault: 'HERITAGE \'52',
+                isVintage: true
+            },
+            {
+                id: 'retro-86',
+                name: '1986 Fleer Vintage Classic',
+                category: 'Retro',
+                icon: 'fa-clock-rotate-left',
+                containerClass: 'style-retro-86',
+                accentColor: '#f8fafc',
+                bgGlow: 'rgba(239, 68, 68, 0.55)',
+                seriesDefault: 'RETRO \'86',
+                isVintage: true
+            }
+        ];
+
+        /* ==========================================================================
+           2. GLOBAL STATE VARIABLES
+           ========================================================================== */
+        let currentPlayerData = null;
+        let currentStyle = CARD_STYLES[0];
+        let currentPatternKey = 'dense-facets';
+        let particleAnimationId = null;
+        let particlesArray = [];
+        let isMotionActive = true;
+        let isParticlesActive = true;
+        let isFlipped = false;
+
+        /* ==========================================================================
+           3. APPLICATION INITIALIZATION ON WINDOW LOAD
+           ========================================================================== */
+        window.onload = function() {
+            renderStyleSelectorGrid();
+            updatePatternSVG('dense-facets');
+            fetchMLBTeams();
+            loadPresetPlayer(545361); // Default Mike Trout
+            setupCard3DTilt();
+            initBaseballParticleCanvas();
+        };
+
+        // Tab Switcher
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-cyan-400', 'bg-cyan-950/60', 'border-cyan-800/50');
+                btn.classList.add('text-slate-400');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            const activeContent = document.getElementById(`tab-content-${tabName}`);
+
+            if (activeBtn && activeContent) {
+                activeBtn.classList.add('active', 'text-cyan-400', 'bg-cyan-950/60', 'border-cyan-800/50');
+                activeBtn.classList.remove('text-slate-400');
+                activeContent.classList.remove('hidden');
+            }
+        }
+
+        // Render Style Theme Buttons
+        function renderStyleSelectorGrid() {
+            const grid = document.getElementById('styles-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            CARD_STYLES.forEach(st => {
+                const isSelected = st.id === currentStyle.id;
+                const cardBtn = document.createElement('button');
+                cardBtn.onclick = () => selectStyle(st.id);
+                cardBtn.className = `p-2.5 rounded-xl border text-left transition flex items-center justify-between ${
+                    isSelected 
+                        ? 'border-cyan-400 bg-cyan-950/80 text-white shadow-lg shadow-cyan-950' 
+                        : 'border-slate-800 bg-slate-950/80 text-slate-300 hover:bg-slate-800 hover:border-slate-700'
+                }`;
+
+                cardBtn.innerHTML = `
+                    <div class="overflow-hidden">
+                        <span class="text-xs font-bold block truncate">${st.name}</span>
+                        <span class="text-[9px] text-slate-400 uppercase font-mono">${st.category}</span>
+                    </div>
+                    <i class="fa-solid ${st.icon} text-cyan-400 text-sm ml-1"></i>
+                `;
+                grid.appendChild(cardBtn);
+            });
+        }
+
+        // Apply Card Theme Style
+        function selectStyle(styleId) {
+            const styleObj = CARD_STYLES.find(s => s.id === styleId);
+            if (!styleObj) return;
+
+            currentStyle = styleObj;
+
+            // Remove previous theme classes
+            const cardEl = document.getElementById('card-element');
+            CARD_STYLES.forEach(s => cardEl.classList.remove(s.containerClass));
+            cardEl.classList.add(currentStyle.containerClass);
+
+            // Toggle vintage filter automatically for vintage styles
+            const vintageFilterToggle = document.getElementById('toggle-vintage-filter');
+            if (currentStyle.isVintage) {
+                cardEl.classList.add('fx-vintage-active');
+                if (vintageFilterToggle) vintageFilterToggle.checked = true;
+            } else {
+                cardEl.classList.remove('fx-vintage-active');
+                if (vintageFilterToggle) vintageFilterToggle.checked = false;
+            }
+
+            // Update series badge text
+            const seriesInput = document.getElementById('series-title-input');
+            if (seriesInput) {
+                seriesInput.value = currentStyle.seriesDefault;
+                updateSeriesTitle(currentStyle.seriesDefault);
+            }
+
+            renderStyleSelectorGrid();
+            showToast(`Applied ${currentStyle.name} Theme`, "fa-palette");
+        }
+
+        /* ==========================================================================
+           4. GEOMETRIC PATTERN ENGINE (IRREGULAR TRIANGLES WITH INDIVIDUAL GRADIENTS)
+           ========================================================================== */
+        function changePatternOverlay(key) {
+            currentPatternKey = key;
+            updatePatternSVG(key);
+        }
+
+        function updatePatternSVG(patternKey) {
+            const container = document.getElementById('pattern-svg-container');
+            if (!container) return;
+
+            if (patternKey === 'dense-facets') {
+                // Generate irregular crystal triangles with individual multi-stop gradients
+                let defsHTML = '<defs>';
+                let pathsHTML = '';
+                
+                const points = [
+                    [0,0], [90,0], [180,0], [270,0], [380,0],
+                    [0,90], [80,70], [170,110], [260,80], [380,90],
+                    [0,190], [110,180], [200,210], [300,180], [380,200],
+                    [0,290], [90,310], [190,280], [280,320], [380,300],
+                    [0,400], [100,390], [180,420], [290,390], [380,410],
+                    [0,490], [80,510], [190,480], [270,500], [380,490],
+                    [0,570], [90,570], [180,570], [270,570], [380,570]
+                ];
+
+                const triangles = [
+                    [0,1,6], [1,2,7], [2,3,8], [3,4,9],
+                    [0,6,5], [1,6,7], [2,7,8], [3,8,9],
+                    [5,6,11], [6,7,12], [7,8,13], [8,9,14],
+                    [5,10,11], [6,11,12], [7,12,13], [8,13,14],
+                    [10,11,16], [11,12,17], [12,13,18], [13,14,19],
+                    [10,15,16], [11,16,17], [12,17,18], [13,18,19],
+                    [15,16,21], [16,17,22], [17,18,23], [18,19,24],
+                    [15,20,21], [16,21,22], [17,22,23], [18,23,24],
+                    [20,21,26], [21,22,27], [22,23,28], [23,24,29],
+                    [20,25,26], [21,26,27], [22,27,28], [23,28,29],
+                    [25,26,31], [26,27,32], [27,28,33], [28,29,34],
+                    [25,30,31], [26,31,32], [27,32,33], [28,33,34]
+                ];
+
+                triangles.forEach((tri, idx) => {
+                    const p1 = points[tri[0]];
+                    const p2 = points[tri[1]];
+                    const p3 = points[tri[2]];
+                    
+                    const gradId = `facet-grad-${idx}`;
+                    const angle = (idx * 37) % 360;
+                    const opacity1 = (0.2 + ((idx * 13) % 65) / 100).toFixed(2);
+                    const opacity2 = (0.05 + ((idx * 23) % 40) / 100).toFixed(2);
+
+                    defsHTML += `
+                        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%" gradientTransform="rotate(${angle})">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="${opacity1}" />
+                            <stop offset="50%" stop-color="#38bdf8" stop-opacity="${(opacity1/1.5).toFixed(2)}" />
+                            <stop offset="100%" stop-color="#000000" stop-opacity="${opacity2}" />
+                        </linearGradient>
+                    `;
+
+                    pathsHTML += `<polygon points="${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]}" fill="url(#${gradId})" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />`;
+                });
+
+                defsHTML += '</defs>';
+                container.innerHTML = defsHTML + pathsHTML;
+
+            } else if (patternKey === 'hex-grid') {
+                container.innerHTML = `
+                    <pattern id="hex-pat" width="40" height="69.28" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 20 11.54 L 0 0 L 0 23.09 L 20 34.64 L 40 23.09 Z M 0 34.64 L 20 46.19 L 0 57.74 L 0 80.83 L 20 92.38 L 40 80.83 L 40 57.74 L 20 46.19 Z" 
+                            fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                    </pattern>
+                    <rect width="380" height="570" fill="url(#hex-pat)" />
+                `;
+            } else if (patternKey === 'glass-shatter') {
+                container.innerHTML = `
+                    <path d="M 0 0 L 190 285 L 380 0 M 380 0 L 190 285 L 380 570 M 380 570 L 190 285 L 0 570 M 0 570 L 190 285 L 0 0" 
+                        fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
+                    <circle cx="190" cy="285" r="140" fill="none" stroke="rgba(255,255,255,0.2)" stroke-dasharray="8 8" />
+                `;
+            } else if (patternKey === 'laser-lines') {
+                container.innerHTML = `
+                    <pattern id="laser-pat" width="20" height="20" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                        <line x1="0" y1="0" x2="0" y2="20" stroke="rgba(255,255,255,0.3)" stroke-width="3" />
+                    </pattern>
+                    <rect width="380" height="570" fill="url(#laser-pat)" />
+                `;
+            } else if (patternKey === 'carbon-weave') {
+                container.innerHTML = `
+                    <pattern id="carbon-pat" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <rect width="5" height="5" fill="rgba(255,255,255,0.15)"/>
+                        <rect x="5" y="5" width="5" height="5" fill="rgba(255,255,255,0.15)"/>
+                    </pattern>
+                    <rect width="380" height="570" fill="url(#carbon-pat)" />
+                `;
+            }
+        }
+
+        /* ==========================================================================
+           5. MLB API FETCH ENGINE & BASE64 IMAGE CONVERTER
+           ========================================================================== */
+        // Base64 Image Converter for CORS-safe PNG export
+        async function getImageAsBase64(url) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = () => resolve(url);
+                    reader.readAsDataURL(blob);
+                });
+            } catch (e) {
+                return url;
+            }
+        }
+
+        // Fetch MLB Teams list for dropdown
+        async function fetchMLBTeams() {
+            try {
+                const res = await fetch('https://statsapi.mlb.com/api/v1/teams?sportId=1');
+                const data = await res.json();
+                const select = document.getElementById('team-select');
+                
+                const teams = data.teams.sort((a, b) => a.name.localeCompare(b.name));
+                teams.forEach(team => {
+                    const opt = document.createElement('option');
+                    opt.value = team.id;
+                    opt.textContent = team.name;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Failed to load MLB Teams:", err);
+            }
+        }
+
+        // Fetch team roster when selected
+        async function loadTeamRoster(teamId) {
+            if (!teamId) return;
+            try {
+                const res = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/roster`);
+                const data = await res.json();
+                const rosterSelect = document.getElementById('roster-select');
+                const container = document.getElementById('roster-container');
+                
+                rosterSelect.innerHTML = '<option value="">-- Select Roster Member --</option>';
+                data.roster.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.person.id;
+                    opt.textContent = `${item.person.fullName} (${item.position.abbreviation})`;
+                    rosterSelect.appendChild(opt);
+                });
+                container.classList.remove('hidden');
+            } catch (err) {
+                showToast("Error loading team roster", "fa-triangle-exclamation");
+            }
+        }
+
+        // Search MLB players by name
+        async function searchMLBPlayers() {
+            const query = document.getElementById('player-search-input').value.trim();
+            if (!query) return;
+
+            const resultsContainer = document.getElementById('search-results-container');
+            resultsContainer.innerHTML = '<div class="text-xs text-slate-400 p-2">Searching MLB database...</div>';
+            resultsContainer.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`https://statsapi.mlb.com/api/v1/people/search?query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (!data.people || data.people.length === 0) {
+                    resultsContainer.innerHTML = '<div class="text-xs text-slate-500 p-2">No players found.</div>';
+                    return;
+                }
+
+                resultsContainer.innerHTML = '';
+                data.people.slice(0, 6).forEach(person => {
+                    const item = document.createElement('div');
+                    item.className = 'p-2 hover:bg-slate-800 rounded-lg cursor-pointer flex items-center justify-between text-xs transition';
+                    item.innerHTML = `
+                        <span class="font-bold text-slate-200">${person.fullName}</span>
+                        <span class="text-[10px] text-cyan-400 font-mono">ID: ${person.id}</span>
+                    `;
+                    item.onclick = () => {
+                        loadPresetPlayer(person.id);
+                        resultsContainer.classList.add('hidden');
+                    };
+                    resultsContainer.appendChild(item);
+                });
+            } catch (err) {
+                resultsContainer.innerHTML = '<div class="text-xs text-rose-400 p-2">Search failed.</div>';
+            }
+        }
+
+        // Main player data loader (fetches profile + career stats)
+        async function loadPresetPlayer(personId) {
+            try {
+                showToast("Fetching live player data...", "fa-spinner");
+
+                const url = `https://statsapi.mlb.com/api/v1/people/${personId}?hydrate=stats(group=[hitting,pitching],type=[career,season]),currentTeam`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (!data.people || data.people.length === 0) {
+                    showToast("Player data unavailable", "fa-triangle-exclamation");
+                    return;
+                }
+
+                currentPlayerData = data.people[0];
+                await updateCardDisplay(currentPlayerData);
+                showToast(`Loaded ${currentPlayerData.fullName}`, "fa-circle-check");
+            } catch (err) {
+                console.error("Error loading player:", err);
+                showToast("Failed to fetch player stats", "fa-triangle-exclamation");
+            }
+        }
+
+        /* ==========================================================================
+           6. CARD RENDERING & DATA BINDING (WITH MULTI-PHOTO MONTAGE)
+           ========================================================================== */
+        async function updateCardDisplay(player) {
+            if (!player) return;
+
+            const teamId = player.currentTeam ? player.currentTeam.id : 108;
+            const pos = player.primaryPosition ? player.primaryPosition.abbreviation : 'DH';
+            const isPitcher = pos === 'P' || pos === 'SP' || pos === 'RP';
+
+            // Headshot cutout & team logos
+            const rawHeadshot = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_600,q_auto:best/v1/people/${player.id}/headshot/silo/current`;
+            const rawTeamLogo = `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+
+            // Convert images to base64 DataURLs for guaranteed clean html2canvas PNG exports
+            const [base64Headshot, base64TeamLogo] = await Promise.all([
+                getImageAsBase64(rawHeadshot),
+                getImageAsBase64(rawTeamLogo)
+            ]);
+
+            // Format Short Name with Player Jersey Number (e.g. #27 M. TROUT '26)
+            const jerseyNum = player.primaryNumber ? `#${player.primaryNumber} ` : '';
+            const nameParts = player.fullName.split(' ');
+            const shortName = nameParts.length > 1 
+                ? `${jerseyNum}${nameParts[0].charAt(0)}. ${nameParts[nameParts.length - 1].toUpperCase()} '26`
+                : `${jerseyNum}${player.fullName.toUpperCase()} '26`;
+
+            // Front UI updates
+            document.getElementById('card-player-name').textContent = shortName;
+            
+            // Set main central photo & background flanking double photos (action montage effect)
+            document.getElementById('card-player-headshot').src = base64Headshot;
+            document.getElementById('card-player-headshot-bg-left').src = base64Headshot;
+            document.getElementById('card-player-headshot-bg-right').src = base64Headshot;
+
+            document.getElementById('card-team-logo-top').src = base64TeamLogo;
+
+            document.getElementById('card-pos-1').textContent = pos;
+            document.getElementById('card-pos-2').textContent = isPitcher ? 'P' : 'OF';
+
+            // Meta Info Panel Update
+            document.getElementById('meta-player-name').textContent = `${jerseyNum}${player.fullName}`;
+            document.getElementById('meta-player-team').textContent = `${player.currentTeam ? player.currentTeam.name : 'MLB Superstar'} • #${player.primaryNumber || '00'}`;
+            document.getElementById('meta-player-headshot').src = base64Headshot;
+
+            // Back UI updates
+            document.getElementById('back-player-name').textContent = player.fullName;
+            document.getElementById('back-card-number').textContent = `RevV #${player.id}`;
+            document.getElementById('back-team-logo').src = base64TeamLogo;
+
+            document.getElementById('back-ht').textContent = player.height || '6\' 2"';
+            document.getElementById('back-wt').textContent = player.weight ? `${player.weight} lbs` : '200 lbs';
+            document.getElementById('back-bt').textContent = `${player.batSide ? player.batSide.code : 'R'}/${player.pitchHand ? player.pitchHand.code : 'R'}`;
+            document.getElementById('back-age').textContent = player.currentAge || '28';
+            document.getElementById('back-born').textContent = player.birthCity ? `${player.birthCity}, ${player.birthCountry}` : 'USA';
+
+            // Generate Bio text
+            document.getElementById('back-bio-text').textContent = 
+                `${player.fullName} continues to demonstrate supreme skill and consistency for ${player.currentTeam ? player.currentTeam.name : 'Major League Baseball'}.`;
+
+            // Render Front & Back Real MLB Stats
+            renderCardStats(player, isPitcher);
+        }
+
+        /* ==========================================================================
+           7. STAT RENDERING ENGINE (FRONT REAL STATS + BACK CAREER STATS TABLE)
+           ========================================================================== */
+        function renderCardStats(player, isPitcher) {
+            const frontLabels = document.getElementById('front-real-stats-labels');
+            const frontValues = document.getElementById('front-real-stats-values');
+            const backHead = document.getElementById('back-stats-head');
+            const backBody = document.getElementById('back-stats-body');
+
+            let seasonStat = null;
+            let careerStat = null;
+
+            if (player.stats && player.stats.length > 0) {
+                const groupTarget = isPitcher ? 'pitching' : 'hitting';
+                
+                player.stats.forEach(st => {
+                    const groupName = st.group ? st.group.displayName : '';
+                    const typeName = st.type ? st.type.displayName : '';
+                    
+                    if (groupName === groupTarget || (!isPitcher && groupName === 'hitting') || (isPitcher && groupName === 'pitching')) {
+                        if (typeName === 'season' && st.splits && st.splits.length > 0) {
+                            seasonStat = st.splits[st.splits.length - 1].stat;
+                        }
+                        if (typeName === 'career' && st.splits && st.splits.length > 0) {
+                            careerStat = st.splits[0].stat;
+                        }
+                    }
+                });
+            }
+
+            if (!isPitcher) {
+                // Hitter Stats
+                frontLabels.innerHTML = 'AVG &nbsp;/&nbsp; HR &nbsp;/&nbsp; RBI &nbsp;/&nbsp; OPS';
+                
+                const avg = seasonStat?.avg || careerStat?.avg || '.285';
+                const hr = seasonStat?.homeRuns ?? careerStat?.homeRuns ?? '32';
+                const rbi = seasonStat?.rbi ?? careerStat?.rbi ?? '95';
+                const ops = seasonStat?.ops || careerStat?.ops || '.890';
+
+                frontValues.innerHTML = `${avg} &nbsp;/&nbsp; ${hr} &nbsp;/&nbsp; ${rbi} &nbsp;/&nbsp; ${ops}`;
+
+                // Back Stats Table
+                backHead.innerHTML = `
+                    <tr>
+                        <th class="py-1 px-1">YEAR</th>
+                        <th class="py-1 px-1">G</th>
+                        <th class="py-1 px-1">AB</th>
+                        <th class="py-1 px-1">HR</th>
+                        <th class="py-1 px-1">RBI</th>
+                        <th class="py-1 px-1">AVG</th>
+                        <th class="py-1 px-1">OPS</th>
+                    </tr>
+                `;
+
+                const sG = seasonStat?.gamesPlayed || '-';
+                const sAB = seasonStat?.atBats || '-';
+                const sHR = seasonStat?.homeRuns ?? '-';
+                const sRBI = seasonStat?.rbi ?? '-';
+                const sAVG = seasonStat?.avg || '-';
+                const sOPS = seasonStat?.ops || '-';
+
+                const cG = careerStat?.gamesPlayed || '-';
+                const cAB = careerStat?.atBats || '-';
+                const cHR = careerStat?.homeRuns ?? '-';
+                const cRBI = careerStat?.rbi ?? '-';
+                const cAVG = careerStat?.avg || '-';
+                const cOPS = careerStat?.ops || '-';
+
+                backBody.innerHTML = `
+                    <tr class="hover:bg-slate-900/50">
+                        <td class="py-1 text-cyan-400 font-bold">2025</td>
+                        <td>${sG}</td>
+                        <td>${sAB}</td>
+                        <td>${sHR}</td>
+                        <td>${sRBI}</td>
+                        <td>${sAVG}</td>
+                        <td>${sOPS}</td>
+                    </tr>
+                    <tr class="bg-cyan-950/40 text-cyan-200 font-extrabold border-t border-slate-700">
+                        <td class="py-1 text-amber-400">CAREER</td>
+                        <td>${cG}</td>
+                        <td>${cAB}</td>
+                        <td>${cHR}</td>
+                        <td>${cRBI}</td>
+                        <td>${cAVG}</td>
+                        <td>${cOPS}</td>
+                    </tr>
+                `;
+            } else {
+                // Pitcher Stats
+                frontLabels.innerHTML = 'ERA &nbsp;/&nbsp; W-L &nbsp;/&nbsp; SO &nbsp;/&nbsp; WHIP';
+
+                const era = seasonStat?.era || careerStat?.era || '3.20';
+                const wins = seasonStat?.wins ?? careerStat?.wins ?? '12';
+                const losses = seasonStat?.losses ?? careerStat?.losses ?? '5';
+                const so = seasonStat?.strikeOuts ?? careerStat?.strikeOuts ?? '180';
+                const whip = seasonStat?.whip || careerStat?.whip || '1.10';
+
+                frontValues.innerHTML = `${era} &nbsp;/&nbsp; ${wins}-${losses} &nbsp;/&nbsp; ${so} &nbsp;/&nbsp; ${whip}`;
+
+                // Back Stats Table
+                backHead.innerHTML = `
+                    <tr>
+                        <th class="py-1 px-1">YEAR</th>
+                        <th class="py-1 px-1">W-L</th>
+                        <th class="py-1 px-1">ERA</th>
+                        <th class="py-1 px-1">IP</th>
+                        <th class="py-1 px-1">SO</th>
+                        <th class="py-1 px-1">WHIP</th>
+                    </tr>
+                `;
+
+                const sWL = (seasonStat?.wins !== undefined && seasonStat?.losses !== undefined) ? `${seasonStat.wins}-${seasonStat.losses}` : '-';
+                const sERA = seasonStat?.era || '-';
+                const sIP = seasonStat?.inningsPitched || '-';
+                const sSO = seasonStat?.strikeOuts ?? '-';
+                const sWHIP = seasonStat?.whip || '-';
+
+                const cWL = (careerStat?.wins !== undefined && careerStat?.losses !== undefined) ? `${careerStat.wins}-${careerStat.losses}` : '-';
+                const cERA = careerStat?.era || '-';
+                const cIP = careerStat?.inningsPitched || '-';
+                const cSO = careerStat?.strikeOuts ?? '-';
+                const cWHIP = careerStat?.whip || '-';
+
+                backBody.innerHTML = `
+                    <tr class="hover:bg-slate-900/50">
+                        <td class="py-1 text-cyan-400 font-bold">2025</td>
+                        <td>${sWL}</td>
+                        <td>${sERA}</td>
+                        <td>${sIP}</td>
+                        <td>${sSO}</td>
+                        <td>${sWHIP}</td>
+                    </tr>
+                    <tr class="bg-cyan-950/40 text-cyan-200 font-extrabold border-t border-slate-700">
+                        <td class="py-1 text-amber-400">CAREER</td>
+                        <td>${cWL}</td>
+                        <td>${cERA}</td>
+                        <td>${cIP}</td>
+                        <td>${cSO}</td>
+                        <td>${cWHIP}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        /* ==========================================================================
+           8. CUSTOMIZATION INPUT HANDLERS & FX TOGGLES
+           ========================================================================== */
+        function updateCardOVR(val) {
+            document.getElementById('ovr-display').textContent = val;
+            document.getElementById('card-ovr-number').textContent = val;
+        }
+
+        function updateCardLevel(val) {
+            document.getElementById('card-level-badge').textContent = val;
+        }
+
+        function updateSeriesTitle(val) {
+            document.getElementById('card-series-text').textContent = val.toUpperCase();
+        }
+
+        function toggleParticlesFX(active) {
+            isParticlesActive = active;
+            const canvas = document.getElementById('card-particle-canvas');
+            if (canvas) canvas.style.display = active ? 'block' : 'none';
+        }
+
+        function toggleMotionFX(active) {
+            isMotionActive = active;
+            const foil = document.getElementById('foil-sheen-layer');
+            if (foil) foil.style.animationPlayState = active ? 'running' : 'paused';
+        }
+
+        function toggleFlareFX(active) {
+            const flare = document.getElementById('flare-glow');
+            if (flare) flare.style.display = active ? 'block' : 'none';
+        }
+
+        function toggleVintageFilter(active) {
+            const cardEl = document.getElementById('card-element');
+            if (active) cardEl.classList.add('fx-vintage-active');
+            else cardEl.classList.remove('fx-vintage-active');
+        }
+
+        function toggleVignetteFilter(active) {
+            const cardEl = document.getElementById('card-element');
+            if (active) cardEl.classList.add('fx-vignette-active');
+            else cardEl.classList.remove('fx-vignette-active');
+        }
+
+        /* ==========================================================================
+           9. 3D CARD INTERACTION & FLIP CONTROLLER
+           ========================================================================== */
+        function handleCardClick(event) {
+            // Prevent flip when clicking input elements
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON') return;
+            triggerCardFlip();
+        }
+
+        function triggerCardFlip() {
+            const cardEl = document.getElementById('card-element');
+            isFlipped = !isFlipped;
+
+            if (isFlipped) {
+                cardEl.classList.add('is-flipped');
+            } else {
+                cardEl.classList.remove('is-flipped');
+            }
+        }
+
+        function setupCard3DTilt() {
+            const cardContainer = document.getElementById('card-element');
+            if (!cardContainer) return;
+
+            cardContainer.addEventListener('mousemove', (e) => {
+                const rect = cardContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = ((y - centerY) / centerY) * -12;
+                const rotateY = ((x - centerX) / centerX) * 12;
+
+                if (isFlipped) {
+                    cardContainer.style.transform = `rotateY(180deg) rotateX(${rotateX}deg) rotateY(${-rotateY}deg)`;
+                } else {
+                    cardContainer.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                }
+            });
+
+            cardContainer.addEventListener('mouseleave', () => {
+                if (isFlipped) {
+                    cardContainer.style.transform = 'rotateY(180deg)';
+                } else {
+                    cardContainer.style.transform = 'rotateX(0deg) rotateY(0deg)';
+                }
+            });
+        }
+
+        /* ==========================================================================
+           10. FLOATING ⚾ BASEBALL EMOJI PARTICLE CANVAS
+           ========================================================================== */
+        function initBaseballParticleCanvas() {
+            const canvas = document.getElementById('card-particle-canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            canvas.width = 380;
+            canvas.height = 570;
+
+            particlesArray = [];
+            const numberOfParticles = 14;
+
+            for (let i = 0; i < numberOfParticles; i++) {
+                particlesArray.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: 16 + Math.random() * 12, // Font size for baseball emoji
+                    speedX: (Math.random() - 0.5) * 0.8,
+                    speedY: -0.4 - Math.random() * 0.6,
+                    rotation: Math.random() * Math.PI * 2,
+                    rotSpeed: (Math.random() - 0.5) * 0.04
+                });
+            }
+
+            function animateParticles() {
+                if (isParticlesActive) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    particlesArray.forEach(p => {
+                        p.x += p.speedX;
+                        p.y += p.speedY;
+                        p.rotation += p.rotSpeed;
+
+                        if (p.y < -20) p.y = canvas.height + 20;
+                        if (p.x < -20) p.x = canvas.width + 20;
+                        if (p.x > canvas.width + 20) p.x = -20;
+
+                        drawBaseballEmoji(ctx, p.x, p.y, p.size, p.rotation);
+                    });
+                }
+                particleAnimationId = requestAnimationFrame(animateParticles);
+            }
+
+            animateParticles();
+        }
+
+        // Render clean ⚾ baseball emoji with smooth rotation
+        function drawBaseballEmoji(ctx, x, y, size, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.font = `${size}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⚾', 0, 0);
+            ctx.restore();
+        }
+
+        /* ==========================================================================
+           11. HIGH-RES CARD EXPORT TO PNG ENGINE
+           ========================================================================== */
+        async function exportCardPNG(side) {
+            const targetSide = side === 'front' ? 'card-front' : 'card-back';
+            const element = document.getElementById(targetSide);
+
+            if (!element) return;
+
+            showToast(`Generating ${side.toUpperCase()} card PNG...`, "fa-spinner");
+
+            try {
+                // Ensure card container temporary reset 3D rotate for clean capture
+                const cardContainer = document.getElementById('card-element');
+                const origTransform = cardContainer.style.transform;
+                cardContainer.style.transform = 'none';
+
+                const canvas = await html2canvas(element, {
+                    scale: 3, // High DPI export quality
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    logging: false
+                });
+
+                // Restore original 3D transform
+                cardContainer.style.transform = origTransform;
+
+                const image = canvas.toDataURL("image/png");
+                const link = document.createElement("a");
+                const playerName = currentPlayerData ? currentPlayerData.fullName.replace(/\s+/g, '_') : 'MLB_Player';
+                
+                link.download = `${playerName}_RevV_${side}_Card.png`;
+                link.href = image;
+                link.click();
+
+                showToast(`Saved ${side.toUpperCase()} PNG to downloads!`, "fa-download");
+            } catch (err) {
+                console.error("Export error:", err);
+                showToast("Failed to export PNG image", "fa-triangle-exclamation");
+            }
+        }
+
+        /* ==========================================================================
+           12. TOAST NOTIFICATION HELPER
+           ========================================================================== */
+        function showToast(message, iconClass = "fa-circle-check") {
+            const toast = document.getElementById('toast-notification');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+
+            if (!toast) return;
+
+            msgEl.textContent = message;
+            iconEl.className = `fa-solid ${iconClass} text-cyan-400 text-lg`;
+
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100 select-none overflow-hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Cyber Neon Digital Signage</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Orbitron & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-tech {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* Custom scrollbar for HUD panels */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.5);
+            border-radius: 2px;
+        }
+        /* UI Auto-hide overlay behavior */
+        .hud-overlay {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .hud-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+        }
+        /* Custom Glowing Glow Effects */
+        .neon-glow-cyan {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.4);
+        }
+        .neon-glow-magenta {
+            text-shadow: 0 0 10px rgba(236, 72, 153, 0.8), 0 0 20px rgba(236, 72, 153, 0.4);
+        }
+        .neon-box {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25), inset 0 0 15px rgba(56, 189, 248, 0.1);
+        }
+        /* Scanline Overlay for Display Aesthetics */
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="relative h-full w-full bg-black overflow-hidden cursor-default">
+
+    <!-- Main Graphics Canvas -->
+    <canvas id="mainCanvas" class="absolute inset-0 z-0 w-full h-full block"></canvas>
+    
+    <!-- Retro Screen CRT Scanline Overlay Effect -->
+    <div id="scanlineOverlay" class="scanlines pointer-events-none absolute inset-0 z-10 opacity-40"></div>
+
+    <!-- HUD Header & Controls Overlay (Auto-hides on idle) -->
+    <header id="hudControls" class="hud-overlay absolute top-0 left-0 right-0 z-30 p-4 sm:p-6 flex flex-col md:flex-row justify-between items-center gap-4 bg-gradient-to-b from-slate-950/90 via-slate-950/60 to-transparent backdrop-blur-md border-b border-cyan-500/20">
+        
+        <!-- Branding Title & Status -->
+        <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                    <i class="fa-solid fa-baseball-bat-ball text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-tech text-lg sm:text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-300">
+                        MLB // NEON SIGNAGE
+                    </h1>
+                    <p class="text-xs text-slate-400 flex items-center gap-2">
+                        <span id="apiStatusBadge" class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="apiStatusText">MLB Live API Connected</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Fullscreen Button Mobile/Header -->
+            <button id="toggleFullscreenBtn" class="md:hidden p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-600/50 transition" title="Toggle Fullscreen">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+        </div>
+
+        <!-- Dynamic Control Pickers -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto text-xs sm:text-sm">
+            
+            <!-- Target Selection Mode (MLB / Team / Player) -->
+            <div class="flex flex-col gap-1">
+                <label class="text-[10px] uppercase font-semibold tracking-wider text-cyan-400/80">Target Mode</label>
+                <select id="targetTypeSelect" class="bg-slate-900/90 border border-cyan-500/40 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 font-tech">
+                    <option value="league">MLB League Focus</option>
+                    <option value="team">Specific Team</option>
+                    <option value="player">Featured Player</option>
+                </select>
+            </div>
+
+            <!-- Team Selector Dropdown -->
+            <div id="teamSelectContainer" class="flex flex-col gap-1 hidden">
+                <label class="text-[10px] uppercase font-semibold tracking-wider text-cyan-400/80">Select Team</label>
+                <select id="teamSelect" class="bg-slate-900/90 border border-cyan-500/40 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 max-w-[160px] truncate">
+                    <!-- Populated dynamically via API -->
+                </select>
+            </div>
+
+            <!-- Player Selector Dropdown -->
+            <div id="playerSelectContainer" class="flex flex-col gap-1 hidden">
+                <label class="text-[10px] uppercase font-semibold tracking-wider text-cyan-400/80">Select Player</label>
+                <select id="playerSelect" class="bg-slate-900/90 border border-cyan-500/40 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 max-w-[170px] truncate">
+                    <!-- Populated dynamically via API -->
+                </select>
+            </div>
+
+            <!-- Preset Art Style Dropdown -->
+            <div class="flex flex-col gap-1">
+                <label class="text-[10px] uppercase font-semibold tracking-wider text-fuchsia-400/80">Visual Theme</label>
+                <select id="stylePresetSelect" class="bg-slate-900/90 border border-fuchsia-500/40 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-fuchsia-400 font-tech">
+                    <option value="cyber">Cyberpunk Neon</option>
+                    <option value="matrix">Matrix Velocity</option>
+                    <option value="gold">Gold Broadcast HUD</option>
+                    <option value="vapor">Vaporwave Stadium</option>
+                    <option value="strobe">High-Energy Strobe</option>
+                </select>
+            </div>
+
+            <!-- Advanced FX Settings Toggle Button -->
+            <button id="toggleFxPanelBtn" class="mt-4 md:mt-0 p-2 px-3 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders"></i>
+                <span class="hidden lg:inline text-xs font-semibold">FX Tuning</span>
+            </button>
+
+            <!-- Fullscreen Toggle Button (Desktop) -->
+            <button id="toggleFullscreenBtnDesktop" class="hidden md:flex p-2 px-3 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-600/50 transition items-center gap-1.5" title="Toggle Fullscreen">
+                <i class="fa-solid fa-expand"></i>
+                <span class="text-xs">Fullscreen</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Drawer: Advanced FX Tuning Panel -->
+    <div id="fxPanel" class="hud-overlay absolute top-20 right-4 sm:right-6 z-40 w-72 bg-slate-900/95 border border-cyan-500/40 rounded-xl p-4 backdrop-blur-xl shadow-2xl transition-all duration-300 hidden">
+        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
+            <span class="font-tech text-xs text-cyan-400 font-bold uppercase tracking-wider"><i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Neon & Engine Tuning</span>
+            <button id="closeFxPanelBtn" class="text-slate-400 hover:text-slate-100 text-xs"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <div class="space-y-3 text-xs">
+            <!-- Glitch Frequency Slider -->
+            <div>
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>Glitch Slice Power</span>
+                    <span id="glitchVal">Medium</span>
+                </div>
+                <input id="glitchSlider" type="range" min="0" max="100" value="40" class="w-full accent-cyan-400 bg-slate-800 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Strobe Beam Intensity -->
+            <div>
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>Strobe & Light Sweeps</span>
+                    <span id="strobeVal">Active</span>
+                </div>
+                <input id="strobeSlider" type="range" min="0" max="100" value="65" class="w-full accent-fuchsia-400 bg-slate-800 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Tactical ESPN Accents Density -->
+            <div>
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>X's & O's Playbook FX</span>
+                    <span id="tacticalVal">High</span>
+                </div>
+                <input id="tacticalSlider" type="range" min="10" max="100" value="70" class="w-full accent-amber-400 bg-slate-800 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Toggle Scanlines -->
+            <div class="flex items-center justify-between pt-1">
+                <span class="text-slate-300">Retro CRT Scanlines</span>
+                <input id="scanlinesToggle" type="checkbox" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+            </div>
+            
+            <!-- Toggle CRT Distortion -->
+            <div class="flex items-center justify-between">
+                <span class="text-slate-300">Stadium Vignette</span>
+                <input id="vignetteToggle" type="checkbox" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Broadcast Live Telemetry & Scores Ticker -->
+    <footer id="hudFooter" class="hud-overlay absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent border-t border-cyan-500/20 backdrop-blur-sm pointer-events-none">
+        
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <!-- Left Info Block: Active Target & Realtime Stats -->
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="targetBadgeLogo" class="w-12 h-12 rounded-lg bg-slate-900/80 border border-cyan-400/40 p-1 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                        <i class="fa-solid fa-baseball text-2xl text-slate-500"></i>
+                    </div>
+                    <div>
+                        <div id="hudTargetTitle" class="font-tech text-base sm:text-lg font-bold text-slate-100 uppercase tracking-wide">
+                            MAJOR LEAGUE BASEBALL
+                        </div>
+                        <div id="hudTargetSubtitle" class="text-xs text-cyan-400/90 font-mono flex items-center gap-2">
+                            <span>VELO: <strong id="telemetryVelo">98.4 MPH</strong></span>
+                            <span class="text-slate-600">|</span>
+                            <span>SPIN: <strong id="telemetrySpin">2480 RPM</strong></span>
+                            <span class="text-slate-600">|</span>
+                            <span class="hidden sm:inline">LAUNCH: <strong id="telemetryLaunch">28.5°</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Ticker: Real MLB Scores or Live Broadcast Feed -->
+            <div class="w-full md:w-1/2 overflow-hidden bg-slate-900/60 border border-slate-800 rounded-lg py-1.5 px-3 relative">
+                <div class="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-slate-900 to-transparent z-10"></div>
+                <div class="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-slate-900 to-transparent z-10"></div>
+                <div id="tickerTrack" class="whitespace-nowrap inline-block animate-marquee font-mono text-xs text-slate-300">
+                    <!-- Dynamic Live Games Data loaded here -->
+                    <span class="inline-flex items-center gap-2 mx-4 text-cyan-300 font-bold"><i class="fa-solid fa-satellite-dish animate-pulse"></i> LIVE MLB SCOREBOARD</span>
+                    <span class="mx-4">NYY <strong class="text-emerald-400">5</strong> - 3 BOS (FINAL)</span>
+                    <span class="mx-4">LAD <strong class="text-amber-400">4</strong> - 4 SF (BOT 8TH)</span>
+                    <span class="mx-4">ATL <strong class="text-emerald-400">8</strong> - 2 NYM (FINAL)</span>
+                    <span class="mx-4">HOU <strong class="text-emerald-400">6</strong> - 1 TEX (BOT 6TH)</span>
+                    <span class="mx-4">CHC <strong class="text-emerald-400">2</strong> - 0 STL (TOP 4TH)</span>
+                </div>
+            </div>
+
+            <!-- Right Telemetry: Digital Clock & Status -->
+            <div class="hidden lg:flex items-center gap-4 text-right font-mono">
+                <div>
+                    <div id="hudClock" class="font-tech text-lg text-slate-100 font-bold tracking-widest">
+                        00:00:00
+                    </div>
+                    <div class="text-[10px] text-slate-400 tracking-wider">SYSTEM SIGNAGE READY</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        
+        // Comprehensive MLB Team Database (Fallbacks + Colors for Canvas rendering)
+        const MLB_TEAMS = [
+            { id: 147, name: 'New York Yankees', abbr: 'NYY', primary: '#0C2340', accent: '#C4CED4', neon: '#38bdf8' },
+            { id: 119, name: 'Los Angeles Dodgers', abbr: 'LAD', primary: '#005A9C', accent: '#FFFFFF', neon: '#60a5fa' },
+            { id: 144, name: 'Atlanta Braves', abbr: 'ATL', primary: '#13274F', accent: '#CE1141', neon: '#f43f5e' },
+            { id: 117, name: 'Houston Astros', abbr: 'HOU', primary: '#002D62', accent: '#EB6E1F', neon: '#fb923C' },
+            { id: 111, name: 'Boston Red Sox', abbr: 'BOS', primary: '#BD3039', accent: '#0C2340', neon: '#ef4444' },
+            { id: 112, name: 'Chicago Cubs', abbr: 'CHC', primary: '#0E3386', accent: '#CC3433', neon: '#3b82f6' },
+            { id: 137, name: 'San Francisco Giants', abbr: 'SF', primary: '#FD5A1E', accent: '#27251F', neon: '#f97316' },
+            { id: 143, name: 'Philadelphia Phillies', abbr: 'PHI', primary: '#E81828', accent: '#002D62', neon: '#f43f5e' },
+            { id: 135, name: 'San Diego Padres', abbr: 'SD', primary: '#2F241D', accent: '#FFC425', neon: '#eab308' },
+            { id: 141, name: 'Toronto Blue Jays', abbr: 'TOR', primary: '#134A8E', accent: '#1D2D5C', neon: '#38bdf8' },
+            { id: 121, name: 'New York Mets', abbr: 'NYM', primary: '#002D62', accent: '#FF5910', neon: '#fb923c' },
+            { id: 139, name: 'Tampa Bay Rays', abbr: 'TB', primary: '#092C5C', accent: '#8FBCE6', neon: '#38bdf8' },
+            { id: 110, name: 'Baltimore Orioles', abbr: 'BAL', primary: '#DF4601', accent: '#000000', neon: '#f97316' },
+            { id: 114, name: 'Cleveland Guardians', abbr: 'CLE', primary: '#0C2340', accent: '#E31937', neon: '#ef4444' },
+            { id: 116, name: 'Detroit Tigers', abbr: 'DET', primary: '#0C2340', accent: '#FA4616', neon: '#f97316' },
+            { id: 118, name: 'Kansas City Royals', abbr: 'KC', primary: '#004687', accent: '#C41E3A', neon: '#60a5fa' },
+            { id: 142, name: 'Minnesota Twins', abbr: 'MIN', primary: '#002B5C', accent: '#D31145', neon: '#f43f5e' },
+            { id: 145, name: 'Chicago White Sox', abbr: 'CWS', primary: '#27251F', accent: '#C4CED4', neon: '#e2e8f0' },
+            { id: 108, name: 'Los Angeles Angels', abbr: 'LAA', primary: '#BA0021', accent: '#003263', neon: '#ef4444' },
+            { id: 133, name: 'Oakland Athletics', abbr: 'OAK', primary: '#003831', accent: '#EFB21E', neon: '#10b981' },
+            { id: 136, name: 'Seattle Mariners', abbr: 'SEA', primary: '#0C2C56', accent: '#005C5C', neon: '#2dd4bf' },
+            { id: 140, name: 'Texas Rangers', abbr: 'TEX', primary: '#003278', accent: '#C0111F', neon: '#3b82f6' },
+            { id: 109, name: 'Arizona Diamondbacks', abbr: 'ARI', primary: '#A71930', accent: '#E3D4AD', neon: '#f43f5e' },
+            { id: 113, name: 'Cincinnati Reds', abbr: 'CIN', primary: '#C6011F', accent: '#000000', neon: '#ef4444' },
+            { id: 115, name: 'Colorado Rockies', abbr: 'COL', primary: '#330066', accent: '#C4CED4', neon: '#a855f7' },
+            { id: 158, name: 'Milwaukee Brewers', abbr: 'MIL', primary: '#12284C', accent: '#FFC52F', neon: '#eab308' },
+            { id: 134, name: 'Pittsburgh Pirates', abbr: 'PIT', primary: '#FDB827', accent: '#000000', neon: '#facc15' },
+            { id: 138, name: 'St. Louis Cardinals', abbr: 'STL', primary: '#C41E3A', accent: '#0C2340', neon: '#ef4444' },
+            { id: 120, name: 'Washington Nationals', abbr: 'WSH', primary: '#AB0003', accent: '#14223D', neon: '#f43f5e' },
+            { id: 109, name: 'Miami Marlins', abbr: 'MIA', primary: '#00A3E0', accent: '#EF3340', neon: '#06b6d4' }
+        ];
+
+        // Sample Star Players Cache
+        const STAR_PLAYERS = [
+            { id: 660271, name: 'Shohei Ohtani', teamId: 119, pos: 'DH/TWP', stats: 'AVG .310 | 54 HR | 130 RBI' },
+            { id: 592450, name: 'Aaron Judge', teamId: 147, pos: 'CF', stats: 'AVG .322 | 58 HR | 144 RBI' },
+            { id: 665487, name: 'Fernando Tatis Jr.', teamId: 135, pos: 'RF', stats: 'AVG .276 | 21 HR | 22 SB' },
+            { id: 605141, name: 'Mookie Betts', teamId: 119, pos: 'SS/2B', stats: 'AVG .289 | 19 HR | .892 OPS' },
+            { id: 665742, name: 'Juan Soto', teamId: 147, pos: 'OF', stats: 'AVG .288 | 41 HR | 109 RBI' },
+            { id: 660670, name: 'Ronald Acuña Jr.', teamId: 144, pos: 'OF', stats: 'AVG .337 | 41 HR | 73 SB' },
+            { id: 663586, name: 'Bryce Harper', teamId: 143, pos: '1B', stats: 'AVG .285 | 30 HR | 87 RBI' },
+            { id: 545361, name: 'Mike Trout', teamId: 108, pos: 'CF', stats: 'AVG .263 | 10 HR | .867 OPS' }
+        ];
+
+        
+        // Application State
+        const state = {
+            targetType: 'league', // 'league', 'team', 'player'
+            selectedTeam: MLB_TEAMS[0],
+            selectedPlayer: STAR_PLAYERS[0],
+            stylePreset: 'cyber', // 'cyber', 'matrix', 'gold', 'vapor', 'strobe'
+            
+            // FX Controls
+            glitchPower: 0.4,
+            strobePower: 0.65,
+            tacticalDensity: 70,
+            showScanlines: true,
+            showVignette: true,
+
+            // Loaded Images & Buffer Cache
+            images: {
+                leagueLogo: null,
+                teamLogo: null,
+                playerHeadshot: null,
+                stadiumBackdrop: null
+            },
+            isBufferDirty: true,
+            
+            // Mouse HUD timeout
+            hudTimeout: null,
+            lastMouseMove: Date.now()
+        };
+
+        // Canvas & Buffer Context
+        let canvas, ctx;
+        let offscreenCanvas, offscreenCtx;
+
+        const THEMES = {
+            cyber: {
+                bgGrad: ['#030712', '#0f172a', '#1e1b4b'],
+                primaryNeon: '#06b6d4', // Cyan
+                secondaryNeon: '#ec4899', // Fuchsia
+                accentNeon: '#38bdf8',
+                gridColor: 'rgba(6, 182, 212, 0.15)',
+                particleColors: ['#06b6d4', '#ec4899', '#38bdf8', '#a855f7']
+            },
+            matrix: {
+                bgGrad: ['#022c22', '#052e16', '#020617'],
+                primaryNeon: '#10b981', // Emerald Green
+                secondaryNeon: '#84cc16', // Lime
+                accentNeon: '#06b6d4',
+                gridColor: 'rgba(16, 185, 129, 0.15)',
+                particleColors: ['#10b981', '#34d399', '#84cc16', '#059669']
+            },
+            gold: {
+                bgGrad: ['#1c1917', '#292524', '#0c0a09'],
+                primaryNeon: '#eab308', // Gold / Amber
+                secondaryNeon: '#f97316', // Orange
+                accentNeon: '#fef08a',
+                gridColor: 'rgba(234, 179, 8, 0.15)',
+                particleColors: ['#eab308', '#f97316', '#fef08a', '#d97706']
+            },
+            vapor: {
+                bgGrad: ['#2e1065', '#3b0764', '#0f172a'],
+                primaryNeon: '#f43f5e', // Neon Rose
+                secondaryNeon: '#c084fc', // Purple
+                accentNeon: '#38bdf8',
+                gridColor: 'rgba(244, 63, 94, 0.15)',
+                particleColors: ['#f43f5e', '#c084fc', '#38bdf8', '#fb7185']
+            },
+            strobe: {
+                bgGrad: ['#09090b', '#18181b', '#000000'],
+                primaryNeon: '#ffffff', // Ultra Bright White
+                secondaryNeon: '#38bdf8', // Light Blue
+                accentNeon: '#f43f5e',
+                gridColor: 'rgba(255, 255, 255, 0.2)',
+                particleColors: ['#ffffff', '#38bdf8', '#f43f5e', '#e2e8f0']
+            }
+        };
+
+        
+        function initEngine() {
+            canvas = document.getElementById('mainCanvas');
+            ctx = canvas.getContext('2d', { alpha: false });
+
+            // Create high-performance Offscreen Buffer Canvas
+            offscreenCanvas = document.createElement('canvas');
+            offscreenCtx = offscreenCanvas.getContext('2d');
+
+            resizeCanvas();
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                state.isBufferDirty = true;
+            });
+
+            // Populate Team Dropdown Options
+            populateTeamDropdown();
+            
+            // Load Default Assets
+            loadLeagueLogo();
+            loadStadiumBackdrop();
+            
+            // Connect Live Scores API Ticker
+            fetchLiveSchedule();
+
+            // Set up Event Listeners
+            setupEventListeners();
+
+            // Spawn ESPN Tactical Accent Objects & Light Rays
+            initTacticalParticles();
+
+            // Start Main Animation Engine Loop
+            requestAnimationFrame(renderLoop);
+        }
+
+        function resizeCanvas() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            canvas.width = w;
+            canvas.height = h;
+
+            offscreenCanvas.width = w;
+            offscreenCanvas.height = h;
+        }
+
+
+        function populateTeamDropdown() {
+            const teamSelect = document.getElementById('teamSelect');
+            teamSelect.innerHTML = '';
+            
+            MLB_TEAMS.sort((a,b) => a.name.localeCompare(b.name)).forEach(team => {
+                const opt = document.createElement('option');
+                opt.value = team.id;
+                opt.textContent = `${team.name} (${team.abbr})`;
+                teamSelect.appendChild(opt);
+            });
+
+            populatePlayerDropdown();
+        }
+
+        function populatePlayerDropdown() {
+            const playerSelect = document.getElementById('playerSelect');
+            playerSelect.innerHTML = '';
+
+            STAR_PLAYERS.forEach(player => {
+                const opt = document.createElement('option');
+                opt.value = player.id;
+                opt.textContent = `${player.name} (${player.pos})`;
+                playerSelect.appendChild(opt);
+            });
+        }
+
+        function loadLeagueLogo() {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            // Official MLB Logo SVG
+            img.src = "https://www.mlbstatic.com/team-logos/league-on-dark/1.svg";
+            img.onload = () => {
+                state.images.leagueLogo = img;
+                state.isBufferDirty = true;
+            };
+        }
+
+        function loadTeamLogo(teamId) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            // MLB Official Team Primary SVG CDN
+            img.src = `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${teamId}.svg`;
+            
+            img.onload = () => {
+                state.images.teamLogo = img;
+                state.isBufferDirty = true;
+            };
+            img.onerror = () => {
+                // Fallback team logo URL
+                img.src = `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+            };
+        }
+
+        function loadPlayerHeadshot(personId) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            // MLB Player Official Headshot
+            img.src = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_640,q_auto:best/v1/people/${personId}/headshot/67/current`;
+            
+            img.onload = () => {
+                state.images.playerHeadshot = img;
+                state.isBufferDirty = true;
+            };
+        }
+
+        function loadStadiumBackdrop() {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            // Stylish dark atmospheric baseball stadium backdrop
+            img.src = "https://images.unsplash.com/photo-1508801939243-2a420b9804b4?auto=format&fit=crop&w=1920&q=80";
+            img.onload = () => {
+                state.images.stadiumBackdrop = img;
+                state.isBufferDirty = true;
+            };
+        }
+
+        async function fetchLiveSchedule() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}`);
+                if (!res.ok) throw new Error('Schedule API response failed');
+                const data = await res.json();
+                
+                if (data.dates && data.dates.length > 0 && data.dates[0].games.length > 0) {
+                    const games = data.dates[0].games;
+                    let tickerHTML = `<span class="inline-flex items-center gap-2 mx-4 text-cyan-300 font-bold"><i class="fa-solid fa-satellite-dish animate-pulse"></i> LIVE MLB TODAY</span>`;
+                    
+                    games.slice(0, 10).forEach(g => {
+                        const away = g.teams.away.team.name.split(' ').pop();
+                        const home = g.teams.home.team.name.split(' ').pop();
+                        const awayScore = g.teams.away.score ?? 0;
+                        const homeScore = g.teams.home.score ?? 0;
+                        const status = g.status.abstractGameState.toUpperCase();
+                        
+                        tickerHTML += `<span class="mx-6">${away} <strong class="text-cyan-400">${awayScore}</strong> @ ${home} <strong class="text-fuchsia-400">${homeScore}</strong> <span class="text-slate-400">(${status})</span></span>`;
+                    });
+                    
+                    document.getElementById('tickerTrack').innerHTML = tickerHTML;
+                }
+            } catch (err) {
+                console.warn('Using fallback scoreboard data due to CORS or off-season schedule:', err);
+            }
+        }
+
+
+        function renderOffscreenBuffer() {
+            if (!state.isBufferDirty) return;
+
+            const w = offscreenCanvas.width;
+            const h = offscreenCanvas.height;
+            const theme = THEMES[state.stylePreset];
+
+            // 1. Base Gradient & Atmosphere Background
+            const bgGrad = offscreenCtx.createRadialGradient(w/2, h/2, 100, w/2, h/2, Math.max(w, h));
+            bgGrad.addColorStop(0, theme.bgGrad[1]);
+            bgGrad.addColorStop(0.6, theme.bgGrad[0]);
+            bgGrad.addColorStop(1, theme.bgGrad[2]);
+
+            offscreenCtx.fillStyle = bgGrad;
+            offscreenCtx.fillRect(0, 0, w, h);
+
+            // 2. Render Faded Stadium Image Backdrop if Available
+            if (state.images.stadiumBackdrop) {
+                offscreenCtx.save();
+                offscreenCtx.globalAlpha = 0.22;
+                offscreenCtx.globalCompositeOperation = 'screen';
+                
+                // Cover fit image
+                const img = state.images.stadiumBackdrop;
+                const scale = Math.max(w / img.width, h / img.height);
+                const x = (w - img.width * scale) / 2;
+                const y = (h - img.height * scale) / 2;
+                offscreenCtx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                offscreenCtx.restore();
+            }
+
+            // 3. Digital Perspective Tech Grid (Cyber Stadium Diamond Layout)
+            renderCyberGrid(offscreenCtx, w, h, theme.gridColor);
+
+            // 4. Render Huge Glowing Center Logo or Player Silhouette
+            renderMainHeroAsset(offscreenCtx, w, h, theme);
+
+            // 5. Static HUD Corners & Diamond Field Diagrams
+            renderTacticalWireframes(offscreenCtx, w, h, theme);
+
+            state.isBufferDirty = false;
+        }
+
+        function renderCyberGrid(ctx, w, h, color) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+
+            // Perspective Grid Lines
+            const horizon = h * 0.55;
+            const numLines = 24;
+
+            // Horizontal grid lines
+            for (let i = horizon; i < h; i += (h - horizon) / 12) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(w, i);
+                ctx.stroke();
+            }
+
+            // Radial perspective lines converging to stadium center
+            const cx = w / 2;
+            for (let i = -w; i <= w * 2; i += w / numLines) {
+                ctx.beginPath();
+                ctx.moveTo(cx, horizon * 0.7);
+                ctx.lineTo(i, h);
+                ctx.stroke();
+            }
+
+            // Baseball Diamond Overlay Contour Lines
+            ctx.strokeStyle = color.replace('0.15', '0.3');
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(w/2, h/2 - 120);
+            ctx.lineTo(w/2 + 200, h/2 + 80);
+            ctx.lineTo(w/2, h/2 + 280);
+            ctx.lineTo(w/2 - 200, h/2 + 80);
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function renderMainHeroAsset(ctx, w, h, theme) {
+            ctx.save();
+
+            let imgToDraw = null;
+
+            if (state.targetType === 'league') {
+                imgToDraw = state.images.leagueLogo;
+            } else if (state.targetType === 'team') {
+                imgToDraw = state.images.teamLogo || state.images.leagueLogo;
+            } else if (state.targetType === 'player') {
+                imgToDraw = state.images.playerHeadshot;
+            }
+
+            if (imgToDraw && imgToDraw.complete) {
+                const maxDim = Math.min(w, h) * (state.targetType === 'player' ? 0.65 : 0.52);
+                const scale = maxDim / Math.max(imgToDraw.width, imgToDraw.height);
+                const dw = imgToDraw.width * scale;
+                const dh = imgToDraw.height * scale;
+                const dx = (w - dw) / 2;
+                const dy = (h - dh) / 2 - 20;
+
+                // Render Multi-layer Neon Aura Behind Logo
+                ctx.globalCompositeOperation = 'screen';
+                
+                // Outer Glow Pass 1
+                ctx.shadowColor = theme.primaryNeon;
+                ctx.shadowBlur = 60;
+                ctx.drawImage(imgToDraw, dx, dy, dw, dh);
+
+                // Outer Glow Pass 2 (Secondary Color Accent)
+                ctx.shadowColor = theme.secondaryNeon;
+                ctx.shadowBlur = 30;
+                ctx.drawImage(imgToDraw, dx, dy, dw, dh);
+
+                // Main Sharp Image Core
+                ctx.shadowBlur = 0;
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.drawImage(imgToDraw, dx, dy, dw, dh);
+            } else {
+                // Fallback SVG Text Branding if image loading
+                ctx.font = '900 64px Orbitron';
+                ctx.fillStyle = theme.primaryNeon;
+                ctx.textAlign = 'center';
+                ctx.shadowColor = theme.secondaryNeon;
+                ctx.shadowBlur = 30;
+                ctx.fillText('MLB DIGITAL', w/2, h/2);
+            }
+
+            ctx.restore();
+        }
+
+        function renderTacticalWireframes(ctx, w, h, theme) {
+            ctx.save();
+            ctx.strokeStyle = theme.primaryNeon;
+            ctx.fillStyle = theme.primaryNeon;
+            ctx.globalAlpha = 0.4;
+            ctx.lineWidth = 1;
+
+            // HUD Bracket Corners
+            const bSize = 30;
+            const margin = 20;
+
+            // Top-Left Corner
+            ctx.beginPath();
+            ctx.moveTo(margin, margin + bSize);
+            ctx.lineTo(margin, margin);
+            ctx.lineTo(margin + bSize, margin);
+            ctx.stroke();
+
+            // Top-Right Corner
+            ctx.beginPath();
+            ctx.moveTo(w - margin - bSize, margin);
+            ctx.lineTo(w - margin, margin);
+            ctx.lineTo(w - margin, margin + bSize);
+            ctx.stroke();
+
+            // Bottom-Left Corner
+            ctx.beginPath();
+            ctx.moveTo(margin, h - margin - bSize);
+            ctx.lineTo(margin, h - margin);
+            ctx.lineTo(margin + bSize, h - margin);
+            ctx.stroke();
+
+            // Bottom-Right Corner
+            ctx.beginPath();
+            ctx.moveTo(w - margin - bSize, h - margin);
+            ctx.lineTo(w - margin, h - margin);
+            ctx.lineTo(w - margin, h - margin - bSize);
+            ctx.stroke();
+
+            // Decorative Crosshairs & Coordinates
+            ctx.font = '10px monospace';
+            ctx.fillText('SEC: 01 // ZONE-9', margin + 10, margin + 45);
+            ctx.fillText('CAM: 04 // STADIUM-WIDE', w - margin - 150, margin + 45);
+
+            ctx.restore();
+        }
+
+
+        let tacticalParticles = [];
+        let lightBeams = [];
+
+        function initTacticalParticles() {
+            tacticalParticles = [];
+            lightBeams = [];
+
+            // Spawn floating ESPN-style X's, O's, Arrow Vectors & Target Reticles
+            for (let i = 0; i < 45; i++) {
+                tacticalParticles.push(createTacticalParticle());
+            }
+
+            // Spawn Rotating Stadium Strobe Beams
+            for (let i = 0; i < 6; i++) {
+                lightBeams.push({
+                    angle: Math.random() * Math.PI * 2,
+                    speed: (Math.random() - 0.5) * 0.015,
+                    width: Math.random() * 0.2 + 0.05,
+                    length: 1200,
+                    color: i % 2 === 0 ? 'primary' : 'secondary'
+                });
+            }
+        }
+
+        function createTacticalParticle() {
+            const types = ['X', 'O', 'ARROW', 'CROSS', 'DASH_PATH', 'DOT'];
+            return {
+                type: types[Math.floor(Math.random() * types.length)],
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                vx: (Math.random() - 0.5) * 1.2,
+                vy: (Math.random() - 0.5) * 1.2,
+                size: Math.random() * 18 + 10,
+                rotation: Math.random() * Math.PI * 2,
+                vRot: (Math.random() - 0.5) * 0.03,
+                alpha: Math.random() * 0.6 + 0.2,
+                pulseSpeed: Math.random() * 0.05 + 0.01,
+                pulseFactor: 0
+            };
+        }
+
+        function updateAndDrawTacticalElements(ctx, w, h, theme) {
+            ctx.save();
+
+            // 1. Render Rotating Stadium Light Beams / Strobe Sweeps
+            if (state.strobePower > 0) {
+                ctx.globalCompositeOperation = 'screen';
+                lightBeams.forEach(beam => {
+                    beam.angle += beam.speed;
+
+                    const bx = w / 2 + Math.cos(beam.angle) * (w * 0.6);
+                    const by = h / 2 + Math.sin(beam.angle) * (h * 0.6);
+
+                    const grad = ctx.createRadialGradient(w/2, h/2, 0, bx, by, beam.length);
+                    const beamColor = beam.color === 'primary' ? theme.primaryNeon : theme.secondaryNeon;
+                    
+                    grad.addColorStop(0, beamColor + '22');
+                    grad.addColorStop(0.5, beamColor + '08');
+                    grad.addColorStop(1, 'transparent');
+
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.moveTo(w/2, h/2);
+                    ctx.arc(w/2, h/2, beam.length, beam.angle - beam.width, beam.angle + beam.width);
+                    ctx.closePath();
+                    ctx.fill();
+                });
+            }
+
+            // 2. Render ESPN Style X's, O's, Play Arrows, Tactical Vectors
+            const countToRender = Math.floor((state.tacticalDensity / 100) * tacticalParticles.length);
+            
+            for (let i = 0; i < countToRender; i++) {
+                const p = tacticalParticles[i];
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.rotation += p.vRot;
+                p.pulseFactor += p.pulseSpeed;
+
+                // Screen Wrap
+                if (p.x < -40) p.x = w + 40;
+                if (p.x > w + 40) p.x = -40;
+                if (p.y < -40) p.y = h + 40;
+                if (p.y > h + 40) p.y = -40;
+
+                const currentAlpha = p.alpha * (0.6 + 0.4 * Math.sin(p.pulseFactor));
+                ctx.globalAlpha = currentAlpha;
+                ctx.strokeStyle = i % 2 === 0 ? theme.primaryNeon : theme.secondaryNeon;
+                ctx.fillStyle = ctx.strokeStyle;
+                ctx.lineWidth = 2;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+
+                // Draw Specific Tactical Graphics
+                switch (p.type) {
+                    case 'X':
+                        // ESPN Defensive Play X
+                        const s = p.size / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(-s, -s); ctx.lineTo(s, s);
+                        ctx.moveTo(s, -s); ctx.lineTo(-s, s);
+                        ctx.stroke();
+                        break;
+
+                    case 'O':
+                        // Offensive Runner Ring
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        break;
+
+                    case 'ARROW':
+                        // Tactical Playbook Path Arrow
+                        ctx.beginPath();
+                        ctx.moveTo(0, -p.size);
+                        ctx.lineTo(0, p.size);
+                        ctx.lineTo(-p.size/2, p.size/2);
+                        ctx.moveTo(0, p.size);
+                        ctx.lineTo(p.size/2, p.size/2);
+                        ctx.stroke();
+                        break;
+
+                    case 'CROSS':
+                        // Pitch Zone Crosshair
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.size/2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(-p.size, 0); ctx.lineTo(p.size, 0);
+                        ctx.moveTo(0, -p.size); ctx.lineTo(0, p.size);
+                        ctx.stroke();
+                        break;
+
+                    case 'DASH_PATH':
+                        // Pitch Curve Path Segment
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.size * 1.5, 0, Math.PI * 0.75);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        break;
+
+                    case 'DOT':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+
+        function applyGlitchAndStrobeEffects(ctx, w, h, theme) {
+            if (state.glitchPower <= 0) return;
+
+            // Random Glitch Slice Trigger
+            const chance = state.glitchPower * 0.35;
+            if (Math.random() < chance) {
+                const numSlices = Math.floor(Math.random() * 5 * state.glitchPower) + 1;
+
+                for (let i = 0; i < numSlices; i++) {
+                    const sliceY = Math.random() * h;
+                    const sliceH = Math.random() * 35 + 5;
+                    const offsetX = (Math.random() - 0.5) * 60 * state.glitchPower;
+
+                    ctx.save();
+                    // Copy slice from current frame and shift horizontally
+                    ctx.beginPath();
+                    ctx.rect(0, sliceY, w, sliceH);
+                    ctx.clip();
+
+                    ctx.drawImage(canvas, offsetX, 0);
+
+                    // Color Tint RGB Displacement Shift
+                    ctx.globalCompositeOperation = 'screen';
+                    ctx.fillStyle = (i % 2 === 0) ? 'rgba(6, 182, 212, 0.25)' : 'rgba(236, 72, 153, 0.25)';
+                    ctx.fillRect(0, sliceY, w, sliceH);
+
+                    ctx.restore();
+                }
+            }
+
+            // High Energy Strobe Light Flash
+            if (state.stylePreset === 'strobe' && Math.random() < 0.08 * state.strobePower) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+                ctx.fillRect(0, 0, w, h);
+                ctx.restore();
+            }
+        }
+
+
+        function renderLoop() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const theme = THEMES[state.stylePreset];
+
+            // 1. Ensure Offscreen Buffer is Pre-rendered
+            renderOffscreenBuffer();
+
+            // 2. Draw Cached Static Buffer to Main Canvas (Zero Performance Overhead)
+            ctx.drawImage(offscreenCanvas, 0, 0);
+
+            // 3. Render Dynamic ESPN Tactical Accents & Light Rays
+            updateAndDrawTacticalElements(ctx, w, h, theme);
+
+            // 4. Post-processing Dynamic Glitch Slices & Strobe Flashes
+            applyGlitchAndStrobeEffects(ctx, w, h, theme);
+
+            // 5. Update Digital Clock
+            updateClockAndTelemetry();
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        function updateClockAndTelemetry() {
+            const now = new Date();
+            const clockEl = document.getElementById('hudClock');
+            if (clockEl) clockEl.textContent = now.toTimeString().split(' ')[0];
+
+            // Randomize slight telemetry jitter for high-tech HUD look
+            if (Math.random() < 0.05) {
+                const veloEl = document.getElementById('telemetryVelo');
+                const spinEl = document.getElementById('telemetrySpin');
+                const launchEl = document.getElementById('telemetryLaunch');
+                
+                if (veloEl && spinEl && launchEl) {
+                    const velo = (96 + Math.random() * 6).toFixed(1);
+                    const spin = Math.floor(2350 + Math.random() * 300);
+                    const launch = (22 + Math.random() * 12).toFixed(1);
+
+                    veloEl.textContent = `${velo} MPH`;
+                    spinEl.textContent = `${spin} RPM`;
+                    launchEl.textContent = `${launch}°`;
+                }
+            }
+        }
+
+
+        function setupEventListeners() {
+            // Target Selection Mode Switcher (League / Team / Player)
+            const targetTypeSelect = document.getElementById('targetTypeSelect');
+            const teamContainer = document.getElementById('teamSelectContainer');
+            const playerContainer = document.getElementById('playerSelectContainer');
+
+            targetTypeSelect.addEventListener('change', (e) => {
+                state.targetType = e.target.value;
+
+                teamContainer.classList.add('hidden');
+                playerContainer.classList.add('hidden');
+
+                if (state.targetType === 'team') {
+                    teamContainer.classList.remove('hidden');
+                    updateActiveTeam();
+                } else if (state.targetType === 'player') {
+                    teamContainer.classList.remove('hidden');
+                    playerContainer.classList.remove('hidden');
+                    updateActivePlayer();
+                } else {
+                    // League Focus
+                    document.getElementById('hudTargetTitle').textContent = 'MAJOR LEAGUE BASEBALL';
+                    document.getElementById('hudTargetSubtitle').innerHTML = 'OFFICIAL DIGITAL SIGNAGE DISPLAY';
+                    document.getElementById('targetBadgeLogo').innerHTML = `<i class="fa-solid fa-baseball text-2xl text-cyan-400"></i>`;
+                    state.isBufferDirty = true;
+                }
+            });
+
+            // Team Dropdown Change
+            document.getElementById('teamSelect').addEventListener('change', (e) => {
+                updateActiveTeam();
+            });
+
+            // Player Dropdown Change
+            document.getElementById('playerSelect').addEventListener('change', (e) => {
+                updateActivePlayer();
+            });
+
+            // Visual Theme Preset Switcher
+            document.getElementById('stylePresetSelect').addEventListener('change', (e) => {
+                state.stylePreset = e.target.value;
+                state.isBufferDirty = true;
+            });
+
+            // FX Tuning Panel Sliders
+            document.getElementById('glitchSlider').addEventListener('input', (e) => {
+                state.glitchPower = e.target.value / 100;
+                document.getElementById('glitchVal').textContent = state.glitchPower === 0 ? 'Off' : `${e.target.value}%`;
+            });
+
+            document.getElementById('strobeSlider').addEventListener('input', (e) => {
+                state.strobePower = e.target.value / 100;
+                document.getElementById('strobeVal').textContent = state.strobePower === 0 ? 'Off' : `${e.target.value}%`;
+            });
+
+            document.getElementById('tacticalSlider').addEventListener('input', (e) => {
+                state.tacticalDensity = parseInt(e.target.value);
+                document.getElementById('tacticalVal').textContent = `${e.target.value}%`;
+            });
+
+            // CRT Scanlines Toggle
+            document.getElementById('scanlinesToggle').addEventListener('change', (e) => {
+                document.getElementById('scanlineOverlay').style.display = e.target.checked ? 'block' : 'none';
+            });
+
+            // FX Panel Drawer Toggle Button
+            const fxPanel = document.getElementById('fxPanel');
+            document.getElementById('toggleFxPanelBtn').addEventListener('click', () => {
+                fxPanel.classList.toggle('hidden');
+            });
+            document.getElementById('closeFxPanelBtn').addEventListener('click', () => {
+                fxPanel.classList.add('hidden');
+            });
+
+            // Fullscreen Toggle
+            const toggleFS = () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => console.log(err));
+                } else {
+                    document.exitFullscreen().catch(err => console.log(err));
+                }
+            };
+            document.getElementById('toggleFullscreenBtn').addEventListener('click', toggleFS);
+            document.getElementById('toggleFullscreenBtnDesktop').addEventListener('click', toggleFS);
+
+            // Auto-hiding Screen Saver Controls Overlay on Mouse Inactivity
+            const hudControls = document.getElementById('hudControls');
+            const hudFooter = document.getElementById('hudFooter');
+
+            const resetHudTimeout = () => {
+                hudControls.classList.remove('hud-hidden');
+                hudFooter.classList.remove('hud-hidden');
+                document.body.style.cursor = 'default';
+
+                clearTimeout(state.hudTimeout);
+                state.hudTimeout = setTimeout(() => {
+                    // Auto hide controls for clean fullscreen signage
+                    hudControls.classList.add('hud-hidden');
+                    hudFooter.classList.add('hud-hidden');
+                    fxPanel.classList.add('hidden');
+                    document.body.style.cursor = 'none';
+                }, 5000);
+            };
+
+            window.addEventListener('mousemove', resetHudTimeout);
+            window.addEventListener('touchstart', resetHudTimeout);
+            resetHudTimeout();
+        }
+
+        function updateActiveTeam() {
+            const teamId = parseInt(document.getElementById('teamSelect').value);
+            const team = MLB_TEAMS.find(t => t.id === teamId) || MLB_TEAMS[0];
+            state.selectedTeam = team;
+
+            document.getElementById('hudTargetTitle').textContent = team.name.toUpperCase();
+            document.getElementById('hudTargetSubtitle').textContent = `DIVISION LEAGUE // ${team.abbr} ATHLETICS`;
+            document.getElementById('targetBadgeLogo').innerHTML = `<img src="https://www.mlbstatic.com/team-logos/${team.id}.svg" class="w-full h-full object-contain" alt="${team.name}">`;
+
+            loadTeamLogo(team.id);
+        }
+
+        function updateActivePlayer() {
+            const playerId = parseInt(document.getElementById('playerSelect').value);
+            const player = STAR_PLAYERS.find(p => p.id === playerId) || STAR_PLAYERS[0];
+            state.selectedPlayer = player;
+
+            document.getElementById('hudTargetTitle').textContent = player.name.toUpperCase();
+            document.getElementById('hudTargetSubtitle').textContent = `${player.pos} // ${player.stats}`;
+            document.getElementById('targetBadgeLogo').innerHTML = `<img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_120,q_auto:best/v1/people/${player.id}/headshot/67/current" class="w-full h-full object-cover rounded" alt="${player.name}">`;
+
+            loadPlayerHeadshot(player.id);
+        }
+
+        // Start Application on Load
+        window.onload = () => {
+            initEngine();
+        };
+    </script>
+</body>
+</html>

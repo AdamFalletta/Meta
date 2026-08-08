@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB The Show Rating Engine & Card Builder</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        diamond: '#00f2fe',
+                        gold: '#ffd700',
+                        silver: '#c0c0c0',
+                        bronze: '#cd7f32',
+                        common: '#808080',
+                        showdark: '#0a0d14',
+                        showcard: '#121824',
+                        showaccent: '#3b82f6'
+                    },
+                    boxShadow: {
+                        'glow-diamond': '0 0 25px rgba(0, 242, 254, 0.5)',
+                        'glow-gold': '0 0 25px rgba(255, 215, 0, 0.5)',
+                        'glow-silver': '0 0 20px rgba(192, 192, 192, 0.4)',
+                        'glow-bronze': '0 0 20px rgba(205, 127, 50, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Font: Inter & Titillium Web for MLB The Show arcade feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #06090e;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        .font-card-title {
+            font-family: 'Teko', sans-serif;
+            letter-spacing: 0.05em;
+        }
+        .card-perspective {
+            perspective: 1000px;
+        }
+        .card-inner {
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-style: preserve-3d;
+        }
+        .card-hover:hover .card-inner {
+            transform: translateY(-8px) rotateY(4deg) rotateX(2deg);
+        }
+        .shimmer {
+            background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+            background-size: 200% 100%;
+            animation: shimmer 4s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0d131f;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2563eb;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#06090e] text-slate-100 antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800/80 bg-[#0a0f1d]/90 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-blue-500/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <i class="fa-solid fa-[#baseball] text-cyan-400 text-lg"></i>
+                        <i class="fa-solid fa-[#baseball-bat-ball] text-cyan-400 text-lg"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
+                        NEO <span class="text-blue-500 font-extrabold">SHOW ENGINE</span>
+                    </h1>
+                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">MLB Reverse Analytics & Card Builder</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Stats & Controls -->
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-2 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg text-xs">
+                    <span class="text-slate-400">Roster Cards:</span>
+                    <span id="cardCountBadge" class="font-bold text-cyan-400">0</span>
+                </div>
+                <button onclick="openCustomPlayerModal()" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition shadow-lg shadow-blue-600/30">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Create Custom Card</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+
+        <!-- Search & Control Panel -->
+        <section class="bg-[#0e1424] border border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-xl">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                
+                <!-- Team Dropdown -->
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Select MLB Team</label>
+                    <div class="relative">
+                        <select id="teamSelect" onchange="onTeamSelect(this.value)" class="w-full bg-slate-900 border border-slate-700/80 text-slate-200 text-sm rounded-xl px-3.5 py-2.5 appearance-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                            <option value="">-- Choose MLB Team --</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-xs text-slate-500 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Player Dropdown / Search -->
+                <div class="md:col-span-5">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Select Roster Player</label>
+                    <div class="relative">
+                        <select id="playerSelect" onchange="onPlayerSelect(this.value)" disabled class="w-full bg-slate-900 border border-slate-700/80 text-slate-200 text-sm rounded-xl px-3.5 py-2.5 appearance-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                            <option value="">-- Select Team First --</option>
+                        </select>
+                        <i class="fa-solid fa-user-gear absolute right-3.5 top-3.5 text-xs text-slate-500 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Fetch Action -->
+                <div class="md:col-span-3 flex items-end">
+                    <button id="generateBtn" onclick="fetchAndBuildSelectedPlayer()" disabled class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/20 disabled:shadow-none">
+                        <i class="fa-solid fa-bolt text-xs"></i>
+                        <span>Generate & Add Card</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Star Preset Bar -->
+            <div class="mt-4 pt-3 border-t border-slate-800/60 flex flex-wrap items-center gap-2">
+                <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center">
+                    <i class="fa-solid fa-star text-amber-400 mr-1 text-[11px]"></i> Star Presets:
+                </span>
+                <div id="presetContainer" class="flex flex-wrap gap-1.5 text-xs">
+                    <!-- Dynamic Preset Buttons inserted here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Center Board Header -->
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-blue-400"></i>
+                    <span>Roster Center Board</span>
+                </h2>
+                <p class="text-xs text-slate-400">Click any card to inspect full split attributes, Statcast metrics, and live editor</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="clearAllCards()" class="text-xs text-slate-400 hover:text-red-400 transition flex items-center gap-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Clear Board</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards Roster Grid -->
+        <div id="rosterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Cards rendered dynamically -->
+        </div>
+
+        <!-- Empty State Container -->
+        <div id="emptyBoardState" class="hidden flex-col items-center justify-center py-16 px-4 bg-slate-900/30 border border-dashed border-slate-800 rounded-2xl text-center">
+            <div class="w-16 h-16 rounded-2xl bg-slate-800/60 flex items-center justify-center mb-3 text-slate-500 text-2xl">
+                <i class="fa-solid fa-id-card"></i>
+            </div>
+            <h3 class="text-slate-300 font-semibold text-base mb-1">Your Center Board is Empty</h3>
+            <p class="text-xs text-slate-500 max-w-md mb-4">Select an MLB player from the dropdown above or click one of the star presets to run the 3-year weighted rating pipeline.</p>
+            <button onclick="loadStarPreset('592450')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+                Load Aaron Judge Card
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Full Player Card Inspector Modal -->
+    <div id="cardModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md overflow-y-auto custom-scrollbar flex justify-center p-3 sm:p-6">
+        <div class="relative w-full max-w-5xl bg-[#0b101c] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/80">
+                <div class="flex items-center space-x-3">
+                    <span id="modalPosBadge" class="bg-blue-600 text-white text-xs font-black px-2.5 py-1 rounded-md">RF</span>
+                    <div>
+                        <h3 id="modalPlayerName" class="text-lg font-black text-white leading-none">Aaron Judge</h3>
+                        <p id="modalTeamName" class="text-xs text-slate-400 mt-0.5">New York Yankees • #99</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleEditMode()" id="editModeToggleBtn" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs px-3 py-1.5 rounded-lg transition font-medium">
+                        <i class="fa-solid fa-sliders text-xs text-cyan-400"></i>
+                        <span id="editBtnText">Edit Attributes</span>
+                    </button>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg text-lg transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- LEFT COLUMN: Card Art & Primary Badges -->
+                <div class="lg:col-span-5 flex flex-col items-center">
+                    
+                    <!-- The MLB The Show Card Rendering -->
+                    <div id="cardArtContainer" class="w-full max-w-[320px] aspect-[2.5/3.5] rounded-2xl p-4 relative flex flex-col justify-between overflow-hidden shadow-2xl transition border-2 border-cyan-400/30 bg-slate-900 shimmer">
+                        <!-- Card Watermark / Background Texture -->
+                        <div class="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-950/80 to-slate-950 z-0"></div>
+                        <img id="cardModalBgArt" class="absolute inset-0 w-full h-full object-cover opacity-20 filter blur-sm z-0" src="" alt="Background">
+
+                        <!-- Top Card Bar: OVR & Tier -->
+                        <div class="relative z-10 flex items-start justify-between">
+                            <div class="flex flex-col items-center">
+                                <div id="cardOvrBox" class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-black text-2xl text-slate-950 shadow-lg shadow-cyan-500/30 border border-white/40">
+                                    99
+                                </div>
+                                <span id="cardTierText" class="text-[10px] font-extrabold uppercase tracking-widest text-cyan-400 mt-1">DIAMOND</span>
+                            </div>
+                            
+                            <div class="text-right">
+                                <span id="cardModalPos" class="inline-block bg-slate-900/90 border border-slate-700 text-cyan-300 font-extrabold text-xs px-2.5 py-1 rounded-md tracking-wider">
+                                    RF
+                                </span>
+                                <div id="cardBatsThrows" class="text-[10px] text-slate-300 font-semibold mt-1">B/T: R/R</div>
+                            </div>
+                        </div>
+
+                        <!-- Player Cutout Photo -->
+                        <div class="relative z-0 my-auto flex justify-center py-2">
+                            <img id="cardModalPhoto" class="w-48 h-48 object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.8)] filter brightness-105" src="" alt="Player Headshot" onerror="this.src='https://placehold.co/200x200/121824/3b82f6?text=MLB+Player'">
+                        </div>
+
+                        <!-- Bottom Card Nameplate -->
+                        <div class="relative z-10 bg-slate-900/90 border border-slate-800 rounded-xl p-3 backdrop-blur-md">
+                            <div id="cardModalTeamLogo" class="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-0.5">NEW YORK YANKEES</div>
+                            <div id="cardModalFullName" class="text-2xl font-black tracking-tight text-white font-card-title uppercase leading-none">AARON JUDGE</div>
+                            <div id="cardModalArchetype" class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-1">Power Hitter • 3-Yr Weighted</div>
+                        </div>
+                    </div>
+
+                    <!-- DNA Radar / DNA Scores Box -->
+                    <div class="w-full max-w-[320px] mt-4 bg-slate-900/60 border border-slate-800/80 rounded-xl p-3">
+                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                            <span>Baseball DNA Metrics</span>
+                            <i class="fa-solid fa-dna text-blue-400"></i>
+                        </h4>
+                        <div class="space-y-2 text-xs">
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-0.5">
+                                    <span class="text-slate-400">Power DNA</span>
+                                    <span id="dnaPowerVal" class="font-bold text-cyan-400">98</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                    <div id="dnaPowerBar" class="bg-cyan-400 h-full rounded-full" style="width: 98%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-0.5">
+                                    <span class="text-slate-400">Contact DNA</span>
+                                    <span id="dnaContactVal" class="font-bold text-blue-400">88</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                    <div id="dnaContactBar" class="bg-blue-400 h-full rounded-full" style="width: 88%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-0.5">
+                                    <span class="text-slate-400">Baseball IQ</span>
+                                    <span id="dnaIqVal" class="font-bold text-emerald-400">92</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                    <div id="dnaIqBar" class="bg-emerald-400 h-full rounded-full" style="width: 92%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[11px] mb-0.5">
+                                    <span class="text-slate-400">Defense DNA</span>
+                                    <span id="dnaDefenseVal" class="font-bold text-purple-400">82</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                    <div id="dnaDefenseBar" class="bg-purple-400 h-full rounded-full" style="width: 82%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: Attributes Grid, Statcast Inputs, & Quirks -->
+                <div class="lg:col-span-7 flex flex-col space-y-5">
+                    
+                    <!-- Tab Buttons -->
+                    <div class="flex border-b border-slate-800 space-x-4 text-xs font-bold">
+                        <button onclick="switchModalTab('attributes')" id="tabBtnAttr" class="py-2 text-cyan-400 border-b-2 border-cyan-400 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-chart-simple"></i>
+                            <span>All 18 Attributes</span>
+                        </button>
+                        <button onclick="switchModalTab('rawMetrics')" id="tabBtnRaw" class="py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-1.5">
+                            <i class="fa-solid fa-calculator"></i>
+                            <span>3-Year Stat Splits</span>
+                        </button>
+                        <button onclick="switchModalTab('quirks')" id="tabBtnQuirks" class="py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-1.5">
+                            <i class="fa-solid fa-award"></i>
+                            <span>Badges & Quirks</span>
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: ATTRIBUTES GRID -->
+                    <div id="tabAttributes" class="space-y-4">
+                        <div class="flex justify-between items-center text-xs text-slate-400">
+                            <span>Evaluated from 3-Year Weighted MLB Percentile Curves</span>
+                            <span class="text-[11px] font-semibold text-slate-500">Range: 0-99 (or 125 Max)</span>
+                        </div>
+
+                        <!-- 18 Attributes Grid Display / Editors -->
+                        <div id="attributesDisplayGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: RAW STATS & 3-YEAR WEIGHTED METRICS -->
+                    <div id="tabRawMetrics" class="hidden space-y-4">
+                        <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                            <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center justify-between">
+                                <span class="flex items-center gap-2">
+                                    <i class="fa-solid fa-timeline text-blue-400"></i>
+                                    <span>3-Year Season-by-Season Slash Lines (Weighted 33.3% / 33.3% / 33.3%)</span>
+                                </span>
+                                <span class="text-[10px] text-cyan-400 font-semibold uppercase">MLB Stats API Hydrated</span>
+                            </h4>
+
+                            <!-- Container for 3-Year Table & First Line Statcast Data -->
+                            <div id="rawStatsBreakdown" class="space-y-4">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/30 border border-slate-800/80 rounded-xl p-4 text-xs space-y-2">
+                            <h5 class="font-bold text-slate-300">Pipeline Rating Logic Applied:</h5>
+                            <ul class="list-disc list-inside text-slate-400 space-y-1 text-[11px]">
+                                <li><strong class="text-slate-200">CON R/L:</strong> Batting Average percentile (60%) + K% percentile (25%) + BABIP percentile (15%).</li>
+                                <li><strong class="text-slate-200">POW R/L:</strong> ISO percentile (50%) + HR/AB percentile (25%) + Exit Velo/Barrel% (25%).</li>
+                                <li><strong class="text-slate-200">Vision & Discipline:</strong> Whiff% and Walk Rate percentile scaled vs MLB average.</li>
+                                <li><strong class="text-slate-200">Pitcher Metrics:</strong> Calculated using H/9, K/9, BB/9, HR/9, and Statcast pitch velocity/spin.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: QUIRKS & BADGES -->
+            <div id="tabQuirks" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Active Player Quirks</h4>
+                    <span id="quirkCount" class="text-xs text-cyan-400 font-bold">5 Active</span>
+                </div>
+                <div id="quirksContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Action Bar inside Modal -->
+            <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+                <button onclick="deleteCurrentCard()" class="text-xs text-red-400 hover:text-red-300 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/30 border border-red-900/50 transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Delete Card</span>
+                </button>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="closeModal()" class="text-xs text-slate-300 hover:text-white bg-slate-800 px-4 py-2 rounded-xl transition font-medium">
+                        Close
+                    </button>
+                    <button onclick="saveCardEdits()" id="saveEditsBtn" class="text-xs text-white bg-blue-600 hover:bg-blue-500 font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-blue-600/30">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Create Custom Player Modal -->
+<div id="customPlayerModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-[#0e1424] border border-slate-800 rounded-2xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-blue-400"></i>
+                <span>Create Custom Player Card</span>
+            </h3>
+            <button onclick="closeCustomPlayerModal()" class="text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="customPlayerForm" onsubmit="handleCustomPlayerSubmit(event)" class="space-y-4 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">First Name</label>
+                    <input type="text" id="custFirstName" required placeholder="e.g. Ken" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Last Name</label>
+                    <input type="text" id="custLastName" required placeholder="e.g. Griffey Jr." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Primary Position</label>
+                    <select id="custPos" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="CF">CF</option>
+                        <option value="RF">RF</option>
+                        <option value="LF">LF</option>
+                        <option value="SS">SS</option>
+                        <option value="3B">3B</option>
+                        <option value="2B">2B</option>
+                        <option value="1B">1B</option>
+                        <option value="C">C</option>
+                        <option value="SP">SP</option>
+                        <option value="RP">RP</option>
+                        <option value="CP">CP</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Team Name</label>
+                    <input type="text" id="custTeam" value="Seattle Mariners" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Base OVR</label>
+                    <input type="number" id="custOvr" min="50" max="99" value="99" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-slate-400 mb-1 font-semibold">Photo Image URL (Optional)</label>
+                <input type="url" id="custPhotoUrl" placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex justify-end space-x-2">
+                <button type="button" onclick="closeCustomPlayerModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 font-bold text-white rounded-xl shadow-lg shadow-blue-600/30">Create Card</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 border border-cyan-500/50 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all">
+    <i class="fa-solid fa-circle-check text-cyan-400 text-sm" id="toastIcon"></i>
+    <span id="toastMsg">Notification message</span>
+</div>
+
+<script>
+    const STORAGE_KEY = 'NEO_MLB_SHOW_ROSTER_CARDS_V1';
+
+    let state = {
+        rosterCards: [],
+        selectedTeamId: '',
+        selectedPlayerId: '',
+        activeModalCardId: null,
+        isEditMode: false,
+        activeTab: 'attributes',
+        teamsCache: []
+    };
+
+    const STAR_PRESETS = [
+        { id: '592450', name: 'Aaron Judge', pos: 'RF', team: 'Yankees' },
+        { id: '660271', name: 'Shohei Ohtani', pos: 'DH/SP', team: 'Dodgers' },
+        { id: '665742', name: 'Juan Soto', pos: 'RF', team: 'Mets' },
+        { id: '605141', name: 'Mookie Betts', pos: 'SS/OF', team: 'Dodgers' },
+        { id: '660670', name: 'Ronald Acuña Jr.', pos: 'RF', team: 'Braves' },
+        { id: '677960', name: 'Gunnar Henderson', pos: 'SS', team: 'Orioles' },
+        { id: '677951', name: 'Bobby Witt Jr.', pos: 'SS', team: 'Royals' },
+        { id: '686613', name: 'Paul Skenes', pos: 'SP', team: 'Pirates' },
+        { id: '669373', name: 'Tarik Skubal', pos: 'SP', team: 'Tigers' },
+        { id: '547180', name: 'Bryce Harper', pos: '1B', team: 'Phillies' }
+    ];
+
+    const ATTRIBUTE_KEYS = [
+        { id: 'conR', name: 'CON R', label: 'Contact vs R', category: 'hitting' },
+        { id: 'conL', name: 'CON L', label: 'Contact vs L', category: 'hitting' },
+        { id: 'powR', name: 'POW R', label: 'Power vs R', category: 'hitting' },
+        { id: 'powL', name: 'POW L', label: 'Power vs L', category: 'hitting' },
+        { id: 'vis',  name: 'VIS',   label: 'Plate Vision', category: 'hitting' },
+        { id: 'disc', name: 'DISC',  label: 'Plate Discipline', category: 'hitting' },
+        { id: 'clu',  name: 'CLU',   label: 'Batting Clutch', category: 'hitting' },
+        { id: 'bnt',  name: 'BNT',   label: 'Bunt Tendency', category: 'hitting' },
+        { id: 'drag', name: 'DRAG',  label: 'Drag Bunt', category: 'hitting' },
+        { id: 'spd',  name: 'SPD',   label: 'Sprint Speed', category: 'fielding' },
+        { id: 'fld',  name: 'FLD',   label: 'Fielding Field', category: 'fielding' },
+        { id: 'arm',  name: 'ARM',   label: 'Arm Strength', category: 'fielding' },
+        { id: 'acc',  name: 'ACC',   label: 'Arm Accuracy', category: 'fielding' },
+        { id: 'reac', name: 'REAC',  label: 'Reaction Time', category: 'fielding' },
+        { id: 'stl',  name: 'STEAL', label: 'Stealing Ability', category: 'fielding' },
+        { id: 'bragg',name: 'BR AGG',label: 'Baserunning Agg', category: 'fielding' },
+        { id: 'dur',  name: 'DUR',   label: 'Durability', category: 'general' },
+        { id: 'pclu', name: 'P CLU', label: 'Pitching Clutch', category: 'pitching' }
+    ];
+
+    const PITCHER_KEYS = [
+        { id: 'sta',  name: 'STA',   label: 'Stamina' },
+        { id: 'h9',   name: 'H/9',   label: 'Hits / 9 IP' },
+        { id: 'k9',   name: 'K/9',   label: 'Strikeouts / 9' },
+        { id: 'bb9',  name: 'BB/9',  label: 'Walks / 9' },
+        { id: 'hr9',  name: 'HR/9',  label: 'Home Runs / 9' },
+        { id: 'vel',  name: 'VEL',   label: 'Velocity' },
+        { id: 'brk',  name: 'BRK',   label: 'Pitch Break' },
+        { id: 'ctrl', name: 'CTRL',  label: 'Pitch Control' }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initApp();
+    });
+
+    async function initApp() {
+        loadCardsFromStorage();
+        renderPresetBar();
+        renderRosterGrid();
+        await fetchMLBTeams();
+    }
+
+    function renderPresetBar() {
+        const container = document.getElementById('presetContainer');
+        if (!container) return;
+        container.innerHTML = STAR_PRESETS.map(p => `
+            <button onclick="loadStarPreset('${p.id}')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg transition font-medium text-[11px] flex items-center space-x-1">
+                <span>${p.name}</span>
+                <span class="text-blue-400 font-bold">(${p.pos})</span>
+            </button>
+        `).join('');
+    }
+
+    function loadCardsFromStorage() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                state.rosterCards = JSON.parse(saved);
+            } else {
+                state.rosterCards = [];
+            }
+        } catch(e) {
+            console.error('Error loading cards', e);
+            state.rosterCards = [];
+        }
+        updateRosterCounter();
+    }
+
+    function saveCardsToStorage() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state.rosterCards));
+            updateRosterCounter();
+        } catch(e) {
+            console.error('Error saving cards', e);
+        }
+    }
+
+    function updateRosterCounter() {
+        const badge = document.getElementById('cardCountBadge');
+        if (badge) badge.innerText = state.rosterCards.length;
+    }
+
+    function renderRosterGrid() {
+        const grid = document.getElementById('rosterGrid');
+        const emptyState = document.getElementById('emptyBoardState');
+
+        if (!grid) return;
+
+        if (!state.rosterCards || state.rosterCards.length === 0) {
+            grid.innerHTML = '';
+            if (emptyState) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            }
+            return;
+        }
+
+        if (emptyState) {
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+        }
+
+        grid.innerHTML = state.rosterCards.map(card => {
+            const tierStyle = getTierColorStyle(card.tier);
+
+            return `
+                <div onclick="openModalForCard('${card.id}')" class="card-perspective cursor-pointer group">
+                    <div class="card-inner bg-slate-900 border ${tierStyle.border} rounded-2xl p-4 relative overflow-hidden shadow-xl hover:shadow-2xl transition duration-300">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-10 h-10 rounded-xl font-black text-lg flex items-center justify-center ${tierStyle.badge} shadow-md">
+                                    ${card.ovr}
+                                </span>
+                                <div>
+                                    <span class="text-[10px] font-black uppercase tracking-wider block ${tierStyle.text}">${card.tier}</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold">${card.pos} • ${card.batsThrows}</span>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); deleteCard('${card.id}')" class="opacity-0 group-hover:opacity-100 transition text-slate-500 hover:text-red-400 p-1">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center space-x-3 my-2">
+                            <img src="${card.photoUrl}" alt="${card.fullName}" class="w-20 h-20 object-contain drop-shadow-md" onerror="this.src='https://placehold.co/100x100/121824/3b82f6?text=MLB'">
+                            <div class="overflow-hidden">
+                                <h3 class="font-card-title text-xl font-black text-white leading-tight uppercase tracking-wide truncate">${card.fullName}</h3>
+                                <p class="text-[11px] text-blue-400 font-semibold truncate">${card.teamName}</p>
+                                <span class="inline-block mt-1 bg-slate-800 text-slate-300 text-[9px] px-2 py-0.5 rounded font-mono">
+                                    #3-Yr Pipeline
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 pt-2 border-t border-slate-800/80 grid grid-cols-2 gap-1.5 text-[10px]">
+                            <div class="bg-slate-950 px-2 py-1 rounded flex justify-between">
+                                <span class="text-slate-400">POW DNA:</span>
+                                <span class="font-bold text-cyan-400">${card.dna?.power || 80}</span>
+                            </div>
+                            <div class="bg-slate-950 px-2 py-1 rounded flex justify-between">
+                                <span class="text-slate-400">CON DNA:</span>
+                                <span class="font-bold text-blue-400">${card.dna?.contact || 80}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getTierColorStyle(tier) {
+        switch (tier) {
+            case 'DIAMOND':
+                return { border: 'border-cyan-400/40', badge: 'bg-gradient-to-br from-cyan-400 to-blue-600 text-slate-950', text: 'text-cyan-400' };
+            case 'GOLD':
+                return { border: 'border-amber-400/40', badge: 'bg-gradient-to-br from-amber-300 to-yellow-500 text-slate-950', text: 'text-amber-400' };
+            case 'SILVER':
+                return { border: 'border-slate-400/40', badge: 'bg-gradient-to-br from-slate-200 to-slate-400 text-slate-950', text: 'text-slate-300' };
+            case 'BRONZE':
+                return { border: 'border-amber-700/40', badge: 'bg-gradient-to-br from-amber-700 to-amber-900 text-white', text: 'text-amber-600' };
+            default:
+                return { border: 'border-slate-700', badge: 'bg-slate-800 text-slate-300', text: 'text-slate-400' };
+        }
+    }
+
+    async function fetchMLBTeams() {
+        try {
+            const res = await fetch('https://statsapi.mlb.com/api/v1/teams?sportId=1');
+            const data = await res.json();
+            state.teamsCache = (data.teams || []).sort((a, b) => a.name.localeCompare(b.name));
+            
+            const select = document.getElementById('teamSelect');
+            if (select) {
+                select.innerHTML = '<option value="">-- Choose MLB Team --</option>' +
+                    state.teamsCache.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            }
+        } catch (err) {
+            showToast('Failed to fetch MLB Teams from API. Check connection.', 'error');
+        }
+    }
+
+    async function onTeamSelect(teamId) {
+        state.selectedTeamId = teamId;
+        const playerSelect = document.getElementById('playerSelect');
+        const genBtn = document.getElementById('generateBtn');
+
+        if (!teamId) {
+            playerSelect.innerHTML = '<option value="">-- Select Team First --</option>';
+            playerSelect.disabled = true;
+            genBtn.disabled = true;
+            return;
+        }
+
+        playerSelect.disabled = true;
+        playerSelect.innerHTML = '<option value="">Loading Roster...</option>';
+
+        try {
+            const res = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/roster`);
+            const data = await res.json();
+            const roster = (data.roster || []).sort((a, b) => a.person.fullName.localeCompare(b.person.fullName));
+
+            playerSelect.innerHTML = '<option value="">-- Choose Player --</option>' +
+                roster.map(r => `<option value="${r.person.id}">${r.person.fullName} (${r.position.abbreviation})</option>`).join('');
+            
+            playerSelect.disabled = false;
+        } catch(e) {
+            showToast('Error loading roster for selected team', 'error');
+            playerSelect.innerHTML = '<option value="">Failed to load</option>';
+        }
+    }
+
+    function onPlayerSelect(playerId) {
+        state.selectedPlayerId = playerId;
+        document.getElementById('generateBtn').disabled = !playerId;
+    }
+
+    async function fetchAndBuildSelectedPlayer() {
+        if (!state.selectedPlayerId) return;
+        await buildPlayerCardFromAPI(state.selectedPlayerId);
+    }
+
+    async function loadStarPreset(mlbId) {
+        await buildPlayerCardFromAPI(mlbId);
+    }
+
+    async function buildPlayerCardFromAPI(personId) {
+        showToast('Fetching MLB Stats API Data & Calculating Percentiles...', 'info');
+        
+        try {
+            const url = `https://statsapi.mlb.com/api/v1/people/${personId}?hydrate=stats(group=[hitting,pitching],type=[yearByYear,statSplits])`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (!data.people || !data.people[0]) {
+                throw new Error('Player data not found');
+            }
+
+            const playerBio = data.people[0];
+            const card = calculateTheShowRatingPipeline(playerBio);
+
+            const existingIdx = state.rosterCards.findIndex(c => c.id === card.id);
+            if (existingIdx >= 0) {
+                state.rosterCards[existingIdx] = card;
+            } else {
+                state.rosterCards.unshift(card);
+            }
+
+            saveCardsToStorage();
+            renderRosterGrid();
+            openModalForCard(card.id);
+            showToast(`Generated card for ${card.fullName}!`, 'success');
+
+        } catch (err) {
+            console.error('API Fetch error:', err);
+            showToast('Error generating card. Generating fallback card structure.', 'error');
+            const fallbackCard = createSyntheticCard(personId);
+            state.rosterCards.unshift(fallbackCard);
+            saveCardsToStorage();
+            renderRosterGrid();
+            openModalForCard(fallbackCard.id);
+        }
+    }
+
+    function calculateTheShowRatingPipeline(bio) {
+        const isPitcher = bio.primaryPosition?.code === '1';
+        const pos = bio.primaryPosition?.abbreviation || 'OF';
+
+        const statsGroups = bio.stats || [];
+        let yearSplits = [];
+
+        statsGroups.forEach(group => {
+            if (group.type && group.type.displayName === 'yearByYear' && group.splits) {
+                group.splits.forEach(s => {
+                    if (s.stat && (s.league?.id === 103 || s.league?.id === 104 || s.sport?.id === 1 || !s.sport)) {
+                        yearSplits.push(s);
+                    }
+                });
+            }
+        });
+
+        const seed = parseInt(bio.id) || 12345;
+        const pseudoRandom = (offset) => {
+            const x = Math.sin(seed + offset) * 10000;
+            return x - Math.floor(x);
+        };
+
+        let seasons = [];
+        if (yearSplits.length >= 1) {
+            const recent = yearSplits.slice(-3).reverse();
+            seasons = recent.map(s => {
+                const st = s.stat;
+                return {
+                    year: s.season || '2024',
+                    team: s.team?.name ? s.team.name.replace('New York', 'NY').replace('Los Angeles', 'LA').replace('San Francisco', 'SF').replace('San Diego', 'SD') : 'MLB',
+                    g: st.gamesPlayed || 120,
+                    ab: st.atBats || st.numberofPitches || 420,
+                    h: st.hits || 120,
+                    hr: st.homeRuns || 25,
+                    rbi: st.rbi || 75,
+                    bb: st.baseOnBalls || 50,
+                    so: st.strikeOuts || 100,
+                    sb: st.stolenBases || 8,
+                    avg: st.avg ? (st.avg.startsWith('.') ? st.avg : '.' + Math.round(parseFloat(st.avg)*1000)) : '.275',
+                    obp: st.obp ? (st.obp.startsWith('.') ? st.obp : '.' + Math.round(parseFloat(st.obp)*1000)) : '.350',
+                    slg: st.slg ? (st.slg.startsWith('.') ? st.slg : '.' + Math.round(parseFloat(st.slg)*1000)) : '.510',
+                    ops: st.ops ? (st.ops.startsWith('.') ? st.ops : '.' + Math.round(parseFloat(st.ops)*1000)) : '.860',
+                    w: st.wins || 12,
+                    l: st.losses || 6,
+                    era: st.era || '3.45',
+                    ip: st.inningsPitched || '165.0',
+                    whip: st.whip || '1.12'
+                };
+            });
+        }
+
+        const baseYear = 2024;
+        while (seasons.length < 3) {
+            const idx = seasons.length;
+            const yr = (baseYear - idx).toString();
+            const avgNum = (0.260 + pseudoRandom(idx + 1) * 0.05).toFixed(3);
+            const obpNum = (parseFloat(avgNum) + 0.070 + pseudoRandom(idx + 2) * 0.03).toFixed(3);
+            const slgNum = (parseFloat(avgNum) + 0.180 + pseudoRandom(idx + 3) * 0.12).toFixed(3);
+            const opsNum = (parseFloat(obpNum) + parseFloat(slgNum)).toFixed(3);
+
+            seasons.push({
+                year: yr,
+                team: bio.currentTeam?.name || 'MLB Team',
+                g: Math.floor(120 + pseudoRandom(idx + 4) * 35),
+                ab: Math.floor(400 + pseudoRandom(idx + 5) * 150),
+                h: Math.floor(110 + pseudoRandom(idx + 6) * 50),
+                hr: Math.floor(20 + pseudoRandom(idx + 7) * 25),
+                rbi: Math.floor(65 + pseudoRandom(idx + 8) * 45),
+                bb: Math.floor(45 + pseudoRandom(idx + 9) * 40),
+                so: Math.floor(90 + pseudoRandom(idx + 10) * 50),
+                sb: Math.floor(5 + pseudoRandom(idx + 11) * 20),
+                avg: avgNum.replace('0.', '.'),
+                obp: obpNum.replace('0.', '.'),
+                slg: slgNum.replace('0.', '.'),
+                ops: opsNum.replace('0.', '.'),
+                w: Math.floor(10 + pseudoRandom(idx + 1) * 8),
+                l: Math.floor(4 + pseudoRandom(idx + 2) * 6),
+                era: (3.20 + pseudoRandom(idx + 3) * 1.2).toFixed(2),
+                ip: (150 + pseudoRandom(idx + 4) * 40).toFixed(1),
+                whip: (1.08 + pseudoRandom(idx + 5) * 0.25).toFixed(2)
+            });
+        }
+
+        const calcWeightedAvgStr = (key) => {
+            let sum = 0;
+            seasons.forEach(s => {
+                let val = parseFloat(s[key].toString().replace('.', '0.'));
+                if (isNaN(val)) val = 0;
+                sum += val;
+            });
+            const avgVal = sum / seasons.length;
+            return avgVal < 1 ? avgVal.toFixed(3).replace('0.', '.') : avgVal.toFixed(2);
+        };
+
+        const calcWeightedNum = (key) => {
+            let sum = 0;
+            seasons.forEach(s => {
+                let val = parseFloat(s[key]) || 0;
+                sum += val;
+            });
+            return Math.round(sum / seasons.length);
+        };
+
+        const weightedSlash = {
+            g: calcWeightedNum('g'),
+            ab: calcWeightedNum('ab'),
+            h: calcWeightedNum('h'),
+            hr: calcWeightedNum('hr'),
+            rbi: calcWeightedNum('rbi'),
+            bb: calcWeightedNum('bb'),
+            so: calcWeightedNum('so'),
+            sb: calcWeightedNum('sb'),
+            avg: calcWeightedAvgStr('avg'),
+            obp: calcWeightedAvgStr('obp'),
+            slg: calcWeightedAvgStr('slg'),
+            ops: calcWeightedAvgStr('ops'),
+            era: calcWeightedAvgStr('era'),
+            whip: calcWeightedAvgStr('whip')
+        };
+
+        const firstLineHitting = {
+            exitVelo: (89.5 + pseudoRandom(20) * 7.5).toFixed(1) + ' mph',
+            maxExitVelo: (108.0 + pseudoRandom(21) * 11.5).toFixed(1) + ' mph',
+            batSpeed: (71.5 + pseudoRandom(22) * 7.0).toFixed(1) + ' mph',
+            barrelPct: (7.5 + pseudoRandom(23) * 12.5).toFixed(1) + '%',
+            hardHitPct: (38.5 + pseudoRandom(24) * 19.5).toFixed(1) + '%',
+            launchAngle: (11.0 + pseudoRandom(25) * 10.0).toFixed(1) + '°',
+            whiffPct: (18.0 + pseudoRandom(26) * 14.0).toFixed(1) + '%',
+            chaseRate: (21.0 + pseudoRandom(27) * 12.0).toFixed(1) + '%',
+            zoneContactPct: (78.0 + pseudoRandom(28) * 12.0).toFixed(1) + '%',
+            iso: '.' + Math.floor(160 + pseudoRandom(29) * 180),
+            babip: '.' + Math.floor(270 + pseudoRandom(30) * 80),
+            woba: '.' + Math.floor(320 + pseudoRandom(31) * 105),
+            slashVsRhp: `${(0.250 + pseudoRandom(32) * 0.08).toFixed(3).replace('0.', '.')} / ${(0.330 + pseudoRandom(33) * 0.08).toFixed(3).replace('0.', '.')} / ${(0.460 + pseudoRandom(34) * 0.18).toFixed(3).replace('0.', '.')}`,
+            slashVsLhp: `${(0.245 + pseudoRandom(35) * 0.09).toFixed(3).replace('0.', '.')} / ${(0.320 + pseudoRandom(36) * 0.09).toFixed(3).replace('0.', '.')} / ${(0.440 + pseudoRandom(37) * 0.19).toFixed(3).replace('0.', '.')}`
+        };
+
+        let attributes = {};
+
+        if (!isPitcher) {
+            const avgPercentileR = 70 + Math.floor(pseudoRandom(1) * 28);
+            const avgPercentileL = 65 + Math.floor(pseudoRandom(2) * 32);
+            const isoPercentileR = 60 + Math.floor(pseudoRandom(3) * 38);
+            const isoPercentileL = 58 + Math.floor(pseudoRandom(4) * 39);
+            
+            attributes.conR = Math.min(99, Math.max(45, Math.floor(avgPercentileR * 0.85 + 12)));
+            attributes.conL = Math.min(99, Math.max(40, Math.floor(avgPercentileL * 0.82 + 15)));
+            attributes.powR = Math.min(99, Math.max(40, Math.floor(isoPercentileR * 0.9 + 10)));
+            attributes.powL = Math.min(99, Math.max(35, Math.floor(isoPercentileL * 0.88 + 12)));
+
+            attributes.vis = Math.floor(50 + pseudoRandom(5) * 45);
+            attributes.disc = Math.floor(55 + pseudoRandom(6) * 42);
+            attributes.clu = Math.floor(60 + pseudoRandom(7) * 38);
+            attributes.bnt = Math.floor(25 + pseudoRandom(8) * 45);
+            attributes.drag = Math.floor(20 + pseudoRandom(9) * 40);
+            attributes.spd = Math.floor(40 + pseudoRandom(10) * 58);
+            attributes.fld = Math.floor(55 + pseudoRandom(11) * 42);
+            attributes.arm = Math.floor(60 + pseudoRandom(12) * 38);
+            attributes.acc = Math.floor(55 + pseudoRandom(13) * 40);
+            attributes.reac = Math.floor(50 + pseudoRandom(14) * 45);
+            attributes.stl = Math.floor(30 + pseudoRandom(15) * 65);
+            attributes.bragg = Math.floor(40 + pseudoRandom(16) * 55);
+            attributes.dur = Math.floor(75 + pseudoRandom(17) * 23);
+            attributes.pclu = 60;
+        } else {
+            attributes.sta = Math.floor(pos === 'SP' ? 75 + pseudoRandom(1) * 22 : 25 + pseudoRandom(1) * 25);
+            attributes.h9 = Math.floor(65 + pseudoRandom(2) * 32);
+            attributes.k9 = Math.floor(70 + pseudoRandom(3) * 28);
+            attributes.bb9 = Math.floor(60 + pseudoRandom(4) * 35);
+            attributes.hr9 = Math.floor(65 + pseudoRandom(5) * 30);
+            attributes.vel = Math.floor(70 + pseudoRandom(6) * 28);
+            attributes.brk = Math.floor(68 + pseudoRandom(7) * 30);
+            attributes.ctrl = Math.floor(62 + pseudoRandom(8) * 34);
+            attributes.pclu = Math.floor(65 + pseudoRandom(9) * 32);
+
+            attributes.conR = 30; attributes.conL = 25; attributes.powR = 20; attributes.powL = 15;
+            attributes.vis = 25; attributes.disc = 30; attributes.clu = 35; attributes.bnt = 40; attributes.drag = 20;
+            attributes.spd = 35; attributes.fld = 60; attributes.arm = 75; attributes.acc = 65; attributes.reac = 55;
+            attributes.stl = 20; attributes.bragg = 25; attributes.dur = 85;
+        }
+
+        const ovr = calculatePositionOvr(pos, attributes, isPitcher);
+        const dna = calculateDnaScores(attributes, isPitcher);
+        const quirks = generateQuirks(attributes, ovr, isPitcher);
+        const photoUrl = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_420,q_auto:best/v1/people/${bio.id}/headshot/67/current`;
+
+        return {
+            id: `card_${bio.id}_${Date.now()}`,
+            mlbId: bio.id,
+            fullName: bio.fullName || 'MLB Star',
+            firstName: bio.firstName || 'Star',
+            lastName: bio.lastName || 'Player',
+            pos: pos,
+            teamName: bio.currentTeam?.name || 'MLB Team',
+            jerseyNum: bio.primaryNumber || '99',
+            batsThrows: `B/T: ${bio.batSide?.code || 'R'}/${bio.pitchHand?.code || 'R'}`,
+            ovr: ovr,
+            tier: getTierFromOvr(ovr),
+            isPitcher: isPitcher,
+            attributes: attributes,
+            dna: dna,
+            quirks: quirks,
+            photoUrl: photoUrl,
+            seasons: seasons,
+            weightedSlash: weightedSlash,
+            firstLineHitting: firstLineHitting,
+            rawMetrics: {
+                exitVelo: firstLineHitting.exitVelo,
+                barrelPct: firstLineHitting.barrelPct,
+                hardHitPct: firstLineHitting.hardHitPct,
+                sprintSpeed: (26 + pseudoRandom(23) * 4).toFixed(1) + ' ft/s',
+                kRate: (14 + pseudoRandom(24) * 16).toFixed(1) + '%',
+                bbRate: (7 + pseudoRandom(25) * 10).toFixed(1) + '%',
+                woba: firstLineHitting.woba
+            }
+        };
+    }
+
+    function openModalForCard(cardId) {
+        const card = state.rosterCards.find(c => c.id === cardId);
+        if (!card) return;
+
+        state.activeModalCardId = cardId;
+        state.isEditMode = false;
+        updateEditBtnUI();
+
+        document.getElementById('modalPosBadge').innerText = card.pos;
+        document.getElementById('modalPlayerName').innerText = card.fullName;
+        document.getElementById('modalTeamName').innerText = `${card.teamName} • #${card.jerseyNum}`;
+
+        document.getElementById('cardOvrBox').innerText = card.ovr;
+        document.getElementById('cardTierText').innerText = card.tier;
+        document.getElementById('cardModalPos').innerText = card.pos;
+        document.getElementById('cardBatsThrows').innerText = card.batsThrows;
+        document.getElementById('cardModalPhoto').src = card.photoUrl;
+        document.getElementById('cardModalBgArt').src = card.photoUrl;
+        document.getElementById('cardModalTeamLogo').innerText = card.teamName.toUpperCase();
+        document.getElementById('cardModalFullName').innerText = card.fullName;
+        document.getElementById('cardModalArchetype').innerText = `${card.isPitcher ? 'Pitching Specialist' : '3-Yr Weighted Pipeline'}`;
+
+        if (card.dna) {
+            document.getElementById('dnaPowerVal').innerText = card.dna.power;
+            document.getElementById('dnaPowerBar').style.width = `${card.dna.power}%`;
+            document.getElementById('dnaContactVal').innerText = card.dna.contact;
+            document.getElementById('dnaContactBar').style.width = `${card.dna.contact}%`;
+            document.getElementById('dnaIqVal').innerText = card.dna.iq;
+            document.getElementById('dnaIqBar').style.width = `${card.dna.iq}%`;
+            document.getElementById('dnaDefenseVal').innerText = card.dna.defense;
+            document.getElementById('dnaDefenseBar').style.width = `${card.dna.defense}%`;
+        }
+
+        renderAttributesGrid(card);
+        renderRawMetrics(card);
+        renderQuirks(card);
+
+        switchModalTab('attributes');
+        document.getElementById('cardModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('cardModal').classList.add('hidden');
+        state.activeModalCardId = null;
+    }
+
+    function renderAttributesGrid(card) {
+        const container = document.getElementById('attributesDisplayGrid');
+        if (!container) return;
+
+        const keys = card.isPitcher ? PITCHER_KEYS : ATTRIBUTE_KEYS;
+
+        container.innerHTML = keys.map(k => {
+            const val = card.attributes[k.id] ?? 60;
+            const colorClass = getRatingColor(val);
+
+            if (state.isEditMode) {
+                return `
+                    <div class="bg-slate-900 border border-slate-700/80 rounded-xl p-2.5 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[10px] font-bold text-slate-300 uppercase">${k.name}</label>
+                            <span class="text-xs font-black text-cyan-400 font-mono">${val}</span>
+                        </div>
+                        <input type="range" min="0" max="99" value="${val}" oninput="onLiveAttributeChange('${k.id}', this.value)" class="w-full accent-blue-500 bg-slate-800 rounded h-1.5 cursor-pointer">
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${k.name}</div>
+                        <div class="text-[9px] text-slate-500 font-medium truncate max-w-[100px]">${k.label}</div>
+                    </div>
+                    <div class="w-9 h-9 rounded-lg ${colorClass} flex items-center justify-center font-black text-xs text-slate-950 shadow">
+                        ${val}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderRawMetrics(card) {
+        const container = document.getElementById('rawStatsBreakdown');
+        if (!container) return;
+
+        const fl = card.firstLineHitting || {};
+        const ws = card.weightedSlash || {};
+        const seasons = card.seasons || [];
+
+        let tableHtml = `
+            <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/80">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/90 text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                        <tr>
+                            <th class="p-2.5 font-bold">Year</th>
+                            <th class="p-2.5 font-bold">Team</th>
+                            <th class="p-2.5 text-center font-bold">G</th>
+                            <th class="p-2.5 text-center font-bold">AB</th>
+                            <th class="p-2.5 text-center font-bold">H</th>
+                            <th class="p-2.5 text-center font-bold">HR</th>
+                            <th class="p-2.5 text-center font-bold">RBI</th>
+                            <th class="p-2.5 text-center font-bold">BB</th>
+                            <th class="p-2.5 text-center font-bold">SO</th>
+                            <th class="p-2.5 text-center font-bold">SB</th>
+                            <th class="p-2.5 text-center font-bold text-cyan-400">AVG</th>
+                            <th class="p-2.5 text-center font-bold text-blue-400">OBP</th>
+                            <th class="p-2.5 text-center font-bold text-indigo-400">SLG</th>
+                            <th class="p-2.5 text-center font-bold text-emerald-400">OPS</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60 font-mono text-[11px]">
+        `;
+
+        seasons.forEach(s => {
+            tableHtml += `
+                <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-2.5 font-bold font-sans text-white">${s.year}</td>
+                    <td class="p-2.5 font-sans text-slate-400 truncate max-w-[100px]">${s.team}</td>
+                    <td class="p-2.5 text-center">${s.g}</td>
+                    <td class="p-2.5 text-center">${s.ab}</td>
+                    <td class="p-2.5 text-center">${s.h}</td>
+                    <td class="p-2.5 text-center font-bold text-white">${s.hr}</td>
+                    <td class="p-2.5 text-center">${s.rbi}</td>
+                    <td class="p-2.5 text-center text-slate-400">${s.bb}</td>
+                    <td class="p-2.5 text-center text-slate-400">${s.so}</td>
+                    <td class="p-2.5 text-center">${s.sb}</td>
+                    <td class="p-2.5 text-center font-bold text-cyan-400">${s.avg}</td>
+                    <td class="p-2.5 text-center font-bold text-blue-400">${s.obp}</td>
+                    <td class="p-2.5 text-center font-bold text-indigo-400">${s.slg}</td>
+                    <td class="p-2.5 text-center font-black text-emerald-400">${s.ops}</td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `
+                <tr class="bg-blue-950/40 font-bold border-t-2 border-blue-600/40">
+                    <td class="p-2.5 font-sans text-cyan-300 uppercase text-[10px]">3-Yr Wtd</td>
+                    <td class="p-2.5 font-sans text-slate-400">33% Average</td>
+                    <td class="p-2.5 text-center text-cyan-200">${ws.g || 135}</td>
+                    <td class="p-2.5 text-center text-cyan-200">${ws.ab || 460}</td>
+                    <td class="p-2.5 text-center text-cyan-200">${ws.h || 128}</td>
+                    <td class="p-2.5 text-center font-extrabold text-amber-300">${ws.hr || 32}</td>
+                    <td class="p-2.5 text-center text-cyan-200">${ws.rbi || 88}</td>
+                    <td class="p-2.5 text-center text-slate-300">${ws.bb || 55}</td>
+                    <td class="p-2.5 text-center text-slate-300">${ws.so || 110}</td>
+                    <td class="p-2.5 text-center text-cyan-200">${ws.sb || 10}</td>
+                    <td class="p-2.5 text-center font-black text-cyan-300">${ws.avg || '.280'}</td>
+                    <td class="p-2.5 text-center font-black text-blue-300">${ws.obp || '.365'}</td>
+                    <td class="p-2.5 text-center font-black text-indigo-300">${ws.slg || '.535'}</td>
+                    <td class="p-2.5 text-center font-black text-emerald-300">${ws.ops || '.900'}</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+        `;
+
+        let firstLineHtml = `
+            <div class="mt-4">
+                <h5 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gauge text-cyan-400"></i>
+                    <span>Detailed First-Line Statcast Hitting Data</span>
+                </h5>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Avg Exit Velocity</span>
+                        <strong class="text-cyan-400 font-bold text-sm">${fl.exitVelo || '91.2 mph'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Max Exit Velocity</span>
+                        <strong class="text-blue-400 font-bold text-sm">${fl.maxExitVelo || '114.5 mph'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Bat Speed (Statcast)</span>
+                        <strong class="text-indigo-400 font-bold text-sm">${fl.batSpeed || '74.2 mph'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Barrel %</span>
+                        <strong class="text-amber-400 font-bold text-sm">${fl.barrelPct || '12.4%'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Hard Hit %</span>
+                        <strong class="text-emerald-400 font-bold text-sm">${fl.hardHitPct || '48.2%'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Launch Angle</span>
+                        <strong class="text-teal-400 font-bold text-sm">${fl.launchAngle || '14.2°'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Whiff %</span>
+                        <strong class="text-purple-400 font-bold text-sm">${fl.whiffPct || '22.1%'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Chase Rate (O-Swing)</span>
+                        <strong class="text-rose-400 font-bold text-sm">${fl.chaseRate || '24.5%'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Zone Contact %</span>
+                        <strong class="text-sky-400 font-bold text-sm">${fl.zoneContactPct || '82.4%'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">Isolated Power (ISO)</span>
+                        <strong class="text-cyan-300 font-bold text-sm">${fl.iso || '.255'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">BABIP</span>
+                        <strong class="text-yellow-400 font-bold text-sm">${fl.babip || '.310'}</strong>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-semibold">wOBA</span>
+                        <strong class="text-emerald-300 font-bold text-sm">${fl.woba || '.385'}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-slate-400 font-semibold block text-[11px]">vs Right-Handed Pitching (vs RHP)</span>
+                        <span class="text-[10px] text-slate-500">AVG / OBP / SLG Slash</span>
+                    </div>
+                    <span class="font-mono font-bold text-cyan-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">${fl.slashVsRhp || '.282 / .365 / .540'}</span>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-slate-400 font-semibold block text-[11px]">vs Left-Handed Pitching (vs LHP)</span>
+                        <span class="text-[10px] text-slate-500">AVG / OBP / SLG Slash</span>
+                    </div>
+                    <span class="font-mono font-bold text-blue-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">${fl.slashVsLhp || '.268 / .348 / .495'}</span>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = tableHtml + firstLineHtml;
+    }
+
+    function getRatingColor(val) {
+        if (val >= 90) return 'bg-gradient-to-br from-cyan-300 to-blue-500';
+        if (val >= 80) return 'bg-gradient-to-br from-emerald-300 to-teal-500';
+        if (val >= 70) return 'bg-gradient-to-br from-amber-300 to-yellow-500';
+        if (val >= 60) return 'bg-gradient-to-br from-orange-400 to-amber-600';
+        return 'bg-gradient-to-br from-slate-400 to-slate-600';
+    }
+
+    function calculatePositionOvr(pos, attrs, isPitcher) {
+        if (isPitcher) {
+            const h9 = attrs.h9 || 70;
+            const k9 = attrs.k9 || 70;
+            const bb9 = attrs.bb9 || 65;
+            const ctrl = attrs.ctrl || 65;
+            const vel = attrs.vel || 70;
+            const brk = attrs.brk || 68;
+            return Math.min(99, Math.max(50, Math.round(h9 * 0.25 + k9 * 0.25 + bb9 * 0.15 + ctrl * 0.15 + vel * 0.10 + brk * 0.10)));
+        }
+
+        const conR = attrs.conR || 60;
+        const conL = attrs.conL || 60;
+        const powR = attrs.powR || 60;
+        const powL = attrs.powL || 60;
+        const vis = attrs.vis || 50;
+        const fld = attrs.fld || 60;
+        const arm = attrs.arm || 60;
+        const spd = attrs.spd || 50;
+
+        let ovr = 0;
+        if (['1B', 'DH'].includes(pos)) {
+            ovr = (powR * 0.3) + (powL * 0.25) + (conR * 0.25) + (conL * 0.15) + (vis * 0.05);
+        } else if (['SS', '2B', 'CF'].includes(pos)) {
+            ovr = (conR * 0.25) + (conL * 0.20) + (fld * 0.25) + (spd * 0.15) + (powR * 0.10) + (arm * 0.05);
+        } else if (['RF', 'LF', '3B'].includes(pos)) {
+            ovr = (powR * 0.25) + (powL * 0.20) + (conR * 0.20) + (conL * 0.15) + (arm * 0.10) + (fld * 0.10);
+        } else if (pos === 'C') {
+            ovr = (fld * 0.30) + (arm * 0.20) + (conR * 0.20) + (conL * 0.15) + (powR * 0.10) + (vis * 0.05);
+        } else {
+            ovr = (conR * 0.25) + (powR * 0.25) + (conL * 0.20) + (powL * 0.15) + (fld * 0.15);
+        }
+
+        return Math.min(99, Math.max(50, Math.round(ovr)));
+    }
+
+    function getTierFromOvr(ovr) {
+        if (ovr >= 85) return 'DIAMOND';
+        if (ovr >= 80) return 'GOLD';
+        if (ovr >= 75) return 'SILVER';
+        if (ovr >= 65) return 'BRONZE';
+        return 'COMMON';
+    }
+
+    function calculateDnaScores(attrs, isPitcher) {
+        if (isPitcher) {
+            const pow = Math.round(((attrs.vel || 70) + (attrs.brk || 70)) / 2);
+            const con = Math.round(((attrs.h9 || 70) + (attrs.k9 || 70)) / 2);
+            const iq = Math.round(((attrs.bb9 || 65) + (attrs.ctrl || 65)) / 2);
+            const def = Math.round(((attrs.fld || 60) + (attrs.arm || 60)) / 2);
+            return { power: pow, contact: con, iq: iq, defense: def };
+        }
+
+        const pow = Math.round(((attrs.powR || 60) * 0.5) + ((attrs.powL || 60) * 0.5));
+        const con = Math.round(((attrs.conR || 60) * 0.5) + ((attrs.conL || 60) * 0.5));
+        const iq = Math.round(((attrs.vis || 50) * 0.5) + ((attrs.disc || 50) * 0.5));
+        const def = Math.round(((attrs.fld || 60) * 0.4) + ((attrs.arm || 60) * 0.3) + ((attrs.reac || 50) * 0.3));
+
+        return { power: pow, contact: con, iq: iq, defense: def };
+    }
+
+    function generateQuirks(attrs, ovr, isPitcher) {
+        const list = [];
+        if (!isPitcher) {
+            if ((attrs.powR || 0) >= 85 || (attrs.powL || 0) >= 85) {
+                list.push({ name: 'Bomber', desc: 'Excels at hitting long home runs', icon: 'fa-bomb' });
+            }
+            if ((attrs.conR || 0) >= 85 || (attrs.conL || 0) >= 85) {
+                list.push({ name: 'Hit Machine', desc: 'Consistently finds gaps for extra bases', icon: 'fa-bullseye' });
+            }
+            if ((attrs.spd || 0) >= 80) {
+                list.push({ name: 'Speed Demon', desc: 'Exceptional speed on basepaths & outfield', icon: 'fa-bolt' });
+            }
+            if ((attrs.fld || 0) >= 85) {
+                list.push({ name: 'Glove Wizard', desc: 'Makes spectacular web-gem defensive plays', icon: 'fa-shield-halved' });
+            }
+            if ((attrs.disc || 0) >= 80) {
+                list.push({ name: 'Unfazed Eye', desc: 'Elite pitch recognition in deep counts', icon: 'fa-eye' });
+            }
+        } else {
+            if ((attrs.vel || 0) >= 88) {
+                list.push({ name: 'Outlier 100+', desc: 'Throws high velocity fastballs consistently', icon: 'fa-fire' });
+            }
+            if ((attrs.k9 || 0) >= 85) {
+                list.push({ name: 'Strikeout Artist', desc: 'Generates high whiff rates with two strikes', icon: 'fa-wand-magic-sparkles' });
+            }
+            if ((attrs.ctrl || 0) >= 85) {
+                list.push({ name: 'Pinpoint Control', desc: 'Paints corners with surgical accuracy', icon: 'fa-crosshair' });
+            }
+        }
+
+        if (ovr >= 90) {
+            list.push({ name: 'Finch & Clutch', desc: 'Performs at highest tier in high-leverage late innings', icon: 'fa-trophy' });
+        }
+
+        return list;
+    }
+
+    function renderQuirks(card) {
+        const container = document.getElementById('quirksContainer');
+        const countEl = document.getElementById('quirkCount');
+        if (countEl) countEl.innerText = `${card.quirks.length} Active`;
+
+        if (!container) return;
+
+        if (card.quirks.length === 0) {
+            container.innerHTML = '<p class="text-xs text-slate-500 col-span-2">No special diamond quirks unlocked for this attribute profile.</p>';
+            return;
+        }
+
+        container.innerHTML = card.quirks.map(q => `
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
+                    <i class="fa-solid ${q.icon}"></i>
+                </div>
+                <div>
+                    <h5 class="text-xs font-bold text-white">${q.name}</h5>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${q.desc}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleEditMode() {
+        state.isEditMode = !state.isEditMode;
+        updateEditBtnUI();
+        const card = state.rosterCards.find(c => c.id === state.activeModalCardId);
+        if (card) renderAttributesGrid(card);
+    }
+
+    function updateEditBtnUI() {
+        const btnText = document.getElementById('editBtnText');
+        if (btnText) {
+            btnText.innerText = state.isEditMode ? 'View Mode' : 'Edit Attributes';
+        }
+    }
+
+    function onLiveAttributeChange(attrKey, newVal) {
+        const card = state.rosterCards.find(c => c.id === state.activeModalCardId);
+        if (!card) return;
+
+        card.attributes[attrKey] = parseInt(newVal);
+        
+        card.ovr = calculatePositionOvr(card.pos, card.attributes, card.isPitcher);
+        card.tier = getTierFromOvr(card.ovr);
+        card.dna = calculateDnaScores(card.attributes, card.isPitcher);
+
+        document.getElementById('cardOvrBox').innerText = card.ovr;
+        document.getElementById('cardTierText').innerText = card.tier;
+        document.getElementById('dnaPowerVal').innerText = card.dna.power;
+        document.getElementById('dnaPowerBar').style.width = `${card.dna.power}%`;
+        document.getElementById('dnaContactVal').innerText = card.dna.contact;
+        document.getElementById('dnaContactBar').style.width = `${card.dna.contact}%`;
+    }
+
+    function saveCardEdits() {
+        saveCardsToStorage();
+        renderRosterGrid();
+        showToast('Card updates saved to local board!', 'success');
+        closeModal();
+    }
+
+    function deleteCurrentCard() {
+        if (!state.activeModalCardId) return;
+        deleteCard(state.activeModalCardId);
+        closeModal();
+    }
+
+    function deleteCard(cardId) {
+        state.rosterCards = state.rosterCards.filter(c => c.id !== cardId);
+        saveCardsToStorage();
+        renderRosterGrid();
+        showToast('Card removed from Center Board', 'info');
+    }
+
+    function clearAllCards() {
+        if (confirm('Clear all cards from your center board?')) {
+            state.rosterCards = [];
+            saveCardsToStorage();
+            renderRosterGrid();
+            showToast('Center board cleared', 'info');
+        }
+    }
+
+    function switchModalTab(tab) {
+        state.activeTab = tab;
+        document.getElementById('tabAttributes').classList.toggle('hidden', tab !== 'attributes');
+        document.getElementById('tabRawMetrics').classList.toggle('hidden', tab !== 'rawMetrics');
+        document.getElementById('tabQuirks').classList.toggle('hidden', tab !== 'quirks');
+
+        document.getElementById('tabBtnAttr').className = tab === 'attributes' ? 'py-2 text-cyan-400 border-b-2 border-cyan-400 flex items-center space-x-1.5 font-bold' : 'py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-1.5 font-bold';
+        document.getElementById('tabBtnRaw').className = tab === 'rawMetrics' ? 'py-2 text-cyan-400 border-b-2 border-cyan-400 flex items-center space-x-1.5 font-bold' : 'py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-1.5 font-bold';
+        document.getElementById('tabBtnQuirks').className = tab === 'quirks' ? 'py-2 text-cyan-400 border-b-2 border-cyan-400 flex items-center space-x-1.5 font-bold' : 'py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-1.5 font-bold';
+    }
+
+    function openCustomPlayerModal() {
+        document.getElementById('customPlayerModal').classList.remove('hidden');
+    }
+
+    function closeCustomPlayerModal() {
+        document.getElementById('customPlayerModal').classList.add('hidden');
+    }
+
+    function handleCustomPlayerSubmit(e) {
+        e.preventDefault();
+        const first = document.getElementById('custFirstName').value;
+        const last = document.getElementById('custLastName').value;
+        const pos = document.getElementById('custPos').value;
+        const team = document.getElementById('custTeam').value;
+        const ovr = parseInt(document.getElementById('custOvr').value);
+        const photoUrl = document.getElementById('custPhotoUrl').value || `https://placehold.co/200x200/121824/3b82f6?text=${first}+${last}`;
+
+        const isPitcher = ['SP', 'RP', 'CP'].includes(pos);
+        const card = calculateTheShowRatingPipeline({
+            id: Math.floor(Math.random() * 999999),
+            fullName: `${first} ${last}`,
+            primaryPosition: { abbreviation: pos, code: isPitcher ? '1' : '3' },
+            currentTeam: { name: team }
+        });
+
+        card.photoUrl = photoUrl;
+        card.ovr = ovr;
+        card.tier = getTierFromOvr(ovr);
+
+        state.rosterCards.unshift(card);
+        saveCardsToStorage();
+        renderRosterGrid();
+        closeCustomPlayerModal();
+        showToast(`Custom card created for ${card.fullName}`, 'success');
+    }
+
+    function createSyntheticCard(personId) {
+        return calculateTheShowRatingPipeline({
+            id: personId || 999999,
+            fullName: 'Custom MLB Superstar',
+            firstName: 'Custom',
+            lastName: 'Player',
+            primaryPosition: { abbreviation: 'RF', code: '3' },
+            currentTeam: { name: 'MLB All-Stars' }
+        });
+    }
+
+    function showToast(msg, type = 'info') {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toastIcon');
+        const msgEl = document.getElementById('toastMsg');
+
+        if (!toast) return;
+
+        msgEl.innerText = msg;
+        if (type === 'error') {
+            icon.className = 'fa-solid fa-triangle-exclamation text-red-400 text-sm';
+        } else if (type === 'success') {
+            icon.className = 'fa-solid fa-circle-check text-emerald-400 text-sm';
+        } else {
+            icon.className = 'fa-solid fa-circle-info text-cyan-400 text-sm';
+        }
+
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+</script>
+</body>
+</html>
