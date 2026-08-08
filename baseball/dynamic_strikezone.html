@@ -27,12 +27,12 @@
         .font-chakra { font-family: 'Chakra Petch', sans-serif; }
         
         .stadium-bg {
-            background: linear-gradient(180deg, rgba(5, 10, 20, 0.82) 0%, rgba(10, 18, 32, 0.94) 100%),
+            background: linear-gradient(180deg, rgba(5, 10, 20, 0.88) 0%, rgba(10, 18, 32, 0.96) 100%),
                         url('https://images.unsplash.com/photo-1508802279492-472765a07916?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
         }
 
         .hud-panel {
-            background: rgba(12, 20, 36, 0.88);
+            background: rgba(12, 20, 36, 0.90);
             border: 2px solid #2a3e5c;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.67), inset 0 0 12px rgba(56, 189, 248, 0.15);
             backdrop-filter: blur(8px);
@@ -106,7 +106,7 @@
                     const playEventDesc = (play.result?.event || '').toLowerCase();
                     const isLastPitchOfPlay = idx === playEvents.length - 1;
 
-                    let result = 'TAKEN';
+                    let result = 'TAKEN BALL';
                     if (callDesc.includes('in play') || callDesc.includes('hit')) {
                         if (play.result?.type === 'hit' || ['single', 'double', 'triple', 'home run'].some(h => playEventDesc.includes(h))) {
                             result = 'HIT';
@@ -116,29 +116,72 @@
                     } else if (callDesc.includes('foul')) {
                         result = 'FOULED';
                     } else if (callDesc.includes('swinging strike') || callDesc.includes('missed') || callDesc.includes('foul tip')) {
-                        result = 'MISSED';
+                        if (isLastPitchOfPlay && (playEventDesc.includes('strikeout') || playEventDesc.includes('out'))) {
+                            result = 'OUT';
+                        } else {
+                            result = 'MISSED';
+                        }
                     } else if (callDesc.includes('called strike')) {
                         if (isLastPitchOfPlay && playEventDesc.includes('strikeout')) {
                             result = 'OUT';
                         } else {
-                            result = 'TAKEN';
+                            result = 'TAKEN STRIKE';
                         }
                     } else if (callDesc.includes('ball') || callDesc.includes('blocked')) {
-                        result = 'TAKEN';
+                        if (isLastPitchOfPlay && playEventDesc.includes('out')) {
+                            result = 'OUT';
+                        } else {
+                            result = 'TAKEN BALL';
+                        }
+                    } else if (isLastPitchOfPlay && playEventDesc.includes('out')) {
+                        result = 'OUT';
                     }
 
                     let rawZone = evt.pitchData?.zone || 5;
                     let zone = rawZone;
-                    if (rawZone > 9) {
-                        if (rawZone === 11) zone = 1;
-                        else if (rawZone === 12) zone = 3;
-                        else if (rawZone === 13) zone = 7;
-                        else if (rawZone === 14) zone = 9;
-                        else zone = 5;
-                    }
+                    
+                    let x = 2; 
+                    let y = 2; 
 
-                    const x = (zone - 1) % 3;
-                    const y = Math.floor((zone - 1) / 3);
+                    if (zone >= 1 && zone <= 9) {
+                        x = 1 + ((zone - 1) % 3);
+                        y = 1 + Math.floor((zone - 1) / 3);
+                    } else if (zone === 11) {
+                        x = 0; y = 0;
+                    } else if (zone === 12) {
+                        x = 4; y = 0;
+                    } else if (zone === 13) {
+                        x = 0; y = 4;
+                    } else if (zone === 14) {
+                        x = 4; y = 4;
+                    } else {
+                        const pitchX = evt.pitchData?.coordinates?.x;
+                        const pitchY = evt.pitchData?.coordinates?.y;
+                        
+                        if (pitchX !== undefined && pitchY !== undefined) {
+                            const rawX = Math.round((pitchX - 65) / 20);
+                            const rawY = Math.round((pitchY - 90) / 25);
+                            x = Math.max(0, Math.min(4, rawX));
+                            y = Math.max(0, Math.min(4, rawY));
+                        } else {
+                            if (callDesc.includes('high') || rawZone === 15) { x = 2; y = 0; }
+                            else if (callDesc.includes('low') || rawZone === 16) { x = 2; y = 4; }
+                            else if (callDesc.includes('inside') || rawZone === 17) { x = 0; y = 2; }
+                            else if (callDesc.includes('outside') || rawZone === 18) { x = 4; y = 2; }
+                            else { x = 2; y = 0; }
+                        }
+
+                        if (x >= 1 && x <= 3 && y >= 1 && y <= 3) {
+                            zone = (y - 1) * 3 + (x - 1) + 1;
+                        } else if (y === 0 && x === 0) zone = 11;
+                        else if (y === 0 && x === 4) zone = 12;
+                        else if (y === 4 && x === 0) zone = 13;
+                        else if (y === 4 && x === 4) zone = 14;
+                        else if (y === 0) zone = 15;
+                        else if (y === 4) zone = 16;
+                        else if (x === 0) zone = 17;
+                        else if (x === 4) zone = 18;
+                    }
 
                     const countStr = `${evt.count?.balls || 0}-${evt.count?.strikes || 0}`;
                     let situation = 'Bases Empty';
@@ -181,6 +224,7 @@
             const [currentBattingTeam, setCurrentBattingTeam] = React.useState('');
             const [currentInningHalf, setCurrentInningHalf] = React.useState('TOP');
             const [currentInningNum, setCurrentInningNum] = React.useState(1);
+            const [activeBatterAtPlate, setActiveBatterAtPlate] = React.useState('');
             const [isLoading, setIsLoading] = React.useState(false);
             const [apiError, setApiError] = React.useState(null);
             const [lastUpdatedTime, setLastUpdatedTime] = React.useState('');
@@ -192,7 +236,7 @@
             const [selectedPitcherHand, setSelectedPitcherHand] = React.useState('ALL'); 
             const [selectedPitchType, setSelectedPitchType] = React.useState('ALL');
             const [selectedSituation, setSelectedSituation] = React.useState('ALL');
-            const [selectedResults, setSelectedResults] = React.useState(['HIT', 'OUT', 'TAKEN', 'FOULED', 'MISSED']);
+            const [selectedResults, setSelectedResults] = React.useState(['HIT', 'OUT', 'TAKEN BALL', 'TAKEN STRIKE', 'FOULED', 'MISSED']);
 
             const [selectedZone, setSelectedZone] = React.useState(null);
             const [gridMode, setGridMode] = React.useState('BA');
@@ -294,6 +338,8 @@
 
                     const isTopInning = linescore?.isTopInning;
                     const currentPlayHalf = data.liveData?.plays?.currentPlay?.about?.halfInning;
+                    const liveBatter = data.liveData?.plays?.currentPlay?.matchup?.batter?.fullName || '';
+
                     let currentBatting = away;
                     let inningHalfText = 'TOP';
                     if (isTopInning !== undefined) {
@@ -306,6 +352,7 @@
                     setCurrentBattingTeam(currentBatting);
                     setCurrentInningHalf(inningHalfText);
                     setCurrentInningNum(linescore?.currentInning || 1);
+                    if (liveBatter) setActiveBatterAtPlate(liveBatter);
 
                     const titleText = `${away} @ ${home}`;
                     setGameTitle(titleText);
@@ -319,15 +366,6 @@
                     setIsLoading(false);
                 }
             }, []);
-
-            const activeBattingTeamName = React.useMemo(() => {
-                if (selectedBatter !== 'ALL') {
-                    const bTeam = rawPitches.find(p => p.batter === selectedBatter)?.team;
-                    return bTeam ? `${selectedBatter} (${bTeam})` : selectedBatter;
-                }
-                if (selectedTeam !== 'ALL' && selectedTeam !== 'AUTO') return selectedTeam;
-                return currentBattingTeam ? currentBattingTeam : (teamsInfo.away || 'AWAY TEAM');
-            }, [selectedBatter, selectedTeam, currentBattingTeam, teamsInfo, rawPitches]);
 
             React.useEffect(() => {
                 if (searchDate) fetchGamesForDate(searchDate);
@@ -358,6 +396,13 @@
                 }
                 return Array.from(new Set(filtered.map(p => p.batter))).filter(Boolean);
             }, [rawPitches, selectedTeam, currentBattingTeam]);
+
+            // Auto-reset batter filter when batting team changes so stale batter filters don't block the new team's pitches
+            React.useEffect(() => {
+                if (selectedBatter !== 'ALL' && !availableBatters.includes(selectedBatter)) {
+                    setSelectedBatter('ALL');
+                }
+            }, [availableBatters, selectedBatter]);
 
             const availablePitchTypes = React.useMemo(() => {
                 const extracted = Array.from(new Set(rawPitches.map(p => p.pitchType))).filter(Boolean);
@@ -394,9 +439,9 @@
             const breakdownStats = React.useMemo(() => {
                 const total = filteredPitches.length;
                 if (total === 0) {
-                    return { HIT: { count: 0, ratio: '0%' }, OUT: { count: 0, ratio: '0%' }, TAKEN: { count: 0, ratio: '0%' }, FOULED: { count: 0, ratio: '0%' }, MISSED: { count: 0, ratio: '0%' }, total: 0 };
+                    return { HIT: { count: 0, ratio: '0%' }, OUT: { count: 0, ratio: '0%' }, 'TAKEN BALL': { count: 0, ratio: '0%' }, 'TAKEN STRIKE': { count: 0, ratio: '0%' }, FOULED: { count: 0, ratio: '0%' }, MISSED: { count: 0, ratio: '0%' }, total: 0 };
                 }
-                const counts = { HIT: 0, OUT: 0, TAKEN: 0, FOULED: 0, MISSED: 0 };
+                const counts = { HIT: 0, OUT: 0, 'TAKEN BALL': 0, 'TAKEN STRIKE': 0, FOULED: 0, MISSED: 0 };
                 filteredPitches.forEach(p => {
                     if (counts[p.result] !== undefined) counts[p.result]++;
                 });
@@ -404,7 +449,8 @@
                 return {
                     HIT: { count: counts.HIT, ratio: `${Math.round((counts.HIT / total) * 100)}%` },
                     OUT: { count: counts.OUT, ratio: `${Math.round((counts.OUT / total) * 100)}%` },
-                    TAKEN: { count: counts.TAKEN, ratio: `${Math.round((counts.TAKEN / total) * 100)}%` },
+                    'TAKEN BALL': { count: counts['TAKEN BALL'], ratio: `${Math.round((counts['TAKEN BALL'] / total) * 100)}%` },
+                    'TAKEN STRIKE': { count: counts['TAKEN STRIKE'], ratio: `${Math.round((counts['TAKEN STRIKE'] / total) * 100)}%` },
                     FOULED: { count: counts.FOULED, ratio: `${Math.round((counts.FOULED / total) * 100)}%` },
                     MISSED: { count: counts.MISSED, ratio: `${Math.round((counts.MISSED / total) * 100)}%` },
                     total: total
@@ -413,7 +459,8 @@
 
             const zoneMatrixData = React.useMemo(() => {
                 const matrix = {};
-                for (let z = 1; z <= 9; z++) {
+                const allZoneKeys = [1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18];
+                allZoneKeys.forEach(z => {
                     const zonePitches = filteredPitches.filter(p => p.zone === z);
                     const hits = zonePitches.filter(p => p.result === 'HIT').length;
                     const outs = zonePitches.filter(p => p.result === 'OUT').length;
@@ -441,7 +488,7 @@
                         whiffRate: `${whiffRate}%`,
                         temp
                     };
-                }
+                });
                 return matrix;
             }, [filteredPitches]);
 
@@ -603,16 +650,23 @@
                                     
                                     {/* TEAM */}
                                     <div className="flex items-center justify-between bg-slate-900/70 p-1.5 rounded border border-slate-800">
-                                        <span className="text-slate-400 font-bold tracking-wider uppercase pl-2">TEAM BATTING</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-400 font-bold tracking-wider uppercase pl-2 text-xs">TEAM BATTING</span>
+                                            {selectedTeam === 'AUTO' && currentBattingTeam && (
+                                                <span className="text-[10px] text-emerald-400 font-mono pl-2 animate-pulse font-bold">
+                                                    ● LIVE: {currentBattingTeam} ({currentInningHalf} {currentInningNum})
+                                                </span>
+                                            )}
+                                        </div>
                                         <select
                                             value={selectedTeam}
                                             onChange={(e) => {
                                                 setSelectedTeam(e.target.value);
                                                 setSelectedBatter('ALL');
                                             }}
-                                            className="bg-slate-950 text-yellow-400 font-bold text-right px-2 py-1 rounded border border-slate-700 outline-none focus:border-cyan-400 cursor-pointer min-w-[150px]"
+                                            className="bg-slate-950 text-yellow-400 font-bold text-right px-2 py-1 rounded border border-slate-700 outline-none focus:border-cyan-400 cursor-pointer min-w-[170px]"
                                         >
-                                            <option value="AUTO">AUTO (CURRENT AT-BAT)</option>
+                                            <option value="AUTO">⚡ AUTO (BATTING TEAM)</option>
                                             <option value="ALL">ALL TEAMS</option>
                                             {availableTeams.map(t => <option key={t} value={t}>{t}</option>)}
                                         </select>
@@ -620,11 +674,18 @@
 
                                     {/* BATTER */}
                                     <div className="flex items-center justify-between bg-slate-900/70 p-1.5 rounded border border-slate-800">
-                                        <span className="text-slate-400 font-bold tracking-wider uppercase pl-2">BATTER</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-400 font-bold tracking-wider uppercase pl-2 text-xs">BATTER</span>
+                                            {activeBatterAtPlate && (
+                                                <span className="text-[10px] text-cyan-400 font-mono pl-2 font-bold truncate max-w-[120px]" title={activeBatterAtPlate}>
+                                                    AT PLATE: {activeBatterAtPlate}
+                                                </span>
+                                            )}
+                                        </div>
                                         <select
                                             value={selectedBatter}
                                             onChange={(e) => setSelectedBatter(e.target.value)}
-                                            className="bg-slate-950 text-cyan-300 font-bold text-right px-2 py-1 rounded border border-slate-700 outline-none focus:border-cyan-400 cursor-pointer min-w-[150px]"
+                                            className="bg-slate-950 text-cyan-300 font-bold text-right px-2 py-1 rounded border border-slate-700 outline-none focus:border-cyan-400 cursor-pointer min-w-[170px]"
                                         >
                                             <option value="ALL">ALL BATTERS</option>
                                             {availableBatters.map(b => <option key={b} value={b}>{b}</option>)}
@@ -679,11 +740,12 @@
                                         <span className="text-slate-400 font-bold tracking-wider uppercase text-[11px] pl-1">
                                             RESULTS FILTER (TOGGLE CHECKBOXES)
                                         </span>
-                                        <div className="flex flex-wrap gap-1.5">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                                             {[
                                                 { id: 'HIT', label: 'HIT', color: 'border-emerald-500 bg-emerald-950/80 text-emerald-300' },
                                                 { id: 'OUT', label: 'OUT', color: 'border-red-500 bg-red-950/80 text-red-300' },
-                                                { id: 'TAKEN', label: 'TAKEN', color: 'border-cyan-500 bg-cyan-950/80 text-cyan-300' },
+                                                { id: 'TAKEN BALL', label: 'TAKEN BALL', color: 'border-cyan-500 bg-cyan-950/80 text-cyan-300' },
+                                                { id: 'TAKEN STRIKE', label: 'TAKEN STRIKE', color: 'border-blue-500 bg-blue-950/80 text-blue-300' },
                                                 { id: 'FOULED', label: 'FOULED', color: 'border-yellow-500 bg-yellow-950/80 text-yellow-300' },
                                                 { id: 'MISSED', label: 'MISSED', color: 'border-purple-500 bg-purple-950/80 text-purple-300' }
                                             ].map(r => {
@@ -692,12 +754,12 @@
                                                     <button
                                                         key={r.id}
                                                         onClick={() => toggleResultFilter(r.id)}
-                                                        className={`flex-1 min-w-[60px] py-1 px-2 text-[11px] font-mono font-bold rounded border transition flex items-center justify-center gap-1 ${
+                                                        className={`py-1 px-1.5 text-[10px] font-mono font-bold rounded border transition flex items-center justify-center gap-1 ${
                                                             isChecked ? `${r.color} ring-1 ring-white/30 shadow` : 'bg-slate-950 text-slate-500 border-slate-800'
                                                         }`}
                                                     >
                                                         <span>{isChecked ? '☑' : '☐'}</span>
-                                                        <span>{r.label}</span>
+                                                        <span className="truncate">{r.label}</span>
                                                     </button>
                                                 );
                                             })}
@@ -726,7 +788,7 @@
                                     </div>
 
                                     <div className="divide-y divide-slate-800/80 font-mono text-sm">
-                                        <div className="grid grid-cols-3 py-2.5 px-2 items-center hover:bg-slate-800/40 transition">
+                                        <div className="grid grid-cols-3 py-2 px-2 items-center hover:bg-slate-800/40 transition">
                                             <span className="font-bold text-emerald-400 flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> HIT
                                             </span>
@@ -734,7 +796,7 @@
                                             <span className="text-right font-bold text-emerald-400">{breakdownStats.HIT.ratio}</span>
                                         </div>
 
-                                        <div className="grid grid-cols-3 py-2.5 px-2 items-center hover:bg-slate-800/40 transition">
+                                        <div className="grid grid-cols-3 py-2 px-2 items-center hover:bg-slate-800/40 transition">
                                             <span className="font-bold text-red-400 flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span> OUT
                                             </span>
@@ -742,15 +804,23 @@
                                             <span className="text-right font-bold text-red-400">{breakdownStats.OUT.ratio}</span>
                                         </div>
 
-                                        <div className="grid grid-cols-3 py-2.5 px-2 items-center hover:bg-slate-800/40 transition">
+                                        <div className="grid grid-cols-3 py-2 px-2 items-center hover:bg-slate-800/40 transition">
                                             <span className="font-bold text-cyan-300 flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-300"></span> TAKEN
+                                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-300"></span> TAKEN BALL
                                             </span>
-                                            <span className="text-center font-bold text-slate-200">{breakdownStats.TAKEN.count}</span>
-                                            <span className="text-right font-bold text-cyan-300">{breakdownStats.TAKEN.ratio}</span>
+                                            <span className="text-center font-bold text-slate-200">{breakdownStats['TAKEN BALL'].count}</span>
+                                            <span className="text-right font-bold text-cyan-300">{breakdownStats['TAKEN BALL'].ratio}</span>
                                         </div>
 
-                                        <div className="grid grid-cols-3 py-2.5 px-2 items-center hover:bg-slate-800/40 transition">
+                                        <div className="grid grid-cols-3 py-2 px-2 items-center hover:bg-slate-800/40 transition">
+                                            <span className="font-bold text-blue-400 flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> TAKEN STRIKE
+                                            </span>
+                                            <span className="text-center font-bold text-slate-200">{breakdownStats['TAKEN STRIKE'].count}</span>
+                                            <span className="text-right font-bold text-blue-400">{breakdownStats['TAKEN STRIKE'].ratio}</span>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 py-2 px-2 items-center hover:bg-slate-800/40 transition">
                                             <span className="font-bold text-yellow-400 flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> FOULED
                                             </span>
@@ -758,7 +828,7 @@
                                             <span className="text-right font-bold text-yellow-400">{breakdownStats.FOULED.ratio}</span>
                                         </div>
 
-                                        <div className="grid grid-cols-3 py-2.5 px-2 items-center hover:bg-slate-800/40 transition">
+                                        <div className="grid grid-cols-3 py-2 px-2 items-center hover:bg-slate-800/40 transition">
                                             <span className="font-bold text-purple-400 flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span> MISSED
                                             </span>
@@ -777,208 +847,253 @@
 
                         </div>
 
-                        {/* RIGHT COLUMN: LINESCORE BOX SCORE, HEAT MAP & PLOTTER */}
+                        {/* MIDDLE COLUMN: BOX SCORE + STRIKE ZONE MATRIX & VISUALIZER */}
                         <div className="lg:col-span-7 flex flex-col gap-6">
-
-                            {/* LINESCORE BOX SCORE */}
-                            <div className="hud-panel p-4 overflow-x-auto">
-                                <div className="border-b border-cyan-500/30 pb-1.5 mb-2 flex justify-between items-center">
-                                    <h2 className="text-xs font-bold font-chakra text-cyan-400 uppercase tracking-widest flex items-center gap-2">
-                                        <span>📊 OFFICIAL GAME LINESCORE BOX SCORE</span>
-                                    </h2>
-                                    <span className="text-[10px] font-mono text-slate-400 uppercase">
-                                        Status: <span className="text-emerald-400 font-bold">{gameStatus || 'N/A'}</span>
-                                    </span>
+                            
+                            {/* LIVE BOX SCORE / LINESCORE HUD CARD ABOVE STRIKEZONE */}
+                            <div className="hud-panel p-4">
+                                <div className="flex items-center justify-between border-b border-cyan-500/30 pb-2 mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-sm font-bold font-chakra text-cyan-400 tracking-wider uppercase flex items-center gap-2">
+                                            📊 LIVE GAME LINESCORE & BOX SCORE
+                                        </h2>
+                                        {gameStatus && (
+                                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase border ${
+                                                gameStatus.includes('In Progress') || gameStatus.includes('Live')
+                                                ? 'bg-emerald-950 text-emerald-400 border-emerald-500 animate-pulse'
+                                                : 'bg-slate-800 text-slate-300 border-slate-600'
+                                            }`}>
+                                                {gameStatus} {linescoreData?.currentInning ? `• ${currentInningHalf} ${currentInningNum}` : ''}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-[11px] font-mono text-slate-400">
+                                        Current Batting: <span className="font-bold text-yellow-400">{currentBattingTeam || 'N/A'}</span>
+                                    </div>
                                 </div>
 
-                                <table className="w-full text-center font-mono text-xs">
-                                    <thead>
-                                        <tr className="text-slate-400 border-b border-slate-800 text-[11px]">
-                                            <th className="text-left py-1 pr-2 uppercase font-bold text-cyan-300">TEAM</th>
-                                            {boxScoreData.inningCols.map(num => (
-                                                <th key={num} className="px-1.5 py-1 min-w-[22px]">{num}</th>
-                                            ))}
-                                            <th className="px-2 py-1 border-l border-slate-700 text-yellow-400 font-bold">R</th>
-                                            <th className="px-2 py-1 text-slate-200 font-bold">H</th>
-                                            <th className="px-2 py-1 text-red-400 font-bold">E</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-800/60 font-semibold">
-                                        <tr className="hover:bg-slate-800/30">
-                                            <td className="text-left py-1.5 pr-2 font-bold text-slate-200 truncate max-w-[120px]">
-                                                {teamsInfo.away}
-                                            </td>
-                                            {boxScoreData.awayInnings.map((val, idx) => (
-                                                <td key={idx} className="px-1.5 py-1 text-slate-300">{val}</td>
-                                            ))}
-                                            <td className="px-2 py-1 border-l border-slate-700 font-bold text-yellow-400 bg-slate-900/60">{boxScoreData.awayTotals.r}</td>
-                                            <td className="px-2 py-1 font-bold text-slate-100">{boxScoreData.awayTotals.h}</td>
-                                            <td className="px-2 py-1 font-bold text-red-400">{boxScoreData.awayTotals.e}</td>
-                                        </tr>
-                                        <tr className="hover:bg-slate-800/30">
-                                            <td className="text-left py-1.5 pr-2 font-bold text-slate-200 truncate max-w-[120px]">
-                                                {teamsInfo.home}
-                                            </td>
-                                            {boxScoreData.homeInnings.map((val, idx) => (
-                                                <td key={idx} className="px-1.5 py-1 text-slate-300">{val}</td>
-                                            ))}
-                                            <td className="px-2 py-1 border-l border-slate-700 font-bold text-yellow-400 bg-slate-900/60">{boxScoreData.homeTotals.r}</td>
-                                            <td className="px-2 py-1 font-bold text-slate-100">{boxScoreData.homeTotals.h}</td>
-                                            <td className="px-2 py-1 font-bold text-red-400">{boxScoreData.homeTotals.e}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                {linescoreData ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-center font-mono text-xs">
+                                            <thead>
+                                                <tr className="text-slate-400 border-b border-slate-800 text-[11px]">
+                                                    <th className="text-left py-1 px-2 font-bold uppercase">Team</th>
+                                                    {boxScoreData.inningCols.map(num => (
+                                                        <th key={num} className={`py-1 px-1.5 font-semibold ${num === currentInningNum ? 'text-cyan-400 bg-cyan-950/40 rounded' : ''}`}>
+                                                            {num}
+                                                        </th>
+                                                    ))}
+                                                    <th className="py-1 px-2 font-bold text-cyan-300 border-l border-slate-800">R</th>
+                                                    <th className="py-1 px-2 font-bold text-slate-300">H</th>
+                                                    <th className="py-1 px-2 font-bold text-slate-300">E</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-800/60 font-semibold">
+                                                <tr className={`${currentBattingTeam === teamsInfo.away ? 'bg-cyan-950/30' : ''}`}>
+                                                    <td className="text-left py-2 px-2 text-white font-bold flex items-center gap-1.5">
+                                                        {currentBattingTeam === teamsInfo.away && <span className="text-cyan-400 text-xs">▶</span>}
+                                                        <span>{teamsInfo.away}</span>
+                                                    </td>
+                                                    {boxScoreData.awayInnings.map((val, i) => (
+                                                        <td key={i} className={`py-2 px-1.5 ${i + 1 === currentInningNum && currentInningHalf === 'TOP' ? 'text-yellow-400 font-bold bg-yellow-950/40' : 'text-slate-300'}`}>
+                                                            {val}
+                                                        </td>
+                                                    ))}
+                                                    <td className="py-2 px-2 text-cyan-400 font-black border-l border-slate-800 text-sm">{boxScoreData.awayTotals.r}</td>
+                                                    <td className="py-2 px-2 text-slate-200">{boxScoreData.awayTotals.h}</td>
+                                                    <td className="py-2 px-2 text-slate-400">{boxScoreData.awayTotals.e}</td>
+                                                </tr>
+                                                <tr className={`${currentBattingTeam === teamsInfo.home ? 'bg-cyan-950/30' : ''}`}>
+                                                    <td className="text-left py-2 px-2 text-white font-bold flex items-center gap-1.5">
+                                                        {currentBattingTeam === teamsInfo.home && <span className="text-cyan-400 text-xs">▶</span>}
+                                                        <span>{teamsInfo.home}</span>
+                                                    </td>
+                                                    {boxScoreData.homeInnings.map((val, i) => (
+                                                        <td key={i} className={`py-2 px-1.5 ${i + 1 === currentInningNum && currentInningHalf === 'BOT' ? 'text-yellow-400 font-bold bg-yellow-950/40' : 'text-slate-300'}`}>
+                                                            {val}
+                                                        </td>
+                                                    ))}
+                                                    <td className="py-2 px-2 text-cyan-400 font-black border-l border-slate-800 text-sm">{boxScoreData.homeTotals.r}</td>
+                                                    <td className="py-2 px-2 text-slate-200">{boxScoreData.homeTotals.h}</td>
+                                                    <td className="py-2 px-2 text-slate-400">{boxScoreData.homeTotals.e}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-3 text-xs font-mono text-slate-500 italic">
+                                        Linescore unavailable or loading live game data...
+                                    </div>
+                                )}
                             </div>
 
-                            {/* VIEW SELECTOR SWITCH */}
-                            <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-700 font-chakra text-sm font-bold">
-                                <button
-                                    onClick={() => setActiveTab('ANALYSIS')}
-                                    className={`flex-1 py-2 rounded-md transition text-center ${
-                                        activeTab === 'ANALYSIS'
-                                        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow'
-                                        : 'text-slate-400 hover:text-white'
-                                    }`}
-                                >
-                                    🎯 STRIKE ZONE HEAT MAP
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('PLOTTER')}
-                                    className={`flex-1 py-2 rounded-md transition text-center ${
-                                        activeTab === 'PLOTTER'
-                                        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow'
-                                        : 'text-slate-400 hover:text-white'
-                                    }`}
-                                >
-                                    ⚾ PITCH LOCATION & VELOCITY PLOT
-                                </button>
+                            {/* TAB NAVIGATION HEADER */}
+                            <div className="hud-panel p-2 flex items-center justify-between">
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setActiveTab('ANALYSIS')}
+                                        className={`px-4 py-2 rounded-lg font-chakra font-bold text-sm tracking-wider uppercase transition flex items-center gap-2 ${
+                                            activeTab === 'ANALYSIS'
+                                            ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30'
+                                            : 'bg-slate-900 text-slate-400 hover:text-cyan-300'
+                                        }`}
+                                    >
+                                        🎯 5x5 Strike & Ball Zone
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('PLOTTER')}
+                                        className={`px-4 py-2 rounded-lg font-chakra font-bold text-sm tracking-wider uppercase transition flex items-center gap-2 ${
+                                            activeTab === 'PLOTTER'
+                                            ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30'
+                                            : 'bg-slate-900 text-slate-400 hover:text-cyan-300'
+                                        }`}
+                                    >
+                                        ⚾ Statcast Pitch Trail
+                                    </button>
+                                </div>
+
+                                {/* METRIC MODE TOGGLE */}
+                                {activeTab === 'ANALYSIS' && (
+                                    <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-700/80">
+                                        <button
+                                            onClick={() => setGridMode('BA')}
+                                            className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all ${
+                                                gridMode === 'BA'
+                                                ? 'bg-cyan-500 text-slate-950'
+                                                : 'text-slate-400 hover:text-cyan-300'
+                                            }`}
+                                        >
+                                            .AVG
+                                        </button>
+                                        <button
+                                            onClick={() => setGridMode('WHIFF')}
+                                            className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all ${
+                                                gridMode === 'WHIFF'
+                                                ? 'bg-cyan-500 text-slate-950'
+                                                : 'text-slate-400 hover:text-cyan-300'
+                                            }`}
+                                        >
+                                            Whiff %
+                                        </button>
+                                        <button
+                                            onClick={() => setGridMode('FREQ')}
+                                            className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all ${
+                                                gridMode === 'FREQ'
+                                                ? 'bg-cyan-500 text-slate-950'
+                                                : 'text-slate-400 hover:text-cyan-300'
+                                            }`}
+                                        >
+                                            Pitches
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
+                            {/* TAB CONTENT DISPLAY */}
                             {activeTab === 'ANALYSIS' ? (
-                                <React.Fragment>
-                                    {/* 3X3 STRIKE ZONE HEAT MAP PANEL */}
-                                    <div className="hud-panel p-6 flex flex-col items-center justify-center relative">
-                                        
-                                        <div className="text-center mb-4">
-                                            <div className="flex items-center justify-center gap-2 mb-1">
-                                                <span className="text-[11px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/60 px-2.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-1.5 shadow">
-                                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
-                                                    CURRENTLY AT BAT: <span className="text-yellow-400 font-extrabold">{currentBattingTeam || 'N/A'}</span> ({currentInningHalf} {currentInningNum})
-                                                </span>
-                                            </div>
-                                            <h2 className="text-3xl font-extrabold font-teko tracking-wider text-slate-100 uppercase">
-                                                {activeBattingTeamName} <span className="text-cyan-400">VS.</span> {selectedPitcherHand !== 'ALL' ? selectedPitcherHand : 'ALL PITCHERS'}
-                                            </h2>
-                                            <p className="text-xs font-mono text-cyan-300">
-                                                Active Display Metric: <span className="text-yellow-400 font-bold">{gridMode === 'BA' ? 'Batting Average (.AVG)' : gridMode === 'WHIFF' ? 'Whiff Rate (%)' : 'Pitch Volume'}</span>
-                                            </p>
-                                        </div>
+                                <div className="hud-panel p-6 flex flex-col items-center">
+                                    
+                                    <div className="w-full flex justify-between items-center mb-4 border-b border-cyan-500/30 pb-2">
+                                        <h2 className="text-lg font-bold font-chakra text-cyan-400 flex items-center gap-2">
+                                            🎯 Expanded 5x5 Strike & Ball Zone Matrix
+                                        </h2>
+                                        <span className="text-xs font-mono text-cyan-300 bg-slate-900 px-2 py-1 rounded border border-cyan-800">
+                                            Mode: <span className="font-bold text-yellow-400">{gridMode === 'BA' ? 'Batting Avg (.AVG)' : gridMode === 'WHIFF' ? 'Whiff Rate (%)' : 'Pitch Count'}</span>
+                                        </span>
+                                    </div>
 
-                                        {/* 3x3 MATRIX STRIKE ZONE */}
-                                        <div className="grid grid-cols-3 gap-2.5 w-full max-w-md aspect-square bg-slate-950 p-3 rounded-xl border-2 border-slate-700 shadow-2xl relative">
-                                            
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(zoneNum => {
-                                                const zData = zoneMatrixData[zoneNum];
+                                    {/* 5x5 EXPANDED STRIKE & BALL ZONE MATRIX */}
+                                    <div className="grid grid-cols-5 gap-1.5 w-full max-w-lg aspect-square bg-slate-950 p-2.5 rounded-xl border-2 border-slate-700 shadow-2xl relative">
+                                        {[0, 1, 2, 3, 4].map(y => (
+                                            [0, 1, 2, 3, 4].map(x => {
+                                                const isStrikeZone = x >= 1 && x <= 3 && y >= 1 && y <= 3;
+                                                let zoneNum = 5;
+                                                let label = '';
+                                                
+                                                if (isStrikeZone) {
+                                                    zoneNum = (y - 1) * 3 + (x - 1) + 1;
+                                                    label = `#${zoneNum}`;
+                                                } else {
+                                                    if (x === 0 && y === 0) { zoneNum = 11; label = 'HIGH-L'; }
+                                                    else if (x === 4 && y === 0) { zoneNum = 12; label = 'HIGH-R'; }
+                                                    else if (x === 0 && y === 4) { zoneNum = 13; label = 'LOW-L'; }
+                                                    else if (x === 4 && y === 4) { zoneNum = 14; label = 'LOW-R'; }
+                                                    else if (y === 0) { zoneNum = 15; label = 'HIGH'; }
+                                                    else if (y === 4) { zoneNum = 16; label = 'LOW'; }
+                                                    else if (x === 0) { zoneNum = 17; label = 'OUT-L'; }
+                                                    else if (x === 4) { zoneNum = 18; label = 'OUT-R'; }
+                                                }
+
+                                                const zData = zoneMatrixData[zoneNum] || { hits: 0, outs: 0, ab: 0, totalPitches: 0, ba: '.000', whiffRate: '0%', temp: 'zero' };
                                                 const isSelected = selectedZone === zoneNum;
 
-                                                let bgClass = 'zero-zone';
-                                                if (zData.temp === 'hot') bgClass = 'hot-zone';
-                                                else if (zData.temp === 'avg') bgClass = 'avg-zone';
-                                                else if (zData.temp === 'weak') bgClass = 'weak-zone';
-                                                else bgClass = 'zero-zone';
+                                                let bgClass = isStrikeZone ? 'zero-zone' : 'bg-slate-900/90 border-slate-800 text-slate-400';
+                                                if (isStrikeZone) {
+                                                    if (zData.temp === 'hot') bgClass = 'hot-zone';
+                                                    else if (zData.temp === 'avg') bgClass = 'avg-zone';
+                                                    else if (zData.temp === 'weak') bgClass = 'weak-zone';
+                                                } else if (zData.totalPitches > 0) {
+                                                    if (zData.hits > 0) bgClass = 'bg-emerald-950/80 border-emerald-600/80 text-emerald-200';
+                                                    else if (zData.outs > 0) bgClass = 'bg-red-950/80 border-red-600/80 text-red-200';
+                                                    else bgClass = 'bg-slate-800/80 border-cyan-700/60 text-cyan-200';
+                                                }
 
                                                 return (
                                                     <div
-                                                        key={zoneNum}
+                                                        key={`${x}-${y}`}
                                                         onClick={() => setSelectedZone(isSelected ? null : zoneNum)}
-                                                        className={`zone-cell ${bgClass} rounded-lg flex flex-col items-center justify-center cursor-pointer p-2 relative text-white border-2 ${
-                                                            isSelected ? 'border-yellow-400 ring-4 ring-yellow-400/50 scale-105 z-20' : 'border-white/20'
+                                                        className={`zone-cell ${bgClass} rounded-md flex flex-col items-center justify-center cursor-pointer p-1 relative transition-all border ${
+                                                            isStrikeZone ? 'border-cyan-400/50 shadow-inner' : 'border-slate-800'
+                                                        } ${
+                                                            isSelected ? 'border-yellow-400 ring-2 ring-yellow-400 z-20 scale-105' : ''
                                                         }`}
                                                     >
-                                                        <span className="text-[10px] font-mono text-white/70 absolute top-1 left-1.5 font-bold">
-                                                            #{zoneNum}
+                                                        <span className={`text-[8px] sm:text-[9px] font-mono absolute top-0.5 left-1 font-bold ${
+                                                            isStrikeZone ? 'text-white/80' : 'text-cyan-400/80'
+                                                        }`}>
+                                                            {label}
                                                         </span>
 
-                                                        <span className="text-xs font-mono font-semibold text-white/90">
+                                                        <span className="text-[9px] sm:text-[10px] font-mono font-semibold text-white/90 mt-2">
                                                             ({zData.hits}-{zData.ab})
                                                         </span>
 
-                                                        <span className="text-xl sm:text-2xl font-black font-chakra tracking-tight drop-shadow-md text-white mt-0.5">
+                                                        <span className="text-sm sm:text-lg font-black font-chakra tracking-tight drop-shadow text-white">
                                                             {gridMode === 'BA' && zData.ba}
                                                             {gridMode === 'WHIFF' && zData.whiffRate}
-                                                            {gridMode === 'FREQ' && `${zData.totalPitches} pitches`}
+                                                            {gridMode === 'FREQ' && `${zData.totalPitches}p`}
                                                         </span>
-
-                                                        {isSelected && (
-                                                            <span className="absolute bottom-1 bg-yellow-400 text-slate-950 text-[9px] font-extrabold px-1.5 rounded uppercase font-mono">
-                                                                SELECTED
-                                                            </span>
-                                                        )}
                                                     </div>
                                                 );
-                                            })}
-
-                                        </div>
-
-                                        <p className="mt-3 text-xs font-mono text-yellow-400 tracking-wider">
-                                            Sample: Last {breakdownStats.total} Filtered Live Pitches
-                                        </p>
-
-                                        {/* COLOR LEGEND & METRICS CONTROLS */}
-                                        <div className="w-full mt-6 bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3 text-xs font-mono">
-                                                <span className="text-slate-400 font-bold uppercase">Zone Rating:</span>
-                                                <span className="flex items-center gap-1 text-red-400 font-semibold">
-                                                    <span className="w-3 h-3 rounded-sm bg-red-600 inline-block"></span> HOT (.300+)
-                                                </span>
-                                                <span className="flex items-center gap-1 text-sky-400 font-semibold">
-                                                    <span className="w-3 h-3 rounded-sm bg-sky-600 inline-block"></span> AVG (.200)
-                                                </span>
-                                                <span className="flex items-center gap-1 text-blue-400 font-semibold">
-                                                    <span className="w-3 h-3 rounded-sm bg-blue-600 inline-block"></span> WEAK (&lt;.200)
-                                                </span>
-                                                <span className="flex items-center gap-1 text-slate-400 font-semibold">
-                                                    <span className="w-3 h-3 rounded-sm bg-slate-600 inline-block"></span> 0-0 (NO AB)
-                                                </span>
-                                            </div>
-
-                                            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-700/80 shadow-inner">
-                                                <button
-                                                    onClick={() => setGridMode('BA')}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                                                        gridMode === 'BA'
-                                                        ? 'bg-cyan-500 text-slate-950 shadow-md font-extrabold'
-                                                        : 'text-slate-400 hover:text-cyan-300'
-                                                    }`}
-                                                >
-                                                    .AVG
-                                                </button>
-                                                <button
-                                                    onClick={() => setGridMode('WHIFF')}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                                                        gridMode === 'WHIFF'
-                                                        ? 'bg-cyan-500 text-slate-950 shadow-md font-extrabold'
-                                                        : 'text-slate-400 hover:text-cyan-300'
-                                                    }`}
-                                                >
-                                                    Whiff %
-                                                </button>
-                                                <button
-                                                    onClick={() => setGridMode('FREQ')}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                                                        gridMode === 'FREQ'
-                                                        ? 'bg-cyan-500 text-slate-950 shadow-md font-extrabold'
-                                                        : 'text-slate-400 hover:text-cyan-300'
-                                                    }`}
-                                                >
-                                                    Pitches
-                                                </button>
-                                            </div>
-
-                                        </div>
+                                            })
+                                        ))}
 
                                     </div>
-                                </React.Fragment>
+
+                                    <p className="mt-3 text-xs font-mono text-yellow-400 tracking-wider">
+                                        Sample: Last {breakdownStats.total} Filtered Live Pitches (Clamped 5x5 Outer Ball Zones)
+                                    </p>
+
+                                    {/* COLOR LEGEND & METRICS CONTROLS */}
+                                    <div className="w-full mt-6 bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+                                            <span className="text-slate-400 font-bold uppercase">Zone Rating:</span>
+                                            <span className="flex items-center gap-1 text-red-400 font-semibold">
+                                                <span className="w-3 h-3 rounded-sm bg-red-600 inline-block"></span> HOT (.300+)
+                                            </span>
+                                            <span className="flex items-center gap-1 text-sky-400 font-semibold">
+                                                <span className="w-3 h-3 rounded-sm bg-sky-600 inline-block"></span> AVG (.200)
+                                            </span>
+                                            <span className="flex items-center gap-1 text-blue-400 font-semibold">
+                                                <span className="w-3 h-3 rounded-sm bg-blue-600 inline-block"></span> WEAK (&lt;.200)
+                                            </span>
+                                            <span className="flex items-center gap-1 text-cyan-400 font-semibold">
+                                                <span className="w-3 h-3 rounded-sm bg-slate-800 border border-cyan-500 inline-block"></span> BALL ZONE
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                </div>
                             ) : (
                                 /* STATCAST PITCH LOCATION PLOTTER */
                                 <div className="hud-panel p-6 flex flex-col items-center">
@@ -991,16 +1106,25 @@
                                         </span>
                                     </div>
 
-                                    <div className="relative w-full max-w-md aspect-square bg-slate-950 border-4 border-slate-700 rounded-lg p-6 shadow-2xl flex items-center justify-center overflow-hidden">
-                                        <div className="w-2/3 h-2/3 border-2 border-dashed border-cyan-400/60 grid grid-cols-3 grid-rows-3 relative">
+                                    <div className="relative w-full max-w-md aspect-square bg-slate-950 border-4 border-slate-800 rounded-lg p-4 shadow-2xl flex items-center justify-center overflow-hidden">
+                                        {/* Core Strike Zone Box (Center 60%) */}
+                                        <div className="absolute inset-[20%] border-2 border-cyan-400/90 shadow-[0_0_15px_rgba(56,189,248,0.2)] bg-slate-900/40 grid grid-cols-3 grid-rows-3 z-10 pointer-events-none">
                                             {[...Array(9)].map((_, i) => (
-                                                <div key={i} className="border border-cyan-500/20"></div>
+                                                <div key={i} className="border border-cyan-500/30"></div>
                                             ))}
+                                            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-mono text-cyan-400 font-bold bg-slate-950 px-1.5 rounded border border-cyan-500/50">
+                                                STRIKE ZONE
+                                            </span>
+                                        </div>
+
+                                        {/* Outer Ball Zone Guides */}
+                                        <div className="absolute inset-2 border border-dashed border-slate-700/60 rounded pointer-events-none">
+                                            <span className="absolute top-1 left-2 text-[8px] font-mono text-slate-500">BALLS / OUT OF ZONE</span>
                                         </div>
 
                                         {filteredPitches.map((p, idx) => {
-                                            const posX = 22 + (p.x * 28);
-                                            const posY = 22 + (p.y * 28);
+                                            const posX = 10 + (p.x * 20);
+                                            const posY = 10 + (p.y * 20);
 
                                             let dotColor = 'bg-cyan-400 ring-cyan-300';
                                             if (p.result === 'HIT') dotColor = 'bg-emerald-400 ring-emerald-300 shadow-[0_0_10px_#34d399]';
@@ -1012,7 +1136,7 @@
                                                 <div
                                                     key={p.id}
                                                     style={{ left: `${posX}%`, top: `${posY}%` }}
-                                                    className={`absolute w-6 h-6 rounded-full ${dotColor} border-2 border-slate-950 ring-2 flex items-center justify-center font-mono text-[9px] font-bold text-slate-950 shadow-md transform -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition cursor-pointer z-20 group`}
+                                                    className={`absolute w-5 h-5 sm:w-6 sm:h-6 rounded-full ${dotColor} border-2 border-slate-950 ring-2 flex items-center justify-center font-mono text-[8px] sm:text-[9px] font-bold text-slate-950 shadow-md transform -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition cursor-pointer z-20 group`}
                                                     title={`${p.pitchType} (${p.speed} MPH) - ${p.result}`}
                                                 >
                                                     {idx + 1}
@@ -1021,6 +1145,7 @@
                                                         <div className="font-bold text-cyan-300">{p.batter} vs {p.pitcher}</div>
                                                         <div>{p.pitchType} • {p.speed} MPH</div>
                                                         <div>Count: {p.count} • Result: <span className="font-bold uppercase text-yellow-400">{p.result}</span></div>
+                                                        <div>Zone: <span className="font-bold text-cyan-300">#{p.zone}</span></div>
                                                     </div>
                                                 </div>
                                             );
@@ -1030,7 +1155,8 @@
                                     <div className="w-full mt-4 flex flex-wrap justify-center gap-3 text-xs font-mono">
                                         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-400"></span> Hit</span>
                                         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500"></span> Out</span>
-                                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-cyan-400"></span> Taken</span>
+                                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-cyan-400"></span> Taken Ball</span>
+                                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Taken Strike</span>
                                         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-yellow-400"></span> Fouled</span>
                                         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-purple-500"></span> Missed</span>
                                     </div>
@@ -1076,7 +1202,7 @@
                                         {Object.entries(breakdownStats).filter(([k]) => k !== 'total').map(([type, val], idx) => {
                                             const pct = parseInt(val.ratio);
                                             if (pct === 0) return null;
-                                            const colors = ['bg-emerald-500', 'bg-red-500', 'bg-cyan-400', 'bg-yellow-400', 'bg-purple-500'];
+                                            const colors = ['bg-emerald-500', 'bg-red-500', 'bg-cyan-400', 'bg-blue-500', 'bg-yellow-400', 'bg-purple-500'];
                                             return (
                                                 <div
                                                     key={type}
