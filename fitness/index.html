@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardio, Warmup & Tabata Timer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: radial-gradient(circle at 50% -20%, #0f172a 0%, #020617 55%, #000000 100%);
+            color: #f3f4f6;
+        }
+
+        .font-sans-header {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Glassmorphism Cards - Smooth diagonal gradient from base color top-left to dark version bottom-right */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-cardio {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.45) 0%, rgba(69, 10, 10, 0.85) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.38);
+            box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.2);
+        }
+
+        .glass-card-warmup {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.45) 0%, rgba(69, 26, 3, 0.85) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.38);
+            box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.2);
+        }
+
+        .glass-card-tabata {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.45) 0%, rgba(23, 37, 84, 0.85) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.38);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Buttons Styling */
+        .btn-cardio {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px 0 rgba(220, 38, 38, 0.39);
+        }
+        .btn-cardio:hover {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 6px 20px 0 rgba(220, 38, 38, 0.5);
+        }
+
+        .btn-warmup {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px 0 rgba(217, 119, 6, 0.39);
+        }
+        .btn-warmup:hover {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 6px 20px 0 rgba(245, 158, 11, 0.5);
+        }
+
+        .btn-tabata {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+        }
+        .btn-tabata:hover {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            color: #f3f4f6;
+            border: 1px solid #4b5563;
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            color: #fca5a5;
+            border: 1px solid #ef4444;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #991b1b 0%, #b91c1c 100%);
+            color: #ffffff;
+        }
+
+        /* Fixed timer display sizes */
+        .fixed-timer {
+            font-size: 3.75rem;
+            line-height: 1;
+            font-weight: 700;
+        }
+        @media (min-width: 640px) {
+            .fixed-timer {
+                font-size: 4.5rem;
+            }
+        }
+        @media (min-width: 1280px) {
+            .fixed-timer {
+                font-size: 5rem;
+            }
+        }
+
+        /* Doubled height progress bar (2.5rem / 40px) */
+        .progress-bar {
+            width: 100%;
+            height: 2.5rem;
+            background-color: rgba(15, 23, 42, 0.9);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        .progress-fill-cardio {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #f97316 100%);
+            width: 0%;
+            transition: none;
+        }
+
+        .progress-fill-warmup {
+            height: 100%;
+            background: linear-gradient(90deg, #eab308 0%, #f59e0b 100%);
+            width: 0%;
+            transition: none;
+        }
+
+        .progress-fill-tabata {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+            width: 0%;
+            transition: none;
+        }
+
+        /* Fixed Controls Wrapper slot so UI never shifts when toggling buttons */
+        .controls-wrapper {
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+        }
+
+        /* Fullscreen Timer Card Overlay */
+        .timer-card-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            border-radius: 0 !important;
+            padding: 4.5rem 2rem 4rem 2rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            background: radial-gradient(circle at 50% 30%, #0f172a 0%, #030712 100%) !important;
+        }
+
+        .timer-card-fullscreen .fixed-timer {
+            font-size: 8rem !important;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+        @media (min-width: 768px) {
+            .timer-card-fullscreen .fixed-timer {
+                font-size: 11rem !important;
+            }
+        }
+
+        .timer-card-fullscreen .bg-slate-950\/60 {
+            padding-top: 2.5rem !important;
+            padding-bottom: 2.5rem !important;
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+    <div class="container mx-auto p-4 md:p-6 max-w-[1600px]">
+        <!-- Header -->
+        <header class="text-center mb-8 flex flex-col items-center">
+            <h1 class="font-sans-header text-4xl sm:text-6xl font-extrabold mb-3 tracking-tight text-white drop-shadow-md">
+                RevV Fitness
+            </h1>
+        </header>
+
+        <!-- Main Content Grid - 3 Columns for Cardio, Warmup, Tabata -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            
+            <!-- 1. Cardio Timer Section -->
+            <div id="cardio-section" class="glass-card glass-card-cardio p-6 rounded-3xl flex flex-col justify-between items-center relative overflow-hidden">
+                <div class="w-full flex flex-col items-center">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2 bg-red-500/10 rounded-2xl border border-red-500/30">
+                            <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <h2 class="font-sans-header text-2xl md:text-3xl font-bold text-red-400 tracking-wide drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]">Cardio Timer</h2>
+                    </div>
+
+                    <!-- Duration Selector with Edit Icon Button -->
+                    <div class="mb-5 w-full text-center">
+                        <label for="cardio-duration" class="block text-xs font-sans-header font-semibold uppercase tracking-wider mb-2 text-gray-400">Duration</label>
+                        <div class="flex items-center justify-center space-x-3">
+                            <select id="cardio-duration" class="w-full max-w-xs p-3 bg-slate-900/90 border border-slate-700 text-slate-100 rounded-xl shadow-inner text-base text-center focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all">
+                                <option value="5">5 Minutes</option>
+                                <option value="10">10 Minutes</option>
+                                <option value="15">15 Minutes</option>
+                                <option value="20">20 Minutes</option>
+                                <option value="25">25 Minutes</option>
+                                <option value="30">30 Minutes</option>
+                                <option value="35">35 Minutes</option>
+                                <option value="40">40 Minutes</option>
+                                <option value="45">45 Minutes</option>
+                                <option value="50">50 Minutes</option>
+                                <option value="55">55 Minutes</option>
+                                <option value="60">60 Minutes</option>
+                                <option value="65">65 Minutes</option>
+                                <option value="70">70 Minutes</option>
+                                <option value="75">75 Minutes</option>
+                                <option value="80">80 Minutes</option>
+                                <option value="85">85 Minutes</option>
+                                <option value="90">90 Minutes</option>
+                                <option value="95">95 Minutes</option>
+                                <option value="100">100 Minutes</option>
+                                <option value="105">105 Minutes</option>
+                                <option value="110">110 Minutes</option>
+                                <option value="115">115 Minutes</option>
+                                <option value="120">120 Minutes</option>
+                            </select>
+
+                            <!-- Customization Edit Icon Button -->
+                            <button id="open-cardio-routine-modal-btn" title="Customize Cardio Activity" aria-label="Customize Cardio Activity" class="p-3 bg-slate-900/90 border border-slate-700 hover:border-red-400 text-red-400 hover:text-white rounded-xl shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center hover:scale-105 active:scale-95">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Timer Display with Header -->
+                    <div class="text-center w-full bg-slate-950/60 py-5 px-4 rounded-2xl border border-slate-800/80 mb-2 shadow-inner">
+                        <p id="cardio-round-title" class="font-sans-header text-2xl md:text-3xl font-extrabold mb-1 text-red-400 min-h-[2.25rem] truncate px-2 drop-shadow-md">Ready</p>
+                        <div id="cardio-timer" class="fixed-timer tracking-tighter text-white drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">00:00</div>
+                    </div>
+
+                    <!-- Cardio Progress Bar (Enlarged) -->
+                    <div class="w-full max-w-md my-4">
+                        <div class="flex justify-between items-center mb-2 font-sans-header font-bold text-red-300 text-sm sm:text-base">
+                            <span>Cardio Progress</span>
+                            <span id="cardio-progress-percentage">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="cardio-progress-fill" class="progress-fill-cardio"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fixed Controls Wrapper with Fullscreen Button on Right -->
+                <div class="controls-wrapper mt-4">
+                    <div class="flex space-x-3">
+                        <button id="start-cardio-btn" class="btn-cardio w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <span>Start</span>
+                        </button>
+                        <button id="pause-cardio-btn" class="btn-secondary w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all hidden flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            <span>Pause</span>
+                        </button>
+                        <button id="reset-cardio-btn" class="btn-danger w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all hidden flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                    <button class="fullscreen-toggle-btn absolute right-0 p-3 bg-slate-900/80 hover:bg-slate-800 border border-slate-700 hover:border-red-400 text-red-400 rounded-2xl transition-all shadow-md focus:outline-none" data-target="cardio-section" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Warmup Timer Section (Gold Theme) -->
+            <div id="warmup-section" class="glass-card glass-card-warmup p-6 rounded-3xl flex flex-col justify-between items-center relative overflow-hidden">
+                <div class="w-full flex flex-col items-center">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2 bg-amber-500/10 rounded-2xl border border-amber-500/30">
+                            <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </div>
+                        <h2 class="font-sans-header text-2xl md:text-3xl font-bold text-amber-400 tracking-wide drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]">Warmup Timer</h2>
+                    </div>
+
+                    <!-- Duration Selector with Edit Icon Button Inline -->
+                    <div class="mb-5 w-full text-center">
+                        <label for="warmup-duration" class="block text-xs font-sans-header font-semibold uppercase tracking-wider mb-2 text-gray-400">Duration</label>
+                        <div class="flex items-center justify-center space-x-3">
+                            <select id="warmup-duration" class="w-full max-w-xs p-3 bg-slate-900/90 border border-slate-700 text-slate-100 rounded-xl shadow-inner text-base text-center focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all">
+                                <option value="5">5 Minutes</option>
+                                <option value="10">10 Minutes</option>
+                                <option value="15">15 Minutes</option>
+                                <option value="20">20 Minutes</option>
+                                <option value="25">25 Minutes</option>
+                                <option value="30">30 Minutes</option>
+                                <option value="35">35 Minutes</option>
+                                <option value="40">40 Minutes</option>
+                                <option value="45">45 Minutes</option>
+                                <option value="50">50 Minutes</option>
+                                <option value="55">55 Minutes</option>
+                                <option value="60">60 Minutes</option>
+                                <option value="65">65 Minutes</option>
+                                <option value="70">70 Minutes</option>
+                                <option value="75">75 Minutes</option>
+                                <option value="80">80 Minutes</option>
+                                <option value="85">85 Minutes</option>
+                                <option value="90">90 Minutes</option>
+                                <option value="95">95 Minutes</option>
+                                <option value="100">100 Minutes</option>
+                                <option value="105">105 Minutes</option>
+                                <option value="110">110 Minutes</option>
+                                <option value="115">115 Minutes</option>
+                                <option value="120">120 Minutes</option>
+                            </select>
+                            
+                            <!-- Customization Edit Icon Button -->
+                            <button id="open-warmup-routine-modal-btn" title="Customize Warmup Routine" aria-label="Customize Warmup Routine" class="p-3 bg-slate-900/90 border border-slate-700 hover:border-amber-400 text-amber-400 hover:text-white rounded-xl shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center justify-center hover:scale-105 active:scale-95">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Timer Display -->
+                    <div class="text-center w-full bg-slate-950/60 py-5 px-4 rounded-2xl border border-slate-800/80 mb-2 shadow-inner">
+                        <p id="warmup-round-title" class="font-sans-header text-2xl md:text-3xl font-extrabold mb-1 text-amber-400 min-h-[2.25rem] truncate px-2 drop-shadow-md">Ready</p>
+                        <div id="warmup-countdown-timer" class="fixed-timer tracking-tighter text-white drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]">00:00</div>
+                    </div>
+
+                    <!-- Warmup Round Info & Progress Bar (Centered above bar with bigger text) -->
+                    <div class="w-full max-w-md my-3">
+                        <div class="flex justify-between items-center mb-2 font-sans-header font-bold text-amber-300 text-sm sm:text-base">
+                            <span id="warmup-round-number">Round 0 of <span id="warmup-total-rounds-count">6</span></span>
+                            <span id="warmup-progress-percentage">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="warmup-progress-fill" class="progress-fill-warmup"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fixed Controls Wrapper with Fullscreen Button on Right -->
+                <div class="controls-wrapper mt-4">
+                    <div class="flex space-x-3">
+                        <button id="start-warmup-btn" class="btn-warmup w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <span>Start</span>
+                        </button>
+                        <button id="pause-warmup-btn" class="btn-secondary w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all hidden flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            <span>Pause</span>
+                        </button>
+                        <button id="reset-warmup-btn" class="btn-danger w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all hidden flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                    <button class="fullscreen-toggle-btn absolute right-0 p-3 bg-slate-900/80 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 text-amber-400 rounded-2xl transition-all shadow-md focus:outline-none" data-target="warmup-section" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Tabata Workout Section -->
+            <div id="tabata-section" class="glass-card glass-card-tabata p-6 rounded-3xl flex flex-col justify-between items-center relative overflow-hidden">
+                <div class="w-full flex flex-col items-center">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="p-2 bg-blue-500/10 rounded-2xl border border-blue-500/30">
+                            <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h2 class="font-sans-header text-2xl md:text-3xl font-bold text-blue-400 tracking-wide drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]">Tabata Timer</h2>
+                    </div>
+
+                    <!-- Duration Selector with Edit Icon Button Inline -->
+                    <div class="mb-5 w-full text-center">
+                        <label for="workout-duration" class="block text-xs font-sans-header font-semibold uppercase tracking-wider mb-2 text-gray-400">Duration</label>
+                        <div class="flex items-center justify-center space-x-3">
+                            <select id="workout-duration" class="w-full max-w-xs p-3 bg-slate-900/90 border border-slate-700 text-slate-100 rounded-xl shadow-inner text-base text-center focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
+                                <option value="5">5 Minutes</option>
+                                <option value="10">10 Minutes</option>
+                                <option value="15">15 Minutes</option>
+                                <option value="20">20 Minutes</option>
+                                <option value="25">25 Minutes</option>
+                                <option value="30">30 Minutes</option>
+                                <option value="35">35 Minutes</option>
+                                <option value="40">40 Minutes</option>
+                                <option value="45">45 Minutes</option>
+                                <option value="50">50 Minutes</option>
+                                <option value="55">55 Minutes</option>
+                                <option value="60">60 Minutes</option>
+                                <option value="65">65 Minutes</option>
+                                <option value="70">70 Minutes</option>
+                                <option value="75">75 Minutes</option>
+                                <option value="80">80 Minutes</option>
+                                <option value="85">85 Minutes</option>
+                                <option value="90">90 Minutes</option>
+                                <option value="95">95 Minutes</option>
+                                <option value="100">100 Minutes</option>
+                                <option value="105">105 Minutes</option>
+                                <option value="110">110 Minutes</option>
+                                <option value="115">115 Minutes</option>
+                                <option value="120">120 Minutes</option>
+                            </select>
+                            
+                            <!-- Customization Edit Icon Button -->
+                            <button id="open-routine-modal-btn" title="Customize Tabata Routine" aria-label="Customize Tabata Routine" class="p-3 bg-slate-900/90 border border-slate-700 hover:border-blue-400 text-blue-400 hover:text-white rounded-xl shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center hover:scale-105 active:scale-95">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Timer Display -->
+                    <div class="text-center w-full bg-slate-950/60 py-5 px-4 rounded-2xl border border-slate-800/80 mb-2 shadow-inner">
+                        <p id="round-title" class="font-sans-header text-2xl md:text-3xl font-extrabold mb-1 text-blue-400 min-h-[2.25rem] truncate px-2 drop-shadow-md">Ready</p>
+                        <div id="countdown-timer" class="fixed-timer tracking-tighter text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">00:00</div>
+                    </div>
+
+                    <!-- Round Progress Info & Bar (Centered above bar with bigger text) -->
+                    <div class="w-full max-w-md my-3">
+                        <div class="flex justify-between items-center mb-2 font-sans-header font-bold text-blue-300 text-sm sm:text-base">
+                            <span id="round-number">Round 0 of <span id="total-rounds-count">12</span></span>
+                            <span id="progress-percentage">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill-tabata"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fixed Controls Wrapper with Fullscreen Button on Right -->
+                <div class="controls-wrapper mt-4">
+                    <div class="flex space-x-3">
+                        <button id="start-btn" class="btn-tabata w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <span>Start</span>
+                        </button>
+                        <button id="pause-btn" class="btn-secondary w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all hidden flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            <span>Pause</span>
+                        </button>
+                        <button id="reset-btn" class="btn-danger w-32 font-sans-header font-bold py-3 rounded-full text-base transition-all hidden flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                    <button class="fullscreen-toggle-btn absolute right-0 p-3 bg-slate-900/80 hover:bg-slate-800 border border-slate-700 hover:border-blue-400 text-blue-400 rounded-2xl transition-all shadow-md focus:outline-none" data-target="tabata-section" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise & Routine Customization Modal -->
+    <div id="routine-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-3xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+                <h3 id="modal-title" class="font-sans-header text-2xl font-bold text-white flex items-center space-x-2">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    <span id="modal-title-text">Edit Routine</span>
+                </h3>
+                <button id="close-routine-modal-btn" class="text-slate-400 hover:text-white p-2 rounded-lg text-2xl font-bold focus:outline-none">&times;</button>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-400 mt-3 mb-4 font-sans-header">
+                Add, remove, or reorder exercises. The workout duration will be divided equally among all rounds.
+            </p>
+
+            <!-- Exercise List Inputs -->
+            <div id="exercise-list-container" class="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-grow my-2 max-h-[50vh]">
+                <!-- Dynamic exercise inputs rendered here -->
+            </div>
+
+            <!-- Footer Controls inside Modal -->
+            <div class="pt-4 mt-2 border-t border-slate-800 flex flex-wrap justify-between items-center gap-3 font-sans-header">
+                <div class="flex space-x-2">
+                    <button id="add-exercise-btn" class="bg-blue-600/20 text-blue-400 border border-blue-500/40 hover:bg-blue-600 hover:text-white py-2 px-4 rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-1 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>Add Exercise</span>
+                    </button>
+                    <button id="reset-default-exercises-btn" class="bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-slate-200 py-2 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+                        Reset Defaults
+                    </button>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button id="save-routine-btn" class="btn-tabata py-2.5 px-6 rounded-xl font-semibold text-xs sm:text-sm shadow-md transition-all">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 font-sans-header font-medium text-sm">
+        Settings Saved!
+    </div>
+
+    <script>
+        // Storage Keys
+        const STORAGE_KEY_EXERCISES = 'tabata_app_exercises';
+        const STORAGE_KEY_WARMUP_EXERCISES = 'warmup_app_exercises';
+        const STORAGE_KEY_CARDIO_ACTIVITY = 'tabata_app_cardio_activity';
+        const STORAGE_KEY_WORKOUT_DURATION = 'tabata_app_workout_duration';
+        const STORAGE_KEY_WARMUP_DURATION = 'warmup_app_workout_duration';
+        const STORAGE_KEY_CARDIO_DURATION = 'tabata_app_cardio_duration';
+
+        // Default Exercises fallbacks
+        const DEFAULT_TABATA_EXERCISES = [
+            "Abs", "Traps", "Delts", "Back", "Triceps", "Biceps",
+            "Chest", "Forearms", "Hand Grip", "Quads", "Hamstrings", "Calves"
+        ];
+
+        const DEFAULT_WARMUP_EXERCISES = [
+            "Jumping Jacks", "Arm Circles", "Torso Twists",
+            "Leg Swings", "High Knees", "Dynamic Lunges"
+        ];
+
+        const DEFAULT_CARDIO_ACTIVITY = "Running / Treadmill";
+
+        // Model
+        const model = {
+            // Target timer modal mode ('tabata', 'warmup', or 'cardio')
+            activeModalTarget: 'tabata',
+
+            // Tabata state
+            exercises: [],
+            workoutDuration: 30, // in minutes
+            timePerExercise: 0,  // in seconds
+            currentRound: 0,
+            animFrameId: null,
+            roundStartTimestamp: 0,
+            roundTotalMs: 0,
+            roundRemainingMs: 0,
+            lastDisplayedSec: -1,
+            isWorkoutRunning: false,
+
+            // Warmup state
+            warmupExercises: [],
+            warmupDuration: 10,  // in minutes
+            warmupTimePerExercise: 0,
+            warmupCurrentRound: 0,
+            warmupAnimFrameId: null,
+            warmupRoundStartTimestamp: 0,
+            warmupRoundTotalMs: 0,
+            warmupRoundRemainingMs: 0,
+            warmupLastDisplayedSec: -1,
+            isWarmupRunning: false,
+            
+            // Cardio state
+            cardioActivity: DEFAULT_CARDIO_ACTIVITY,
+            cardioDuration: 15,  // in minutes
+            cardioAnimFrameId: null,
+            cardioStartTimestamp: 0,
+            cardioTotalMs: 0,
+            cardioRemainingMs: 0,
+            cardioLastDisplayedSec: -1,
+            isCardioRunning: false,
+
+            // Web Audio Context
+            audioCtx: null,
+
+            loadFromStorage() {
+                try {
+                    // Load Tabata Exercises
+                    const savedExercises = localStorage.getItem(STORAGE_KEY_EXERCISES);
+                    if (savedExercises) {
+                        const parsed = JSON.parse(savedExercises);
+                        this.exercises = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [...DEFAULT_TABATA_EXERCISES];
+                    } else {
+                        this.exercises = [...DEFAULT_TABATA_EXERCISES];
+                    }
+
+                    // Load Warmup Exercises
+                    const savedWarmup = localStorage.getItem(STORAGE_KEY_WARMUP_EXERCISES);
+                    if (savedWarmup) {
+                        const parsed = JSON.parse(savedWarmup);
+                        this.warmupExercises = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [...DEFAULT_WARMUP_EXERCISES];
+                    } else {
+                        this.warmupExercises = [...DEFAULT_WARMUP_EXERCISES];
+                    }
+
+                    // Load Cardio Activity
+                    const savedCardioAct = localStorage.getItem(STORAGE_KEY_CARDIO_ACTIVITY);
+                    if (savedCardioAct) {
+                        this.cardioActivity = savedCardioAct;
+                    } else {
+                        this.cardioActivity = DEFAULT_CARDIO_ACTIVITY;
+                    }
+
+                    // Load Durations
+                    const savedWorkoutDuration = localStorage.getItem(STORAGE_KEY_WORKOUT_DURATION);
+                    if (savedWorkoutDuration) this.workoutDuration = parseInt(savedWorkoutDuration, 10) || 30;
+
+                    const savedWarmupDuration = localStorage.getItem(STORAGE_KEY_WARMUP_DURATION);
+                    if (savedWarmupDuration) this.warmupDuration = parseInt(savedWarmupDuration, 10) || 10;
+
+                    const savedCardioDuration = localStorage.getItem(STORAGE_KEY_CARDIO_DURATION);
+                    if (savedCardioDuration) this.cardioDuration = parseInt(savedCardioDuration, 10) || 15;
+                } catch (err) {
+                    console.error("Failed to load settings from storage", err);
+                    this.exercises = [...DEFAULT_TABATA_EXERCISES];
+                    this.warmupExercises = [...DEFAULT_WARMUP_EXERCISES];
+                    this.cardioActivity = DEFAULT_CARDIO_ACTIVITY;
+                }
+            },
+
+            saveToStorage() {
+                try {
+                    localStorage.setItem(STORAGE_KEY_EXERCISES, JSON.stringify(this.exercises));
+                    localStorage.setItem(STORAGE_KEY_WARMUP_EXERCISES, JSON.stringify(this.warmupExercises));
+                    localStorage.setItem(STORAGE_KEY_CARDIO_ACTIVITY, this.cardioActivity);
+                    localStorage.setItem(STORAGE_KEY_WORKOUT_DURATION, this.workoutDuration.toString());
+                    localStorage.setItem(STORAGE_KEY_WARMUP_DURATION, this.warmupDuration.toString());
+                    localStorage.setItem(STORAGE_KEY_CARDIO_DURATION, this.cardioDuration.toString());
+                } catch (err) {
+                    console.error("Failed to save settings to storage", err);
+                }
+            },
+
+            playBeep(freq = 440, type = 'sine', duration = 0.15) {
+                try {
+                    if (!this.audioCtx) {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (AudioContext) this.audioCtx = new AudioContext();
+                    }
+                    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                        this.audioCtx.resume();
+                    }
+                    if (!this.audioCtx) return;
+
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+                    osc.start();
+                    osc.stop(this.audioCtx.currentTime + duration);
+                } catch (e) {
+                    // Audio blocked
+                }
+            }
+        };
+
+        // View
+        const view = {
+            elements: {
+                // Tabata Elements
+                roundTitle: document.getElementById('round-title'),
+                roundNumber: document.getElementById('round-number'),
+                countdownTimer: document.getElementById('countdown-timer'),
+                progressBar: document.getElementById('progress-fill'),
+                progressPercentage: document.getElementById('progress-percentage'),
+                workoutDurationSelect: document.getElementById('workout-duration'),
+                totalRoundsCount: document.getElementById('total-rounds-count'),
+                startBtn: document.getElementById('start-btn'),
+                pauseBtn: document.getElementById('pause-btn'),
+                resetBtn: document.getElementById('reset-btn'),
+
+                // Warmup Elements
+                warmupRoundTitle: document.getElementById('warmup-round-title'),
+                warmupRoundNumber: document.getElementById('warmup-round-number'),
+                warmupCountdownTimer: document.getElementById('warmup-countdown-timer'),
+                warmupProgressBar: document.getElementById('warmup-progress-fill'),
+                warmupProgressPercentage: document.getElementById('warmup-progress-percentage'),
+                warmupDurationSelect: document.getElementById('warmup-duration'),
+                warmupTotalRoundsCount: document.getElementById('warmup-total-rounds-count'),
+                startWarmupBtn: document.getElementById('start-warmup-btn'),
+                pauseWarmupBtn: document.getElementById('pause-warmup-btn'),
+                resetWarmupBtn: document.getElementById('reset-warmup-btn'),
+
+                // Cardio Elements
+                cardioRoundTitle: document.getElementById('cardio-round-title'),
+                cardioDurationSelect: document.getElementById('cardio-duration'),
+                cardioTimer: document.getElementById('cardio-timer'),
+                cardioProgressBar: document.getElementById('cardio-progress-fill'),
+                cardioProgressPercentage: document.getElementById('cardio-progress-percentage'),
+                startCardioBtn: document.getElementById('start-cardio-btn'),
+                pauseCardioBtn: document.getElementById('pause-cardio-btn'),
+                resetCardioBtn: document.getElementById('reset-cardio-btn'),
+
+                // Modal Elements
+                openRoutineModalBtn: document.getElementById('open-routine-modal-btn'),
+                openWarmupRoutineModalBtn: document.getElementById('open-warmup-routine-modal-btn'),
+                openCardioRoutineModalBtn: document.getElementById('open-cardio-routine-modal-btn'),
+                closeRoutineModalBtn: document.getElementById('close-routine-modal-btn'),
+                routineModal: document.getElementById('routine-modal'),
+                modalTitleText: document.getElementById('modal-title-text'),
+                exerciseListContainer: document.getElementById('exercise-list-container'),
+                addExerciseBtn: document.getElementById('add-exercise-btn'),
+                resetDefaultExercisesBtn: document.getElementById('reset-default-exercises-btn'),
+                saveRoutineBtn: document.getElementById('save-routine-btn'),
+                toast: document.getElementById('toast'),
+            },
+
+            updateTabataDisplay(time, round, totalRounds, roundTitle) {
+                this.elements.countdownTimer.textContent = this.formatTime(time);
+                if (round === 0) {
+                    this.elements.roundNumber.innerHTML = `Round 0 of <span id="total-rounds-count">${totalRounds}</span>`;
+                } else {
+                    this.elements.roundNumber.innerHTML = `Round ${round} of <span id="total-rounds-count">${totalRounds}</span>`;
+                }
+                this.elements.roundTitle.textContent = roundTitle;
+            },
+
+            updateWarmupDisplay(time, round, totalRounds, roundTitle) {
+                this.elements.warmupCountdownTimer.textContent = this.formatTime(time);
+                if (round === 0) {
+                    this.elements.warmupRoundNumber.innerHTML = `Round 0 of <span id="warmup-total-rounds-count">${totalRounds}</span>`;
+                } else {
+                    this.elements.warmupRoundNumber.innerHTML = `Round ${round} of <span id="warmup-total-rounds-count">${totalRounds}</span>`;
+                }
+                this.elements.warmupRoundTitle.textContent = roundTitle;
+            },
+
+            updateTimePerExerciseDisplay(totalRounds) {
+                if (this.elements.totalRoundsCount) this.elements.totalRoundsCount.textContent = totalRounds;
+            },
+
+            updateWarmupTimePerExerciseDisplay(totalRounds) {
+                if (this.elements.warmupTotalRoundsCount) this.elements.warmupTotalRoundsCount.textContent = totalRounds;
+            },
+            
+            updateProgressBar(progress) {
+                const rounded = Math.min(100, Math.max(0, progress));
+                this.elements.progressBar.style.width = `${rounded}%`;
+                this.elements.progressPercentage.textContent = `${Math.round(rounded)}%`;
+            },
+
+            updateWarmupProgressBar(progress) {
+                const rounded = Math.min(100, Math.max(0, progress));
+                this.elements.warmupProgressBar.style.width = `${rounded}%`;
+                this.elements.warmupProgressPercentage.textContent = `${Math.round(rounded)}%`;
+            },
+
+            updateCardioDisplay(time, title) {
+                this.elements.cardioTimer.textContent = this.formatTime(time);
+                if (title !== undefined) {
+                    this.elements.cardioRoundTitle.textContent = title;
+                }
+            },
+
+            updateCardioProgressBar(progress) {
+                const rounded = Math.min(100, Math.max(0, progress));
+                this.elements.cardioProgressBar.style.width = `${rounded}%`;
+                this.elements.cardioProgressPercentage.textContent = `${Math.round(rounded)}%`;
+            },
+
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+            },
+
+            toggleTabataButtons(state) {
+                if (state === 'running') {
+                    this.elements.startBtn.classList.add('hidden');
+                    this.elements.pauseBtn.classList.remove('hidden');
+                    this.elements.resetBtn.classList.remove('hidden');
+                    this.elements.workoutDurationSelect.disabled = true;
+                    this.elements.openRoutineModalBtn.classList.add('pointer-events-none', 'opacity-50');
+                } else if (state === 'paused') {
+                    this.elements.startBtn.classList.remove('hidden');
+                    this.elements.pauseBtn.classList.add('hidden');
+                    this.elements.resetBtn.classList.remove('hidden');
+                    this.elements.workoutDurationSelect.disabled = false;
+                    this.elements.openRoutineModalBtn.classList.remove('pointer-events-none', 'opacity-50');
+                } else {
+                    this.elements.startBtn.classList.remove('hidden');
+                    this.elements.pauseBtn.classList.add('hidden');
+                    this.elements.resetBtn.classList.add('hidden');
+                    this.elements.workoutDurationSelect.disabled = false;
+                    this.elements.openRoutineModalBtn.classList.remove('pointer-events-none', 'opacity-50');
+                }
+            },
+
+            toggleWarmupButtons(state) {
+                if (state === 'running') {
+                    this.elements.startWarmupBtn.classList.add('hidden');
+                    this.elements.pauseWarmupBtn.classList.remove('hidden');
+                    this.elements.resetWarmupBtn.classList.remove('hidden');
+                    this.elements.warmupDurationSelect.disabled = true;
+                    this.elements.openWarmupRoutineModalBtn.classList.add('pointer-events-none', 'opacity-50');
+                } else if (state === 'paused') {
+                    this.elements.startWarmupBtn.classList.remove('hidden');
+                    this.elements.pauseWarmupBtn.classList.add('hidden');
+                    this.elements.resetWarmupBtn.classList.remove('hidden');
+                    this.elements.warmupDurationSelect.disabled = false;
+                    this.elements.openWarmupRoutineModalBtn.classList.remove('pointer-events-none', 'opacity-50');
+                } else {
+                    this.elements.startWarmupBtn.classList.remove('hidden');
+                    this.elements.pauseWarmupBtn.classList.add('hidden');
+                    this.elements.resetWarmupBtn.classList.add('hidden');
+                    this.elements.warmupDurationSelect.disabled = false;
+                    this.elements.openWarmupRoutineModalBtn.classList.remove('pointer-events-none', 'opacity-50');
+                }
+            },
+
+            toggleCardioButtons(state) {
+                if (state === 'running') {
+                    this.elements.startCardioBtn.classList.add('hidden');
+                    this.elements.pauseCardioBtn.classList.remove('hidden');
+                    this.elements.resetCardioBtn.classList.remove('hidden');
+                    this.elements.cardioDurationSelect.disabled = true;
+                    this.elements.openCardioRoutineModalBtn.classList.add('pointer-events-none', 'opacity-50');
+                } else if (state === 'paused') {
+                    this.elements.startCardioBtn.classList.remove('hidden');
+                    this.elements.pauseCardioBtn.classList.add('hidden');
+                    this.elements.resetCardioBtn.classList.remove('hidden');
+                    this.elements.cardioDurationSelect.disabled = false;
+                    this.elements.openCardioRoutineModalBtn.classList.remove('pointer-events-none', 'opacity-50');
+                } else {
+                    this.elements.startCardioBtn.classList.remove('hidden');
+                    this.elements.pauseCardioBtn.classList.add('hidden');
+                    this.elements.resetCardioBtn.classList.add('hidden');
+                    this.elements.cardioDurationSelect.disabled = false;
+                    this.elements.openCardioRoutineModalBtn.classList.remove('pointer-events-none', 'opacity-50');
+                }
+            },
+
+            renderExerciseListInModal(exercises, isSingleSlot = false) {
+                this.elements.exerciseListContainer.innerHTML = '';
+                
+                // Show/hide add button if single slot
+                if (isSingleSlot) {
+                    this.elements.addExerciseBtn.classList.add('hidden');
+                } else {
+                    this.elements.addExerciseBtn.classList.remove('hidden');
+                }
+
+                exercises.forEach((ex, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center space-x-2 bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/80 shadow-sm';
+                    
+                    const hideDelete = isSingleSlot ? 'hidden' : '';
+
+                    row.innerHTML = `
+                        <span class="text-xs font-bold text-slate-400 w-8 text-center font-sans-header">#${index + 1}</span>
+                        <input type="text" data-index="${index}" value="${this.escapeHtml(ex)}" 
+                            class="exercise-input flex-grow bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500 font-sans-header" 
+                            placeholder="Activity / Exercise Name">
+                        <button type="button" data-index="${index}" class="remove-exercise-btn text-red-400 hover:text-red-300 hover:bg-red-950/50 p-2 rounded-lg transition-colors ${hideDelete}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    `;
+                    this.elements.exerciseListContainer.appendChild(row);
+                });
+            },
+
+            showToast(msg) {
+                this.elements.toast.textContent = msg;
+                this.elements.toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    this.elements.toast.classList.add('translate-y-20', 'opacity-0');
+                }, 2500);
+            },
+
+            escapeHtml(str) {
+                return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            }
+        };
+
+        // Controller
+        const controller = {
+            init() {
+                model.loadFromStorage();
+                
+                // Sync dropdown UI values
+                view.elements.workoutDurationSelect.value = model.workoutDuration.toString();
+                view.elements.warmupDurationSelect.value = model.warmupDuration.toString();
+                view.elements.cardioDurationSelect.value = model.cardioDuration.toString();
+
+                this.setupEventListeners();
+                this.calculateTimePerExercise();
+                this.calculateWarmupTimePerExercise();
+                this.resetTabataWorkout();
+                this.resetWarmupWorkout();
+                this.resetCardioTimer();
+            },
+
+            setupEventListeners() {
+                // Tabata Controls
+                view.elements.workoutDurationSelect.addEventListener('change', this.handleDurationChange.bind(this));
+                view.elements.startBtn.addEventListener('click', this.startTabataWorkout.bind(this));
+                view.elements.pauseBtn.addEventListener('click', this.pauseTabataWorkout.bind(this));
+                view.elements.resetBtn.addEventListener('click', this.resetTabataWorkout.bind(this));
+                
+                // Warmup Controls
+                view.elements.warmupDurationSelect.addEventListener('change', this.handleWarmupDurationChange.bind(this));
+                view.elements.startWarmupBtn.addEventListener('click', this.startWarmupWorkout.bind(this));
+                view.elements.pauseWarmupBtn.addEventListener('click', this.pauseWarmupWorkout.bind(this));
+                view.elements.resetWarmupBtn.addEventListener('click', this.resetWarmupWorkout.bind(this));
+
+                // Cardio Controls
+                view.elements.cardioDurationSelect.addEventListener('change', this.handleCardioDurationChange.bind(this));
+                view.elements.startCardioBtn.addEventListener('click', this.startCardioTimer.bind(this));
+                view.elements.pauseCardioBtn.addEventListener('click', this.pauseCardioTimer.bind(this));
+                view.elements.resetCardioBtn.addEventListener('click', this.resetCardioTimer.bind(this));
+
+                // Modal Routine Customization
+                view.elements.openRoutineModalBtn.addEventListener('click', () => this.openRoutineModal('tabata'));
+                view.elements.openWarmupRoutineModalBtn.addEventListener('click', () => this.openRoutineModal('warmup'));
+                view.elements.openCardioRoutineModalBtn.addEventListener('click', () => this.openRoutineModal('cardio'));
+                view.elements.closeRoutineModalBtn.addEventListener('click', this.closeRoutineModal.bind(this));
+                view.elements.addExerciseBtn.addEventListener('click', this.addExerciseRow.bind(this));
+                view.elements.resetDefaultExercisesBtn.addEventListener('click', this.resetDefaultExercises.bind(this));
+                view.elements.saveRoutineBtn.addEventListener('click', this.saveRoutineChanges.bind(this));
+
+                // Fullscreen Buttons
+                document.querySelectorAll('.fullscreen-toggle-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetId = btn.getAttribute('data-target');
+                        this.toggleFullscreen(targetId);
+                    });
+                });
+
+                // Delegate remove exercise button inside modal
+                view.elements.exerciseListContainer.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.remove-exercise-btn');
+                    if (btn) {
+                        const idx = parseInt(btn.getAttribute('data-index'), 10);
+                        this.removeExerciseRow(idx);
+                    }
+                });
+
+                // Close modal on backdrop click
+                view.elements.routineModal.addEventListener('click', (e) => {
+                    if (e.target === view.elements.routineModal) {
+                        this.closeRoutineModal();
+                    }
+                });
+            },
+
+            toggleFullscreen(elementId) {
+                const card = document.getElementById(elementId);
+                if (!card) return;
+
+                if (card.classList.contains('timer-card-fullscreen')) {
+                    card.classList.remove('timer-card-fullscreen');
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(() => {});
+                    }
+                } else {
+                    document.querySelectorAll('.timer-card-fullscreen').forEach(el => el.classList.remove('timer-card-fullscreen'));
+                    card.classList.add('timer-card-fullscreen');
+                    if (card.requestFullscreen) {
+                        card.requestFullscreen().catch(() => {});
+                    }
+                }
+            },
+
+            // --- TABATA LOGIC ---
+            handleDurationChange(event) {
+                model.workoutDuration = parseInt(event.target.value, 10);
+                model.saveToStorage();
+                this.calculateTimePerExercise();
+                this.resetTabataWorkout();
+            },
+
+            calculateTimePerExercise() {
+                const totalSeconds = model.workoutDuration * 60;
+                const numExercises = model.exercises.length || 1;
+                model.timePerExercise = Math.floor(totalSeconds / numExercises);
+                view.updateTimePerExerciseDisplay(model.exercises.length);
+            },
+
+            startTabataWorkout() {
+                if (model.isWorkoutRunning) return;
+                model.isWorkoutRunning = true;
+                view.toggleTabataButtons('running');
+
+                if (model.currentRound === 0) {
+                    model.currentRound = 1;
+                    model.roundRemainingMs = model.timePerExercise * 1000;
+                } else if (model.roundRemainingMs <= 0) {
+                    model.roundRemainingMs = model.timePerExercise * 1000;
+                }
+
+                model.roundTotalMs = model.timePerExercise * 1000;
+                model.roundStartTimestamp = performance.now() - (model.roundTotalMs - model.roundRemainingMs);
+                model.lastDisplayedSec = -1;
+
+                const currentExerciseName = model.exercises[model.currentRound - 1] || "Exercise";
+                view.updateTabataDisplay(Math.ceil(model.roundRemainingMs / 1000), model.currentRound, model.exercises.length, currentExerciseName);
+                model.playBeep(600, 'sine', 0.2);
+                
+                this.startTabataAnimationLoop();
+            },
+
+            startTabataAnimationLoop() {
+                let lastFrameTime = 0;
+                const fpsInterval = 1000 / 30; // 30 FPS throttle
+
+                const tick = (timestamp) => {
+                    if (!model.isWorkoutRunning) return;
+
+                    const elapsedSinceLastFrame = timestamp - lastFrameTime;
+                    if (elapsedSinceLastFrame >= fpsInterval) {
+                        lastFrameTime = timestamp - (elapsedSinceLastFrame % fpsInterval);
+
+                        const elapsedInRound = timestamp - model.roundStartTimestamp;
+                        const remainingMs = Math.max(0, model.roundTotalMs - elapsedInRound);
+                        model.roundRemainingMs = remainingMs;
+
+                        const progress = Math.min(100, Math.max(0, ((model.roundTotalMs - remainingMs) / model.roundTotalMs) * 100));
+                        view.updateProgressBar(progress);
+
+                        const currentSec = Math.ceil(remainingMs / 1000);
+                        if (currentSec !== model.lastDisplayedSec) {
+                            model.lastDisplayedSec = currentSec;
+                            const currentExerciseName = model.exercises[model.currentRound - 1] || "Exercise";
+                            view.updateTabataDisplay(currentSec, model.currentRound, model.exercises.length, currentExerciseName);
+
+                            if (currentSec <= 3 && currentSec > 0) {
+                                model.playBeep(440, 'sine', 0.1);
+                            }
+                        }
+
+                        if (remainingMs <= 0) {
+                            this.nextRound();
+                            return;
+                        }
+                    }
+
+                    model.animFrameId = requestAnimationFrame(tick);
+                };
+
+                cancelAnimationFrame(model.animFrameId);
+                model.animFrameId = requestAnimationFrame(tick);
+            },
+
+            pauseTabataWorkout() {
+                model.isWorkoutRunning = false;
+                cancelAnimationFrame(model.animFrameId);
+                view.toggleTabataButtons('paused');
+            },
+
+            resetTabataWorkout() {
+                cancelAnimationFrame(model.animFrameId);
+                model.isWorkoutRunning = false;
+                model.currentRound = 0;
+                model.roundRemainingMs = model.timePerExercise * 1000;
+                view.updateTabataDisplay(model.timePerExercise, 0, model.exercises.length, "Ready");
+                view.updateProgressBar(0);
+                view.toggleTabataButtons('stopped');
+                view.elements.startBtn.querySelector('span').textContent = 'Start';
+            },
+
+            nextRound() {
+                model.currentRound++;
+                if (model.currentRound > model.exercises.length) {
+                    this.completeWorkout();
+                } else {
+                    model.playBeep(880, 'sine', 0.3);
+                    model.roundTotalMs = model.timePerExercise * 1000;
+                    model.roundRemainingMs = model.roundTotalMs;
+                    model.roundStartTimestamp = performance.now();
+                    model.lastDisplayedSec = -1;
+
+                    const currentExerciseName = model.exercises[model.currentRound - 1] || "Exercise";
+                    view.updateTabataDisplay(model.timePerExercise, model.currentRound, model.exercises.length, currentExerciseName);
+                    view.updateProgressBar(0);
+                    
+                    this.startTabataAnimationLoop();
+                }
+            },
+
+            completeWorkout() {
+                cancelAnimationFrame(model.animFrameId);
+                model.isWorkoutRunning = false;
+                model.playBeep(1000, 'square', 0.5);
+                view.updateTabataDisplay(0, model.exercises.length, model.exercises.length, "Workout Complete!");
+                view.updateProgressBar(100);
+                view.toggleTabataButtons('stopped');
+                view.elements.startBtn.querySelector('span').textContent = 'Restart';
+            },
+
+            // --- WARMUP LOGIC ---
+            handleWarmupDurationChange(event) {
+                model.warmupDuration = parseInt(event.target.value, 10);
+                model.saveToStorage();
+                this.calculateWarmupTimePerExercise();
+                this.resetWarmupWorkout();
+            },
+
+            calculateWarmupTimePerExercise() {
+                const totalSeconds = model.warmupDuration * 60;
+                const numExercises = model.warmupExercises.length || 1;
+                model.warmupTimePerExercise = Math.floor(totalSeconds / numExercises);
+                view.updateWarmupTimePerExerciseDisplay(model.warmupExercises.length);
+            },
+
+            startWarmupWorkout() {
+                if (model.isWarmupRunning) return;
+                model.isWarmupRunning = true;
+                view.toggleWarmupButtons('running');
+
+                if (model.warmupCurrentRound === 0) {
+                    model.warmupCurrentRound = 1;
+                    model.warmupRoundRemainingMs = model.warmupTimePerExercise * 1000;
+                } else if (model.warmupRoundRemainingMs <= 0) {
+                    model.warmupRoundRemainingMs = model.warmupTimePerExercise * 1000;
+                }
+
+                model.warmupRoundTotalMs = model.warmupTimePerExercise * 1000;
+                model.warmupRoundStartTimestamp = performance.now() - (model.warmupRoundTotalMs - model.warmupRoundRemainingMs);
+                model.warmupLastDisplayedSec = -1;
+
+                const currentExerciseName = model.warmupExercises[model.warmupCurrentRound - 1] || "Warmup Exercise";
+                view.updateWarmupDisplay(Math.ceil(model.warmupRoundRemainingMs / 1000), model.warmupCurrentRound, model.warmupExercises.length, currentExerciseName);
+                model.playBeep(600, 'sine', 0.2);
+                
+                this.startWarmupAnimationLoop();
+            },
+
+            startWarmupAnimationLoop() {
+                let lastFrameTime = 0;
+                const fpsInterval = 1000 / 30;
+
+                const tick = (timestamp) => {
+                    if (!model.isWarmupRunning) return;
+
+                    const elapsedSinceLastFrame = timestamp - lastFrameTime;
+                    if (elapsedSinceLastFrame >= fpsInterval) {
+                        lastFrameTime = timestamp - (elapsedSinceLastFrame % fpsInterval);
+
+                        const elapsedInRound = timestamp - model.warmupRoundStartTimestamp;
+                        const remainingMs = Math.max(0, model.warmupRoundTotalMs - elapsedInRound);
+                        model.warmupRoundRemainingMs = remainingMs;
+
+                        const progress = Math.min(100, Math.max(0, ((model.warmupRoundTotalMs - remainingMs) / model.warmupRoundTotalMs) * 100));
+                        view.updateWarmupProgressBar(progress);
+
+                        const currentSec = Math.ceil(remainingMs / 1000);
+                        if (currentSec !== model.warmupLastDisplayedSec) {
+                            model.warmupLastDisplayedSec = currentSec;
+                            const currentExerciseName = model.warmupExercises[model.warmupCurrentRound - 1] || "Warmup Exercise";
+                            view.updateWarmupDisplay(currentSec, model.warmupCurrentRound, model.warmupExercises.length, currentExerciseName);
+
+                            if (currentSec <= 3 && currentSec > 0) {
+                                model.playBeep(440, 'sine', 0.1);
+                            }
+                        }
+
+                        if (remainingMs <= 0) {
+                            this.nextWarmupRound();
+                            return;
+                        }
+                    }
+
+                    model.warmupAnimFrameId = requestAnimationFrame(tick);
+                };
+
+                cancelAnimationFrame(model.warmupAnimFrameId);
+                model.warmupAnimFrameId = requestAnimationFrame(tick);
+            },
+
+            pauseWarmupWorkout() {
+                model.isWarmupRunning = false;
+                cancelAnimationFrame(model.warmupAnimFrameId);
+                view.toggleWarmupButtons('paused');
+            },
+
+            resetWarmupWorkout() {
+                cancelAnimationFrame(model.warmupAnimFrameId);
+                model.isWarmupRunning = false;
+                model.warmupCurrentRound = 0;
+                model.warmupRoundRemainingMs = model.warmupTimePerExercise * 1000;
+                view.updateWarmupDisplay(model.warmupTimePerExercise, 0, model.warmupExercises.length, "Ready");
+                view.updateWarmupProgressBar(0);
+                view.toggleWarmupButtons('stopped');
+                view.elements.startWarmupBtn.querySelector('span').textContent = 'Start';
+            },
+
+            nextWarmupRound() {
+                model.warmupCurrentRound++;
+                if (model.warmupCurrentRound > model.warmupExercises.length) {
+                    this.completeWarmupWorkout();
+                } else {
+                    model.playBeep(880, 'sine', 0.3);
+                    model.warmupRoundTotalMs = model.warmupTimePerExercise * 1000;
+                    model.warmupRoundRemainingMs = model.warmupRoundTotalMs;
+                    model.warmupRoundStartTimestamp = performance.now();
+                    model.warmupLastDisplayedSec = -1;
+
+                    const currentExerciseName = model.warmupExercises[model.warmupCurrentRound - 1] || "Warmup Exercise";
+                    view.updateWarmupDisplay(model.warmupTimePerExercise, model.warmupCurrentRound, model.warmupExercises.length, currentExerciseName);
+                    view.updateWarmupProgressBar(0);
+                    
+                    this.startWarmupAnimationLoop();
+                }
+            },
+
+            completeWarmupWorkout() {
+                cancelAnimationFrame(model.warmupAnimFrameId);
+                model.isWarmupRunning = false;
+                model.playBeep(1000, 'square', 0.5);
+                view.updateWarmupDisplay(0, model.warmupExercises.length, model.warmupExercises.length, "Warmup Complete!");
+                view.updateWarmupProgressBar(100);
+                view.toggleWarmupButtons('stopped');
+                view.elements.startWarmupBtn.querySelector('span').textContent = 'Restart';
+            },
+
+            // --- CARDIO LOGIC ---
+            handleCardioDurationChange(event) {
+                model.cardioDuration = parseInt(event.target.value, 10);
+                model.saveToStorage();
+                this.resetCardioTimer();
+            },
+
+            startCardioTimer() {
+                if (model.isCardioRunning) return;
+                model.isCardioRunning = true;
+                view.toggleCardioButtons('running');
+
+                if (model.cardioRemainingMs <= 0) {
+                    model.cardioRemainingMs = model.cardioDuration * 60 * 1000;
+                }
+
+                model.cardioTotalMs = model.cardioDuration * 60 * 1000;
+                model.cardioStartTimestamp = performance.now() - (model.cardioTotalMs - model.cardioRemainingMs);
+                model.cardioLastDisplayedSec = -1;
+
+                view.updateCardioDisplay(Math.ceil(model.cardioRemainingMs / 1000), model.cardioActivity);
+                model.playBeep(600, 'sine', 0.2);
+                
+                this.startCardioAnimationLoop();
+            },
+            
+            startCardioAnimationLoop() {
+                let lastFrameTime = 0;
+                const fpsInterval = 1000 / 30;
+
+                const tick = (timestamp) => {
+                    if (!model.isCardioRunning) return;
+
+                    const elapsedSinceLastFrame = timestamp - lastFrameTime;
+                    if (elapsedSinceLastFrame >= fpsInterval) {
+                        lastFrameTime = timestamp - (elapsedSinceLastFrame % fpsInterval);
+
+                        const elapsed = timestamp - model.cardioStartTimestamp;
+                        const remainingMs = Math.max(0, model.cardioTotalMs - elapsed);
+                        model.cardioRemainingMs = remainingMs;
+
+                        const progress = Math.min(100, Math.max(0, ((model.cardioTotalMs - remainingMs) / model.cardioTotalMs) * 100));
+                        view.updateCardioProgressBar(progress);
+
+                        const currentSec = Math.ceil(remainingMs / 1000);
+                        if (currentSec !== model.cardioLastDisplayedSec) {
+                            model.cardioLastDisplayedSec = currentSec;
+                            view.updateCardioDisplay(currentSec, model.cardioActivity);
+
+                            if (currentSec <= 3 && currentSec > 0) {
+                                model.playBeep(440, 'sine', 0.1);
+                            }
+                        }
+
+                        if (remainingMs <= 0) {
+                            this.completeCardioTimer();
+                            return;
+                        }
+                    }
+
+                    model.cardioAnimFrameId = requestAnimationFrame(tick);
+                };
+
+                cancelAnimationFrame(model.cardioAnimFrameId);
+                model.cardioAnimFrameId = requestAnimationFrame(tick);
+            },
+
+            pauseCardioTimer() {
+                model.isCardioRunning = false;
+                cancelAnimationFrame(model.cardioAnimFrameId);
+                view.toggleCardioButtons('paused');
+            },
+
+            resetCardioTimer() {
+                cancelAnimationFrame(model.cardioAnimFrameId);
+                model.isCardioRunning = false;
+                model.cardioRemainingMs = model.cardioDuration * 60 * 1000;
+                view.updateCardioDisplay(model.cardioDuration * 60, "Ready");
+                view.updateCardioProgressBar(0);
+                view.toggleCardioButtons('stopped');
+                view.elements.startCardioBtn.querySelector('span').textContent = 'Start';
+            },
+
+            completeCardioTimer() {
+                cancelAnimationFrame(model.cardioAnimFrameId);
+                model.isCardioRunning = false;
+                model.playBeep(1000, 'square', 0.5);
+                view.updateCardioDisplay(0, "Cardio Complete!");
+                view.updateCardioProgressBar(100);
+                view.toggleCardioButtons('stopped');
+                view.elements.startCardioBtn.querySelector('span').textContent = 'Restart';
+            },
+
+            completeCardioTimer() {
+                cancelAnimationFrame(model.cardioAnimFrameId);
+                model.isCardioRunning = false;
+                model.playBeep(1000, 'square', 0.5);
+                view.updateCardioDisplay(0, "Cardio Complete!");
+                view.updateCardioProgressBar(100);
+                view.toggleCardioButtons('stopped');
+                view.elements.startCardioBtn.textContent = 'Restart';
+            },
+
+            // --- ROUTINE CUSTOMIZATION MODAL ---
+            openRoutineModal(target = 'tabata') {
+                if (target === 'tabata' && model.isWorkoutRunning) return;
+                if (target === 'warmup' && model.isWarmupRunning) return;
+                if (target === 'cardio' && model.isCardioRunning) return;
+
+                model.activeModalTarget = target;
+                
+                if (target === 'cardio') {
+                    view.elements.modalTitleText.textContent = "Edit Cardio Activity";
+                    view.renderExerciseListInModal([model.cardioActivity], true);
+                } else if (target === 'warmup') {
+                    view.elements.modalTitleText.textContent = "Edit Warmup Routine";
+                    view.renderExerciseListInModal(model.warmupExercises, false);
+                } else {
+                    view.elements.modalTitleText.textContent = "Edit Tabata Routine";
+                    view.renderExerciseListInModal(model.exercises, false);
+                }
+
+                view.elements.routineModal.classList.remove('hidden');
+            },
+
+            closeRoutineModal() {
+                view.elements.routineModal.classList.add('hidden');
+            },
+
+            addExerciseRow() {
+                if (model.activeModalTarget === 'cardio') return;
+                const inputs = Array.from(view.elements.exerciseListContainer.querySelectorAll('.exercise-input'));
+                const currentVals = inputs.map(i => i.value.trim() || "New Exercise");
+                currentVals.push(`Exercise ${currentVals.length + 1}`);
+                view.renderExerciseListInModal(currentVals, false);
+
+                setTimeout(() => {
+                    view.elements.exerciseListContainer.scrollTop = view.elements.exerciseListContainer.scrollHeight;
+                }, 50);
+            },
+
+            removeExerciseRow(index) {
+                if (model.activeModalTarget === 'cardio') return;
+                const inputs = Array.from(view.elements.exerciseListContainer.querySelectorAll('.exercise-input'));
+                let currentVals = inputs.map(i => i.value.trim());
+                if (currentVals.length <= 1) {
+                    view.showToast("You must have at least 1 exercise!");
+                    return;
+                }
+                currentVals.splice(index, 1);
+                view.renderExerciseListInModal(currentVals, false);
+            },
+
+            resetDefaultExercises() {
+                if (model.activeModalTarget === 'cardio') {
+                    view.renderExerciseListInModal([DEFAULT_CARDIO_ACTIVITY], true);
+                } else if (model.activeModalTarget === 'warmup') {
+                    view.renderExerciseListInModal([...DEFAULT_WARMUP_EXERCISES], false);
+                } else {
+                    view.renderExerciseListInModal([...DEFAULT_TABATA_EXERCISES], false);
+                }
+            },
+
+            saveRoutineChanges() {
+                const inputs = Array.from(view.elements.exerciseListContainer.querySelectorAll('.exercise-input'));
+
+                if (model.activeModalTarget === 'cardio') {
+                    const newActivity = inputs[0] ? (inputs[0].value.trim() || DEFAULT_CARDIO_ACTIVITY) : DEFAULT_CARDIO_ACTIVITY;
+                    model.cardioActivity = newActivity;
+                    model.saveToStorage();
+                    this.resetCardioTimer();
+                } else if (model.activeModalTarget === 'warmup') {
+                    let newExercises = inputs.map((input, idx) => input.value.trim() || `Exercise ${idx + 1}`);
+                    if (newExercises.length === 0) newExercises = ["Exercise 1"];
+                    model.warmupExercises = newExercises;
+                    model.saveToStorage();
+                    this.calculateWarmupTimePerExercise();
+                    this.resetWarmupWorkout();
+                } else {
+                    let newExercises = inputs.map((input, idx) => input.value.trim() || `Exercise ${idx + 1}`);
+                    if (newExercises.length === 0) newExercises = ["Exercise 1"];
+                    model.exercises = newExercises;
+                    model.saveToStorage();
+                    this.calculateTimePerExercise();
+                    this.resetTabataWorkout();
+                }
+
+                this.closeRoutineModal();
+                view.showToast("Settings updated & saved!");
+            }
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            controller.init();
+        });
+    </script>
+</body>
+</html>
