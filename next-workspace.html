@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full w-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeXT Retro Workstation Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --scanline-opacity: 0.30;
+            --crt-brightness: 100%;
+            --text-color: #00ff66; /* Default CRT Phosphor Green */
+            --column-bg: #1e222d;  /* Crisp slate background */
+            --font-size: 14px;
+            --title-font-size: 12px;
+            --bezel-color: #2b2c30;
+            --text-align: left;
+        }
+
+        /* Full screen background - Industrial Dark Workstation Desk */
+        html, body {
+            background-color: #0c0d10 !important;
+            background-image: 
+                radial-gradient(circle at 20% 20%, #1a1c23 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, #15161a 0%, transparent 50%),
+                linear-gradient(to bottom, #090a0c, #111216);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, Monaco, 'Consolas', monospace !important;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Dynamic styles for terminal areas */
+        .column-box {
+            background-color: var(--column-bg) !important;
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.5);
+            filter: brightness(var(--crt-brightness));
+        }
+
+        .column-textarea, .column-title {
+            background-color: var(--column-bg) !important;
+            color: var(--text-color);
+            border: none;
+            outline: none;
+            font-family: 'Courier New', Courier, Monaco, 'Consolas', monospace !important;
+        }
+
+        .column-title {
+            font-size: var(--title-font-size) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .column-textarea {
+            font-size: var(--font-size) !important;
+            text-align: var(--text-align) !important;
+        }
+
+        ::placeholder {
+            color: var(--text-color);
+            opacity: 0.45;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-color);
+            opacity: 0.4;
+            border-radius: 3px;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /* NeXT Computer Hardware Frame Styling */
+        .next-monitor-bezel {
+            background: linear-gradient(145deg, #2e3036 0%, #1e2024 50%, #141518 100%);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.9),
+                inset 1px 1px 2px rgba(255, 255, 255, 0.15),
+                inset -2px -2px 4px rgba(0, 0, 0, 0.8);
+            border: 2px solid #383a42;
+        }
+
+        .next-tower-bezel {
+            background: linear-gradient(160deg, #26282e 0%, #191a1e 100%);
+            box-shadow: 
+                0 15px 35px rgba(0,0,0,0.8),
+                inset 1px 1px 1px rgba(255,255,255,0.1),
+                inset -1px -1px 3px rgba(0,0,0,0.9);
+            border: 1px solid #33353d;
+        }
+
+        /* CRT Curved Screen Inset */
+        .crt-screen-container {
+            border-radius: 12px;
+            box-shadow: 
+                inset 0 0 14px rgba(0, 0, 0, 0.8),
+                inset 0 0 35px rgba(0, 0, 0, 0.5);
+            border: 8px solid #121316;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .crt-scanlines {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 30;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.35),
+                rgba(0, 0, 0, 0.35) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            opacity: var(--scanline-opacity);
+            transition: opacity 0.15s ease;
+        }
+
+        .crt-glare {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 28;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 40%, rgba(255,255,255,0.01) 100%);
+        }
+
+        /* Reduced intensity vignette in screen corners */
+        .crt-vignette {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 29;
+            background: radial-gradient(circle at center, transparent 75%, rgba(0, 0, 0, 0.35) 100%);
+        }
+
+        #sparkle-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .crt-glow {
+            text-shadow: 0 0 4px currentColor;
+        }
+
+        @keyframes crtFlickerAnimation {
+            0% { opacity: 0.98; }
+            48% { opacity: 1; }
+            50% { opacity: 0.95; }
+            52% { opacity: 0.99; }
+            78% { opacity: 0.97; }
+            80% { opacity: 0.94; }
+            82% { opacity: 1; }
+            100% { opacity: 0.99; }
+        }
+
+        .crt-flickering {
+            animation: crtFlickerAnimation 0.18s infinite;
+        }
+
+        /* Retro CRT Power Off & Bootup Beam Animations */
+        @keyframes crtShutdownAnim {
+            0% {
+                transform: scale(1, 1);
+                filter: brightness(120%);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1, 0.005);
+                filter: brightness(350%);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(0, 0);
+                filter: brightness(0%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes crtBootupAnim {
+            0% {
+                transform: scale(0, 0.005);
+                filter: brightness(400%);
+                opacity: 0.2;
+            }
+            40% {
+                transform: scale(1, 0.005);
+                filter: brightness(250%);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1, 1);
+                filter: brightness(var(--crt-brightness));
+                opacity: 1;
+            }
+        }
+
+        .crt-power-off {
+            animation: crtShutdownAnim 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        .crt-power-on {
+            animation: crtBootupAnim 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        .retro-btn {
+            background-color: #1a1b1f;
+            border: 1px solid #3e414c;
+            color: var(--text-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: all 0.1s ease;
+        }
+        .retro-btn:hover {
+            border-color: var(--text-color);
+            background-color: #24262c;
+        }
+        .retro-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 1px rgba(0,0,0,0.8);
+        }
+        .retro-btn-active {
+            background-color: #2c303a !important;
+            border-color: var(--text-color) !important;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+            font-weight: bold;
+        }
+
+        .floppy-slot {
+            background: #0d0e11;
+            border: 2px solid #17181c;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.9);
+        }
+
+        .hardware-badge {
+            background: linear-gradient(180deg, #18191c 0%, #0a0b0d 100%);
+            border: 1px solid #454854;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .power-rocker {
+            width: 36px;
+            height: 52px;
+            background: linear-gradient(180deg, #aa2222 0%, #661111 100%);
+            border: 2px solid #441111;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.4);
+            cursor: pointer;
+        }
+        .power-rocker.power-off {
+            background: linear-gradient(180deg, #441111 0%, #220505 100%);
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.9);
+        }
+
+        .speaker-vent {
+            background: repeating-linear-gradient(
+                90deg,
+                #111215,
+                #111215 4px,
+                #23252c 4px,
+                #23252c 8px
+            );
+            border: 1px solid #141518;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center p-2 sm:p-4 box-border overflow-hidden">
+
+    <div class="w-full h-full max-w-[1920px] max-h-[1100px] flex flex-col md:flex-row gap-4 items-stretch justify-center">
+
+        <!-- ================================================================= -->
+        <!-- LEFT PANEL: NeXT CRT MONITOR DISPLAY BUILD                        -->
+        <!-- ================================================================= -->
+        <section class="flex-1 min-w-0 h-full next-monitor-bezel rounded-2xl p-4 sm:p-6 flex flex-col justify-between relative shadow-2xl">
+            
+            <!-- Monitor Top Header Rim & Power Indicator -->
+            <div class="flex justify-end items-center px-2 pb-2.5 text-xs tracking-wider text-gray-300 font-mono">
+                <div class="flex items-center space-x-2.5">
+                    <span id="crt-power-led" class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_#00ff66]"></span>
+                    <span class="text-gray-400 font-semibold text-xs">CRT ACTIVE</span>
+                </div>
+            </div>
+
+            <!-- Curved CRT Glass Screen Container -->
+            <div class="crt-screen-container flex-1 w-full h-full flex flex-col bg-[#0b0c0f] relative overflow-hidden" id="crt-screen-body">
+                
+                <!-- Ambient Sparkle Canvas Layer -->
+                <canvas id="sparkle-canvas"></canvas>
+
+                <!-- CRT Overlay Effects -->
+                <div id="scanline-layer" class="crt-scanlines"></div>
+                <div class="crt-glare"></div>
+                <div class="crt-vignette"></div>
+
+                <!-- Main Dynamic Workspace Grid -->
+                <main id="columns-container" class="grid gap-2 p-2.5 flex-1 w-full h-full min-h-0 overflow-hidden relative z-10 crt-glow crt-flickering">
+                    <!-- Dynamic column textareas rendered by JS -->
+                </main>
+
+                <!-- Embedded CRT Web View Frame -->
+                <div id="web-viewer-container" class="hidden flex-1 w-full h-full relative z-10 p-2">
+                    <iframe id="crt-iframe" class="w-full h-full border-0 rounded bg-black" src="about:blank" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+                </div>
+            </div>
+
+            <!-- Monitor Bottom Housing Badge -->
+            <div class="flex justify-between items-center pt-3 px-2 text-xs font-mono">
+                <div class="hardware-badge px-4 py-1.5 rounded text-xs font-black tracking-widest text-amber-500 border-amber-600/40">
+                    NeXT<span class="text-gray-300 text-[10px] font-normal ml-1.5">STATION-8</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- RIGHT PANEL: LARGER & SCALED COMPUTER SIDE CONSOLE PANEL         -->
+        <!-- ================================================================= -->
+        <aside class="w-full md:w-[440px] lg:w-[480px] h-full next-tower-bezel rounded-2xl p-4 flex flex-col justify-between space-y-3 overflow-hidden">
+            
+            <!-- TOP PART: NICE LCD DISPLAY SCREEN -->
+            <div class="bg-[#0f1411] border-2 border-[#1e2e22] rounded-xl p-3 shadow-[inset_0_0_15px_rgba(0,0,0,0.9)] flex flex-col justify-between space-y-3 font-mono text-green-400">
+
+                <!-- Live Clock Display -->
+                <div class="bg-[#080d09] p-2.5 rounded-lg border border-[#1b3321] text-center">
+                    <div class="text-[10px] text-emerald-600 tracking-wider font-bold">EASTERN STANDARD TIME (US/EASTERN)</div>
+                    <div id="eastern-time-clock" class="text-base font-bold text-emerald-400 tracking-widest mt-0.5">
+                        LOADING EST...
+                    </div>
+                </div>
+
+                <!-- Sheet Navigator -->
+                <div class="flex items-center justify-between bg-[#080d09] p-2.5 rounded-lg border border-[#1b3321]">
+                    <span class="text-xs text-emerald-500 font-bold tracking-wider">&gt; ACTIVE SHEET:</span>
+                    <div class="flex items-center space-x-1.5">
+                        <button id="prev-page-btn" class="retro-btn px-3 py-1 rounded text-sm font-bold hover:text-emerald-300">&lt;</button>
+                        <span id="page-indicator" class="px-3 text-sm font-bold tracking-widest text-emerald-300">
+                            001.SHEET
+                        </span>
+                        <button id="next-page-btn" class="retro-btn px-3 py-1 rounded text-sm font-bold hover:text-emerald-300">&gt;</button>
+                    </div>
+                </div>
+
+                <!-- Screen View Mode & Web Loader Toggle -->
+                <div class="bg-[#080d09] p-2.5 rounded-lg border border-[#1b3321] space-y-2">
+                    <div class="flex justify-between items-center text-xs text-emerald-500 font-bold tracking-wider">
+                        <span>&gt; DISPLAY MODE:</span>
+                        <button id="load-url-btn" class="retro-btn px-2.5 py-1 rounded text-[11px] text-amber-400 font-bold border-amber-600/50 hover:text-amber-200">
+                            + LOAD URL
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="mode-note-btn" class="retro-btn retro-btn-active py-1.5 rounded text-xs font-bold text-emerald-300">NOTE MODE</button>
+                        <button id="mode-site-btn" class="retro-btn py-1.5 rounded text-xs font-bold text-gray-400">SITE MODE</button>
+                    </div>
+                </div>
+
+                <!-- Column Mode Buttons (1, 2, 4, 8, 16) -->
+                <div>
+                    <div class="text-xs text-emerald-500 font-bold mb-1.5 tracking-wider">&gt; LAYOUT TEXT AREA MODE:</div>
+                    <div class="grid grid-cols-5 gap-1.5">
+                        <button data-mode="1" class="mode-btn retro-btn py-1.5 rounded text-center text-sm font-bold">1</button>
+                        <button data-mode="2" class="mode-btn retro-btn py-1.5 rounded text-center text-sm font-bold">2</button>
+                        <button data-mode="4" class="mode-btn retro-btn py-1.5 rounded text-center text-sm font-bold">4</button>
+                        <button data-mode="8" class="mode-btn retro-btn py-1.5 rounded text-center text-sm font-bold">8</button>
+                        <button data-mode="16" class="mode-btn retro-btn py-1.5 rounded text-center text-sm font-bold">16</button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Audio/Visual Signal Equalizer bar -->
+                <div class="flex justify-between items-center text-xs text-emerald-600 pt-1 border-t border-[#1a3320]">
+                    <span class="font-bold">BUS: 32-BIT</span>
+                    <div class="flex space-x-1.5">
+                        <span class="w-2 h-3.5 bg-emerald-500 rounded-sm inline-block"></span>
+                        <span class="w-2 h-3.5 bg-emerald-500 rounded-sm inline-block"></span>
+                        <span class="w-2 h-3.5 bg-emerald-500 rounded-sm inline-block"></span>
+                        <span class="w-2 h-3.5 bg-emerald-600 rounded-sm inline-block"></span>
+                        <span class="w-2 h-3.5 bg-emerald-800 rounded-sm inline-block"></span>
+                    </div>
+                    <span class="font-bold">MEM: 64MB OK</span>
+                </div>
+            </div>
+
+            <!-- BOTTOM PART: HARDWARE DESIGN AESTHETICS & CONTROLS -->
+            <div class="flex-1 flex flex-col justify-between space-y-3 pt-1">
+
+                <!-- Font Size Dropdown, Shell Colors, Backgrounds, and CRT Knobs Deck -->
+                <div class="bg-[#121316] p-3.5 rounded-xl border border-gray-800 space-y-3 font-mono text-xs">
+                    
+                    <!-- Font Size Dropdown (6px - 60px) -->
+                    <div>
+                        <span class="text-xs text-gray-300 font-bold block mb-1.5">&gt; SELECT FONT SIZE (6px - 60px):</span>
+                        <select id="font-size-select" class="w-full bg-[#1c1e24] text-emerald-400 border border-gray-700 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-emerald-500 cursor-pointer">
+                            <option value="6px">6px - Ultra Micro</option>
+                            <option value="8px">8px - Tiny</option>
+                            <option value="10px">10px - Compact</option>
+                            <option value="11px">11px - Small</option>
+                            <option value="12px">12px - Medium Small</option>
+                            <option value="13px">13px - Standard Retro</option>
+                            <option value="14px">14px - Regular</option>
+                            <option value="16px">16px - Medium</option>
+                            <option value="18px">18px - Large</option>
+                            <option value="20px">20px - Extra Large</option>
+                            <option value="24px">24px - Huge</option>
+                            <option value="28px">28px - Display 28</option>
+                            <option value="32px">32px - Display 32</option>
+                            <option value="36px">36px - Display 36</option>
+                            <option value="40px">40px - Display 40</option>
+                            <option value="48px">48px - Poster 48</option>
+                            <option value="56px">56px - Poster 56</option>
+                            <option value="60px">60px - Maximum 60</option>
+                        </select>
+                    </div>
+
+                    <!-- Font Alignment Controls -->
+                    <div>
+                        <span class="text-xs text-gray-300 font-bold block mb-1.5">&gt; TEXT ALIGNMENT:</span>
+                        <div class="grid grid-cols-4 gap-1.5">
+                            <button data-align="left" class="align-btn retro-btn py-1.5 rounded text-xs font-bold">LEFT</button>
+                            <button data-align="center" class="align-btn retro-btn py-1.5 rounded text-xs font-bold">CNTR</button>
+                            <button data-align="right" class="align-btn retro-btn py-1.5 rounded text-xs font-bold">RGHT</button>
+                            <button data-align="justify" class="align-btn retro-btn py-1.5 rounded text-xs font-bold">JUST</button>
+                        </div>
+                    </div>
+
+                    <!-- CRT Display Analog Controls (Moved from Monitor bezel) -->
+                    <div class="bg-[#181a20] p-2.5 rounded-lg border border-gray-800 space-y-2">
+                        <span class="text-xs text-gray-300 font-bold block mb-1">&gt; CRT DISPLAY ADJUSTMENTS:</span>
+                        <div class="grid grid-cols-2 gap-3 text-xs text-gray-300">
+                            <div class="flex flex-col space-y-1">
+                                <div class="flex justify-between items-center text-[10px]">
+                                    <span class="text-gray-400 font-bold">SCANLINES</span>
+                                    <span id="val-scanlines" class="text-emerald-400 font-bold">30%</span>
+                                </div>
+                                <input type="range" id="knob-scanlines" min="0" max="80" value="30" class="w-full h-1.5 accent-emerald-500 bg-gray-700 rounded cursor-pointer">
+                            </div>
+                            <div class="flex flex-col space-y-1">
+                                <div class="flex justify-between items-center text-[10px]">
+                                    <span class="text-gray-400 font-bold">BRIGHTNESS</span>
+                                    <span id="val-brightness" class="text-amber-400 font-bold">100%</span>
+                                </div>
+                                <input type="range" id="knob-brightness" min="60" max="160" value="100" class="w-full h-1.5 accent-amber-500 bg-gray-700 rounded cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Text Shell Color Selector -->
+                    <div>
+                        <span class="text-xs text-gray-300 font-bold block mb-1.5">&gt; TEXT SHELL COLOR:</span>
+                        <div class="grid grid-cols-4 gap-1.5">
+                            <button data-color="#00ff66" class="color-btn py-1.5 text-xs font-bold border border-green-500/50 bg-black text-[#00ff66] rounded-md">GRN</button>
+                            <button data-color="#ffb000" class="color-btn py-1.5 text-xs font-bold border border-amber-500/50 bg-black text-[#ffb000] rounded-md">AMB</button>
+                            <button data-color="#00f0ff" class="color-btn py-1.5 text-xs font-bold border border-cyan-500/50 bg-black text-[#00f0ff] rounded-md">CYN</button>
+                            <button data-color="#f0f0f0" class="color-btn py-1.5 text-xs font-bold border border-gray-400/50 bg-black text-[#f0f0f0] rounded-md">WHT</button>
+                            <button data-color="#ff66cc" class="color-btn py-1.5 text-xs font-bold border border-pink-500/50 bg-black text-[#ff66cc] rounded-md">PNK</button>
+                            <button data-color="#66ff66" class="color-btn py-1.5 text-xs font-bold border border-emerald-400/50 bg-black text-[#66ff66] rounded-md">MTRX</button>
+                            <button data-color="#ff8800" class="color-btn py-1.5 text-xs font-bold border border-orange-500/50 bg-black text-[#ff8800] rounded-md">SOLR</button>
+                            <button data-color="#d8b4fe" class="color-btn py-1.5 text-xs font-bold border border-purple-400/50 bg-black text-[#d8b4fe] rounded-md">VIO</button>
+                        </div>
+                    </div>
+
+                    <!-- Brighter Terminal Background Selector -->
+                    <div>
+                        <span class="text-xs text-gray-300 font-bold block mb-1.5">&gt; BACKGROUND PRESETS:</span>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button data-bg="#1e222d" class="bg-color-btn py-1.5 text-[10px] font-bold border border-slate-500 bg-[#1e222d] text-gray-200 rounded-md">CRISP SLATE</button>
+                            <button data-bg="#2a2b30" class="bg-color-btn py-1.5 text-[10px] font-bold border border-gray-500 bg-[#2a2b30] text-gray-200 rounded-md">CHARCOAL</button>
+                            <button data-bg="#162a1e" class="bg-color-btn py-1.5 text-[10px] font-bold border border-emerald-700 bg-[#162a1e] text-gray-200 rounded-md">DEEP SAGE</button>
+                            <button data-bg="#2e210a" class="bg-color-btn py-1.5 text-[10px] font-bold border border-amber-700 bg-[#2e210a] text-gray-200 rounded-md">VINTAGE AMB</button>
+                            <button data-bg="#0e2a35" class="bg-color-btn py-1.5 text-[10px] font-bold border border-cyan-700 bg-[#0e2a35] text-gray-200 rounded-md">CYAN NIGHT</button>
+                            <button data-bg="#221633" class="bg-color-btn py-1.5 text-[10px] font-bold border border-purple-700 bg-[#221633] text-gray-200 rounded-md">ROYAL VIOLET</button>
+                        </div>
+                    </div>
+
+                    <!-- Sparkle Effect & CRT Flicker Toggles -->
+                    <div class="flex justify-between items-center pt-1.5">
+                        <button id="sparkle-toggle-btn" class="retro-btn px-3 py-1.5 text-xs rounded-md text-emerald-400 font-bold">
+                            SPARKLE: ON
+                        </button>
+                        <button id="flicker-toggle-btn" class="retro-btn px-3 py-1.5 text-xs rounded-md text-emerald-400 font-bold">
+                            CRT FLICKER: ON
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Speaker Grills & Hardware Power Rocker Switch -->
+                <div class="flex justify-between items-center bg-[#0d0e11] p-3 rounded-xl border border-gray-800">
+                    <!-- Dual Speaker Vents -->
+                    <div class="flex space-x-2 flex-1 mr-4">
+                        <div class="speaker-vent h-10 flex-1 rounded"></div>
+                        <div class="speaker-vent h-10 flex-1 rounded"></div>
+                    </div>
+
+                    <!-- Hardware Power Rocker Switch -->
+                    <div class="flex items-center space-x-2.5">
+                        <span class="text-xs font-mono text-gray-300 font-bold">POWER</span>
+                        <div id="master-power-btn" class="power-rocker rounded flex items-center justify-center font-mono text-xs text-white font-bold tracking-tighter" title="Master CRT Screen Power Toggle">
+                            ON
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+    </div>
+
+    <!-- Retro URL Loader Modal -->
+    <div id="url-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 font-mono">
+        <div class="bg-[#16181d] border-2 border-emerald-600/70 rounded-xl p-5 max-w-md w-full shadow-2xl text-emerald-400 space-y-4">
+            <div class="flex justify-between items-center border-b border-emerald-800/60 pb-2">
+                <span class="font-bold text-sm text-emerald-300 tracking-wider">&gt; LOAD EXTERNAL WEBSITE</span>
+                <button id="modal-close-x" class="text-gray-400 hover:text-white font-bold">&times;</button>
+            </div>
+            <p class="text-xs text-gray-300 leading-relaxed">
+                Enter a web address to view inside the retro CRT monitor frame. Note: Some external websites restrict iframe embedding.
+            </p>
+            <div class="space-y-1.5">
+                <label class="text-[11px] text-emerald-500 font-bold block">WEB ADDRESS (URL):</label>
+                <input type="text" id="url-input" placeholder="https://wikipedia.org" class="w-full bg-[#0b0c0e] text-emerald-300 border border-emerald-700/60 rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-400">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button id="modal-cancel-btn" class="retro-btn px-4 py-1.5 rounded text-xs font-bold text-gray-300">CANCEL</button>
+                <button id="modal-load-btn" class="retro-btn px-4 py-1.5 rounded text-xs font-bold text-emerald-300 border-emerald-600">LOAD SITE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- UI Elements ---
+            const clockEl = document.getElementById('eastern-time-clock');
+            const statusEl = document.getElementById('save-status');
+            const columnsContainer = document.getElementById('columns-container');
+            const webViewerContainer = document.getElementById('web-viewer-container');
+            const crtIframe = document.getElementById('crt-iframe');
+            const pageIndicator = document.getElementById('page-indicator');
+            const prevPageBtn = document.getElementById('prev-page-btn');
+            const nextPageBtn = document.getElementById('next-page-btn');
+            const crtScreenBody = document.getElementById('crt-screen-body');
+            const crtPowerLed = document.getElementById('crt-power-led');
+            const fontSizeSelect = document.getElementById('font-size-select');
+            const valScanlines = document.getElementById('val-scanlines');
+            const valBrightness = document.getElementById('val-brightness');
+
+            // --- Display Mode & Modal Elements ---
+            const modeNoteBtn = document.getElementById('mode-note-btn');
+            const modeSiteBtn = document.getElementById('mode-site-btn');
+            const loadUrlBtn = document.getElementById('load-url-btn');
+            const urlModal = document.getElementById('url-modal');
+            const urlInput = document.getElementById('url-input');
+            const modalLoadBtn = document.getElementById('modal-load-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
+            const modalCloseX = document.getElementById('modal-close-x');
+
+            // --- Workspace State ---
+            let currentPage = 1;
+            const TOTAL_PAGES = 100;
+            let currentMode = 8; // Default 8 columns
+            let isPowerOn = true;
+            let currentDisplayView = 'note'; // 'note' or 'site'
+            let loadedWebUrl = '';
+            let activeIframeUrl = '';
+
+            let settings = {
+                scanlines: 30,
+                brightness: 100,
+                flicker: true,
+                sparkle: true,
+                textColor: '#00ff66',
+                bgColor: '#1e222d',
+                fontSize: '14px',
+                textAlign: 'left'
+            };
+
+            const savedSettings = localStorage.getItem('next_ws_settings');
+            if (savedSettings) {
+                try {
+                    settings = { ...settings, ...JSON.parse(savedSettings) };
+                } catch(e) {}
+            }
+
+            const savedPage = localStorage.getItem('next_ws_current_page');
+            if (savedPage) currentPage = parseInt(savedPage, 10) || 1;
+
+            const savedMode = localStorage.getItem('next_ws_current_mode');
+            if (savedMode) currentMode = parseInt(savedMode, 10) || 8;
+
+            const savedUrl = localStorage.getItem('next_ws_current_url');
+            if (savedUrl) loadedWebUrl = savedUrl;
+
+            // --- 1. Real-Time Eastern Standard Time Clock ---
+            function updateEasternTime() {
+                const now = new Date();
+                const options = {
+                    timeZone: 'America/New_York',
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true,
+                    timeZoneName: 'short'
+                };
+                clockEl.textContent = new Intl.DateTimeFormat('en-US', options).format(now).toUpperCase();
+            }
+            updateEasternTime();
+            setInterval(updateEasternTime, 1000);
+
+            // --- 2. Unique LocalStorage Key Generator ---
+            function getStorageKey(page, mode, colIndex, type) {
+                return `next_ws_data_p${page}_m${mode}_c${colIndex}_${type}`;
+            }
+
+            // --- 3. Dynamic Column & Web Frame Rendering ---
+            function renderColumns() {
+                columnsContainer.innerHTML = '';
+
+                if (!isPowerOn) return;
+
+                if (currentDisplayView === 'site') {
+                    columnsContainer.classList.add('hidden');
+                    webViewerContainer.classList.remove('hidden');
+                    if (loadedWebUrl && activeIframeUrl !== loadedWebUrl) {
+                        crtIframe.src = loadedWebUrl;
+                        activeIframeUrl = loadedWebUrl;
+                    }
+                } else {
+                    webViewerContainer.classList.add('hidden');
+                    columnsContainer.classList.remove('hidden');
+
+                    if (currentMode === 16) {
+                        columnsContainer.className = "grid grid-cols-4 sm:grid-cols-8 md:grid-cols-16 gap-1 flex-1 w-full h-full min-h-0 overflow-hidden relative z-10 crt-glow crt-flickering";
+                    } else if (currentMode === 1) {
+                        columnsContainer.className = "grid grid-cols-1 gap-2 flex-1 w-full h-full min-h-0 overflow-hidden relative z-10 crt-glow crt-flickering";
+                    } else if (currentMode === 2) {
+                        columnsContainer.className = "grid grid-cols-2 gap-2 flex-1 w-full h-full min-h-0 overflow-hidden relative z-10 crt-glow crt-flickering";
+                    } else if (currentMode === 4) {
+                        columnsContainer.className = "grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1 w-full h-full min-h-0 overflow-hidden relative z-10 crt-glow crt-flickering";
+                    } else {
+                        // Default 8 columns
+                        columnsContainer.className = "grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 flex-1 w-full h-full min-h-0 overflow-hidden relative z-10 crt-glow crt-flickering";
+                    }
+
+                    for (let i = 0; i < currentMode; i++) {
+                        const colBox = document.createElement('div');
+                        colBox.className = 'column-box flex flex-col h-full rounded-md border';
+
+                        const titleInput = document.createElement('input');
+                        titleInput.type = 'text';
+                        titleInput.id = `col-title-${i}`;
+                        titleInput.placeholder = `[ COL_${i + 1} ]`;
+                        titleInput.className = 'column-title w-full p-2 font-semibold tracking-wider';
+
+                        const textarea = document.createElement('textarea');
+                        textarea.id = `col-text-${i}`;
+                        textarea.placeholder = 'Terminal ready...';
+                        textarea.className = 'column-textarea w-full h-full p-2.5 resize-none leading-relaxed';
+
+                        // Load saved content from LocalStorage
+                        const savedTitle = localStorage.getItem(getStorageKey(currentPage, currentMode, i, 'title'));
+                        const savedText = localStorage.getItem(getStorageKey(currentPage, currentMode, i, 'text'));
+
+                        if (savedTitle !== null) titleInput.value = savedTitle;
+                        if (savedText !== null) textarea.value = savedText;
+
+                        // Autosave Event Listeners
+                        titleInput.addEventListener('input', (e) => {
+                            localStorage.setItem(getStorageKey(currentPage, currentMode, i, 'title'), e.target.value);
+                            flashSavedStatus();
+                        });
+
+                        textarea.addEventListener('input', (e) => {
+                            localStorage.setItem(getStorageKey(currentPage, currentMode, i, 'text'), e.target.value);
+                            flashSavedStatus();
+                        });
+
+                        colBox.appendChild(titleInput);
+                        colBox.appendChild(textarea);
+                        columnsContainer.appendChild(colBox);
+                    }
+                }
+
+                // Update layout active buttons
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    const btnMode = parseInt(btn.getAttribute('data-mode'), 10);
+                    if (btnMode === currentMode) {
+                        btn.classList.add('retro-btn-active');
+                    } else {
+                        btn.classList.remove('retro-btn-active');
+                    }
+                });
+
+                // Update Display Mode toggle state
+                if (currentDisplayView === 'site') {
+                    modeSiteBtn.classList.add('retro-btn-active', 'text-emerald-300');
+                    modeSiteBtn.classList.remove('text-gray-400');
+                    modeNoteBtn.classList.remove('retro-btn-active', 'text-emerald-300');
+                    modeNoteBtn.classList.add('text-gray-400');
+                } else {
+                    modeNoteBtn.classList.add('retro-btn-active', 'text-emerald-300');
+                    modeNoteBtn.classList.remove('text-gray-400');
+                    modeSiteBtn.classList.remove('retro-btn-active', 'text-emerald-300');
+                    modeSiteBtn.classList.add('text-gray-400');
+                }
+
+                // Update Page Indicator (Up to 100 Sheets)
+                pageIndicator.textContent = `${String(currentPage).padStart(3, '0')}.SHEET`;
+            }
+
+            let saveTimeout = null;
+            function flashSavedStatus() {
+                if (!statusEl) return;
+                statusEl.textContent = 'SAVING...';
+                statusEl.classList.replace('text-emerald-300', 'text-amber-400');
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    if (statusEl) {
+                        statusEl.textContent = 'AUTOSAVED';
+                        statusEl.classList.replace('text-amber-400', 'text-emerald-300');
+                    }
+                }, 600);
+            }
+
+            // --- 4. Navigation & Layout Controls ---
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    localStorage.setItem('next_ws_current_page', currentPage);
+                    renderColumns();
+                }
+            });
+
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < TOTAL_PAGES) {
+                    currentPage++;
+                    localStorage.setItem('next_ws_current_page', currentPage);
+                    renderColumns();
+                }
+            });
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentMode = parseInt(btn.getAttribute('data-mode'), 10);
+                    localStorage.setItem('next_ws_current_mode', currentMode);
+                    currentDisplayView = 'note';
+                    renderColumns();
+                });
+            });
+
+            // Display Mode Switchers
+            modeNoteBtn.addEventListener('click', () => {
+                currentDisplayView = 'note';
+                renderColumns();
+            });
+
+            modeSiteBtn.addEventListener('click', () => {
+                if (!loadedWebUrl) {
+                    openUrlModal();
+                } else {
+                    currentDisplayView = 'site';
+                    renderColumns();
+                }
+            });
+
+            // URL Modal Handler
+            function openUrlModal() {
+                urlInput.value = loadedWebUrl || '';
+                urlModal.classList.remove('hidden');
+                setTimeout(() => urlInput.focus(), 100);
+            }
+
+            function closeUrlModal() {
+                urlModal.classList.add('hidden');
+            }
+
+            loadUrlBtn.addEventListener('click', openUrlModal);
+            modalCancelBtn.addEventListener('click', closeUrlModal);
+            modalCloseX.addEventListener('click', closeUrlModal);
+
+            modalLoadBtn.addEventListener('click', () => {
+                let val = urlInput.value.trim();
+                if (val) {
+                    if (!val.startsWith('http://') && !val.startsWith('https://')) {
+                        val = 'https://' + val;
+                    }
+                    loadedWebUrl = val;
+                    localStorage.setItem('next_ws_current_url', loadedWebUrl);
+                    currentDisplayView = 'site';
+                    crtIframe.src = loadedWebUrl;
+                    activeIframeUrl = loadedWebUrl;
+                    closeUrlModal();
+                    renderColumns();
+                }
+            });
+
+            // --- 5. Settings & Visual Adjustments ---
+            const knobScanlines = document.getElementById('knob-scanlines');
+            const knobBrightness = document.getElementById('knob-brightness');
+            const flickerBtn = document.getElementById('flicker-toggle-btn');
+            const sparkleBtn = document.getElementById('sparkle-toggle-btn');
+            const powerSwitch = document.getElementById('master-power-btn');
+
+            function applySettings() {
+                document.documentElement.style.setProperty('--scanline-opacity', settings.scanlines / 100);
+                document.documentElement.style.setProperty('--crt-brightness', `${settings.brightness}%`);
+                document.documentElement.style.setProperty('--text-color', settings.textColor);
+                document.documentElement.style.setProperty('--column-bg', settings.bgColor);
+                document.documentElement.style.setProperty('--text-align', settings.textAlign || 'left');
+                
+                // Calculate proportional title size based on font size selection
+                const rawFontSize = parseInt(settings.fontSize, 10) || 14;
+                const titleSize = Math.max(10, Math.floor(rawFontSize * 0.85)) + 'px';
+                
+                document.documentElement.style.setProperty('--font-size', settings.fontSize);
+                document.documentElement.style.setProperty('--title-font-size', titleSize);
+
+                knobScanlines.value = settings.scanlines;
+                knobBrightness.value = settings.brightness;
+                valScanlines.textContent = `${settings.scanlines}%`;
+                valBrightness.textContent = `${settings.brightness}%`;
+
+                if (fontSizeSelect) {
+                    fontSizeSelect.value = settings.fontSize;
+                }
+
+                // Text Alignment Buttons
+                document.querySelectorAll('.align-btn').forEach(btn => {
+                    if (btn.getAttribute('data-align') === settings.textAlign) {
+                        btn.classList.add('retro-btn-active');
+                    } else {
+                        btn.classList.remove('retro-btn-active');
+                    }
+                });
+
+                // CRT Flicker Toggle
+                if (settings.flicker) {
+                    columnsContainer.classList.add('crt-flickering');
+                    flickerBtn.textContent = 'CRT FLICKER: ON';
+                    flickerBtn.classList.replace('text-gray-500', 'text-emerald-400');
+                } else {
+                    columnsContainer.classList.remove('crt-flickering');
+                    flickerBtn.textContent = 'CRT FLICKER: OFF';
+                    flickerBtn.classList.replace('text-emerald-400', 'text-gray-500');
+                }
+
+                // Sparkle Effect Toggle
+                if (settings.sparkle) {
+                    sparkleBtn.textContent = 'SPARKLE: ON';
+                    sparkleBtn.classList.replace('text-gray-500', 'text-emerald-400');
+                } else {
+                    sparkleBtn.textContent = 'SPARKLE: OFF';
+                    sparkleBtn.classList.replace('text-emerald-400', 'text-gray-500');
+                }
+
+                // Background Active State
+                document.querySelectorAll('.bg-color-btn').forEach(btn => {
+                    if (btn.getAttribute('data-bg') === settings.bgColor) {
+                        btn.classList.add('ring-2', 'ring-emerald-400');
+                    } else {
+                        btn.classList.remove('ring-2', 'ring-emerald-400');
+                    }
+                });
+
+                localStorage.setItem('next_ws_settings', JSON.stringify(settings));
+            }
+
+            // Font Select Dropdown Listener
+            fontSizeSelect.addEventListener('change', (e) => {
+                settings.fontSize = e.target.value;
+                applySettings();
+            });
+
+            // Alignment Listeners
+            document.querySelectorAll('.align-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    settings.textAlign = btn.getAttribute('data-align');
+                    applySettings();
+                });
+            });
+
+            // Knob Listeners
+            knobScanlines.addEventListener('input', (e) => {
+                settings.scanlines = parseInt(e.target.value, 10);
+                applySettings();
+            });
+
+            knobBrightness.addEventListener('input', (e) => {
+                settings.brightness = parseInt(e.target.value, 10);
+                applySettings();
+            });
+
+            flickerBtn.addEventListener('click', () => {
+                settings.flicker = !settings.flicker;
+                applySettings();
+            });
+
+            sparkleBtn.addEventListener('click', () => {
+                settings.sparkle = !settings.sparkle;
+                applySettings();
+            });
+
+            // Master Power Toggle with Retro CRT Shut Down & Boot Up Beam Effect
+            powerSwitch.addEventListener('click', () => {
+                if (isPowerOn) {
+                    // Trigger Power Off Animation
+                    crtScreenBody.classList.remove('crt-power-on');
+                    crtScreenBody.classList.add('crt-power-off');
+                    powerSwitch.classList.add('power-off');
+                    powerSwitch.textContent = 'OFF';
+                    crtPowerLed.className = "w-2.5 h-2.5 rounded-full bg-red-800";
+                    isPowerOn = false;
+
+                    setTimeout(() => {
+                        columnsContainer.innerHTML = '';
+                        webViewerContainer.classList.add('hidden');
+                    }, 400);
+
+                } else {
+                    // Trigger Power On Bootup Animation
+                    isPowerOn = true;
+                    powerSwitch.classList.remove('power-off');
+                    powerSwitch.textContent = 'ON';
+                    crtPowerLed.className = "w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_#00ff66]";
+                    
+                    renderColumns();
+                    
+                    crtScreenBody.classList.remove('crt-power-off');
+                    crtScreenBody.classList.add('crt-power-on');
+                    
+                    setTimeout(() => {
+                        crtScreenBody.classList.remove('crt-power-on');
+                    }, 500);
+                }
+            });
+
+            // Eject drive triggers for retro aesthetic interactive feel
+            document.getElementById('eject-floppy-btn')?.addEventListener('click', () => {
+                const led = document.getElementById('floppy-led');
+                if (led) led.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-ping mr-2";
+                setTimeout(() => {
+                    if (led) led.className = "w-2.5 h-2.5 rounded-full bg-red-900 border border-red-950 mr-2";
+                }, 1200);
+            });
+
+            document.getElementById('eject-mo-btn')?.addEventListener('click', () => {
+                if (statusEl) {
+                    statusEl.textContent = 'DISK EJECTED';
+                    setTimeout(() => { statusEl.textContent = 'AUTOSAVED'; }, 1000);
+                }
+            });
+
+            // Color preset listeners
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    settings.textColor = btn.getAttribute('data-color');
+                    applySettings();
+                });
+            });
+
+            document.querySelectorAll('.bg-color-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    settings.bgColor = btn.getAttribute('data-bg');
+                    applySettings();
+                });
+            });
+
+            // --- 6. Atmospheric Sparkle / Jazz Particle Canvas Effect ---
+            const canvas = document.getElementById('sparkle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const PARTICLE_COUNT = 35;
+
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            class Particle {
+                constructor() {
+                    this.reset();
+                }
+
+                reset() {
+                    this.x = Math.random() * (canvas.width || 800);
+                    this.y = Math.random() * (canvas.height || 600);
+                    this.size = Math.random() * 2 + 0.5;
+                    this.alpha = Math.random() * 0.5;
+                    this.fade = (Math.random() * 0.008 + 0.002) * (Math.random() < 0.5 ? 1 : -1);
+                    this.speedY = -(Math.random() * 0.25 + 0.05);
+                }
+
+                update() {
+                    this.y += this.speedY;
+                    this.alpha += this.fade;
+
+                    if (this.alpha >= 0.75) {
+                        this.fade = -Math.abs(this.fade);
+                    } else if (this.alpha <= 0.02) {
+                        this.fade = Math.abs(this.fade);
+                    }
+
+                    if (this.y < 0) {
+                        this.y = canvas.height;
+                        this.x = Math.random() * canvas.width;
+                    }
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.fillStyle = settings.textColor;
+                    ctx.globalAlpha = Math.max(0, this.alpha);
+                    ctx.shadowBlur = 5;
+                    ctx.shadowColor = settings.textColor;
+                    ctx.fillRect(this.x, this.y, this.size, this.size);
+                    ctx.restore();
+                }
+            }
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push(new Particle());
+            }
+
+            function animateSparkles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (settings.sparkle && isPowerOn) {
+                    particles.forEach(p => {
+                        p.update();
+                        p.draw();
+                    });
+                }
+                requestAnimationFrame(animateSparkles);
+            }
+
+            // Init App
+            applySettings();
+            renderColumns();
+            animateSparkles();
+        });
+    </script>
+</body>
+</html>
