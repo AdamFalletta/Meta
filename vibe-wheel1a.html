@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Energy Wheel & Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #090d16;
+      color: #f3f4f6;
+    }
+    
+    /* Smooth Range Input Styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 14px;
+      cursor: pointer;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 28px;
+      width: 28px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -7px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(99, 102, 241, 0.5);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.4);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.7);
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glow-effect {
+      box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.3);
+    }
+
+    .tab-btn.active {
+      background-color: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.6);
+      color: #ffffff;
+    }
+
+    /* Color Picker Swatch Fix for WebKit & Gecko browsers */
+    input[type="color"] {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.75rem;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+      border-radius: 0.75rem;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 0.75rem;
+    }
+    input[type="color"]::-moz-color-swatch {
+      border: none;
+      border-radius: 0.75rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-3 md:p-6 overflow-x-hidden">
+
+  <header class="w-full max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 glass-card px-5 py-4 rounded-2xl">
+    <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-2xl shadow-inner">
+          ⚡
+        </div>
+        <div>
+          <h1 class="font-extrabold text-xl md:text-2xl tracking-tight text-white flex items-center gap-2">
+            Vibe Energy <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Wheel</span>
+          </h1>
+          <p class="text-xs text-slate-400">Rate your random vibe level (0-100) per spin!</p>
+        </div>
+      </div>
+      
+      <!-- Active Wheel Selector -->
+      <div class="flex items-center gap-2 sm:ml-4">
+        <span class="text-xs text-slate-400 font-semibold hidden md:inline">Active Wheel:</span>
+        <select id="activeWheelSelect" class="bg-slate-900 border border-indigo-500/40 text-indigo-300 font-bold text-xs rounded-xl px-3 py-2 outline-none focus:border-indigo-400">
+          <!-- Dynamically populated -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto justify-center">
+      <button id="tabBtnPlay" class="tab-btn active px-4 py-2 rounded-lg text-xs font-bold text-slate-300 border border-transparent transition flex items-center gap-1.5">
+        <span>🎲</span> <span>Play Wheel</span>
+      </button>
+      <button id="tabBtnManager" class="tab-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-300 border border-transparent transition flex items-center gap-1.5">
+        <span>⚙️</span> <span>Wheel Manager</span>
+      </button>
+      <button id="tabBtnReports" class="tab-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-300 border border-transparent transition flex items-center gap-1.5">
+        <span>📊</span> <span>Reports & Log</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- TAB 1: PLAY WHEEL -->
+  <main id="tabPlay" class="w-full max-w-6xl my-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-center py-2">
+    
+    <!-- Canvas Wheel Container -->
+    <div class="lg:col-span-7 flex flex-col items-center justify-center relative">
+      <div class="relative w-full max-w-[440px] aspect-square flex items-center justify-center">
+        <!-- Canvas Wheel -->
+        <canvas id="wheelCanvas" width="800" height="800" class="w-full h-full drop-shadow-2xl transition-transform duration-300"></canvas>
+        
+        <!-- Top Pointer Needle -->
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none filter drop-shadow-md">
+          <svg width="36" height="48" viewBox="0 0 36 48" fill="none">
+            <path d="M18 48L3 12C0 6 4 0 11 0H25C32 0 36 6 33 12L18 48Z" fill="#F43F5E"/>
+            <path d="M18 40L7 12C5 8 8 4 12 4H24C28 4 31 8 29 12L18 40Z" fill="#FB7185"/>
+          </svg>
+        </div>
+
+        <!-- Center Cap -->
+        <div class="absolute inset-0 m-auto w-16 h-16 rounded-full bg-slate-900 border-4 border-indigo-500/80 shadow-2xl flex items-center justify-center z-10 pointer-events-none">
+          <span class="text-2xl animate-pulse">✨</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side Control Panel -->
+    <div class="lg:col-span-5 flex flex-col gap-5">
+      
+      <!-- Card: Spin Status & Rating Interface -->
+      <div id="controlCard" class="glass-card rounded-3xl p-6 glow-effect flex flex-col justify-between min-h-[360px] transition-all">
+        
+        <!-- Step 1: Ready View -->
+        <div id="viewReady" class="flex flex-col items-center justify-center text-center py-6 h-full gap-5">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold">
+            <span>Round Progress</span>
+            <span id="roundCounterBadge" class="bg-indigo-600 text-white px-2.5 py-0.5 rounded-full text-[11px] font-bold">0/16</span>
+          </div>
+
+          <h2 class="text-2xl font-bold text-white tracking-tight">Ready for your Vibe Check?</h2>
+          <p class="text-slate-400 text-sm max-w-xs">Spin to draw an unspun slice, then measure your motivation energy for it!</p>
+
+          <button id="btnSpin" class="w-full mt-2 py-4 px-8 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white font-extrabold text-lg shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3">
+            <span>SPIN WHEEL</span>
+            <span class="text-xl">🎲</span>
+          </button>
+        </div>
+
+        <!-- Step 2: Spinning View -->
+        <div id="viewSpinning" class="hidden flex-col items-center justify-center text-center py-10 h-full gap-4">
+          <div class="w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin flex items-center justify-center">
+            <span class="text-2xl">🌀</span>
+          </div>
+          <h2 class="text-xl font-bold text-white animate-pulse">Determining your Vibe...</h2>
+          <p class="text-slate-400 text-xs">Let fate choose what comes next!</p>
+        </div>
+
+        <!-- Step 3: Rating View -->
+        <div id="viewRating" class="hidden flex-col justify-between h-full gap-4">
+          <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80">
+            <div id="landedEmoji" class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner bg-slate-900 border border-slate-700">
+              🎺
+            </div>
+            <div class="flex-1 overflow-hidden">
+              <span class="text-xs uppercase font-bold text-indigo-400 tracking-wider">You landed on</span>
+              <h3 id="landedTitle" class="text-xl font-black text-white truncate">Activity</h3>
+            </div>
+          </div>
+
+          <!-- Slider 0-100 -->
+          <div class="flex flex-col gap-3 py-2">
+            <div class="flex items-center justify-between">
+              <label for="vibeSlider" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Vibe Energy Rating</label>
+              <div class="flex items-center gap-1 bg-slate-900 px-3 py-1 rounded-xl border border-slate-700">
+                <span id="vibeFace" class="text-lg">🔥</span>
+                <span id="vibeValue" class="text-xl font-black text-white">75</span>
+                <span class="text-xs text-slate-400 font-semibold">%</span>
+              </div>
+            </div>
+
+            <input type="range" id="vibeSlider" min="0" max="100" value="75" class="w-full my-2">
+
+            <div class="flex justify-between text-[11px] text-slate-400 font-medium px-1">
+              <span>0% (Not feeling it)</span>
+              <span>50% (Maybe)</span>
+              <span>100% (Hyped!)</span>
+            </div>
+          </div>
+
+          <!-- Set Button -->
+          <button id="btnSetVibe" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-base shadow-lg shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2">
+            <span>SET VIBE SCORE</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Round Session History -->
+      <div class="glass-card rounded-2xl p-4 flex flex-col gap-2">
+        <div class="flex justify-between items-center text-xs">
+          <span class="font-bold text-slate-400 uppercase tracking-wider">Current Round History</span>
+          <span id="remainingBadge" class="text-slate-400 font-semibold">16 Slices Remaining</span>
+        </div>
+        <div id="spinsHistoryList" class="flex gap-1.5 overflow-x-auto py-1 min-h-[36px] items-center">
+          <span class="text-xs text-slate-500 italic">No spins recorded in this round yet...</span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- TAB 2: WHEEL MANAGER & CRUD SLICES -->
+  <section id="tabManager" class="w-full max-w-6xl hidden flex-col gap-6 my-auto py-2">
+    
+    <!-- Wheels CRUD Header -->
+    <div class="glass-card rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span>🎯</span> Saved Wheels CRUD & Slice Setup
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">Create multiple wheel presets, change slice counts (2 to 32), and edit titles, emojis & colors.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        <button id="btnNewWheel" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+          <span>➕</span> New Wheel
+        </button>
+        <button id="btnTextWheel" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+          <span>📝</span> From Text
+        </button>
+        <button id="btnRenameWheel" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs transition flex items-center gap-1">
+          <span>✏️</span> Rename
+        </button>
+        <button id="btnDuplicateWheel" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs transition flex items-center gap-1">
+          <span>📋</span> Duplicate
+        </button>
+        <button id="btnDeleteWheel" class="px-4 py-2.5 rounded-xl bg-rose-900/60 hover:bg-rose-800 border border-rose-700/60 text-rose-200 font-semibold text-xs transition flex items-center gap-1">
+          <span>🗑️</span> Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Slices Count Input & Actions -->
+    <div class="glass-card rounded-3xl p-6 flex flex-col gap-6">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+        <div class="flex items-center gap-4">
+          <label for="sliceCountInput" class="text-sm font-extrabold text-white uppercase tracking-wider">Number of Slices (2–32):</label>
+          <div class="flex items-center gap-2">
+            <button id="btnDecrementSlices" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-black text-base border border-slate-700">-</button>
+            <input type="number" id="sliceCountInput" min="2" max="32" value="16" class="w-16 h-10 text-center font-black text-lg bg-slate-900 border-2 border-indigo-500/60 rounded-xl text-indigo-300 focus:outline-none">
+            <button id="btnIncrementSlices" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-black text-base border border-slate-700">+</button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+          <button id="btnResetStock" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+            Reset Stock Data
+          </button>
+          <button id="btnSaveWheelSlices" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition">
+            Save Changes
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Slices Grid Editor -->
+      <div id="slicesManagerGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[55vh] overflow-y-auto pr-2">
+        <!-- Dynamically rendered slice input editors -->
+      </div>
+    </div>
+
+  </section>
+
+  <!-- TAB 3: REPORTS & ANALYTICS -->
+  <section id="tabReports" class="w-full max-w-6xl hidden flex-col gap-6 my-auto py-2">
+    
+    <!-- Top Summary Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card p-5 rounded-2xl flex flex-col">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Spins Today</span>
+        <span id="statSpinsToday" class="text-3xl font-black text-indigo-400 mt-1">0</span>
+        <span class="text-[11px] text-slate-500 mt-1">Current day activity</span>
+      </div>
+      <div class="glass-card p-5 rounded-2xl flex flex-col">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Spins All-Time</span>
+        <span id="statSpinsTotal" class="text-3xl font-black text-pink-400 mt-1">0</span>
+        <span class="text-[11px] text-slate-500 mt-1">Total recorded entries</span>
+      </div>
+      <div class="glass-card p-5 rounded-2xl flex flex-col">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Today Avg Vibe</span>
+        <span id="statAvgToday" class="text-3xl font-black text-emerald-400 mt-1">0%</span>
+        <span class="text-[11px] text-slate-500 mt-1">Day energy index</span>
+      </div>
+      <div class="glass-card p-5 rounded-2xl flex flex-col">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Monthly / Long-Term Avg</span>
+        <span id="statAvgTotal" class="text-3xl font-black text-amber-400 mt-1">0%</span>
+        <span class="text-[11px] text-slate-500 mt-1">Long-term energy index</span>
+      </div>
+    </div>
+
+    <!-- Dual Meters: Today (Blue) vs Long-Term (Red) Energy Percentages -->
+    <div class="glass-card rounded-3xl p-6 flex flex-col gap-4">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+            <span>📈</span> Energy Distribution Breakdown: Day vs. Monthly/Long-Term
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">Compare short-term energy scores against long-term trends.</p>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs font-bold">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+            <span class="text-blue-300">Blue Meter = Today's %</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+            <span class="text-rose-300">Red Meter = Monthly/All-Time %</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meter List Output Container -->
+      <div id="dualMetersContainer" class="flex flex-col gap-4 max-h-[380px] overflow-y-auto pr-2">
+        <!-- Dynamically rendered dual meters -->
+      </div>
+    </div>
+
+    <!-- Spin History Data Log Table with Edit & Scrap Controls -->
+    <div class="glass-card rounded-3xl p-6 flex flex-col gap-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+            <span>📜</span> Recorded Spin History Log
+          </h3>
+          <p class="text-xs text-slate-400">Edit vibe scores or scrap (delete) invalid spin records.</p>
+        </div>
+
+        <button id="btnDownloadTxt" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+          <span>📥</span> Download Report (.txt)
+        </button>
+      </div>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/90 uppercase text-[10px] font-black text-slate-400 tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="p-3">Date & Time</th>
+              <th class="p-3">Wheel Name</th>
+              <th class="p-3">Activity landed</th>
+              <th class="p-3 text-center">Vibe Score</th>
+              <th class="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="historyLogTableBody" class="divide-y divide-slate-800/60 bg-slate-950/40">
+            <!-- Dynamically populated spin log records -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- MODAL 1: Final Summary Dashboard (After Round Completion) -->
+  <div id="summaryModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-2xl rounded-3xl p-6 md:p-8 max-h-[90vh] overflow-y-auto flex flex-col gap-6 shadow-2xl border border-indigo-500/20">
+      
+      <!-- Top Celebration Banner -->
+      <div class="text-center flex flex-col items-center gap-2">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg shadow-orange-500/30 mb-1">
+          🏆
+        </div>
+        <h2 class="text-2xl md:text-3xl font-black text-white">Full Vibe Round Complete!</h2>
+        <p class="text-sm text-slate-400 max-w-md">You've spun all available slices in this wheel! Here is your calculated energy ranking.</p>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col items-center text-center">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Average Vibe</span>
+          <span id="summaryAvg" class="text-3xl font-black text-indigo-400 mt-1">0%</span>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col items-center text-center">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Top Motivation</span>
+          <div id="summaryTopContainer" class="flex items-center gap-1.5 mt-1 truncate max-w-full">
+            <span id="summaryTopEmoji" class="text-xl">🔥</span>
+            <span id="summaryTopTitle" class="text-base font-bold text-emerald-400 truncate">None</span>
+          </div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col items-center text-center">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Completed Slices</span>
+          <span id="summaryCountBadge" class="text-3xl font-black text-pink-400 mt-1">16 / 16</span>
+        </div>
+      </div>
+
+      <!-- Ranked List breakdown -->
+      <div class="flex flex-col gap-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Ranked Activity Breakdown</h3>
+        <div id="summaryRankedList" class="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+          <!-- Dynamically inserted -->
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex gap-3 pt-2">
+        <button id="btnRestartRound" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-extrabold text-base shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+          <span>START NEW ROUND</span>
+          <span>🔄</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 3: Create Wheel from Text Modal -->
+  <div id="textWheelModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-lg rounded-3xl p-6 flex flex-col gap-4 border border-purple-500/30 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>📝</span> Create Wheel from Text
+        </h3>
+        <button id="btnCloseTextWheelModal" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+      </div>
+      <p class="text-xs text-slate-400">
+        Type or paste your items below (one per line, 2 to 32 entries). Each line becomes a wheel slice with a random shape/number emoji and vibrant color!
+      </p>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="textWheelName" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Wheel Title:</label>
+        <input type="text" id="textWheelName" placeholder="e.g. Quick Decisions" value="Custom Text Wheel" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500 font-semibold">
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="textWheelInput" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Entries (One per line):</label>
+        <textarea id="textWheelInput" rows="7" placeholder="Option 1&#10;Option 2&#10;Option 3&#10;Option 4" class="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500 font-mono resize-none leading-relaxed"></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button id="btnCancelTextWheel" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">Cancel</button>
+        <button id="btnGenerateTextWheel" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white text-xs font-extrabold shadow-lg shadow-purple-500/20 transition">Generate Wheel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Edit Score Modal -->
+  <div id="editScoreModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md rounded-3xl p-6 flex flex-col gap-5 border border-slate-700 shadow-2xl">
+      <h3 class="text-lg font-bold text-white">Edit Vibe Score Record</h3>
+      <p id="editRecordInfo" class="text-xs text-slate-400">Updating score entry for activity...</p>
+
+      <div class="flex flex-col gap-2">
+        <label for="editScoreInput" class="text-xs font-bold text-slate-300">New Score (0-100%):</label>
+        <input type="number" id="editScoreInput" min="0" max="100" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 border border-indigo-500 text-white font-black text-xl outline-none">
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btnCancelEditRecord" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Cancel</button>
+        <button id="btnSaveEditRecord" class="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl bg-indigo-600 text-white text-sm font-semibold shadow-2xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-4 flex items-center gap-2">
+    <span id="toastText">Settings Saved!</span>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const DEFAULT_COLORS = [
+      '#EF4444', '#F97316', '#F59E0B', '#10B981', '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6',
+      '#EC4899', '#14B8A6', '#84CC16', '#64748B', '#D97706', '#DC2626', '#7C3AED', '#2563EB',
+      '#059669', '#D946EF', '#0284C7', '#E11D48', '#65A30D', '#EA580C', '#4F46E5', '#9333EA',
+      '#0891B2', '#C026D3', '#16A34A', '#CA8A04', '#2563EB', '#DB2777', '#475569', '#0D9488'
+    ];
+
+    const SHAPE_NUMBER_EMOJIS = [
+      '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⬛', '⬜', '🟥', '🟧', '🟨', '🟩', '🟦', '🟪',
+      '🔶', '🔷', '🔺', '🔻', '💠', '🔘', '🔳', '🔲', '❇️', '✳️', '✴️', '⭐', '🌟', '💎',
+      '🔮', '🎲', '🎯', '♟️', '⚡', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'
+    ];
+
+    const DEFAULT_STOCK_SLICES = [
+      { id: 1,  emoji: '🏋️‍♂️', title: 'Fitness',     color: '#EF4444' },
+      { id: 2,  emoji: '🎺', title: 'Trumpet',     color: '#F97316' },
+      { id: 3,  emoji: '🎨', title: 'Painting',    color: '#F59E0B' },
+      { id: 4,  emoji: '📚', title: 'Reading',     color: '#10B981' },
+      { id: 5,  emoji: '🍕', title: 'Cooking',     color: '#06B6D4' },
+      { id: 6,  emoji: '🎮', title: 'Gaming',      color: '#3B82F6' },
+      { id: 7,  emoji: '🧘', title: 'Meditation',  color: '#6366F1' },
+      { id: 8,  emoji: '🎧', title: 'Music Prod',  color: '#8B5CF6' },
+      { id: 9,  emoji: '✍️', title: 'Journaling',  color: '#EC4899' },
+      { id: 10, emoji: '🚶', title: 'Nature Walk', color: '#14B8A6' },
+      { id: 11, emoji: '☕', title: 'Coffee Break',color: '#84CC16' },
+      { id: 12, emoji: '🧹', title: 'Deep Clean',  color: '#64748B' },
+      { id: 13, emoji: '🗣️', title: 'Call Friend', color: '#D97706' },
+      { id: 14, emoji: '🎬', title: 'Watch Movie', color: '#DC2626' },
+      { id: 15, emoji: '🧩', title: 'Puzzles',     color: '#7C3AED' },
+      { id: 16, emoji: '🚀', title: 'New Skill',   color: '#2563EB' }
+    ];
+
+    /* Storage Keys */
+    const STORAGE_KEY_WHEELS = 'vibe_wheels_list_v3';
+    const STORAGE_KEY_ACTIVE = 'vibe_active_wheel_v3';
+    const STORAGE_KEY_HISTORY = 'vibe_spin_history_v3';
+    const STORAGE_KEY_ROUND = 'vibe_round_state_v3';
+
+    /* Global App State */
+    let savedWheels = [];
+    let activeWheelId = '';
+    let activeWheel = null;
+    
+    let spinHistory = []; // Array of { id, wheelId, sliceIndex, title, emoji, score, timestamp }
+    let remainingIndices = [];
+    let historyScores = {}; // map sliceIndex -> score for current round
+    let currentSpinSliceIndex = null;
+    let isSpinning = false;
+    let editingRecordId = null;
+
+    // Canvas & Audio
+    let canvas, ctx;
+    let currentAngle = 0;
+    let spinAnimationId = null;
+
+    class AudioEffects {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playTick() {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.04);
+          gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.04);
+        } catch (e) {}
+      }
+      playLand() {
+        if (!this.ctx) return;
+        try {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+            gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.08 + 0.3);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + idx * 0.08);
+            osc.stop(this.ctx.currentTime + idx * 0.08 + 0.3);
+          });
+        } catch (e) {}
+      }
+    }
+    const audioSFX = new AudioEffects();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      canvas = document.getElementById('wheelCanvas');
+      ctx = canvas.getContext('2d');
+
+      loadAllData();
+      setupEventListeners();
+      drawWheel();
+      updateUIState();
+    });
+
+    function loadAllData() {
+      // Load Wheels
+      const savedWheelsRaw = localStorage.getItem(STORAGE_KEY_WHEELS);
+      if (savedWheelsRaw) {
+        try {
+          savedWheels = JSON.parse(savedWheelsRaw);
+        } catch (e) {
+          savedWheels = [];
+        }
+      }
+      if (!Array.isArray(savedWheels) || savedWheels.length === 0) {
+        savedWheels = [{
+          id: 'default_wheel',
+          name: 'Daily Vibe Wheel',
+          sliceCount: 16,
+          slices: JSON.parse(JSON.stringify(DEFAULT_STOCK_SLICES))
+        }];
+        saveWheelsData();
+      }
+
+      // Load Active Wheel ID
+      activeWheelId = localStorage.getItem(STORAGE_KEY_ACTIVE) || savedWheels[0].id;
+      activeWheel = savedWheels.find(w => w.id === activeWheelId) || savedWheels[0];
+      activeWheelId = activeWheel.id;
+
+      // Load Spin History Log
+      const historyRaw = localStorage.getItem(STORAGE_KEY_HISTORY);
+      if (historyRaw) {
+        try {
+          spinHistory = JSON.parse(historyRaw);
+        } catch(e) {
+          spinHistory = [];
+        }
+      } else {
+        spinHistory = [];
+      }
+
+      // Load Round State
+      loadRoundState();
+      populateWheelSelect();
+    }
+
+    function saveWheelsData() {
+      localStorage.setItem(STORAGE_KEY_WHEELS, JSON.stringify(savedWheels));
+      localStorage.setItem(STORAGE_KEY_ACTIVE, activeWheelId);
+    }
+
+    function saveHistoryData() {
+      localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(spinHistory));
+    }
+
+    function loadRoundState() {
+      const saved = localStorage.getItem(STORAGE_KEY_ROUND + '_' + activeWheelId);
+      if (saved) {
+        try {
+          const state = JSON.parse(saved);
+          remainingIndices = state.remainingIndices || [];
+          historyScores = state.historyScores || {};
+        } catch (e) {
+          resetRoundState();
+        }
+      } else {
+        resetRoundState();
+      }
+    }
+
+    function saveRoundState() {
+      const state = {
+        remainingIndices,
+        historyScores
+      };
+      localStorage.setItem(STORAGE_KEY_ROUND + '_' + activeWheelId, JSON.stringify(state));
+    }
+
+    function resetRoundState() {
+      const count = activeWheel.slices.length;
+      remainingIndices = Array.from({ length: count }, (_, i) => i);
+      historyScores = {};
+      currentSpinSliceIndex = null;
+      saveRoundState();
+    }
+
+    function populateWheelSelect() {
+      const select = document.getElementById('activeWheelSelect');
+      select.innerHTML = savedWheels.map(w => 
+        `<option value="${w.id}" ${w.id === activeWheelId ? 'selected' : ''}>${w.name} (${w.slices.length} Slices)</option>`
+      ).join('');
+    }
+
+    function drawWheel() {
+      if (!ctx || !activeWheel) return;
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const outerRadius = width / 2 - 20;
+      const innerRadius = 70;
+      const numSlices = activeWheel.slices.length;
+      const sliceAngle = (2 * Math.PI) / numSlices;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(currentAngle);
+
+      for (let i = 0; i < numSlices; i++) {
+        const slice = activeWheel.slices[i];
+        const startAngle = i * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+        const isCompleted = !(remainingIndices.includes(i)) && (i !== currentSpinSliceIndex);
+
+        // Slice Arc
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, outerRadius, startAngle, endAngle);
+        ctx.closePath();
+
+        // Fill color
+        ctx.fillStyle = isCompleted ? adjustColorOpacity(slice.color, 0.25) : slice.color;
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.6)';
+        ctx.lineWidth = numSlices > 24 ? 2 : 4;
+        ctx.stroke();
+
+        // Dim completed
+        if (isCompleted) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+          ctx.fill();
+        }
+
+        // Text & Emoji Content
+        ctx.save();
+        const midAngle = startAngle + sliceAngle / 2;
+        ctx.rotate(midAngle);
+        
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        
+        // Font sizing according to slice count
+        const emojiSize = numSlices > 24 ? 20 : (numSlices > 16 ? 26 : 36);
+        let titleSize = numSlices > 24 ? 11 : (numSlices > 16 ? 14 : 18);
+
+        ctx.font = `${emojiSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+        ctx.globalAlpha = isCompleted ? 0.4 : 1.0;
+        ctx.fillText(slice.emoji, outerRadius - (numSlices > 20 ? 15 : 28), 0);
+
+        ctx.fillStyle = '#FFFFFF';
+        
+        let titleText = slice.title;
+        ctx.font = `bold ${titleSize}px "Plus Jakarta Sans", sans-serif`;
+
+        // Dynamically shrink font size so the whole title fits onto the slice without truncating
+        const maxTextWidth = outerRadius - innerRadius - (numSlices > 20 ? 40 : 65);
+        let textWidth = ctx.measureText(titleText).width;
+        while (textWidth > maxTextWidth && titleSize > 6) {
+          titleSize -= 0.5;
+          ctx.font = `bold ${titleSize}px "Plus Jakarta Sans", sans-serif`;
+          textWidth = ctx.measureText(titleText).width;
+        }
+
+        ctx.fillText(titleText, outerRadius - (numSlices > 20 ? 45 : 75), 0);
+
+        if (isCompleted) {
+          ctx.fillStyle = '#22C55E';
+          ctx.font = `bold ${titleSize + 4}px sans-serif`;
+          ctx.fillText('✓', outerRadius - 10, -12);
+        }
+
+        ctx.restore();
+      }
+
+      // Outer Metallic Ring
+      ctx.beginPath();
+      ctx.arc(0, 0, outerRadius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+
+      // Inner Hub
+      ctx.beginPath();
+      ctx.arc(0, 0, innerRadius, 0, 2 * Math.PI);
+      ctx.fillStyle = '#0F172A';
+      ctx.fill();
+      ctx.strokeStyle = '#6366F1';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function adjustColorOpacity(hex, opacity) {
+      let c;
+      if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split('');
+        if (c.length == 3) {
+          c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+        }
+        c = '0x' + c.join('');
+        return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + opacity + ')';
+      }
+      return hex;
+    }
+
+    function spinWheel() {
+      if (isSpinning || remainingIndices.length === 0) return;
+
+      audioSFX.init();
+      isSpinning = true;
+      updateUIState();
+
+      const randomIndex = Math.floor(Math.random() * remainingIndices.length);
+      const targetSliceIndex = remainingIndices[randomIndex];
+      currentSpinSliceIndex = targetSliceIndex;
+
+      const numSlices = activeWheel.slices.length;
+      const sliceAngle = (2 * Math.PI) / numSlices;
+      const sliceMidAngle = (targetSliceIndex + 0.5) * sliceAngle;
+      
+      const desiredOffset = (1.5 * Math.PI) - sliceMidAngle;
+      const extraSpins = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
+      const jitter = (Math.random() - 0.5) * (sliceAngle * 0.6);
+      
+      let targetRotation = currentAngle + extraSpins + (desiredOffset - (currentAngle % (2 * Math.PI))) + jitter;
+      if (targetRotation <= currentAngle + extraSpins) {
+        targetRotation += 2 * Math.PI;
+      }
+
+      const startTime = performance.now();
+      const duration = 4000;
+      const startAngle = currentAngle;
+      let lastTickSlice = -1;
+
+      function animateSpin(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3.5);
+        currentAngle = startAngle + (targetRotation - startAngle) * easeOut;
+
+        const normalizedPointerAngle = (1.5 * Math.PI - (currentAngle % (2 * Math.PI)) + 2 * Math.PI * 2) % (2 * Math.PI);
+        const currentPassingSlice = Math.floor(normalizedPointerAngle / sliceAngle) % numSlices;
+
+        if (currentPassingSlice !== lastTickSlice) {
+          audioSFX.playTick();
+          lastTickSlice = currentPassingSlice;
+        }
+
+        drawWheel();
+
+        if (progress < 1) {
+          spinAnimationId = requestAnimationFrame(animateSpin);
+        } else {
+          isSpinning = false;
+          audioSFX.playLand();
+          showRatingView(targetSliceIndex);
+        }
+      }
+
+      spinAnimationId = requestAnimationFrame(animateSpin);
+    }
+
+    function updateUIState() {
+      const totalSlices = activeWheel.slices.length;
+      const spunCount = Object.keys(historyScores).length;
+      
+      document.getElementById('roundCounterBadge').innerText = `${spunCount}/${totalSlices}`;
+      document.getElementById('remainingBadge').innerText = `${totalSlices - spunCount} Slices Remaining`;
+
+      renderRoundHistoryList();
+
+      const viewReady = document.getElementById('viewReady');
+      const viewSpinning = document.getElementById('viewSpinning');
+      const viewRating = document.getElementById('viewRating');
+
+      if (isSpinning) {
+        viewReady.classList.add('hidden');
+        viewSpinning.classList.remove('hidden');
+        viewSpinning.classList.add('flex');
+        viewRating.classList.add('hidden');
+      } else if (currentSpinSliceIndex !== null) {
+        viewReady.classList.add('hidden');
+        viewSpinning.classList.add('hidden');
+        viewSpinning.classList.remove('flex');
+        viewRating.classList.remove('hidden');
+        viewRating.classList.add('flex');
+      } else {
+        viewReady.classList.remove('hidden');
+        viewSpinning.classList.add('hidden');
+        viewSpinning.classList.remove('flex');
+        viewRating.classList.add('hidden');
+      }
+
+      // Update Reports Data
+      renderReportsAnalytics();
+    }
+
+    function showRatingView(sliceIndex) {
+      const slice = activeWheel.slices[sliceIndex];
+      document.getElementById('landedEmoji').innerText = slice.emoji;
+      document.getElementById('landedTitle').innerText = slice.title;
+
+      const slider = document.getElementById('vibeSlider');
+      slider.value = 75;
+      updateVibeMeterDisplay(75);
+
+      updateUIState();
+    }
+
+    function updateVibeMeterDisplay(val) {
+      document.getElementById('vibeValue').innerText = val;
+      const vibeFace = document.getElementById('vibeFace');
+      if (val < 20) vibeFace.innerText = '🥱';
+      else if (val < 40) vibeFace.innerText = '😐';
+      else if (val < 60) vibeFace.innerText = '🙂';
+      else if (val < 85) vibeFace.innerText = '😊';
+      else vibeFace.innerText = '🔥';
+    }
+
+    function renderRoundHistoryList() {
+      const historyList = document.getElementById('spinsHistoryList');
+      const entries = Object.entries(historyScores);
+
+      if (entries.length === 0) {
+        historyList.innerHTML = `<span class="text-xs text-slate-500 italic">No spins recorded in this round yet...</span>`;
+        return;
+      }
+
+      historyList.innerHTML = entries.map(([idx, score]) => {
+        const slice = activeWheel.slices[parseInt(idx)];
+        if (!slice) return '';
+        return `
+          <div class="flex items-center gap-1 bg-slate-900 border border-slate-700/70 px-2.5 py-1 rounded-xl text-xs flex-shrink-0 animate-in fade-in">
+            <span>${slice.emoji}</span>
+            <span class="font-bold text-white">${score}%</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setVibeScore() {
+      if (currentSpinSliceIndex === null) return;
+
+      const slider = document.getElementById('vibeSlider');
+      const score = parseInt(slider.value, 10);
+
+      // Record in current round state
+      historyScores[currentSpinSliceIndex] = score;
+
+      // Append to Spin History Log
+      const slice = activeWheel.slices[currentSpinSliceIndex];
+      const logRecord = {
+        id: 'spin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        wheelId: activeWheelId,
+        wheelName: activeWheel.name,
+        sliceIndex: currentSpinSliceIndex,
+        title: slice.title,
+        emoji: slice.emoji,
+        score: score,
+        timestamp: new Date().toISOString()
+      };
+      spinHistory.unshift(logRecord);
+      saveHistoryData();
+
+      // Filter remaining unspun slices
+      remainingIndices = remainingIndices.filter(idx => idx !== currentSpinSliceIndex);
+      currentSpinSliceIndex = null;
+
+      saveRoundState();
+      drawWheel();
+      updateUIState();
+
+      if (remainingIndices.length === 0) {
+        triggerRoundCompletion();
+      } else {
+        showToast('Vibe Score Recorded!');
+        spinWheel();
+      }
+    }
+
+    /* Trigger Round Completion Modal */
+    function triggerRoundCompletion() {
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      }
+
+      const scoresArray = Object.values(historyScores);
+      const avg = scoresArray.reduce((a, b) => a + b, 0) / scoresArray.length;
+
+      let topIndex = null;
+      let maxScore = -1;
+      Object.entries(historyScores).forEach(([idx, score]) => {
+        if (score > maxScore) {
+          maxScore = score;
+          topIndex = idx;
+        }
+      });
+
+      const topSlice = activeWheel.slices[topIndex] || { emoji: '✨', title: 'None' };
+
+      document.getElementById('summaryAvg').innerText = `${Math.round(avg)}%`;
+      document.getElementById('summaryTopEmoji').innerText = topSlice.emoji;
+      document.getElementById('summaryTopTitle').innerText = `${topSlice.title} (${maxScore}%)`;
+      document.getElementById('summaryCountBadge').innerText = `${activeWheel.slices.length} / ${activeWheel.slices.length}`;
+
+      const rankedListContainer = document.getElementById('summaryRankedList');
+      const sortedEntries = Object.entries(historyScores).sort((a, b) => b[1] - a[1]);
+
+      rankedListContainer.innerHTML = sortedEntries.map(([idx, score], rank) => {
+        const slice = activeWheel.slices[parseInt(idx)];
+        return `
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-sm">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-black text-slate-500 w-4">#${rank + 1}</span>
+              <span class="text-xl">${slice.emoji}</span>
+              <span class="font-bold text-white">${slice.title}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-24 bg-slate-800 rounded-full h-2 overflow-hidden hidden sm:block">
+                <div class="h-full bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full" style="width: ${score}%"></div>
+              </div>
+              <span class="font-black text-indigo-400 text-sm w-12 text-right">${score}%</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('summaryModal').classList.remove('hidden');
+    }
+
+    function renderWheelManager() {
+      document.getElementById('sliceCountInput').value = activeWheel.slices.length;
+      
+      const grid = document.getElementById('slicesManagerGrid');
+      grid.innerHTML = activeWheel.slices.map((slice, i) => `
+        <div class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-2">
+          <span class="text-xs font-black text-slate-500 w-5">#${i + 1}</span>
+          <input type="text" id="editEmoji_${i}" value="${slice.emoji}" maxlength="4" class="w-10 h-9 text-center text-lg bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:border-indigo-500">
+          <input type="text" id="editTitle_${i}" value="${slice.title}" maxlength="60" class="flex-1 px-2.5 h-9 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-white outline-none focus:border-indigo-500">
+          <input type="color" id="editColor_${i}" value="${slice.color}" title="Choose slice color" class="w-9 h-9 shrink-0 cursor-pointer">
+        </div>
+      `).join('');
+    }
+
+    function changeSliceCount(newCount) {
+      newCount = Math.max(2, Math.min(32, newCount));
+      const currentSlices = activeWheel.slices;
+      
+      if (newCount > currentSlices.length) {
+        // Expand slices
+        for (let i = currentSlices.length; i < newCount; i++) {
+          const color = DEFAULT_COLORS[i % DEFAULT_COLORS.length];
+          const stock = DEFAULT_STOCK_SLICES[i] || { emoji: '✨', title: `Activity ${i+1}` };
+          currentSlices.push({
+            id: i + 1,
+            emoji: stock.emoji,
+            title: stock.title,
+            color: color
+          });
+        }
+      } else if (newCount < currentSlices.length) {
+        // Shrink slices
+        activeWheel.slices = currentSlices.slice(0, newCount);
+      }
+
+      activeWheel.sliceCount = newCount;
+      resetRoundState();
+      saveWheelsData();
+      renderWheelManager();
+      drawWheel();
+      updateUIState();
+    }
+
+    function saveWheelSlicesFromInputs() {
+      const count = activeWheel.slices.length;
+      for (let i = 0; i < count; i++) {
+        const emojiVal = document.getElementById(`editEmoji_${i}`).value.trim() || '✨';
+        const titleVal = document.getElementById(`editTitle_${i}`).value.trim() || `Slice ${i+1}`;
+        const colorVal = document.getElementById(`editColor_${i}`).value || '#6366F1';
+
+        activeWheel.slices[i] = {
+          id: i + 1,
+          emoji: emojiVal,
+          title: titleVal,
+          color: colorVal
+        };
+      }
+
+      saveWheelsData();
+      drawWheel();
+      updateUIState();
+      showToast('Wheel Configuration Saved!');
+    }
+
+    /* CRUD Preset Wheel Operations */
+    function createNewWheel() {
+      const name = prompt('Enter a name for your new wheel preset:', 'New Custom Wheel');
+      if (!name) return;
+
+      const newId = 'wheel_' + Date.now();
+      const newWheel = {
+        id: newId,
+        name: name,
+        sliceCount: 16,
+        slices: JSON.parse(JSON.stringify(DEFAULT_STOCK_SLICES))
+      };
+
+      savedWheels.push(newWheel);
+      activeWheelId = newId;
+      activeWheel = newWheel;
+
+      saveWheelsData();
+      resetRoundState();
+      populateWheelSelect();
+      renderWheelManager();
+      drawWheel();
+      updateUIState();
+      showToast('New Wheel Preset Created!');
+    }
+
+    function openTextWheelModal() {
+      document.getElementById('textWheelInput').value = '';
+      document.getElementById('textWheelName').value = 'Text Wheel ' + (savedWheels.length + 1);
+      document.getElementById('textWheelModal').classList.remove('hidden');
+    }
+
+    function closeTextWheelModal() {
+      document.getElementById('textWheelModal').classList.add('hidden');
+    }
+
+    function generateWheelFromText() {
+      const nameInput = document.getElementById('textWheelName').value.trim() || 'Custom Text Wheel';
+      const text = document.getElementById('textWheelInput').value;
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+      if (lines.length < 2) {
+        showToast('Please enter at least 2 entries (1 per line)!');
+        return;
+      }
+
+      if (lines.length > 32) {
+        showToast('Maximum 32 entries supported! Using first 32 lines.');
+        lines.length = 32;
+      }
+
+      // Generate random slices with shape/number emojis and distinct colors
+      const slices = lines.map((line, idx) => {
+        const randEmoji = SHAPE_NUMBER_EMOJIS[Math.floor(Math.random() * SHAPE_NUMBER_EMOJIS.length)];
+        const randColor = DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+        return {
+          id: idx + 1,
+          emoji: randEmoji,
+          title: line.substring(0, 60),
+          color: randColor
+        };
+      });
+
+      const newId = 'wheel_' + Date.now();
+      const newWheel = {
+        id: newId,
+        name: nameInput,
+        sliceCount: slices.length,
+        slices: slices
+      };
+
+      savedWheels.push(newWheel);
+      activeWheelId = newId;
+      activeWheel = newWheel;
+
+      saveWheelsData();
+      resetRoundState();
+      populateWheelSelect();
+      renderWheelManager();
+      drawWheel();
+      updateUIState();
+      closeTextWheelModal();
+      showToast(`Created wheel "${nameInput}" with ${slices.length} slices!`);
+    }
+
+    function renameCurrentWheel() {
+      const name = prompt('Enter new name for this wheel:', activeWheel.name);
+      if (!name) return;
+
+      activeWheel.name = name;
+      saveWheelsData();
+      populateWheelSelect();
+      showToast('Wheel Renamed!');
+    }
+
+    function duplicateCurrentWheel() {
+      const newId = 'wheel_' + Date.now();
+      const newWheel = {
+        id: newId,
+        name: activeWheel.name + ' (Copy)',
+        sliceCount: activeWheel.slices.length,
+        slices: JSON.parse(JSON.stringify(activeWheel.slices))
+      };
+
+      savedWheels.push(newWheel);
+      activeWheelId = newId;
+      activeWheel = newWheel;
+
+      saveWheelsData();
+      resetRoundState();
+      populateWheelSelect();
+      renderWheelManager();
+      drawWheel();
+      updateUIState();
+      showToast('Wheel Duplicated!');
+    }
+
+    function deleteCurrentWheel() {
+      if (savedWheels.length <= 1) {
+        alert('You must keep at least one saved wheel preset!');
+        return;
+      }
+      if (confirm(`Are you sure you want to delete "${activeWheel.name}"?`)) {
+        savedWheels = savedWheels.filter(w => w.id !== activeWheelId);
+        activeWheel = savedWheels[0];
+        activeWheelId = activeWheel.id;
+
+        saveWheelsData();
+        resetRoundState();
+        populateWheelSelect();
+        renderWheelManager();
+        drawWheel();
+        updateUIState();
+        showToast('Wheel Deleted!');
+      }
+    }
+
+    function renderReportsAnalytics() {
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Filter spins for active wheel
+      const wheelSpins = spinHistory.filter(s => s.wheelId === activeWheelId);
+      const todaySpins = wheelSpins.filter(s => s.timestamp.startsWith(todayStr));
+
+      // Stats
+      document.getElementById('statSpinsToday').innerText = todaySpins.length;
+      document.getElementById('statSpinsTotal').innerText = wheelSpins.length;
+
+      const avgToday = todaySpins.length > 0 
+        ? Math.round(todaySpins.reduce((a, b) => a + b.score, 0) / todaySpins.length) : 0;
+      const avgTotal = wheelSpins.length > 0 
+        ? Math.round(wheelSpins.reduce((a, b) => a + b.score, 0) / wheelSpins.length) : 0;
+
+      document.getElementById('statAvgToday').innerText = `${avgToday}%`;
+      document.getElementById('statAvgTotal').innerText = `${avgTotal}%`;
+
+      // Dual Meter Breakdown (Today = Blue, All-Time/Month = Red)
+      const dualContainer = document.getElementById('dualMetersContainer');
+      if (activeWheel.slices.length === 0) {
+        dualContainer.innerHTML = `<span class="text-xs text-slate-500 italic">No slices found in active wheel.</span>`;
+      } else {
+        dualContainer.innerHTML = activeWheel.slices.map(slice => {
+          // Today stats for this slice
+          const sliceTodaySpins = todaySpins.filter(s => s.sliceIndex === slice.id - 1 || s.title === slice.title);
+          const sliceTodayAvg = sliceTodaySpins.length > 0 
+            ? Math.round(sliceTodaySpins.reduce((a, b) => a + b.score, 0) / sliceTodaySpins.length) : 0;
+
+          // All-time / Monthly stats for this slice
+          const sliceTotalSpins = wheelSpins.filter(s => s.sliceIndex === slice.id - 1 || s.title === slice.title);
+          const sliceTotalAvg = sliceTotalSpins.length > 0 
+            ? Math.round(sliceTotalSpins.reduce((a, b) => a + b.score, 0) / sliceTotalSpins.length) : 0;
+
+          return `
+            <div class="flex flex-col gap-1.5 p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">${slice.emoji}</span>
+                  <span class="font-bold text-white">${slice.title}</span>
+                </div>
+                <div class="flex gap-4 font-bold">
+                  <span class="text-blue-400">Day: ${sliceTodayAvg}% (${sliceTodaySpins.length})</span>
+                  <span class="text-rose-400">Monthly/Long-term: ${sliceTotalAvg}% (${sliceTotalSpins.length})</span>
+                </div>
+              </div>
+
+              <!-- Meter Bars -->
+              <div class="grid grid-cols-2 gap-2 mt-1">
+                <!-- Blue Meter (Day) -->
+                <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                  <div class="h-full bg-blue-500 rounded-full transition-all duration-300" style="width: ${sliceTodayAvg}%"></div>
+                </div>
+                <!-- Red Meter (Monthly/Long-Term) -->
+                <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                  <div class="h-full bg-rose-500 rounded-full transition-all duration-300" style="width: ${sliceTotalAvg}%"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // History Table
+      const tableBody = document.getElementById('historyLogTableBody');
+      if (wheelSpins.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500 italic">No spin records log found for this wheel.</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = wheelSpins.map(record => {
+        const dateStr = new Date(record.timestamp).toLocaleString();
+        return `
+          <tr class="hover:bg-slate-900/80 transition">
+            <td class="p-3 text-slate-400 text-[11px] font-mono">${dateStr}</td>
+            <td class="p-3 font-semibold text-slate-300">${record.wheelName}</td>
+            <td class="p-3 font-bold text-white flex items-center gap-1.5">
+              <span>${record.emoji}</span>
+              <span>${record.title}</span>
+            </td>
+            <td class="p-3 text-center">
+              <span class="font-black px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-indigo-400 text-xs">${record.score}%</span>
+            </td>
+            <td class="p-3 text-right">
+              <button onclick="openEditRecordModal('${record.id}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold mr-1">Edit</button>
+              <button onclick="scrapRecord('${record.id}')" class="px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-[11px] font-semibold">Scrap</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    /* Edit & Scrap Log Functions */
+    function openEditRecordModal(id) {
+      const rec = spinHistory.find(r => r.id === id);
+      if (!rec) return;
+      editingRecordId = id;
+
+      document.getElementById('editRecordInfo').innerText = `Updating score entry for "${rec.emoji} ${rec.title}" on ${new Date(rec.timestamp).toLocaleDateString()}...`;
+      document.getElementById('editScoreInput').value = rec.score;
+      document.getElementById('editScoreModal').classList.remove('hidden');
+    }
+
+    function saveRecordEdit() {
+      if (!editingRecordId) return;
+      const rec = spinHistory.find(r => r.id === editingRecordId);
+      if (rec) {
+        const val = parseInt(document.getElementById('editScoreInput').value, 10);
+        rec.score = Math.max(0, Math.min(100, isNaN(val) ? 75 : val));
+        saveHistoryData();
+        updateUIState();
+        showToast('Spin Record Updated!');
+      }
+      document.getElementById('editScoreModal').classList.add('hidden');
+    }
+
+    function scrapRecord(id) {
+      if (confirm('Scrap (delete) this spin record entry from analytics?')) {
+        spinHistory = spinHistory.filter(r => r.id !== id);
+        saveHistoryData();
+        updateUIState();
+        showToast('Record Scrapped!');
+      }
+    }
+
+    function downloadTxtReport() {
+      const wheelSpins = spinHistory.filter(s => s.wheelId === activeWheelId);
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todaySpins = wheelSpins.filter(s => s.timestamp.startsWith(todayStr));
+
+      let txt = `====================================================\n`;
+      txt += `   VIBE ENERGY WHEEL REPORT: ${activeWheel.name.toUpperCase()}\n`;
+      txt += `   Generated On: ${new Date().toLocaleString()}\n`;
+      txt += `====================================================\n\n`;
+
+      txt += `1. OVERALL METRIC SUMMARY\n`;
+      txt += `----------------------------------------------------\n`;
+      txt += `Total Slices in Wheel: ${activeWheel.slices.length}\n`;
+      txt += `Spins Recorded Today : ${todaySpins.length}\n`;
+      txt += `Spins Recorded Total : ${wheelSpins.length}\n`;
+      const avgToday = todaySpins.length ? Math.round(todaySpins.reduce((a,b)=>a+b.score,0)/todaySpins.length) : 0;
+      const avgTotal = wheelSpins.length ? Math.round(wheelSpins.reduce((a,b)=>a+b.score,0)/wheelSpins.length) : 0;
+      txt += `Average Vibe Score Today : ${avgToday}%\n`;
+      txt += `Average Vibe Score Total : ${avgTotal}%\n\n`;
+
+      txt += `2. SLICE ENERGY PERCENTAGE BREAKDOWN\n`;
+      txt += `----------------------------------------------------\n`;
+      activeWheel.slices.forEach(slice => {
+        const sToday = todaySpins.filter(s => s.sliceIndex === slice.id - 1 || s.title === slice.title);
+        const avgTday = sToday.length ? Math.round(sToday.reduce((a,b)=>a+b.score,0)/sToday.length) : 0;
+
+        const sTotal = wheelSpins.filter(s => s.sliceIndex === slice.id - 1 || s.title === slice.title);
+        const avgTot = sTotal.length ? Math.round(sTotal.reduce((a,b)=>a+b.score,0)/sTotal.length) : 0;
+
+        txt += `[${slice.emoji} ${slice.title}]\n`;
+        txt += `   - Today's Energy Average    : ${avgTday}% (${sToday.length} spins)\n`;
+        txt += `   - Long-Term/Monthly Average : ${avgTot}% (${sTotal.length} spins)\n`;
+      });
+
+      txt += `\n3. DETAILED SPIN HISTORY LOG\n`;
+      txt += `----------------------------------------------------\n`;
+      wheelSpins.forEach((rec, idx) => {
+        txt += `${idx + 1}. [${new Date(rec.timestamp).toLocaleString()}] ${rec.emoji} ${rec.title} -> Score: ${rec.score}%\n`;
+      });
+
+      // Trigger download
+      const blob = new Blob([txt], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vibe_Report_${activeWheel.name.replace(/[^a-z0-9]/gi, '_')}_${todayStr}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+      }, 2500);
+    }
+
+    function setupEventListeners() {
+      // Tab Navigation
+      const tabPlay = document.getElementById('tabPlay');
+      const tabManager = document.getElementById('tabManager');
+      const tabReports = document.getElementById('tabReports');
+
+      const btnTabPlay = document.getElementById('tabBtnPlay');
+      const btnTabManager = document.getElementById('tabBtnManager');
+      const btnTabReports = document.getElementById('tabBtnReports');
+
+      function switchTab(activeBtn, activeSec) {
+        [btnTabPlay, btnTabManager, btnTabReports].forEach(b => b.classList.remove('active'));
+        [tabPlay, tabManager, tabReports].forEach(s => s.classList.add('hidden'));
+
+        activeBtn.classList.add('active');
+        activeSec.classList.remove('hidden');
+        if (activeSec === tabManager) renderWheelManager();
+        if (activeSec === tabReports) renderReportsAnalytics();
+      }
+
+      btnTabPlay.addEventListener('click', () => switchTab(btnTabPlay, tabPlay));
+      btnTabManager.addEventListener('click', () => switchTab(btnTabManager, tabManager));
+      btnTabReports.addEventListener('click', () => switchTab(btnTabReports, tabReports));
+
+      // Active Wheel Select Change
+      document.getElementById('activeWheelSelect').addEventListener('change', (e) => {
+        activeWheelId = e.target.value;
+        activeWheel = savedWheels.find(w => w.id === activeWheelId) || savedWheels[0];
+        saveWheelsData();
+        loadRoundState();
+        drawWheel();
+        updateUIState();
+        showToast(`Switched to "${activeWheel.name}"`);
+      });
+
+      // Spin & Rating
+      document.getElementById('btnSpin').addEventListener('click', spinWheel);
+      document.getElementById('vibeSlider').addEventListener('input', (e) => updateVibeMeterDisplay(e.target.value));
+      document.getElementById('btnSetVibe').addEventListener('click', setVibeScore);
+
+      // Wheel CRUD Buttons
+      document.getElementById('btnNewWheel').addEventListener('click', createNewWheel);
+      document.getElementById('btnTextWheel').addEventListener('click', openTextWheelModal);
+      document.getElementById('btnCloseTextWheelModal').addEventListener('click', closeTextWheelModal);
+      document.getElementById('btnCancelTextWheel').addEventListener('click', closeTextWheelModal);
+      document.getElementById('btnGenerateTextWheel').addEventListener('click', generateWheelFromText);
+      document.getElementById('btnRenameWheel').addEventListener('click', renameCurrentWheel);
+      document.getElementById('btnDuplicateWheel').addEventListener('click', duplicateCurrentWheel);
+      document.getElementById('btnDeleteWheel').addEventListener('click', deleteCurrentWheel);
+
+      // Slice Count Controls
+      const sliceInput = document.getElementById('sliceCountInput');
+      sliceInput.addEventListener('change', (e) => changeSliceCount(parseInt(e.target.value, 10)));
+      document.getElementById('btnDecrementSlices').addEventListener('click', () => changeSliceCount(activeWheel.slices.length - 1));
+      document.getElementById('btnIncrementSlices').addEventListener('click', () => changeSliceCount(activeWheel.slices.length + 1));
+
+      // Slices Config Actions
+      document.getElementById('btnSaveWheelSlices').addEventListener('click', saveWheelSlicesFromInputs);
+      document.getElementById('btnResetStock').addEventListener('click', () => {
+        if (confirm('Reset active wheel slices to stock default values?')) {
+          activeWheel.slices = JSON.parse(JSON.stringify(DEFAULT_STOCK_SLICES));
+          activeWheel.sliceCount = 16;
+          saveWheelsData();
+          resetRoundState();
+          renderWheelManager();
+          drawWheel();
+          updateUIState();
+          showToast('Reset to Stock Defaults');
+        }
+      });
+
+      // Edit Record Modal Actions
+      document.getElementById('btnCancelEditRecord').addEventListener('click', () => document.getElementById('editScoreModal').classList.add('hidden'));
+      document.getElementById('btnSaveEditRecord').addEventListener('click', saveRecordEdit);
+
+      // Report TXT Export
+      document.getElementById('btnDownloadTxt').addEventListener('click', downloadTxtReport);
+
+      // Restart Round Button
+      document.getElementById('btnRestartRound').addEventListener('click', () => {
+        document.getElementById('summaryModal').classList.add('hidden');
+        resetRoundState();
+        drawWheel();
+        updateUIState();
+        showToast('New Round Started!');
+      });
+
+      // Resize
+      window.addEventListener('resize', () => drawWheel());
+    }
+  </script>
+</body>
+</html>
