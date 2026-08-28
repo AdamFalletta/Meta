@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RevV Alert! - Siren Development VST</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&display=swap');
+        
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #0a0b10;
+            color: #d1d5db;
+            user-select: none;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Custom VST Metallic Styling */
+        .vst-rack {
+            background: linear-gradient(180deg, #1f242d 0%, #12151b 50%, #0a0c0f 100%);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.15), inset 0 -2px 5px rgba(0,0,0,0.8);
+            border: 2px solid #2a313d;
+        }
+
+        .screw {
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle, #555 0%, #222 70%, #111 100%);
+            border-radius: 50%;
+            border: 1px solid #111;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .screw::before {
+            content: '';
+            position: absolute;
+            top: 6px; left: 2px; width: 8px; height: 2px;
+            background: #111;
+            transform: rotate(45deg);
+        }
+
+        /* Rotary Knob Styling */
+        .knob-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .knob {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #3a414e 0%, #181c24 70%, #0d1015 100%);
+            border: 2px solid #2d3542;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.2);
+            cursor: pointer;
+            position: relative;
+            touch-action: none;
+        }
+        .knob-indicator {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 15px;
+            background: #00ffcc;
+            border-radius: 2px;
+            box-shadow: 0 0 8px #00ffcc;
+        }
+        .knob-master .knob-indicator {
+            background: #ff3344;
+            box-shadow: 0 0 8px #ff3344;
+        }
+
+        /* Switch styling */
+        .vst-switch {
+            width: 44px;
+            height: 22px;
+            background-color: #12161f;
+            border-radius: 12px;
+            border: 1px solid #333d4d;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .vst-switch-handle {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #888 0%, #333 100%);
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .vst-switch.active {
+            background-color: #064e3b;
+            border-color: #10b981;
+        }
+        .vst-switch.active .vst-switch-handle {
+            left: 23px;
+            background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+            box-shadow: 0 0 8px #34d399;
+        }
+
+        /* LED indicator */
+        .led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #222;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        .led.active-red { background-color: #ff3344; box-shadow: 0 0 8px #ff3344; }
+        .led.active-green { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+        .led.active-cyan { background-color: #06b6d4; box-shadow: 0 0 8px #06b6d4; }
+        .led.active-amber { background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+        .led.active-purple { background-color: #a855f7; box-shadow: 0 0 8px #a855f7; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0b10; }
+        ::-webkit-scrollbar-thumb { background: #222c3a; border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen p-2 md:p-6 flex flex-col justify-center items-center">
+
+    <!-- MAIN VST RACK UNIT -->
+    <div class="vst-rack w-full max-w-7xl rounded-xl p-4 md:p-6 relative overflow-hidden shadow-2xl">
+        
+        <!-- Corner Screws -->
+        <div class="screw absolute top-3 left-3"></div>
+        <div class="screw absolute top-3 right-3"></div>
+        <div class="screw absolute bottom-3 left-3"></div>
+        <div class="screw absolute bottom-3 right-3"></div>
+
+        <!-- Header Bar -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 px-4 border-b border-gray-800 pb-4">
+            <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                <div class="h-8 w-3 bg-red-600 rounded-sm animate-pulse"></div>
+                <div>
+                    <h1 class="font-orbitron text-2xl md:text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-cyan-400">
+                        REVV ALERT!
+                    </h1>
+                    <p class="text-xs text-gray-400 tracking-wider">ADVANCED SIREN SYNTHESIS ENGINE &bull; 7-FX VST RACK</p>
+                </div>
+            </div>
+
+            <!-- Master Play / Stop & Patrol Controls -->
+            <div class="flex flex-wrap items-center gap-3 bg-black/40 px-4 py-2.5 rounded-lg border border-gray-800">
+                <button id="masterPowerBtn" class="flex items-center space-x-2 px-5 py-2 rounded-md font-orbitron font-bold text-xs md:text-sm tracking-wider transition-all shadow-lg bg-red-600 hover:bg-red-500 text-white active:scale-95">
+                    <svg id="playIcon" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span id="powerBtnText">ARM / PLAY</span>
+                </button>
+
+                <button id="patrolModeBtn" class="flex items-center space-x-2 px-4 py-2 rounded-md font-orbitron font-bold text-xs tracking-wider transition-all shadow-lg bg-purple-900/80 hover:bg-purple-800 border border-purple-500/50 text-purple-200 active:scale-95">
+                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+                    <span id="patrolBtnText">PATROL MODE: OFF</span>
+                </button>
+
+                <div class="flex flex-col items-center">
+                    <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">STATE</span>
+                    <div id="masterLed" class="led mt-1"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Oscilloscope & Performance Visualizer Canvas -->
+        <div class="relative mb-6 rounded-lg overflow-hidden border-2 border-gray-800 bg-black shadow-inner">
+            <canvas id="mainCanvas" width="1000" height="180" class="w-full h-40 md:h-48 block"></canvas>
+            <div class="absolute top-2 left-3 flex space-x-4 text-[10px] text-cyan-400 tracking-widest bg-black/60 px-2 py-1 rounded border border-cyan-900/50">
+                <span>BUFFER: OFF-SCREEN OPTIMIZED</span>
+                <span id="dspCpuDisplay">DSP: IDLE</span>
+                <span id="rateDisplay">FREQ: -- Hz</span>
+                <span id="patrolTimerDisplay" class="text-purple-400">PATROL: INACTIVE</span>
+            </div>
+        </div>
+
+        <!-- MASTER CONTROL COMMAND SECTION WITH BPM KNOB -->
+        <div class="mb-6 bg-gradient-to-r from-red-950/40 via-black/60 to-red-950/40 p-4 rounded-xl border border-red-900/50 shadow-inner">
+            <div class="flex items-center justify-between mb-3 border-b border-red-900/40 pb-2">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></div>
+                    <span class="font-orbitron text-xs font-black text-red-400 uppercase tracking-widest">MASTER COMMAND & GLOBAL PULSE</span>
+                </div>
+                <span class="text-[10px] text-gray-500 uppercase font-mono tracking-widest">GLOBAL BUS CONTROL</span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div class="knob-container">
+                    <div class="knob knob-master" id="knob-pulseBpm" data-min="30" data-max="300" data-value="130">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <span class="text-[10px] text-gray-300 mt-2 font-bold tracking-wider">PULSE BPM</span>
+                    <span class="text-[9px] text-red-400 font-bold" id="val-pulseBpm">130 BPM</span>
+                </div>
+
+                <div class="knob-container">
+                    <div class="knob knob-master" id="knob-masterPulseRate" data-min="0.1" data-max="25" data-value="6">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <span class="text-[10px] text-gray-300 mt-2 font-bold tracking-wider">MASTER PULSE SPEED</span>
+                    <span class="text-[9px] text-red-400 font-bold" id="val-masterPulseRate">6.0 Hz</span>
+                </div>
+
+                <div class="knob-container">
+                    <div class="knob knob-master" id="knob-masterPitchShift" data-min="-24" data-max="24" data-value="0">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <span class="text-[10px] text-gray-300 mt-2 font-bold tracking-wider">GLOBAL PITCH BEND</span>
+                    <span class="text-[9px] text-amber-400 font-bold" id="val-masterPitchShift">0 Semi</span>
+                </div>
+
+                <div class="knob-container">
+                    <div class="knob knob-master" id="knob-masterGlide" data-min="0" data-max="1" data-value="0.3">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <span class="text-[10px] text-gray-300 mt-2 font-bold tracking-wider">SPACE GLIDE / MOD</span>
+                    <span class="text-[9px] text-cyan-400 font-bold" id="val-masterGlide">30%</span>
+                </div>
+
+                <div class="knob-container col-span-2 md:col-span-1">
+                    <div class="knob knob-master" id="knob-masterVol" data-min="0" data-max="1" data-value="0.75">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <span class="text-[10px] text-gray-300 mt-2 font-bold tracking-wider">MASTER VOLUME</span>
+                    <span class="text-[9px] text-emerald-400 font-bold" id="val-masterVol">75%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Siren Preset Selector Tabs (8 Sirens) -->
+        <div class="mb-6">
+            <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">Select Siren Profile (8 Presets)</label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2" id="presetButtons">
+                <button data-preset="apocalypse" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-red-500 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-red-400">APOCALYPSE</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Dual Distortion</span>
+                </button>
+                <button data-preset="glitch" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-cyan-500 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-cyan-400">CYBER GLITCH</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Grainy Stutter</span>
+                </button>
+                <button data-preset="neon" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-amber-500 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-amber-400">NEON PULSE</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Fast LFO Trem</span>
+                </button>
+                <button data-preset="tectonic" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-purple-500 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-purple-400">TECTONIC</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Low Sub Edge</span>
+                </button>
+                <button data-preset="hypernova" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-emerald-500 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-emerald-400">HYPER-NOVA</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Space Delay</span>
+                </button>
+                <button data-preset="alien" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-indigo-400 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-indigo-400">ALIEN PATROL</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Ring Mod Sci-Fi</span>
+                </button>
+                <button data-preset="biohazard" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-lime-400 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-lime-400">BIO-HAZARD</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Screaming Filter</span>
+                </button>
+                <button data-preset="warpdrive" class="preset-btn px-2 py-2 rounded bg-gray-800/80 border border-gray-700 hover:border-pink-500 font-orbitron text-[11px] text-gray-300 font-bold transition-all flex flex-col items-center">
+                    <span class="text-pink-400">WARP DRIVE</span>
+                    <span class="text-[8px] text-gray-500 font-normal">Phaser Dive-Bomb</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODULE RACKS CONTROL PANEL (7 MODULES) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- MODULE 1: DUAL OSCILLATORS & HARMONIES -->
+            <div class="bg-black/30 p-4 rounded-lg border border-gray-800 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <div id="led-osc" class="led"></div>
+                        <span class="font-orbitron text-xs font-bold text-red-400 uppercase tracking-wider">1. OSC & HARMONY</span>
+                    </div>
+                    <div class="vst-switch active" id="sw-osc"><div class="vst-switch-handle"></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 my-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-baseFreq" data-min="100" data-max="2000" data-value="440">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">BASE FREQ</span>
+                        <span class="text-[9px] text-cyan-400" id="val-baseFreq">440 Hz</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-harmony" data-min="-12" data-max="24" data-value="7">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">HARMONY</span>
+                        <span class="text-[9px] text-cyan-400" id="val-harmony">+7 Semi</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-sweepSpeed" data-min="0.1" data-max="10" data-value="1.5">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">SWEEP RATE</span>
+                        <span class="text-[9px] text-cyan-400" id="val-sweepSpeed">1.5 Hz</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-sweepDepth" data-min="0" data-max="1200" data-value="400">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">SWEEP DEPTH</span>
+                        <span class="text-[9px] text-cyan-400" id="val-sweepDepth">400 Cents</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 2: NOISE & GLITCH (GRAINY/NOISY) -->
+            <div class="bg-black/30 p-4 rounded-lg border border-gray-800 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <div id="led-glitch" class="led"></div>
+                        <span class="font-orbitron text-xs font-bold text-cyan-400 uppercase tracking-wider">2. GRAIN & GLITCH</span>
+                    </div>
+                    <div class="vst-switch active" id="sw-glitch"><div class="vst-switch-handle"></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 my-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-noiseMix" data-min="0" data-max="1" data-value="0.25">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">NOISE MIX</span>
+                        <span class="text-[9px] text-cyan-400" id="val-noiseMix">25%</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-bitcrush" data-min="2" data-max="16" data-value="16">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">BIT DEPTH</span>
+                        <span class="text-[9px] text-cyan-400" id="val-bitcrush">16 Bit</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-glitchRate" data-min="0" data-max="20" data-value="4">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">STUTTER RATE</span>
+                        <span class="text-[9px] text-cyan-400" id="val-glitchRate">4 Hz</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-glitchAmount" data-min="0" data-max="1" data-value="0.3">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">GLITCH INT.</span>
+                        <span class="text-[9px] text-cyan-400" id="val-glitchAmount">30%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 3: DISTORTION & FILTER (EDGY/PUNCHY) -->
+            <div class="bg-black/30 p-4 rounded-lg border border-gray-800 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <div id="led-dist" class="led"></div>
+                        <span class="font-orbitron text-xs font-bold text-amber-400 uppercase tracking-wider">3. EDGE & DRIVE</span>
+                    </div>
+                    <div class="vst-switch active" id="sw-dist"><div class="vst-switch-handle"></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 my-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-drive" data-min="0" data-max="100" data-value="45">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">DRIVE / FUZZ</span>
+                        <span class="text-[9px] text-cyan-400" id="val-drive">45%</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-cutoff" data-min="200" data-max="12000" data-value="3500">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">CUTOFF</span>
+                        <span class="text-[9px] text-cyan-400" id="val-cutoff">3500 Hz</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-resonance" data-min="0" data-max="20" data-value="6">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">RESONANCE</span>
+                        <span class="text-[9px] text-cyan-400" id="val-resonance">6.0 Q</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-pulseRate" data-min="0" data-max="20" data-value="6">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">MODULE PULSE</span>
+                        <span class="text-[9px] text-cyan-400" id="val-pulseRate">6 Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 4: SPACEY ECHO & REVERB -->
+            <div class="bg-black/30 p-4 rounded-lg border border-gray-800 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <div id="led-space" class="led"></div>
+                        <span class="font-orbitron text-xs font-bold text-emerald-400 uppercase tracking-wider">4. SPACEY ECHO</span>
+                    </div>
+                    <div class="vst-switch active" id="sw-space"><div class="vst-switch-handle"></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 my-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-delayTime" data-min="0.05" data-max="1" data-value="0.35">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">DELAY TIME</span>
+                        <span class="text-[9px] text-cyan-400" id="val-delayTime">350 ms</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-feedback" data-min="0" data-max="0.95" data-value="0.5">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">FEEDBACK</span>
+                        <span class="text-[9px] text-cyan-400" id="val-feedback">50%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-spaceMix" data-min="0" data-max="1" data-value="0.4">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">REVERB MIX</span>
+                        <span class="text-[9px] text-cyan-400" id="val-spaceMix">40%</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-glideDepth" data-min="0" data-max="1" data-value="0.5">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">ECHO DENSITY</span>
+                        <span class="text-[9px] text-cyan-400" id="val-glideDepth">50%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW FX MODULE 5: ORBIT PHASER / FLANGER -->
+            <div class="bg-black/30 p-4 rounded-lg border border-gray-800 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <div id="led-phaser" class="led"></div>
+                        <span class="font-orbitron text-xs font-bold text-pink-400 uppercase tracking-wider">5. ORBIT PHASER</span>
+                    </div>
+                    <div class="vst-switch active" id="sw-phaser"><div class="vst-switch-handle"></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 my-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-phaserRate" data-min="0.1" data-max="10" data-value="0.5">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">PHASE RATE</span>
+                        <span class="text-[9px] text-cyan-400" id="val-phaserRate">0.5 Hz</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-phaserDepth" data-min="0" data-max="1" data-value="0.6">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">PHASE DEPTH</span>
+                        <span class="text-[9px] text-cyan-400" id="val-phaserDepth">60%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-phaserFeed" data-min="0" data-max="0.9" data-value="0.4">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">FEEDBACK</span>
+                        <span class="text-[9px] text-cyan-400" id="val-phaserFeed">40%</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-phaserMix" data-min="0" data-max="1" data-value="0.5">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">WET MIX</span>
+                        <span class="text-[9px] text-cyan-400" id="val-phaserMix">50%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW FX MODULE 6: SCI-FI RING MODULATOR -->
+            <div class="bg-black/30 p-4 rounded-lg border border-gray-800 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <div id="led-ring" class="led"></div>
+                        <span class="font-orbitron text-xs font-bold text-indigo-400 uppercase tracking-wider">6. RING MODULATOR</span>
+                    </div>
+                    <div class="vst-switch active" id="sw-ring"><div class="vst-switch-handle"></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 my-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-ringFreq" data-min="50" data-max="3000" data-value="320">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">CARRIER FREQ</span>
+                        <span class="text-[9px] text-cyan-400" id="val-ringFreq">320 Hz</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-ringMix" data-min="0" data-max="1" data-value="0.3">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">RING MIX</span>
+                        <span class="text-[9px] text-cyan-400" id="val-ringMix">30%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-ringShape" data-min="0" data-max="1" data-value="0.5">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">WAVEFORM</span>
+                        <span class="text-[9px] text-cyan-400" id="val-ringShape">SINE/SQR</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-ringLfo" data-min="0" data-max="10" data-value="2">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">MOD SPEED</span>
+                        <span class="text-[9px] text-cyan-400" id="val-ringLfo">2.0 Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW FX MODULE 7: PITCH DROP & DIVE ENVELOPE -->
+            <div class="bg-black/30 p-4 rounded-lg border border-gray-800 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <div id="led-pitchdrop" class="led"></div>
+                        <span class="font-orbitron text-xs font-bold text-lime-400 uppercase tracking-wider">7. PITCH DROP / DIVE</span>
+                    </div>
+                    <div class="vst-switch active" id="sw-pitchdrop"><div class="vst-switch-handle"></div></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 my-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-dropDepth" data-min="0" data-max="36" data-value="12">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">DIVE DEPTH</span>
+                        <span class="text-[9px] text-cyan-400" id="val-dropDepth">12 Semi</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-dropRate" data-min="0.1" data-max="5" data-value="0.5">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">RAMP SPEED</span>
+                        <span class="text-[9px] text-cyan-400" id="val-dropRate">0.5 s</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="knob-container">
+                        <div class="knob" id="knob-dropMode" data-min="0" data-max="1" data-value="0">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">DIR (RISE/FALL)</span>
+                        <span class="text-[9px] text-cyan-400" id="val-dropMode">FALL</span>
+                    </div>
+
+                    <div class="knob-container">
+                        <div class="knob" id="knob-dropMix" data-min="0" data-max="1" data-value="0.6">
+                            <div class="knob-indicator"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 mt-2 font-bold">ENV INT.</span>
+                        <span class="text-[9px] text-cyan-400" id="val-dropMix">60%</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footnote Info -->
+        <div class="mt-6 pt-3 border-t border-gray-800 flex flex-col md:flex-row justify-between text-[11px] text-gray-500 font-mono">
+            <span>REVV ALERT &bull; PROFESSIONAL DSP SIREN RACK &bull; 8-PRESET AUTO PATROL</span>
+            <span>OFF-SCREEN CANVAS RENDER ENGINE: ACTIVE</span>
+        </div>
+
+    </div>
+
+    <!-- WEB AUDIO API & CANVAS LOGIC ENGINE -->
+    <script>
+        let audioCtx = null;
+        let isPlaying = false;
+        let isPatrolMode = false;
+
+        // Persistent Sound Node Graph
+        let osc1 = null;
+        let osc2 = null;
+        let noiseNode = null;
+        let lfoPitch = null;
+        let lfoPitchGain = null;
+        let lfoPulse = null;
+        let lfoPulseGain = null;
+        
+        let oscGain = null;
+        let noiseGain = null;
+        let waveshaperNode = null;
+        let filterNode = null;
+
+        // New FX Nodes (Phaser, RingMod, Pitch Drop)
+        let phaserAllpass = [];
+        let phaserLfo = null;
+        let phaserLfoGain = null;
+        let phaserMixNode = null;
+
+        let ringCarrier = null;
+        let ringGain = null;
+        let ringMixNode = null;
+
+        let dropLfo = null;
+        let dropLfoGain = null;
+
+        let delayNode = null;
+        let delayFeedbackNode = null;
+        let delayMixNode = null;
+        let reverbNode = null;
+        let reverbMixNode = null;
+        let masterGate = null;
+        let masterGain = null;
+        let analyser = null;
+        let glitchProcessor = null;
+
+        // Active State Switches
+        const moduleStates = {
+            osc: true,
+            glitch: true,
+            dist: true,
+            space: true,
+            phaser: true,
+            ring: true,
+            pitchdrop: true
+        };
+
+        // Module Parameters
+        const params = {
+            baseFreq: 440,
+            harmony: 7,
+            sweepSpeed: 1.5,
+            sweepDepth: 400,
+            noiseMix: 0.25,
+            bitcrush: 16,
+            glitchRate: 4,
+            glitchAmount: 0.3,
+            drive: 45,
+            cutoff: 3500,
+            resonance: 6,
+            pulseRate: 6,
+            delayTime: 0.35,
+            feedback: 0.5,
+            spaceMix: 0.4,
+            glideDepth: 0.5,
+            // New FX Params
+            phaserRate: 0.5,
+            phaserDepth: 0.6,
+            phaserFeed: 0.4,
+            phaserMix: 0.5,
+            ringFreq: 320,
+            ringMix: 0.3,
+            ringShape: 0.5,
+            ringLfo: 2.0,
+            dropDepth: 12,
+            dropRate: 0.5,
+            dropMode: 0,
+            dropMix: 0.6,
+            // Master Controls
+            pulseBpm: 130,
+            masterPulseRate: 6.0,
+            masterPitchShift: 0,
+            masterGlide: 0.3,
+            masterVol: 0.75
+        };
+
+        // 8 Presets Configuration
+        const presetKeys = ['apocalypse', 'glitch', 'neon', 'tectonic', 'hypernova', 'alien', 'biohazard', 'warpdrive'];
+        let currentPresetIdx = 0;
+        let patrolTimer = null;
+        let beatsInCurrentPreset = 0;
+
+        const presets = {
+            apocalypse: {
+                baseFreq: 520, harmony: 7, sweepSpeed: 0.8, sweepDepth: 800,
+                noiseMix: 0.1, bitcrush: 16, glitchRate: 0, glitchAmount: 0,
+                drive: 80, cutoff: 4500, resonance: 12, pulseRate: 2,
+                phaserRate: 0.2, phaserDepth: 0.2, phaserFeed: 0.2, phaserMix: 0.1,
+                ringFreq: 200, ringMix: 0.1, ringShape: 0, ringLfo: 1.0,
+                dropDepth: 6, dropRate: 0.8, dropMode: 0, dropMix: 0.2,
+                delayTime: 0.25, feedback: 0.6, spaceMix: 0.3,
+                pulseBpm: 130, masterPulseRate: 2.0, masterPitchShift: 0, masterGlide: 0.2, masterVol: 0.75
+            },
+            glitch: {
+                baseFreq: 880, harmony: -5, sweepSpeed: 4.5, sweepDepth: 300,
+                noiseMix: 0.5, bitcrush: 4, glitchRate: 12, glitchAmount: 0.85,
+                drive: 30, cutoff: 6000, resonance: 4, pulseRate: 10,
+                phaserRate: 2.5, phaserDepth: 0.8, phaserFeed: 0.6, phaserMix: 0.4,
+                ringFreq: 800, ringMix: 0.4, ringShape: 1, ringLfo: 5.0,
+                dropDepth: 18, dropRate: 0.2, dropMode: 1, dropMix: 0.5,
+                delayTime: 0.15, feedback: 0.3, spaceMix: 0.2,
+                pulseBpm: 145, masterPulseRate: 10.0, masterPitchShift: 5, masterGlide: 0.8, masterVol: 0.7
+            },
+            neon: {
+                baseFreq: 600, harmony: 12, sweepSpeed: 2.0, sweepDepth: 500,
+                noiseMix: 0.05, bitcrush: 16, glitchRate: 2, glitchAmount: 0.1,
+                drive: 25, cutoff: 2800, resonance: 8, pulseRate: 14,
+                phaserRate: 0.8, phaserDepth: 0.5, phaserFeed: 0.3, phaserMix: 0.5,
+                ringFreq: 440, ringMix: 0.2, ringShape: 0, ringLfo: 2.0,
+                dropDepth: 12, dropRate: 0.5, dropMode: 0, dropMix: 0.3,
+                delayTime: 0.4, feedback: 0.45, spaceMix: 0.5,
+                pulseBpm: 128, masterPulseRate: 14.0, masterPitchShift: 2, masterGlide: 0.4, masterVol: 0.75
+            },
+            tectonic: {
+                baseFreq: 140, harmony: 4, sweepSpeed: 0.4, sweepDepth: 250,
+                noiseMix: 0.35, bitcrush: 8, glitchRate: 0, glitchAmount: 0,
+                drive: 95, cutoff: 1200, resonance: 15, pulseRate: 4,
+                phaserRate: 0.1, phaserDepth: 0.9, phaserFeed: 0.8, phaserMix: 0.6,
+                ringFreq: 90, ringMix: 0.5, ringShape: 0.8, ringLfo: 0.5,
+                dropDepth: 24, dropRate: 1.5, dropMode: 0, dropMix: 0.8,
+                delayTime: 0.5, feedback: 0.7, spaceMix: 0.4,
+                pulseBpm: 100, masterPulseRate: 4.0, masterPitchShift: -12, masterGlide: 0.1, masterVol: 0.8
+            },
+            hypernova: {
+                baseFreq: 1100, harmony: 7, sweepSpeed: 0.2, sweepDepth: 1100,
+                noiseMix: 0.15, bitcrush: 12, glitchRate: 5, glitchAmount: 0.4,
+                drive: 40, cutoff: 8000, resonance: 5, pulseRate: 1,
+                phaserRate: 1.2, phaserDepth: 0.7, phaserFeed: 0.5, phaserMix: 0.7,
+                ringFreq: 1500, ringMix: 0.6, ringShape: 0.3, ringLfo: 3.0,
+                dropDepth: 36, dropRate: 2.0, dropMode: 1, dropMix: 0.7,
+                delayTime: 0.65, feedback: 0.8, spaceMix: 0.8,
+                pulseBpm: 120, masterPulseRate: 1.0, masterPitchShift: 7, masterGlide: 0.9, masterVol: 0.7
+            },
+            alien: {
+                baseFreq: 750, harmony: 11, sweepSpeed: 3.0, sweepDepth: 600,
+                noiseMix: 0.2, bitcrush: 10, glitchRate: 8, glitchAmount: 0.5,
+                drive: 60, cutoff: 5000, resonance: 10, pulseRate: 8,
+                phaserRate: 3.0, phaserDepth: 0.85, phaserFeed: 0.7, phaserMix: 0.6,
+                ringFreq: 1250, ringMix: 0.8, ringShape: 0.9, ringLfo: 6.0,
+                dropDepth: 15, dropRate: 0.4, dropMode: 0, dropMix: 0.6,
+                delayTime: 0.3, feedback: 0.6, spaceMix: 0.6,
+                pulseBpm: 140, masterPulseRate: 8.0, masterPitchShift: 3, masterGlide: 0.6, masterVol: 0.75
+            },
+            biohazard: {
+                baseFreq: 320, harmony: -7, sweepSpeed: 1.2, sweepDepth: 950,
+                noiseMix: 0.4, bitcrush: 6, glitchRate: 3, glitchAmount: 0.2,
+                drive: 88, cutoff: 9500, resonance: 18, pulseRate: 12,
+                phaserRate: 0.4, phaserDepth: 0.4, phaserFeed: 0.5, phaserMix: 0.4,
+                ringFreq: 450, ringMix: 0.3, ringShape: 0.2, ringLfo: 1.5,
+                dropDepth: 20, dropRate: 0.6, dropMode: 1, dropMix: 0.8,
+                delayTime: 0.2, feedback: 0.5, spaceMix: 0.3,
+                pulseBpm: 150, masterPulseRate: 12.0, masterPitchShift: -4, masterGlide: 0.5, masterVol: 0.8
+            },
+            warpdrive: {
+                baseFreq: 960, harmony: 5, sweepSpeed: 6.0, sweepDepth: 1150,
+                noiseMix: 0.1, bitcrush: 14, glitchRate: 15, glitchAmount: 0.6,
+                drive: 50, cutoff: 7000, resonance: 7, pulseRate: 18,
+                phaserRate: 4.5, phaserDepth: 0.95, phaserFeed: 0.8, phaserMix: 0.8,
+                ringFreq: 1800, ringMix: 0.5, ringShape: 0.7, ringLfo: 8.0,
+                dropDepth: 30, dropRate: 0.3, dropMode: 0, dropMix: 0.9,
+                delayTime: 0.45, feedback: 0.75, spaceMix: 0.65,
+                pulseBpm: 160, masterPulseRate: 18.0, masterPitchShift: 8, masterGlide: 0.85, masterVol: 0.75
+            }
+        };
+
+        // Initialize Audio Engine with Master Gate & 7 FX Modules
+        function initAudioContext() {
+            if (audioCtx) return;
+
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioCtx();
+
+            // Master Output & Analyser
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = params.masterVol;
+
+            masterGate = audioCtx.createGain();
+            masterGate.gain.value = 0; // Starts closed
+
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 1024;
+            analyser.smoothingTimeConstant = 0.8;
+
+            masterGate.connect(masterGain);
+            masterGain.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            // Reverb Buffer Generator
+            reverbNode = audioCtx.createConvolver();
+            reverbNode.buffer = createImpulseResponse(audioCtx, 2.5, 2.0);
+            reverbMixNode = audioCtx.createGain();
+            reverbMixNode.gain.value = moduleStates.space ? params.spaceMix : 0;
+
+            // Delay Nodes
+            delayNode = audioCtx.createDelay();
+            delayNode.delayTime.value = params.delayTime;
+            delayFeedbackNode = audioCtx.createGain();
+            delayFeedbackNode.gain.value = params.feedback;
+            delayMixNode = audioCtx.createGain();
+            delayMixNode.gain.value = moduleStates.space ? 0.5 : 0;
+
+            delayNode.connect(delayFeedbackNode);
+            delayFeedbackNode.connect(delayNode);
+            delayNode.connect(delayMixNode);
+
+            // Filter
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = params.cutoff;
+            filterNode.Q.value = params.resonance;
+
+            // Waveshaper (Distortion)
+            waveshaperNode = audioCtx.createWaveShaper();
+            updateDistortionCurve();
+
+            // Pulse / Tremolo LFO (BPM Synced)
+            lfoPulse = audioCtx.createOscillator();
+            lfoPulse.type = 'sine';
+            lfoPulse.frequency.value = (params.pulseBpm / 60) * (params.masterPulseRate / 6);
+
+            lfoPulseGain = audioCtx.createGain();
+            lfoPulseGain.gain.value = 0.5;
+
+            // Bitcrusher / Glitch Processor
+            const bufferSize = 4096;
+            glitchProcessor = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+            let phase = 0;
+            let lastSample = 0;
+            let glitchCounter = 0;
+            let glitchHold = 0;
+
+            glitchProcessor.onaudioprocess = function(e) {
+                const input = e.inputBuffer.getChannelData(0);
+                const output = e.outputBuffer.getChannelData(0);
+                const step = Math.pow(0.5, params.bitcrush);
+                
+                for (let i = 0; i < input.length; i++) {
+                    if (!moduleStates.glitch) {
+                        output[i] = input[i];
+                        continue;
+                    }
+
+                    if (params.glitchAmount > 0 && params.glitchRate > 0) {
+                        if (glitchCounter <= 0) {
+                            if (Math.random() < (params.glitchAmount * 0.3)) {
+                                glitchHold = (Math.random() * 0.05 + 0.01) * audioCtx.sampleRate;
+                            } else {
+                                glitchHold = 0;
+                            }
+                            glitchCounter = (audioCtx.sampleRate / Math.max(0.1, params.glitchRate));
+                        }
+                        glitchCounter--;
+
+                        if (glitchHold > 0) {
+                            glitchHold--;
+                            output[i] = lastSample;
+                            continue;
+                        }
+                    }
+
+                    phase += 1;
+                    if (phase >= 1) {
+                        phase = 0;
+                        lastSample = step * Math.floor(input[i] / step + 0.5);
+                    }
+                    output[i] = lastSample;
+                }
+            };
+
+            // NEW MODULE 5: ORBIT PHASER (4 Allpass Stages)
+            phaserAllpass = [];
+            for (let i = 0; i < 4; i++) {
+                const ap = audioCtx.createBiquadFilter();
+                ap.type = 'allpass';
+                ap.frequency.value = 800 + i * 400;
+                ap.Q.value = 3;
+                phaserAllpass.push(ap);
+            }
+            for (let i = 0; i < 3; i++) {
+                phaserAllpass[i].connect(phaserAllpass[i + 1]);
+            }
+            phaserLfo = audioCtx.createOscillator();
+            phaserLfo.type = 'sine';
+            phaserLfo.frequency.value = params.phaserRate;
+
+            phaserLfoGain = audioCtx.createGain();
+            phaserLfoGain.gain.value = params.phaserDepth * 500;
+            phaserLfo.connect(phaserLfoGain);
+
+            phaserAllpass.forEach(ap => phaserLfoGain.connect(ap.frequency));
+            phaserLfo.start();
+
+            phaserMixNode = audioCtx.createGain();
+            phaserMixNode.gain.value = moduleStates.phaser ? params.phaserMix : 0;
+            phaserAllpass[3].connect(phaserMixNode);
+
+            // NEW MODULE 6: SCI-FI RING MODULATOR
+            ringCarrier = audioCtx.createOscillator();
+            ringCarrier.type = 'sine';
+            ringCarrier.frequency.value = params.ringFreq;
+
+            ringGain = audioCtx.createGain();
+            ringGain.gain.value = 0; // modulated by carrier
+            ringCarrier.connect(ringGain.gain);
+            ringCarrier.start();
+
+            ringMixNode = audioCtx.createGain();
+            ringMixNode.gain.value = moduleStates.ring ? params.ringMix : 0;
+            ringGain.connect(ringMixNode);
+
+            // NEW MODULE 7: PITCH DROP & DIVE LFO
+            dropLfo = audioCtx.createOscillator();
+            dropLfo.type = 'sawtooth';
+            dropLfo.frequency.value = 1 / Math.max(0.1, params.dropRate);
+
+            dropLfoGain = audioCtx.createGain();
+            dropLfoGain.gain.value = moduleStates.pitchdrop ? params.dropDepth * 100 * (params.dropMode === 0 ? -1 : 1) : 0;
+            dropLfo.connect(dropLfoGain);
+            dropLfo.start();
+
+            // Setup Oscillators & Noise Generators
+            osc1 = audioCtx.createOscillator();
+            osc2 = audioCtx.createOscillator();
+            osc1.type = 'sawtooth';
+            osc2.type = 'square';
+
+            const effectiveBaseFreq = params.baseFreq * Math.pow(2, params.masterPitchShift / 12);
+            const harmonyRatio = Math.pow(2, params.harmony / 12);
+
+            osc1.frequency.setValueAtTime(effectiveBaseFreq, audioCtx.currentTime);
+            osc2.frequency.setValueAtTime(effectiveBaseFreq * harmonyRatio, audioCtx.currentTime);
+
+            // Connect Pitch Drop to Oscillators
+            dropLfoGain.connect(osc1.frequency);
+            dropLfoGain.connect(osc2.frequency);
+
+            lfoPitch = audioCtx.createOscillator();
+            lfoPitchGain = audioCtx.createGain();
+            lfoPitch.type = 'sine';
+            lfoPitch.frequency.setValueAtTime(params.sweepSpeed, audioCtx.currentTime);
+            lfoPitchGain.gain.setValueAtTime(moduleStates.osc ? params.sweepDepth : 0, audioCtx.currentTime);
+
+            lfoPitch.connect(lfoPitchGain);
+            lfoPitchGain.connect(osc1.frequency);
+            lfoPitchGain.connect(osc2.frequency);
+
+            oscGain = audioCtx.createGain();
+            oscGain.gain.value = moduleStates.osc ? 0.4 : 0;
+            osc1.connect(oscGain);
+            osc2.connect(oscGain);
+
+            noiseNode = audioCtx.createBufferSource();
+            noiseNode.buffer = createWhiteNoiseBuffer(audioCtx);
+            noiseNode.loop = true;
+
+            noiseGain = audioCtx.createGain();
+            noiseGain.gain.value = moduleStates.glitch ? params.noiseMix * 0.3 : 0;
+            noiseNode.connect(noiseGain);
+
+            const synthMixer = audioCtx.createGain();
+            oscGain.connect(synthMixer);
+            noiseGain.connect(synthMixer);
+
+            // Complete Routing Chain:
+            // SynthMixer -> Glitch -> WaveShaper -> RingMod -> Phaser -> Filter -> Tremolo -> Master
+            synthMixer.connect(glitchProcessor);
+            glitchProcessor.connect(waveshaperNode);
+
+            // Ring Mod branch
+            waveshaperNode.connect(ringGain);
+            
+            // Phaser branch
+            waveshaperNode.connect(phaserAllpass[0]);
+            
+            // Filter input mixer
+            waveshaperNode.connect(filterNode);
+            ringMixNode.connect(filterNode);
+            phaserMixNode.connect(filterNode);
+
+            const tremoloGain = audioCtx.createGain();
+            tremoloGain.gain.value = 0.8;
+            filterNode.connect(tremoloGain);
+
+            lfoPulseGain.gain.value = moduleStates.dist ? 0.35 : 0;
+            lfoPulse.connect(tremoloGain.gain);
+
+            tremoloGain.connect(masterGate);
+            tremoloGain.connect(delayNode);
+            tremoloGain.connect(reverbNode);
+
+            delayMixNode.connect(masterGate);
+            reverbNode.connect(reverbMixNode);
+            reverbMixNode.connect(masterGate);
+
+            osc1.start();
+            osc2.start();
+            noiseNode.start();
+            lfoPitch.start();
+            lfoPulse.start();
+        }
+
+        function createImpulseResponse(ctx, duration, decay) {
+            const sampleRate = ctx.sampleRate;
+            const length = sampleRate * duration;
+            const impulse = ctx.createBuffer(2, length, sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+
+            for (let i = 0; i < length; i++) {
+                left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+                right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+            }
+            return impulse;
+        }
+
+        function updateDistortionCurve() {
+            if (!waveshaperNode) return;
+            const amount = moduleStates.dist ? params.drive : 0;
+            const k = typeof amount === 'number' ? amount : 50;
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            const deg = Math.PI / 180;
+
+            for (let i = 0; i < n_samples; ++i) {
+                const x = (i * 2) / n_samples - 1;
+                if (k === 0) {
+                    curve[i] = x;
+                } else {
+                    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+                }
+            }
+            waveshaperNode.curve = curve;
+            waveshaperNode.oversample = '4x';
+        }
+
+        function createWhiteNoiseBuffer(ctx) {
+            const bufferSize = ctx.sampleRate * 2;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            return buffer;
+        }
+
+        function startSirens() {
+            initAudioContext();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            masterGate.gain.setTargetAtTime(1, audioCtx.currentTime, 0.02);
+            isPlaying = true;
+            updateUIState();
+        }
+
+        function stopSirens() {
+            if (!isPlaying || !audioCtx) return;
+            
+            masterGate.gain.setTargetAtTime(0, audioCtx.currentTime, 0.02);
+            isPlaying = false;
+            updateUIState();
+        }
+
+        function updateAudioParams() {
+            if (!audioCtx) return;
+
+            const effectiveBaseFreq = params.baseFreq * Math.pow(2, params.masterPitchShift / 12);
+
+            if (osc1 && osc2) {
+                const harmonyRatio = Math.pow(2, params.harmony / 12);
+                osc1.frequency.setTargetAtTime(effectiveBaseFreq, audioCtx.currentTime, 0.05);
+                osc2.frequency.setTargetAtTime(effectiveBaseFreq * harmonyRatio, audioCtx.currentTime, 0.05);
+            }
+
+            if (oscGain) {
+                oscGain.gain.setTargetAtTime(moduleStates.osc ? 0.4 : 0, audioCtx.currentTime, 0.05);
+            }
+
+            if (lfoPitch && lfoPitchGain) {
+                lfoPitch.frequency.setTargetAtTime(params.sweepSpeed, audioCtx.currentTime, 0.05);
+                lfoPitchGain.gain.setTargetAtTime(moduleStates.osc ? params.sweepDepth : 0, audioCtx.currentTime, 0.05);
+            }
+
+            if (noiseGain) {
+                noiseGain.gain.setTargetAtTime(moduleStates.glitch ? params.noiseMix * 0.3 : 0, audioCtx.currentTime, 0.05);
+            }
+
+            if (filterNode) {
+                filterNode.frequency.setTargetAtTime(params.cutoff, audioCtx.currentTime, 0.05);
+                filterNode.Q.setTargetAtTime(params.resonance, audioCtx.currentTime, 0.05);
+            }
+
+            // BPM Synced LFO Tremolo
+            if (lfoPulse && lfoPulseGain) {
+                const bpmHz = (params.pulseBpm / 60) * (params.masterPulseRate / 6);
+                lfoPulse.frequency.setTargetAtTime(bpmHz, audioCtx.currentTime, 0.05);
+                lfoPulseGain.gain.setTargetAtTime(moduleStates.dist ? 0.35 : 0, audioCtx.currentTime, 0.05);
+            }
+
+            updateDistortionCurve();
+
+            // Phaser params
+            if (phaserLfo && phaserLfoGain && phaserMixNode) {
+                phaserLfo.frequency.setTargetAtTime(params.phaserRate, audioCtx.currentTime, 0.05);
+                phaserLfoGain.gain.setTargetAtTime(params.phaserDepth * 500, audioCtx.currentTime, 0.05);
+                phaserMixNode.gain.setTargetAtTime(moduleStates.phaser ? params.phaserMix : 0, audioCtx.currentTime, 0.05);
+            }
+
+            // Ring Mod params
+            if (ringCarrier && ringMixNode) {
+                ringCarrier.frequency.setTargetAtTime(params.ringFreq, audioCtx.currentTime, 0.05);
+                ringMixNode.gain.setTargetAtTime(moduleStates.ring ? params.ringMix : 0, audioCtx.currentTime, 0.05);
+            }
+
+            // Pitch Drop params
+            if (dropLfo && dropLfoGain) {
+                dropLfo.frequency.setTargetAtTime(1 / Math.max(0.1, params.dropRate), audioCtx.currentTime, 0.05);
+                dropLfoGain.gain.setTargetAtTime(moduleStates.pitchdrop ? params.dropDepth * 100 * (params.dropMode === 0 ? -1 : 1) * params.dropMix : 0, audioCtx.currentTime, 0.05);
+            }
+
+            if (delayNode && delayFeedbackNode && delayMixNode) {
+                delayNode.delayTime.setTargetAtTime(params.delayTime, audioCtx.currentTime, 0.05);
+                delayFeedbackNode.gain.setTargetAtTime(params.feedback, audioCtx.currentTime, 0.05);
+                delayMixNode.gain.setTargetAtTime(moduleStates.space ? 0.5 : 0, audioCtx.currentTime, 0.05);
+            }
+            if (reverbMixNode) {
+                reverbMixNode.gain.setTargetAtTime(moduleStates.space ? params.spaceMix : 0, audioCtx.currentTime, 0.05);
+            }
+
+            if (masterGain) {
+                masterGain.gain.setTargetAtTime(params.masterVol, audioCtx.currentTime, 0.05);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // PATROL MODE ENGINE (16 Quarter Notes Synced to Pulse BPM)
+        // -------------------------------------------------------------
+        function togglePatrolMode() {
+            isPatrolMode = !isPatrolMode;
+            const btnText = document.getElementById('patrolBtnText');
+            const timerDisplay = document.getElementById('patrolTimerDisplay');
+
+            if (isPatrolMode) {
+                btnText.innerText = 'PATROL MODE: ACTIVE';
+                document.getElementById('patrolModeBtn').classList.replace('bg-purple-900/80', 'bg-purple-600');
+                if (!isPlaying) startSirens();
+                startPatrolCycle();
+            } else {
+                btnText.innerText = 'PATROL MODE: OFF';
+                document.getElementById('patrolModeBtn').classList.replace('bg-purple-600', 'bg-purple-900/80');
+                timerDisplay.innerText = 'PATROL: INACTIVE';
+                if (patrolTimer) clearInterval(patrolTimer);
+            }
+        }
+
+        function startPatrolCycle() {
+            if (patrolTimer) clearInterval(patrolTimer);
+            beatsInCurrentPreset = 0;
+
+            const updateIntervalMs = 200; // tick visualizer
+            patrolTimer = setInterval(() => {
+                if (!isPatrolMode) return;
+
+                // 16 quarter notes = 4 bars
+                const secondsPerBeat = 60 / params.pulseBpm;
+                const totalSecondsPerSiren = secondsPerBeat * 16;
+                
+                beatsInCurrentPreset += (updateIntervalMs / 1000);
+
+                const currentKey = presetKeys[currentPresetIdx].toUpperCase();
+                const remainingSecs = Math.max(0, totalSecondsPerSiren - beatsInCurrentPreset).toFixed(1);
+                document.getElementById('patrolTimerDisplay').innerText = `PATROL: [${currentKey}] ${remainingSecs}s NEXT`;
+
+                if (beatsInCurrentPreset >= totalSecondsPerSiren) {
+                    beatsInCurrentPreset = 0;
+                    currentPresetIdx = (currentPresetIdx + 1) % presetKeys.length;
+                    triggerPreset(presetKeys[currentPresetIdx]);
+                }
+            }, updateIntervalMs);
+        }
+
+        function triggerPreset(name) {
+            const presetData = presets[name];
+            if (!presetData) return;
+
+            const btns = document.querySelectorAll('.preset-btn');
+            btns.forEach(b => {
+                if (b.dataset.preset === name) {
+                    b.classList.add('ring-2', 'ring-cyan-400', 'bg-gray-700');
+                } else {
+                    b.classList.remove('ring-2', 'ring-cyan-400', 'bg-gray-700');
+                }
+            });
+
+            Object.assign(params, presetData);
+            refreshKnobsVisuals();
+            updateAudioParams();
+        }
+
+        // -------------------------------------------------------------
+        // CANVAS & OFF-SCREEN BUFFER RENDERER (PERFORMANCE OPTIMIZED)
+        // -------------------------------------------------------------
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const bgCanvas = document.createElement('canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+
+        function resizeCanvases() {
+            const rect = canvas.getBoundingClientRect();
+            const width = Math.max(rect.width, 300) * (window.devicePixelRatio || 1);
+            const height = Math.max(rect.height, 120) * (window.devicePixelRatio || 1);
+
+            canvas.width = width;
+            canvas.height = height;
+
+            bgCanvas.width = width;
+            bgCanvas.height = height;
+
+            renderStaticBackground();
+        }
+
+        function renderStaticBackground() {
+            const w = bgCanvas.width;
+            const h = bgCanvas.height;
+
+            if (w <= 0 || h <= 0) return;
+
+            bgCtx.fillStyle = '#05070a';
+            bgCtx.fillRect(0, 0, w, h);
+
+            bgCtx.strokeStyle = '#0e1822';
+            bgCtx.lineWidth = 1 * (window.devicePixelRatio || 1);
+
+            const gridSpacingX = w / 20;
+            const gridSpacingY = h / 8;
+
+            if (gridSpacingX > 0) {
+                bgCtx.beginPath();
+                for (let x = 0; x <= w; x += gridSpacingX) {
+                    bgCtx.moveTo(x, 0);
+                    bgCtx.lineTo(x, h);
+                }
+                bgCtx.stroke();
+            }
+
+            if (gridSpacingY > 0) {
+                bgCtx.beginPath();
+                for (let y = 0; y <= h; y += gridSpacingY) {
+                    bgCtx.moveTo(0, y);
+                    bgCtx.lineTo(w, y);
+                }
+                bgCtx.stroke();
+            }
+
+            bgCtx.strokeStyle = '#182b3c';
+            bgCtx.lineWidth = 1.5 * (window.devicePixelRatio || 1);
+            bgCtx.beginPath();
+            bgCtx.moveTo(0, h / 2);
+            bgCtx.lineTo(w, h / 2);
+            bgCtx.stroke();
+
+            bgCtx.strokeStyle = '#1e293b';
+            bgCtx.lineWidth = 4 * (window.devicePixelRatio || 1);
+            bgCtx.strokeRect(0, 0, w, h);
+        }
+
+        function mainRenderLoop() {
+            requestAnimationFrame(mainRenderLoop);
+
+            if (bgCanvas.width > 0 && bgCanvas.height > 0) {
+                ctx.drawImage(bgCanvas, 0, 0);
+            }
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            if (!isPlaying || !analyser) {
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+                ctx.beginPath();
+                ctx.moveTo(0, h / 2);
+                ctx.lineTo(w, h / 2);
+                ctx.stroke();
+                
+                document.getElementById('dspCpuDisplay').innerText = 'DSP: IDLE';
+                document.getElementById('rateDisplay').innerText = 'FREQ: -- Hz';
+                return;
+            }
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteTimeDomainData(dataArray);
+
+            ctx.lineWidth = 2.5 * (window.devicePixelRatio || 1);
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = isPatrolMode ? '#a855f7' : '#00ffcc';
+            ctx.strokeStyle = isPatrolMode ? '#c084fc' : '#00ffcc';
+            ctx.beginPath();
+
+            const sliceWidth = w / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = (v * h) / 2;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                x += sliceWidth;
+            }
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+
+            const freqArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(freqArray);
+
+            const barWidth = (w / 64);
+            let barX = 0;
+            for (let i = 0; i < 64; i++) {
+                const barHeight = (freqArray[i * 4] / 255) * (h * 0.4);
+                const redVal = Math.floor((i / 64) * 255);
+                ctx.fillStyle = `rgba(${255 - redVal}, ${redVal}, 220, 0.25)`;
+                ctx.fillRect(barX, h - barHeight, barWidth - 1, barHeight);
+                barX += barWidth;
+            }
+
+            const estimatedCpu = (Math.random() * 1.5 + 2.5).toFixed(1);
+            const activeFreq = Math.round(params.baseFreq * Math.pow(2, params.masterPitchShift / 12));
+            document.getElementById('dspCpuDisplay').innerText = `DSP: ${estimatedCpu}%`;
+            document.getElementById('rateDisplay').innerText = `FREQ: ${activeFreq} Hz`;
+        }
+
+        function updateUIState() {
+            const btn = document.getElementById('masterPowerBtn');
+            const btnText = document.getElementById('powerBtnText');
+            const playIcon = document.getElementById('playIcon');
+            const masterLed = document.getElementById('masterLed');
+
+            if (isPlaying) {
+                btn.classList.remove('bg-red-600', 'hover:bg-red-500');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+                btnText.innerText = 'SIREN ACTIVE (STOP)';
+                playIcon.innerHTML = '<path d="M6 6h12v12H6z"/>';
+                masterLed.className = 'led active-red';
+            } else {
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                btn.classList.add('bg-red-600', 'hover:bg-red-500');
+                btnText.innerText = 'ARM / PLAY';
+                playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+                masterLed.className = 'led';
+            }
+
+            document.getElementById('led-osc').className = moduleStates.osc ? 'led active-red' : 'led';
+            document.getElementById('led-glitch').className = moduleStates.glitch ? 'led active-cyan' : 'led';
+            document.getElementById('led-dist').className = moduleStates.dist ? 'led active-amber' : 'led';
+            document.getElementById('led-space').className = moduleStates.space ? 'led active-green' : 'led';
+            document.getElementById('led-phaser').className = moduleStates.phaser ? 'led active-purple' : 'led';
+            document.getElementById('led-ring').className = moduleStates.ring ? 'led active-cyan' : 'led';
+            document.getElementById('led-pitchdrop').className = moduleStates.pitchdrop ? 'led active-amber' : 'led';
+        }
+
+        function refreshKnobsVisuals() {
+            document.querySelectorAll('.knob').forEach(knob => {
+                const id = knob.id.replace('knob-', '');
+                if (params[id] !== undefined) {
+                    const min = parseFloat(knob.dataset.min);
+                    const max = parseFloat(knob.dataset.max);
+                    const val = params[id];
+                    const pct = (val - min) / (max - min);
+                    const deg = -135 + pct * 270;
+                    const indicator = knob.querySelector('.knob-indicator');
+                    if (indicator) {
+                        indicator.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+                    }
+                    const label = document.getElementById(`val-${id}`);
+                    if (label) {
+                        if (id === 'baseFreq' || id === 'cutoff' || id === 'ringFreq') label.innerText = `${Math.round(val)} Hz`;
+                        else if (id === 'pulseBpm') label.innerText = `${Math.round(val)} BPM`;
+                        else if (id === 'harmony' || id === 'masterPitchShift' || id === 'dropDepth') label.innerText = `${val > 0 ? '+' : ''}${Math.round(val)} Semi`;
+                        else if (id === 'sweepSpeed' || id === 'pulseRate' || id === 'glitchRate' || id === 'masterPulseRate' || id === 'phaserRate' || id === 'ringLfo') label.innerText = `${val.toFixed(1)} Hz`;
+                        else if (id === 'delayTime') label.innerText = `${Math.round(val * 1000)} ms`;
+                        else if (id === 'dropRate') label.innerText = `${val.toFixed(1)} s`;
+                        else if (id === 'bitcrush') label.innerText = `${Math.round(val)} Bit`;
+                        else if (id === 'sweepDepth') label.innerText = `${Math.round(val)} Cents`;
+                        else if (id === 'resonance') label.innerText = `${val.toFixed(1)} Q`;
+                        else if (id === 'dropMode') label.innerText = val > 0.5 ? 'RISE' : 'FALL';
+                        else label.innerText = `${Math.round(val * 100)}%`;
+                    }
+                }
+            });
+        }
+
+        function setupKnobs() {
+            document.querySelectorAll('.knob').forEach(knob => {
+                const id = knob.id.replace('knob-', '');
+                const min = parseFloat(knob.dataset.min);
+                const max = parseFloat(knob.dataset.max);
+                let value = params[id] !== undefined ? params[id] : parseFloat(knob.dataset.value);
+
+                function updateKnobVisual(val) {
+                    const pct = (val - min) / (max - min);
+                    const deg = -135 + pct * 270;
+                    const indicator = knob.querySelector('.knob-indicator');
+                    if (indicator) {
+                        indicator.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+                        indicator.style.transformOrigin = 'bottom center';
+                    }
+
+                    const label = document.getElementById(`val-${id}`);
+                    if (label) {
+                        if (id === 'baseFreq' || id === 'cutoff' || id === 'ringFreq') label.innerText = `${Math.round(val)} Hz`;
+                        else if (id === 'pulseBpm') label.innerText = `${Math.round(val)} BPM`;
+                        else if (id === 'harmony' || id === 'masterPitchShift' || id === 'dropDepth') label.innerText = `${val > 0 ? '+' : ''}${Math.round(val)} Semi`;
+                        else if (id === 'sweepSpeed' || id === 'pulseRate' || id === 'glitchRate' || id === 'masterPulseRate' || id === 'phaserRate' || id === 'ringLfo') label.innerText = `${val.toFixed(1)} Hz`;
+                        else if (id === 'delayTime') label.innerText = `${Math.round(val * 1000)} ms`;
+                        else if (id === 'dropRate') label.innerText = `${val.toFixed(1)} s`;
+                        else if (id === 'bitcrush') label.innerText = `${Math.round(val)} Bit`;
+                        else if (id === 'sweepDepth') label.innerText = `${Math.round(val)} Cents`;
+                        else if (id === 'resonance') label.innerText = `${val.toFixed(1)} Q`;
+                        else if (id === 'dropMode') label.innerText = val > 0.5 ? 'RISE' : 'FALL';
+                        else label.innerText = `${Math.round(val * 100)}%`;
+                    }
+                }
+
+                updateKnobVisual(value);
+
+                let isDragging = false;
+                let startY = 0;
+                let startVal = value;
+
+                const onPointerDown = (e) => {
+                    isDragging = true;
+                    startY = e.clientY || e.touches?.[0].clientY;
+                    startVal = params[id];
+                    document.body.style.cursor = 'ns-resize';
+                };
+
+                const onPointerMove = (e) => {
+                    if (!isDragging) return;
+                    const currentY = e.clientY || e.touches?.[0].clientY;
+                    const deltaY = startY - currentY;
+                    const range = max - min;
+                    let newVal = startVal + (deltaY / 150) * range;
+                    newVal = Math.max(min, Math.min(max, newVal));
+
+                    params[id] = newVal;
+                    updateKnobVisual(newVal);
+                    updateAudioParams();
+                };
+
+                const onPointerUp = () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        document.body.style.cursor = 'default';
+                    }
+                };
+
+                knob.addEventListener('mousedown', onPointerDown);
+                window.addEventListener('mousemove', onPointerMove);
+                window.addEventListener('mouseup', onPointerUp);
+
+                knob.addEventListener('touchstart', onPointerDown);
+                window.addEventListener('touchmove', onPointerMove);
+                window.addEventListener('touchend', onPointerUp);
+            });
+        }
+
+        function setupSwitches() {
+            const switches = [
+                { id: 'sw-osc', module: 'osc' },
+                { id: 'sw-glitch', module: 'glitch' },
+                { id: 'sw-dist', module: 'dist' },
+                { id: 'sw-space', module: 'space' },
+                { id: 'sw-phaser', module: 'phaser' },
+                { id: 'sw-ring', module: 'ring' },
+                { id: 'sw-pitchdrop', module: 'pitchdrop' }
+            ];
+
+            switches.forEach(sw => {
+                const el = document.getElementById(sw.id);
+                el.addEventListener('click', () => {
+                    moduleStates[sw.module] = !moduleStates[sw.module];
+                    if (moduleStates[sw.module]) {
+                        el.classList.add('active');
+                    } else {
+                        el.classList.remove('active');
+                    }
+                    updateUIState();
+                    updateAudioParams();
+                });
+            });
+        }
+
+        function setupPresets() {
+            const btns = document.querySelectorAll('.preset-btn');
+            btns.forEach((btn, idx) => {
+                btn.addEventListener('click', () => {
+                    currentPresetIdx = idx;
+                    triggerPreset(btn.dataset.preset);
+                });
+            });
+        }
+
+        window.addEventListener('load', () => {
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases();
+            setupKnobs();
+            setupSwitches();
+            setupPresets();
+            updateUIState();
+            mainRenderLoop();
+
+            document.getElementById('masterPowerBtn').addEventListener('click', () => {
+                if (isPlaying) {
+                    stopSirens();
+                } else {
+                    startSirens();
+                }
+            });
+
+            document.getElementById('patrolModeBtn').addEventListener('click', togglePatrolMode);
+        });
+    </script>
+</body>
+</html>
