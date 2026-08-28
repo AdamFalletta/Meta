@@ -213,9 +213,21 @@
                 RevV Fitness
             </h1>
         </header>
-<button id="start-btn" onclick="startWorkout()" style="padding: 16px 32px; font-size: 1.5rem; font-weight: bold; color: #fff; background-color: #007bff; border: none; border-radius: 8px; cursor: pointer; opacity: 1; transition: opacity 1s ease-out;">
+<div id="wakelock-trigger" onclick="enableScreenLock(event)" style="
+  display: inline-block;
+  padding: 16px 32px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: #007bff;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  opacity: 1;
+  transition: opacity 1s ease-out;
+">
   I'm Ready
-</button>
+</div>
         <!-- Main Content Grid - 3 Columns for Cardio, Warmup, Tabata -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             
@@ -1457,28 +1469,39 @@
 
         let wakeLock = null;
 
-async function startWorkout() {
-  // Grab the lock
+let wakeLock = null;
+
+async function enableScreenLock(e) {
+  // Prevent click event from bubbling to ANY app listeners
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  // Request the Screen Wake Lock for Silk
   try {
     if ('wakeLock' in navigator) {
       wakeLock = await navigator.wakeLock.request('screen');
+      console.log('TV Screen Wake Lock Active');
     }
   } catch (err) {
-    console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+    console.error(`Wake Lock failed: ${err.name}, ${err.message}`);
   }
 
-  // Fade out button
-  const btn = document.getElementById('start-btn');
-  if (btn) {
+  // Fade out and remove the div
+  const trigger = document.getElementById('wakelock-trigger');
+  if (trigger) {
     setTimeout(() => {
-      btn.style.opacity = '0';
-      setTimeout(() => { btn.style.display = 'none'; }, 1000);
+      trigger.style.opacity = '0';
+      setTimeout(() => {
+        trigger.style.display = 'none';
+      }, 1000);
     }, 2000);
   }
-
-  // OPTIONAL: If you already have a function that starts your timer/workout, call it here!
-  // myExistingStartTimerFunction(); 
 }
+
+// Keep screen locked if switching back to Silk tab
+
 
         document.addEventListener('visibilitychange', async () => {
   if (wakeLock !== null && document.visibilityState === 'visible') {
