@@ -1467,8 +1467,6 @@
             }
         };
 
-        let wakeLock = null;
-
 let wakeLock = null;
 
 async function enableScreenLock(e) {
@@ -1501,9 +1499,7 @@ async function enableScreenLock(e) {
 }
 
 // Keep screen locked if switching back to Silk tab
-
-
-        document.addEventListener('visibilitychange', async () => {
+document.addEventListener('visibilitychange', async () => {
   if (wakeLock !== null && document.visibilityState === 'visible') {
     try {
       wakeLock = await navigator.wakeLock.request('screen');
