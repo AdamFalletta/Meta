@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Neon TV Gameday Strikezone - 960x540</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #050714;
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff007f;
+            --neon-green: #39ff14;
+            --neon-yellow: #ffe600;
+            --neon-orange: #ff6c00;
+            --panel-bg: rgba(13, 19, 36, 0.9);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            font-family: 'Impact', 'Trebuchet MS', system-ui, sans-serif;
+            overflow: hidden;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Fixed Quarter HD Viewport Frame (960x540) */
+        #tv-frame {
+            width: 960px;
+            height: 540px;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            border: 2px solid rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.15), inset 0 0 25px rgba(0, 0, 0, 0.9);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Toned Down Clean Neon Text (Reduced Blurry Glows for TV Legibility) */
+        .neon-text-cyan {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 3px rgba(0, 243, 255, 0.4);
+        }
+
+        .neon-text-yellow {
+            color: var(--neon-yellow);
+            text-shadow: 0 0 3px rgba(255, 230, 0, 0.4);
+        }
+
+        .neon-text-green {
+            color: var(--neon-green);
+            text-shadow: 0 0 3px rgba(57, 255, 20, 0.4);
+        }
+
+        .neon-text-magenta {
+            color: var(--neon-magenta);
+            text-shadow: 0 0 3px rgba(255, 0, 127, 0.4);
+        }
+
+        .neon-text-orange {
+            color: var(--neon-orange);
+            text-shadow: 0 0 3px rgba(255, 108, 0, 0.4);
+        }
+
+        /* Centered & Aligned Big Base Diamonds (28px x 28px) */
+        .base-diamond {
+            width: 28px;
+            height: 28px;
+            transform: rotate(45deg);
+            border: 3px solid #4b5563;
+            background-color: #0f172a;
+            transition: all 0.3s ease;
+        }
+
+        .base-active {
+            background-color: var(--neon-yellow);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px var(--neon-yellow);
+        }
+
+        /* TV Dropdown Styling */
+        select {
+            background-color: #090d16;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            outline: none;
+            font-size: 1.05rem;
+            font-weight: bold;
+        }
+
+        /* Smooth Fade Animation for Wake Lock Button */
+        .fade-out {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease-out;
+        }
+
+        /* Hide scrollbars completely for TV Widget area */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main TV Viewport Container (960x540 Strict Aspect) -->
+    <div id="tv-frame" class="p-2 flex flex-col justify-between">
+        
+        <!-- HEADER / GAMEDAY SCOREBOARD BAR (Top Bar - h-14) -->
+        <header class="flex items-center justify-between bg-slate-900/90 p-1.5 rounded-lg border border-cyan-500/40 h-14">
+            
+            <!-- Game Selector Dropdown + Wake Lock Button in Top-Left Corner -->
+            <div class="flex items-center space-x-2">
+                <!-- Screen Wake Lock Button (Fades away 2s after click for Amazon Silk TV) -->
+                <button id="btn-wakelock" class="bg-purple-950/90 hover:bg-purple-900 text-pink-300 border border-pink-500 text-xs font-bold font-sans px-2.5 py-1 rounded flex items-center space-x-1 shadow-md transition-opacity duration-300">
+                    <span id="wakelock-icon">⚡</span>
+                    <span id="wakelock-text">WAKE LOCK</span>
+                </button>
+
+                <select id="game-select" class="px-2 py-1 rounded bg-slate-950 text-cyan-300 font-bold border border-cyan-500 cursor-pointer hover:border-cyan-400 text-base w-60">
+                    <option value="">LOADING MLB GAMES...</option>
+                </select>
+                <button id="btn-refresh" class="bg-cyan-950 hover:bg-cyan-800 text-cyan-300 font-sans text-xs px-2 py-1 rounded border border-cyan-500 font-bold">
+                    ↻ REFRESH
+                </button>
+            </div>
+
+            <!-- Full MLB Gameday Line Score Banner with Team Logos -->
+            <div class="flex items-center space-x-3 bg-slate-950 px-3 py-1 rounded-md border border-cyan-500/50">
+                <!-- Away Team + Logo -->
+                <div class="flex items-center space-x-2">
+                    <img id="away-team-logo" src="https://www.mlbstatic.com/team-logos/league-on-dark/1.svg" onerror="this.src='https://www.mlbstatic.com/team-logos/league-on-dark/1.svg'" class="w-7 h-7 object-contain" alt="Away Logo">
+                    <span id="away-team-abbr" class="text-xl font-black text-slate-200">AWY</span>
+                    <span id="away-score" class="text-2xl font-black neon-text-yellow">0</span>
+                    <div class="text-[10px] text-slate-400 font-sans leading-tight">
+                        <div>H: <span id="away-hits" class="text-slate-200 font-bold">0</span></div>
+                        <div>E: <span id="away-errors" class="text-slate-200 font-bold">0</span></div>
+                    </div>
+                </div>
+
+                <!-- Inning & Status -->
+                <div class="text-center px-3 border-x border-slate-700">
+                    <div id="game-status" class="text-[10px] text-cyan-400 tracking-widest font-sans font-extrabold">LIVE</div>
+                    <div id="inning-display" class="text-lg font-extrabold neon-text-cyan leading-none">TOP 1st</div>
+                </div>
+
+                <!-- Home Team + Logo -->
+                <div class="flex items-center space-x-2">
+                    <div class="text-[10px] text-slate-400 font-sans leading-tight text-right">
+                        <div>H: <span id="home-hits" class="text-slate-200 font-bold">0</span></div>
+                        <div>E: <span id="home-errors" class="text-slate-200 font-bold">0</span></div>
+                    </div>
+                    <span id="home-score" class="text-2xl font-black neon-text-yellow">0</span>
+                    <span id="home-team-abbr" class="text-xl font-black text-slate-200">HOM</span>
+                    <img id="home-team-logo" src="https://www.mlbstatic.com/team-logos/league-on-dark/1.svg" onerror="this.src='https://www.mlbstatic.com/team-logos/league-on-dark/1.svg'" class="w-7 h-7 object-contain" alt="Home Logo">
+                </div>
+            </div>
+
+            <!-- Current Local TV Time Display (Single line fit) -->
+            <div class="flex items-center bg-slate-950 px-3 py-1.5 rounded-md border border-cyan-500/40">
+                <span id="clock-display" class="text-cyan-300 font-sans font-bold text-sm tracking-wide whitespace-nowrap">--:--:--</span>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA (3-COLUMN FLEX LAYOUT - 465px Height) -->
+        <main class="grid grid-cols-12 gap-2 my-1 flex-1 h-[465px] overflow-hidden">
+
+            <!-- LEFT PANEL: BATTER CARD, STATS, COUNT & BASES -->
+            <section class="col-span-3 bg-slate-900/90 rounded-xl p-2 border border-slate-700/80 flex flex-col justify-between shadow-lg h-full overflow-hidden">
+                
+                <!-- Batter Header -->
+                <div class="text-center">
+                    <div class="text-[10px] text-pink-400 font-sans tracking-widest uppercase font-extrabold">AT BAT</div>
+                    <div id="batter-name" class="text-xl font-black text-white truncate leading-tight">WAITING...</div>
+                    <div id="batter-sub" class="text-xs text-slate-300 font-sans font-semibold">B/T: R/R</div>
+                </div>
+
+                <!-- Big Batter Photo -->
+                <div class="relative flex justify-center my-1">
+                    <div class="w-28 h-28 rounded-full border-2 border-pink-500 overflow-hidden bg-slate-950 shadow-[0_0_10px_rgba(255,0,127,0.25)]">
+                        <img id="batter-photo" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_480,q_100/v1/people/0/headshot/silo/current" alt="Batter" class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <!-- Batter Season Slash Line Stats -->
+                <div class="bg-slate-950 rounded border border-pink-500/30 p-1.5 grid grid-cols-4 gap-1 text-center font-sans">
+                    <div>
+                        <div class="text-[9px] text-slate-400">AVG</div>
+                        <div id="stat-avg" class="text-xs font-bold text-pink-300">.000</div>
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-slate-400">HR</div>
+                        <div id="stat-hr" class="text-xs font-bold text-pink-300">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-slate-400">RBI</div>
+                        <div id="stat-rbi" class="text-xs font-bold text-pink-300">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-slate-400">OPS</div>
+                        <div id="stat-ops" class="text-xs font-bold text-pink-300">.000</div>
+                    </div>
+                </div>
+
+                <!-- Count Box (Perfectly Aligned & Centered Bases Diamond + Balls, Strikes, Outs) -->
+                <div class="bg-slate-950 rounded-lg p-2 border border-slate-800 flex flex-col items-center">
+                    
+                    <!-- Centered & Aligned Diamond Graphic Inside Count Div -->
+                    <div class="relative w-32 h-20 mb-1.5 flex items-center justify-center">
+                        <div id="base-2" class="base-diamond absolute top-1 left-[calc(50%-14px)]" title="2nd Base"></div>
+                        <div id="base-3" class="base-diamond absolute left-6 top-9" title="3rd Base"></div>
+                        <div id="base-1" class="base-diamond absolute right-6 top-9" title="1st Base"></div>
+                    </div>
+
+                    <!-- Balls, Strikes, Outs Side-by-Side Indicators -->
+                    <div class="grid grid-cols-3 gap-1 items-center text-center w-full border-t border-slate-800/80 pt-1.5">
+                        <!-- Balls -->
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-sans font-bold">BALLS</span>
+                            <div id="balls-indicator" class="flex justify-center space-x-1 mt-0.5">
+                                <div class="w-3.5 h-3.5 rounded-full border border-green-500 bg-slate-800"></div>
+                                <div class="w-3.5 h-3.5 rounded-full border border-green-500 bg-slate-800"></div>
+                                <div class="w-3.5 h-3.5 rounded-full border border-green-500 bg-slate-800"></div>
+                            </div>
+                        </div>
+                        <!-- Strikes -->
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-sans font-bold">STRIKES</span>
+                            <div id="strikes-indicator" class="flex justify-center space-x-1 mt-0.5">
+                                <div class="w-3.5 h-3.5 rounded-full border border-red-500 bg-slate-800"></div>
+                                <div class="w-3.5 h-3.5 rounded-full border border-red-500 bg-slate-800"></div>
+                            </div>
+                        </div>
+                        <!-- Outs -->
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-sans font-bold">OUTS</span>
+                            <div id="outs-indicator" class="flex justify-center space-x-1 mt-0.5">
+                                <div class="w-3.5 h-3.5 rounded-full border border-yellow-500 bg-slate-800"></div>
+                                <div class="w-3.5 h-3.5 rounded-full border border-yellow-500 bg-slate-800"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- On Deck Player Banner -->
+                <div class="bg-slate-950 rounded-lg py-1 px-2.5 border border-slate-800 flex items-center justify-between">
+                    <span id="on-deck-text" class="text-[10px] text-slate-400 font-sans font-semibold truncate w-full text-center">ON DECK: -</span>
+                </div>
+            </section>
+
+            <!-- CENTER PANEL: GAMEDAY STRIKEZONE CANVAS (OFFICIAL 13-ZONE LAYOUT) -->
+            <section class="col-span-6 bg-slate-950/95 rounded-xl p-2 border-2 border-cyan-500/60 flex flex-col items-center justify-between relative shadow-[0_0_15px_rgba(0,243,255,0.1)] h-full overflow-hidden">
+                
+                <!-- Pitch HUD Header (Speed, Type, Spin Rate) -->
+                <div class="w-full flex justify-between items-center bg-slate-900/90 px-3 py-1 rounded border border-cyan-500/40">
+                    <div class="flex items-center space-x-2">
+                        <span id="pitch-type" class="text-lg font-black neon-text-cyan">4-SEAM FASTBALL</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="pitch-spin" class="text-xs font-sans text-slate-400 font-bold">SPIN: <span class="text-cyan-300">0 RPM</span></span>
+                        <span id="pitch-speed" class="text-2xl font-black neon-text-yellow">0.0 MPH</span>
+                    </div>
+                </div>
+
+                <!-- Main Interactive Pitch Canvas -->
+                <div class="relative flex items-center justify-center w-full h-[325px] my-1">
+                    <canvas id="strikezone-canvas" width="420" height="315" class="w-[420px] h-[315px] rounded-lg"></canvas>
+                </div>
+
+                <!-- Last Pitch Result Banner (Clears cleanly when next batter steps up) -->
+                <div id="call-banner" class="w-full text-center bg-cyan-950/80 border border-cyan-400 py-1 rounded-lg px-2 truncate">
+                    <div id="last-call-text" class="text-lg font-black neon-text-green uppercase tracking-wider truncate">WAITING FOR GAMEDAY DATA...</div>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: PITCHER CARD, PITCH COUNT & AT-BAT LOG -->
+            <section class="col-span-3 bg-slate-900/90 rounded-xl p-2 border border-slate-700/80 flex flex-col justify-between shadow-lg h-full overflow-hidden">
+                
+                <!-- Pitcher Header -->
+                <div class="text-center">
+                    <div class="text-[10px] text-cyan-400 font-sans tracking-widest uppercase font-extrabold">PITCHING</div>
+                    <div id="pitcher-name" class="text-xl font-black text-white truncate leading-tight">WAITING...</div>
+                    <div id="pitcher-sub" class="text-xs text-slate-300 font-sans font-semibold">ERA 0.00</div>
+                </div>
+
+                <!-- Big Pitcher Photo -->
+                <div class="relative flex justify-center my-1">
+                    <div class="w-28 h-28 rounded-full border-2 border-cyan-500 overflow-hidden bg-slate-950 shadow-[0_0_10px_rgba(0,243,255,0.25)]">
+                        <img id="pitcher-photo" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_480,q_100/v1/people/0/headshot/silo/current" alt="Pitcher" class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <!-- Pitcher Game Stats / Pitch Count -->
+                <div class="bg-slate-950 rounded border border-cyan-500/30 p-1.5 grid grid-cols-3 gap-1 text-center font-sans">
+                    <div>
+                        <div class="text-[9px] text-slate-400">PITCHES</div>
+                        <div id="stat-pitches" class="text-xs font-bold text-cyan-300">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-slate-400">STRIKES</div>
+                        <div id="stat-strikes-total" class="text-xs font-bold text-cyan-300">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-slate-400">K's / BB</div>
+                        <div id="stat-k-bb" class="text-xs font-bold text-cyan-300">0 / 0</div>
+                    </div>
+                </div>
+
+                <!-- Current At-Bat Pitch Sequence Log Widget -->
+                <div class="bg-slate-950 rounded-lg p-1.5 border border-slate-800 flex flex-col mt-1 overflow-hidden max-h-[145px] flex-shrink-0">
+                    <div class="text-[10px] text-cyan-400 font-sans font-bold border-b border-slate-800 pb-1 mb-1 flex justify-between flex-shrink-0">
+                        <span>AT-BAT PITCH LOG</span>
+                        <span id="pitch-count-badge" class="text-slate-400 font-normal">0 Pitches</span>
+                    </div>
+                    <div id="pitch-log-list" class="space-y-1 overflow-hidden flex-1 flex flex-col justify-start font-sans text-xs no-scrollbar">
+                        <div class="text-slate-500 text-center py-2 italic my-auto">Awaiting pitches...</div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION CODE -->
+    <script>
+        /**
+         * GLOBAL GAMEDAY STATE & DOM REFERENCES
+         */
+        let currentGameId = null;
+        let pollTimer = null;
+        let wakeLock = null;
+
+        // Pitch tracking state
+        let currentPitchList = [];
+        let activePitchAnimation = null;
+        let lastProcessedPlayId = null;
+        let lastPitchCount = 0;
+
+        // Play Result Banner Handling (Right Side Only)
+        let persistentPlayResult = null;
+        let persistentPlayResultTimer = null;
+        let lastCompletedAtBatIndex = null;
+
+        // DOM References
+        const gameSelect = document.getElementById('game-select');
+        const btnRefresh = document.getElementById('btn-refresh');
+        const btnWakeLock = document.getElementById('btn-wakelock');
+        const wakeLockText = document.getElementById('wakelock-text');
+        const wakeLockIcon = document.getElementById('wakelock-icon');
+        const clockDisplay = document.getElementById('clock-display');
+
+        // Main Canvas & Offscreen Buffer Contexts
+        const canvas = document.getElementById('strikezone-canvas');
+        const ctx = canvas.getContext('2d');
+
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = canvas.width;
+        offscreenCanvas.height = canvas.height;
+        const offCtx = offscreenCanvas.getContext('2d');
+
+        // Strike Zone Dimensions in Canvas Space
+        const ZONE = {
+            x: 135,
+            y: 70,
+            width: 150,
+            height: 175,
+        };
+
+        /**
+         * INITIALIZATION ON WINDOW LOAD
+         */
+        window.addEventListener('load', () => {
+            renderOffscreenBackground();
+            startMainAnimationLoop();
+            fetchTodaySchedule();
+            startClock();
+
+            // Poll live MLB Gameday feed every 5 seconds
+            pollTimer = setInterval(pollLiveFeed, 5000);
+
+            // Bind Event Listeners
+            gameSelect.addEventListener('change', (e) => {
+                currentGameId = e.target.value;
+                resetAtBatState();
+                persistentPlayResult = null;
+                lastCompletedAtBatIndex = null;
+                pollLiveFeed();
+            });
+
+            btnRefresh.addEventListener('click', () => {
+                fetchTodaySchedule();
+                pollLiveFeed();
+            });
+
+            // Wake Lock Button Activation & Fade-Out
+            btnWakeLock.addEventListener('click', activateWakeLock);
+        });
+
+        /**
+         * Real-time TV Clock
+         */
+        function startClock() {
+            function updateTime() {
+                const now = new Date();
+                clockDisplay.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+
+        /**
+         * Wake Lock with 2-second Fade-out for Amazon Silk
+         */
+        async function activateWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLockText.textContent = 'ACTIVE';
+                    wakeLockIcon.textContent = '✓';
+                    btnWakeLock.className = 'bg-green-900/90 text-green-300 border border-green-400 text-xs font-bold font-sans px-2.5 py-1 rounded flex items-center space-x-1 shadow-md';
+                } catch (err) {
+                    console.log('Wake Lock request error:', err);
+                }
+            }
+            // Trigger 2-second fade-out after user clicks
+            setTimeout(() => {
+                btnWakeLock.classList.add('fade-out');
+            }, 500);
+        }
+
+        function resetAtBatState() {
+            currentPitchList = [];
+            activePitchAnimation = null;
+            lastPitchCount = 0;
+            
+            // Clear center call banner when a new batter steps up
+            const bannerText = document.getElementById('last-call-text');
+            bannerText.textContent = "WAITING FOR NEXT PITCH...";
+            bannerText.className = "text-lg font-black neon-text-green uppercase tracking-wider truncate";
+        }
+
+        /**
+         * 1. OFF-SCREEN CANVAS BUFFER: Render Official MLB 13-Zone Layout
+         */
+        function renderOffscreenBackground() {
+            const w = offscreenCanvas.width;
+            const h = offscreenCanvas.height;
+
+            // Stadium Background Gradient
+            offCtx.fillStyle = '#050814';
+            offCtx.fillRect(0, 0, w, h);
+
+            const grad = offCtx.createRadialGradient(w/2, h/2, 20, w/2, h/2, 210);
+            grad.addColorStop(0, 'rgba(0, 243, 255, 0.1)');
+            grad.addColorStop(1, 'rgba(5, 8, 20, 0.96)');
+            offCtx.fillStyle = grad;
+            offCtx.fillRect(0, 0, w, h);
+
+            // Home Plate Silhouette
+            offCtx.save();
+            offCtx.beginPath();
+            const hpX = w / 2;
+            const hpY = ZONE.y + ZONE.height + 34;
+            offCtx.moveTo(hpX - 32, hpY);
+            offCtx.lineTo(hpX + 32, hpY);
+            offCtx.lineTo(hpX + 32, hpY + 14);
+            offCtx.lineTo(hpX, hpY + 28);
+            offCtx.lineTo(hpX - 32, hpY + 14);
+            offCtx.closePath();
+            offCtx.fillStyle = '#1e293b';
+            offCtx.fill();
+            offCtx.strokeStyle = '#00f3ff';
+            offCtx.lineWidth = 2;
+            offCtx.stroke();
+            offCtx.restore();
+
+            // -------------------------------------------------------------
+            // DRAW OFFICIAL MLB 13-ZONE LAYOUT (3x3 Inner + Outer 4 Corners)
+            // -------------------------------------------------------------
+            const padX = 35;
+            const padY = 35;
+
+            // Outer 13-Zone Border Frame (Zones 11-14 bounds)
+            offCtx.strokeStyle = 'rgba(0, 243, 255, 0.25)';
+            offCtx.lineWidth = 1.5;
+            offCtx.setLineDash([3, 3]);
+            offCtx.strokeRect(ZONE.x - padX, ZONE.y - padY, ZONE.width + (padX * 2), ZONE.height + (padY * 2));
+
+            // Outer Diagonal Guidelines for 13-Zone corners
+            offCtx.beginPath();
+            offCtx.moveTo(ZONE.x - padX, ZONE.y - padY);
+            offCtx.lineTo(ZONE.x, ZONE.y);
+
+            offCtx.moveTo(ZONE.x + ZONE.width + padX, ZONE.y - padY);
+            offCtx.lineTo(ZONE.x + ZONE.width, ZONE.y);
+
+            offCtx.moveTo(ZONE.x - padX, ZONE.y + ZONE.height + padY);
+            offCtx.lineTo(ZONE.x, ZONE.y + ZONE.height);
+
+            offCtx.moveTo(ZONE.x + ZONE.width + padX, ZONE.y + ZONE.height + padY);
+            offCtx.lineTo(ZONE.x + ZONE.width, ZONE.y + ZONE.height);
+            offCtx.stroke();
+            offCtx.setLineDash([]);
+
+            // Main Strike Zone Frame (In-Zone: Zones 1-9)
+            offCtx.strokeStyle = '#00f3ff';
+            offCtx.lineWidth = 3.5;
+            offCtx.shadowColor = '#00f3ff';
+            offCtx.shadowBlur = 8;
+            offCtx.strokeRect(ZONE.x, ZONE.y, ZONE.width, ZONE.height);
+            offCtx.shadowBlur = 0;
+
+            // Inner 3x3 Grid Lines (Magenta Accent)
+            offCtx.strokeStyle = 'rgba(255, 0, 127, 0.4)';
+            offCtx.lineWidth = 1.5;
+            offCtx.setLineDash([4, 4]);
+
+            const colW = ZONE.width / 3;
+            const rowH = ZONE.height / 3;
+
+            for (let i = 1; i < 3; i++) {
+                offCtx.beginPath();
+                offCtx.moveTo(ZONE.x + i * colW, ZONE.y);
+                offCtx.lineTo(ZONE.x + i * colW, ZONE.y + ZONE.height);
+                offCtx.stroke();
+            }
+
+            for (let j = 1; j < 3; j++) {
+                offCtx.beginPath();
+                offCtx.moveTo(ZONE.x, ZONE.y + j * rowH);
+                offCtx.lineTo(ZONE.x + ZONE.width, ZONE.y + j * rowH);
+                offCtx.stroke();
+            }
+            offCtx.setLineDash([]);
+        }
+
+        /**
+         * 2. MAIN ANIMATION LOOP
+         */
+        function startMainAnimationLoop() {
+            function drawFrame() {
+                ctx.drawImage(offscreenCanvas, 0, 0);
+
+                currentPitchList.forEach((pitch, idx) => {
+                    drawPitchMarker(pitch, idx + 1);
+                });
+
+                if (activePitchAnimation) {
+                    renderSweepingPitchAnimation(activePitchAnimation);
+                }
+
+                requestAnimationFrame(drawFrame);
+            }
+            requestAnimationFrame(drawFrame);
+        }
+
+        /**
+         * Render landed pitch marker dot with sequence number badge
+         */
+        function drawPitchMarker(pitch, num) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(pitch.cx, pitch.cy, 11, 0, Math.PI * 2);
+
+            let strokeColor = '#00f3ff';
+            let fillColor = 'rgba(0, 243, 255, 0.35)';
+
+            if (pitch.isStrike) {
+                strokeColor = '#ff007f';
+                fillColor = 'rgba(255, 0, 127, 0.45)';
+            } else if (pitch.isInPlay) {
+                strokeColor = '#39ff14';
+                fillColor = 'rgba(57, 255, 20, 0.45)';
+            } else if (pitch.isBall) {
+                strokeColor = '#ffe600';
+                fillColor = 'rgba(255, 230, 0, 0.45)';
+            } else if (pitch.isFoul) {
+                strokeColor = '#ff6c00';
+                fillColor = 'rgba(255, 108, 0, 0.45)';
+            }
+
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = strokeColor;
+            ctx.shadowBlur = 6;
+            ctx.stroke();
+
+            // Sequence Number Badge
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(num, pitch.cx, pitch.cy);
+            ctx.restore();
+        }
+
+        /**
+         * Sweeping Pitch Trajectory
+         */
+        function renderSweepingPitchAnimation(anim) {
+            anim.progress += 0.04;
+
+            if (anim.progress >= 1.0) {
+                anim.progress = 1.0;
+                currentPitchList.push({ ...anim.targetPitch });
+                activePitchAnimation = null;
+                return;
+            }
+
+            const p = anim.progress;
+            const startX = canvas.width / 2;
+            const startY = 22;
+            const controlX = startX + (anim.targetPitch.cx - startX) * 0.4 + anim.curveX;
+            const controlY = startY + (anim.targetPitch.cy - startY) * 0.5;
+
+            const currX = (1 - p) * (1 - p) * startX + 2 * (1 - p) * p * controlX + p * p * anim.targetPitch.cx;
+            const currY = (1 - p) * (1 - p) * startY + 2 * (1 - p) * p * controlY + p * p * anim.targetPitch.cy;
+
+            const ballRadius = 3.5 + p * 10;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.quadraticCurveTo(controlX, controlY, currX, currY);
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.55)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([3, 4]);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(currX, currY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#00f3ff';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+
+            ctx.strokeStyle = '#ff007f';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        /**
+         * 3. REAL MLB STATS API GAMEDAY INTEGRATION
+         */
+        async function fetchTodaySchedule() {
+            try {
+                let res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=team`);
+                let data = await res.json();
+
+                gameSelect.innerHTML = '';
+                let games = [];
+
+                if (data.dates && data.dates.length > 0) {
+                    games = data.dates[0].games || [];
+                }
+
+                if (!games || games.length === 0) {
+                    const fallbackRes = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=2024-09-20&hydrate=team`);
+                    const fallbackData = await fallbackRes.json();
+                    if (fallbackData.dates && fallbackData.dates.length > 0) {
+                        games = fallbackData.dates[0].games || [];
+                    }
+                }
+
+                games.forEach((g) => {
+                    const awayName = g.teams?.away?.team?.name || 'Away';
+                    const homeName = g.teams?.home?.team?.name || 'Home';
+                    const statusText = g.status?.abstractGameState || 'Live';
+
+                    const opt = document.createElement('option');
+                    opt.value = g.gamePk;
+                    opt.textContent = `${awayName} @ ${homeName} (${statusText})`;
+                    gameSelect.appendChild(opt);
+                });
+
+                if (games.length > 0) {
+                    if (!currentGameId || !games.some(g => g.gamePk == currentGameId)) {
+                        currentGameId = games[0].gamePk;
+                    }
+                    gameSelect.value = currentGameId;
+                    pollLiveFeed();
+                }
+            } catch (err) {
+                console.error('Error loading MLB schedule:', err);
+            }
+        }
+
+        async function pollLiveFeed() {
+            if (!currentGameId) return;
+
+            try {
+                const res = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${currentGameId}/feed/live`);
+                const data = await res.json();
+
+                updateGamedayUI(data);
+            } catch (err) {
+                console.error('Error polling MLB Gameday live feed:', err);
+            }
+        }
+
+        /**
+         * Helper to grab real player jersey number
+         */
+        function getPlayerJerseyNumber(playerObj, gameData) {
+            if (!playerObj) return '';
+            if (playerObj.primaryNumber) return `#${playerObj.primaryNumber}`;
+            const fullPlayerData = gameData?.players?.[`ID${playerObj.id}`];
+            if (fullPlayerData?.primaryNumber) return `#${fullPlayerData.primaryNumber}`;
+            if (fullPlayerData?.jerseyNumber) return `#${fullPlayerData.jerseyNumber}`;
+            return '';
+        }
+
+        /**
+         * Comprehensive Gameday UI Update
+         */
+        function updateGamedayUI(feed) {
+            if (!feed) return;
+            const gameData = feed.gameData || {};
+            const liveData = feed.liveData || {};
+            const linescore = liveData.linescore || {};
+
+            // 1. Line Scoreboard Banner & Team Logos
+            const awayTeamId = gameData.teams?.away?.id;
+            const homeTeamId = gameData.teams?.home?.id;
+
+            if (awayTeamId) {
+                document.getElementById('away-team-logo').src = `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${awayTeamId}.svg`;
+            }
+            if (homeTeamId) {
+                document.getElementById('home-team-logo').src = `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${homeTeamId}.svg`;
+            }
+
+            document.getElementById('away-team-abbr').textContent = gameData.teams?.away?.abbreviation || 'AWY';
+            document.getElementById('home-team-abbr').textContent = gameData.teams?.home?.abbreviation || 'HOM';
+            document.getElementById('away-score').textContent = linescore.teams?.away?.runs ?? 0;
+            document.getElementById('home-score').textContent = linescore.teams?.home?.runs ?? 0;
+            document.getElementById('away-hits').textContent = linescore.teams?.away?.hits ?? 0;
+            document.getElementById('home-hits').textContent = linescore.teams?.home?.hits ?? 0;
+            document.getElementById('away-errors').textContent = linescore.teams?.away?.errors ?? 0;
+            document.getElementById('home-errors').textContent = linescore.teams?.home?.errors ?? 0;
+
+            const inningState = linescore.inningState || 'Top';
+            const currentInning = linescore.currentInningOrdinal || '1st';
+            document.getElementById('inning-display').textContent = `${inningState.toUpperCase()} ${currentInning}`;
+            document.getElementById('game-status').textContent = (gameData.status?.abstractGameState || 'LIVE').toUpperCase();
+
+            // Base Runners & Robust On-Deck Player Name Extraction
+            const offense = linescore.offense || {};
+            setBaseActive('base-1', !!offense.first);
+            setBaseActive('base-2', !!offense.second);
+            setBaseActive('base-3', !!offense.third);
+
+            const currentPlay = liveData.plays?.currentPlay;
+            const onDeckObj = offense.ondeck || currentPlay?.matchup?.ondeck;
+            let onDeckName = '-';
+            if (onDeckObj) {
+                onDeckName = onDeckObj.fullName || onDeckObj.firstLastName || (typeof onDeckObj === 'string' ? onDeckObj : '-');
+            }
+            document.getElementById('on-deck-text').textContent = `ON DECK: ${onDeckName.toUpperCase()}`;
+
+            // -------------------------------------------------------------
+            // ROBUST PLAY RESULT SCANNER: Inspect allPlays history for completed result
+            // -------------------------------------------------------------
+            const allPlays = liveData.plays?.allPlays || [];
+            if (allPlays.length > 0) {
+                for (let i = allPlays.length - 1; i >= 0; i--) {
+                    const p = allPlays[i];
+                    if (p?.result?.description) {
+                        const playIdx = p.about?.atBatIndex;
+                        if (lastCompletedAtBatIndex !== playIdx) {
+                            lastCompletedAtBatIndex = playIdx;
+                            setLongLastingPlayResult(p.result.description);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (currentPlay?.result?.description && currentPlay?.playEvents?.length > 0) {
+                setLongLastingPlayResult(currentPlay.result.description);
+            }
+
+            // At-Bat Transition Reset Logic
+            const playId = currentPlay?.about?.atBatIndex;
+            if (playId !== undefined && lastProcessedPlayId !== null && lastProcessedPlayId !== playId) {
+                resetAtBatState();
+            }
+            if (playId !== undefined) {
+                lastProcessedPlayId = playId;
+            }
+
+            // Count Indicators
+            const count = currentPlay?.count || linescore.balls !== undefined ? { balls: linescore.balls || 0, strikes: linescore.strikes || 0, outs: linescore.outs || 0 } : { balls: 0, strikes: 0, outs: 0 };
+            updateDots('balls-indicator', count.balls, 'bg-green-400');
+            updateDots('strikes-indicator', count.strikes, 'bg-red-500');
+            updateDots('outs-indicator', count.outs, 'bg-yellow-400');
+
+            // Batter Card & Real Jersey Number
+            const batter = currentPlay?.matchup?.batter || offense.batter;
+            if (batter) {
+                document.getElementById('batter-name').textContent = batter.fullName || 'BATTER';
+                document.getElementById('batter-photo').src = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_480,q_100/v1/people/${batter.id}/headshot/silo/current`;
+
+                const batSide = currentPlay?.matchup?.batSide?.code || 'R';
+                const jerseyNum = getPlayerJerseyNumber(batter, gameData);
+                document.getElementById('batter-sub').textContent = `${jerseyNum ? jerseyNum + ' • ' : ''}B/T: ${batSide}/R`;
+
+                const bStats = liveData.boxscore?.teams?.[linescore.isTopInning ? 'away' : 'home']?.players?.[`ID${batter.id}`]?.seasonStats?.batting || {};
+                document.getElementById('stat-avg').textContent = bStats.avg || '.000';
+                document.getElementById('stat-hr').textContent = bStats.homeRuns ?? '0';
+                document.getElementById('stat-rbi').textContent = bStats.rbi ?? '0';
+                document.getElementById('stat-ops').textContent = bStats.ops || '.000';
+            }
+
+            // Pitcher Card & Single Total Pitch Count Registration
+            const defense = linescore.defense || {};
+            const pitcher = currentPlay?.matchup?.pitcher || defense.pitcher;
+            if (pitcher) {
+                document.getElementById('pitcher-name').textContent = pitcher.fullName || 'PITCHER';
+                document.getElementById('pitcher-photo').src = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_480,q_100/v1/people/${pitcher.id}/headshot/silo/current`;
+
+                const pitchingTeamKey = linescore.isTopInning ? 'home' : 'away';
+                const pitcherPlayerData = liveData.boxscore?.teams?.[pitchingTeamKey]?.players?.[`ID${pitcher.id}`];
+
+                const jerseyNum = getPlayerJerseyNumber(pitcher, gameData);
+                const pSeasonStats = pitcherPlayerData?.seasonStats?.pitching || {};
+                document.getElementById('pitcher-sub').textContent = `${jerseyNum ? jerseyNum + ' • ' : ''}ERA ${pSeasonStats.era || '0.00'}`;
+
+                const pGameStats = pitcherPlayerData?.stats?.pitching || pitcherPlayerData?.gameStats?.pitching || {};
+                
+                let totalPitches = pGameStats.numberOfPitches ?? pGameStats.pitchesThrown ?? pGameStats.pitches ?? pitcher.pitchCount;
+                if (typeof totalPitches !== 'number' || isNaN(totalPitches)) {
+                    totalPitches = Array.isArray(currentPlay?.pitchIndex) ? currentPlay.pitchIndex.length : (currentPlay?.playEvents?.filter(e => e?.isPitch)?.length || 0);
+                }
+
+                const strikesTotal = pGameStats.strikes ?? pGameStats.numberOfStrikes ?? 0;
+                const kCount = pGameStats.strikeOuts ?? pGameStats.strikeouts ?? 0;
+                const bbCount = pGameStats.baseOnBalls ?? pGameStats.walks ?? 0;
+
+                document.getElementById('stat-pitches').textContent = `${totalPitches}`;
+                document.getElementById('stat-strikes-total').textContent = `${strikesTotal}`;
+                document.getElementById('stat-k-bb').textContent = `${kCount} / ${bbCount}`;
+            }
+
+            // 3. Process Pitches for Current At-Bat
+            const playEvents = currentPlay?.playEvents || [];
+            const pitches = playEvents.filter(e => e?.isPitch);
+            document.getElementById('pitch-count-badge').textContent = `${pitches.length} Pitch${pitches.length === 1 ? '' : 'es'}`;
+
+            if (pitches.length > lastPitchCount) {
+                const latestPitch = pitches[pitches.length - 1];
+                triggerPitchArrival(latestPitch);
+                lastPitchCount = pitches.length;
+            }
+
+            updatePitchLogUI(pitches, persistentPlayResult);
+        }
+
+        /**
+         * Keep play result displayed on right side for 10 seconds after at-bat completes
+         */
+        function setLongLastingPlayResult(resultText) {
+            if (!resultText) return;
+            persistentPlayResult = resultText;
+            if (persistentPlayResultTimer) clearTimeout(persistentPlayResultTimer);
+            persistentPlayResultTimer = setTimeout(() => {
+                persistentPlayResult = null;
+            }, 10000); // 10-second persistence on right panel
+        }
+
+        /**
+         * ACCURATE STRIKE ZONE MATH
+         */
+        function triggerPitchArrival(pitchData) {
+            if (!pitchData) return;
+            const pitchDetails = pitchData.details || {};
+            const coords = pitchData.pitchData?.coordinates || {};
+
+            let cx = ZONE.x + ZONE.width / 2;
+            let cy = ZONE.y + ZONE.height / 2;
+
+            const halfPlateFt = 0.7083;
+            const szTop = pitchData.pitchData?.strikeZoneTop || 3.5;
+            const szBot = pitchData.pitchData?.strikeZoneBottom || 1.5;
+
+            if (coords.pX !== undefined && coords.pZ !== undefined) {
+                const pX = coords.pX;
+                const pZ = coords.pZ;
+
+                cx = ZONE.x + (ZONE.width / 2) + (pX / halfPlateFt) * (ZONE.width / 2);
+                cy = ZONE.y + ZONE.height - ((pZ - szBot) / (szTop - szBot)) * ZONE.height;
+            } else if (coords.x !== undefined && coords.y !== undefined) {
+                cx = ZONE.x + (ZONE.width / 2) + ((coords.x - 125) / 42.5) * (ZONE.width / 2);
+                cy = ZONE.y + ((coords.y - 90) / 90) * ZONE.height;
+            }
+
+            cx = Math.max(ZONE.x - 32, Math.min(ZONE.x + ZONE.width + 32, cx));
+            cy = Math.max(ZONE.y - 32, Math.min(ZONE.y + ZONE.height + 32, cy));
+
+            const pitchType = pitchDetails.type?.description || 'Fastball';
+            const speed = pitchData.pitchData?.startSpeed ? `${pitchData.pitchData.startSpeed.toFixed(1)} MPH` : '95.0 MPH';
+            const spin = pitchData.pitchData?.breaks?.spinRate ? `${pitchData.pitchData.breaks.spinRate} RPM` : '2200 RPM';
+            const call = pitchDetails.call?.description || pitchDetails.description || 'Pitch';
+
+            const callLower = call.toLowerCase();
+            const isStrike = callLower.includes('strike');
+            const isBall = callLower.includes('ball');
+            const isInPlay = callLower.includes('in play');
+            const isFoul = callLower.includes('foul');
+
+            // Update Header HUD
+            document.getElementById('pitch-type').textContent = pitchType.toUpperCase();
+            document.getElementById('pitch-speed').textContent = speed;
+            document.getElementById('pitch-spin').innerHTML = `SPIN: <span class="text-cyan-300">${spin}</span>`;
+
+            // Update Call Banner in Center
+            const banner = document.getElementById('last-call-text');
+            banner.textContent = `${call.toUpperCase()} (${speed})`;
+            if (isStrike) banner.className = 'text-lg font-black neon-text-magenta uppercase tracking-wider truncate';
+            else if (isBall) banner.className = 'text-lg font-black neon-text-yellow uppercase tracking-wider truncate';
+            else if (isInPlay) banner.className = 'text-lg font-black neon-text-green uppercase tracking-wider truncate';
+            else if (isFoul) banner.className = 'text-lg font-black neon-text-orange uppercase tracking-wider truncate';
+            else banner.className = 'text-lg font-black neon-text-cyan uppercase tracking-wider truncate';
+
+            // Trigger sweeping animation
+            activePitchAnimation = {
+                progress: 0.0,
+                curveX: (Math.random() - 0.5) * 45,
+                targetPitch: {
+                    cx,
+                    cy,
+                    isStrike,
+                    isBall,
+                    isInPlay,
+                    isFoul,
+                    type: pitchType,
+                    speed,
+                    spin
+                }
+            };
+        }
+
+        /**
+         * Render pitch log (STRICT MAX HEIGHT & TOP RECENT ITEMS DISPLAY ONLY)
+         */
+        function updatePitchLogUI(pitches, playResult) {
+            const listContainer = document.getElementById('pitch-log-list');
+            if ((!pitches || pitches.length === 0) && !playResult) {
+                listContainer.innerHTML = '<div class="text-slate-500 text-center py-2 italic my-auto">Awaiting pitches...</div>';
+                return;
+            }
+
+            listContainer.innerHTML = '';
+
+            // Render Final Play Outcome strictly on right panel if present
+            if (playResult) {
+                const resultRow = document.createElement('div');
+                resultRow.className = 'mb-1 p-1 bg-cyan-950/90 border border-cyan-400 rounded text-[10px] font-bold text-cyan-200 leading-tight text-center shadow-md flex-shrink-0 truncate';
+                resultRow.innerHTML = `★ RESULT: ${playResult}`;
+                listContainer.appendChild(resultRow);
+            }
+
+            // Reverse pitches array so latest pitch is on top, slice to max 5 pitches
+            const reversedPitches = [...pitches].reverse().slice(0, 5);
+
+            reversedPitches.forEach((p, revIdx) => {
+                const actualIndex = pitches.length - revIdx;
+                const desc = p.details?.type?.description || 'Pitch';
+                const spd = p.pitchData?.startSpeed ? `${p.pitchData.startSpeed.toFixed(0)}mph` : '';
+                const call = p.details?.call?.description || p.details?.description || 'Result';
+                const callLower = call.toLowerCase();
+
+                let textColor = 'text-cyan-400';
+                if (callLower.includes('strike')) textColor = 'text-pink-400';
+                else if (callLower.includes('ball')) textColor = 'text-yellow-400';
+                else if (callLower.includes('in play')) textColor = 'text-green-400';
+                else if (callLower.includes('foul')) textColor = 'text-orange-400';
+
+                const row = document.createElement('div');
+                row.className = `flex justify-between items-center bg-slate-900 px-2 py-0.5 rounded border flex-shrink-0 ${revIdx === 0 ? 'border-cyan-400/80 bg-slate-850' : 'border-slate-800'}`;
+                row.innerHTML = `
+                    <span class="font-bold text-slate-200 truncate pr-1">#${actualIndex} ${desc} ${revIdx === 0 ? '<span class="text-[8px] text-cyan-300 font-normal">[NEW]</span>' : ''}</span>
+                    <div class="flex items-center space-x-1 flex-shrink-0">
+                        <span class="text-slate-400 text-[10px]">${spd}</span>
+                        <span class="text-[10px] font-semibold ${textColor}">${call}</span>
+                    </div>
+                `;
+                listContainer.appendChild(row);
+            });
+        }
+
+        function updateDots(containerId, count, activeClass) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const dots = container.children;
+            for (let i = 0; i < dots.length; i++) {
+                if (i < count) {
+                    dots[i].className = `w-3.5 h-3.5 rounded-full border border-white ${activeClass} shadow-[0_0_5px_#ffffff]`;
+                } else {
+                    dots[i].className = 'w-3.5 h-3.5 rounded-full border border-slate-600 bg-slate-800';
+                }
+            }
+        }
+
+        function setBaseActive(baseId, active) {
+            const el = document.getElementById(baseId);
+            if (!el) return;
+            if (active) {
+                el.classList.add('base-active');
+            } else {
+                el.classList.remove('base-active');
+            }
+        }
+    </script>
+</body>
+</html>
