@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batting Stance Corrector v1.0</title>
+
+  <!-- TensorFlow.js and Pose Detection CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 16px 24px;
+      background-color: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      color: #58a6ff;
+      letter-spacing: 0.5px;
+    }
+
+    #status {
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 12px;
+      background-color: #21262d;
+      color: #8b949e;
+    }
+
+    /* Split Screen Layout */
+    main {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 60px);
+    }
+
+    /* Left Side: Camera & Canvas Tracker */
+    .viewport-container {
+      flex: 1;
+      position: relative;
+      background-color: #010409;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-right: 1px solid #30363d;
+    }
+
+    #webcam {
+      position: absolute;
+      transform: scaleX(-1); /* Mirror view */
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none; /* Rendered onto Canvas */
+    }
+
+    #canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Right Side: Diagnostics Dashboard */
+    .dashboard {
+      width: 380px;
+      background-color: #161b22;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .card {
+      background-color: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: #8b949e;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .metric {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #f0f6fc;
+    }
+
+    .status-badge {
+      font-size: 1.1rem;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 6px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .status-pass {
+      background-color: rgba(46, 160, 67, 0.2);
+      color: #3fb950;
+      border: 1px solid #2ea643;
+    }
+
+    .status-fail {
+      background-color: rgba(248, 81, 73, 0.2);
+      color: #f85149;
+      border: 1px solid #f85149;
+    }
+
+    .feedback-list {
+      list-style: none;
+      font-size: 0.9rem;
+    }
+
+    .feedback-list li {
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Batting Stance Corrector <span style="font-size:0.8rem; color:#8b949e;">v1.0</span></h1>
+    <div id="status">Initializing TF.js Engine...</div>
+  </header>
+
+  <main>
+    <!-- Left Panel: Video Feed & Tracking Overlay -->
+    <div class="viewport-container">
+      <video id="webcam" playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- Right Panel: Telemetry & Live Feedback -->
+    <div class="dashboard">
+      <div class="card">
+        <h3>Stance Assessment</h3>
+        <div id="stance-badge" class="status-badge status-fail">NEUTRAL</div>
+      </div>
+
+      <div class="card">
+        <h3>Knee Flexion Angle</h3>
+        <div id="knee-angle" class="metric">0°</div>
+        <p style="font-size: 0.75rem; color: #8b949e; margin-top: 4px;">Target: 130° – 165°</p>
+      </div>
+
+      <div class="card">
+        <h3>Shoulder Tilt</h3>
+        <div id="shoulder-tilt" class="metric">0°</div>
+        <p style="font-size: 0.75rem; color: #8b949e; margin-top: 4px;">Target: &lt; 15° level</p>
+      </div>
+
+      <div class="card">
+        <h3>Real-time Diagnostics</h3>
+        <ul class="feedback-list" id="feedback">
+          <li>Waiting for pose detection...</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let detector;
+    let video;
+    let canvas;
+    let ctx;
+
+    const SKELETON_CONNECTIONS = [
+      ['left_shoulder', 'right_shoulder'],
+      ['left_shoulder', 'left_elbow'],
+      ['left_elbow', 'left_wrist'],
+      ['right_shoulder', 'right_elbow'],
+      ['right_elbow', 'right_wrist'],
+      ['left_shoulder', 'left_hip'],
+      ['right_shoulder', 'right_hip'],
+      ['left_hip', 'right_hip'],
+      ['left_hip', 'left_knee'],
+      ['left_knee', 'left_ankle'],
+      ['right_hip', 'right_knee'],
+      ['right_knee', 'right_ankle']
+    ];
+
+    async function init() {
+      const statusEl = document.getElementById('status');
+      video = document.getElementById('webcam');
+      canvas = document.getElementById('canvas');
+      ctx = canvas.getContext('2d');
+
+      // 1. Setup Camera Stream
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720, facingMode: 'user' },
+          audio: false
+        });
+        video.srcObject = stream;
+        await new Promise((resolve) => {
+          video.onloadedmetadata = () => resolve(video);
+        });
+        video.play();
+      } catch (err) {
+        statusEl.innerText = 'Camera access denied or unsecure origin.';
+        return;
+      }
+
+      // 2. Initialize MoveNet SinglePose Lightning Model
+      statusEl.innerText = 'Loading MoveNet Pose Detector...';
+      const detectorConfig = {
+        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+      };
+      detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
+      statusEl.innerText = 'System Active • WebGL Enabled';
+
+      // 3. Begin Detection Loop
+      renderLoop();
+    }
+
+    function calculateAngle(A, B, C) {
+      const radians = Math.atan2(C.y - B.y, C.x - B.x) - Math.atan2(A.y - B.y, A.x - B.x);
+      let angle = Math.abs((radians * 180.0) / Math.PI);
+      if (angle > 180.0) angle = 360 - angle;
+      return Math.round(angle);
+    }
+
+    async function renderLoop() {
+      // Sync canvas resolution with display viewport
+      if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+      }
+
+      // Draw mirrored video background on Canvas
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      // Detect Keypoints
+      const poses = await detector.estimatePoses(video, { flipHorizontal: true });
+
+      if (poses.length > 0) {
+        const keypoints = poses[0].keypoints;
+        const keypointMap = {};
+        
+        // Scale keypoint positions to canvas size
+        const scaleX = canvas.width / video.videoWidth;
+        const scaleY = canvas.height / video.videoHeight;
+
+        keypoints.forEach(kp => {
+          keypointMap[kp.name] = {
+            x: kp.x * scaleX,
+            y: kp.y * scaleY,
+            score: kp.score
+          };
+        });
+
+        // Evaluate Batting Stance Biomechanics
+        let isDeviated = false;
+        const feedbackMessages = [];
+
+        // Check 1: Knee Bend (Lead/Rear Knee angle check)
+        let kneeAngle = 180;
+        if (keypointMap['right_hip'] && keypointMap['right_knee'] && keypointMap['right_ankle']) {
+          kneeAngle = calculateAngle(keypointMap['right_hip'], keypointMap['right_knee'], keypointMap['right_ankle']);
+        }
+        document.getElementById('knee-angle').innerText = `${kneeAngle}°`;
+
+        if (kneeAngle > 165) {
+          isDeviated = true;
+          feedbackMessages.push('⚠️ Legs too straight — Bend knees more');
+        } else if (kneeAngle < 125) {
+          isDeviated = true;
+          feedbackMessages.push('⚠️ Stance too low — Raise hips slightly');
+        } else {
+          feedbackMessages.push('✅ Knee flex within optimal window');
+        }
+
+        // Check 2: Shoulder Tilt
+        let shoulderTilt = 0;
+        if (keypointMap['left_shoulder'] && keypointMap['right_shoulder']) {
+          const dy = keypointMap['right_shoulder'].y - keypointMap['left_shoulder'].y;
+          const dx = keypointMap['right_shoulder'].x - keypointMap['left_shoulder'].x;
+          shoulderTilt = Math.abs(Math.round((Math.atan2(dy, dx) * 180) / Math.PI));
+        }
+        document.getElementById('shoulder-tilt').innerText = `${shoulderTilt}°`;
+
+        if (shoulderTilt > 15) {
+          isDeviated = true;
+          feedbackMessages.push('⚠️ Shoulders uneven — Level your stance');
+        } else {
+          feedbackMessages.push('✅ Shoulders level');
+        }
+
+        // Draw Transparent Status Overlay (Green = Good, Red = Deviation)
+        ctx.fillStyle = isDeviated ? 'rgba(248, 81, 73, 0.25)' : 'rgba(46, 160, 67, 0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Update Dashboard UI
+        const badge = document.getElementById('stance-badge');
+        if (isDeviated) {
+          badge.innerText = 'STANCE DEVIATION';
+          badge.className = 'status-badge status-fail';
+        } else {
+          badge.innerText = 'OPTIMAL STANCE';
+          badge.className = 'status-badge status-pass';
+        }
+
+        const feedbackEl = document.getElementById('feedback');
+        feedbackEl.innerHTML = feedbackMessages.map(msg => `<li>${msg}</li>`).join('');
+
+        // Draw Skeleton Lines
+        SKELETON_CONNECTIONS.forEach(([partA, partB]) => {
+          const kpA = keypointMap[partA];
+          const kpB = keypointMap[partB];
+          if (kpA && kpB && kpA.score > 0.3 && kpB.score > 0.3) {
+            ctx.beginPath();
+            ctx.moveTo(kpA.x, kpA.y);
+            ctx.lineTo(kpB.x, kpB.y);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = isDeviated ? '#f85149' : '#3fb950';
+            ctx.stroke();
+          }
+        });
+
+        // Draw Joint Nodes
+        Object.values(keypointMap).forEach(kp => {
+          if (kp.score > 0.3) {
+            ctx.beginPath();
+            ctx.arc(kp.x, kp.y, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#58a6ff';
+            ctx.stroke();
+          }
+        });
+      }
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
