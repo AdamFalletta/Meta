@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEO BOXING — Motion Arcade Experience</title>
+  
+  <!-- Google Fonts for Arcade Aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- TensorFlow.js Core & Pose Detection Models -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background-color: #030712;
+      color: #f3f4f6;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    .font-arcade {
+      font-family: 'Orbitron', sans-serif;
+    }
+    
+    /* Neon glow utility classes */
+    .glow-cyan {
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.7), inset 0 0 10px rgba(6, 182, 212, 0.4);
+      text-shadow: 0 0 12px rgba(6, 182, 212, 0.9);
+    }
+    .glow-red {
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), inset 0 0 15px rgba(239, 68, 68, 0.4);
+      text-shadow: 0 0 15px rgba(239, 68, 68, 0.9);
+    }
+    .glow-gold {
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.7), inset 0 0 10px rgba(245, 158, 11, 0.4);
+      text-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+    }
+    
+    /* Selected Option Active States */
+    .option-active {
+      border-color: #06b6d4 !important;
+      background-color: rgba(6, 182, 212, 0.25) !important;
+      color: #38bdf8 !important;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+
+    .option-active-red {
+      border-color: #ef4444 !important;
+      background-color: rgba(239, 68, 68, 0.25) !important;
+      color: #fca5a5 !important;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+
+    /* CRT Scanline Overlay */
+    .crt-overlay::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      z-index: 40;
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* Screen Shake animation class */
+    .shake {
+      animation: shake 0.25s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-2px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+      40%, 60% { transform: translate3d(8px, 0, 0); }
+    }
+
+    /* Custom Scrollbar for Leaderboard */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(6, 182, 212, 0.5);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="w-screen h-screen relative flex items-center justify-center bg-black crt-overlay">
+
+  <!-- Hidden webcam element for MoveNet AI inference -->
+  <video id="webcam-video" class="hidden" playsinline muted></video>
+
+  <!-- Main 1080p Canvas container maintaining 16:9 Aspect Ratio -->
+  <div id="game-container" class="relative w-full h-full max-w-[1920px] max-h-[1080px] aspect-video flex items-center justify-center bg-slate-950 overflow-hidden shadow-2xl">
+    
+    <!-- Game World & Dynamic HUD Canvas -->
+    <canvas id="game-canvas" width="1920" height="1080" class="w-full h-full object-contain block bg-slate-950"></canvas>
+
+    <!-- ATTRACT MODE OVERLAY -->
+    <div id="attract-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-between p-12 z-30 transition-opacity duration-500">
+      <div class="text-center mt-8 space-y-4">
+        <p class="text-cyan-400 font-arcade text-lg tracking-[0.4em] uppercase animate-pulse">TensorFlow MoveNet Motion Arcade</p>
+        <h1 id="app-title" class="font-arcade text-7xl md:text-9xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-200 to-fuchsia-500 drop-shadow-[0_0_35px_rgba(6,182,212,0.8)]">
+          NEO BOXING
+        </h1>
+        <p class="text-slate-400 text-xl font-medium tracking-wide">Full-Body Camera Controlled Punch Target Simulator</p>
+      </div>
+
+      <div class="flex flex-col items-center gap-6">
+        <button id="btn-start-game" class="group relative px-12 py-6 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-arcade text-3xl font-black tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 glow-cyan cursor-pointer overflow-hidden">
+          <span class="relative z-10 flex items-center gap-4">
+            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            START BOXING SESSION
+          </span>
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        </button>
+        <p class="text-slate-500 text-sm font-arcade tracking-widest">REQUIRES WEBCAM ACCESS & DISTANCE CLEARANCE</p>
+      </div>
+
+      <!-- High Score Ticker -->
+      <div class="w-full max-w-4xl bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between backdrop-blur-lg">
+        <div class="flex items-center gap-3 text-amber-400 font-arcade text-sm">
+          <span class="inline-block w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
+          CURRENT CHAMPION
+        </div>
+        <div id="attract-top-score" class="font-arcade text-2xl font-bold text-slate-200 tracking-wider">
+          NEO — 12,450 PTS
+        </div>
+        <div class="text-xs text-slate-500 font-mono">TARGET RUSH MODE</div>
+      </div>
+    </div>
+
+    <!-- MAIN CONFIGURATION MENU OVERLAY -->
+    <div id="menu-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-xl flex flex-col justify-between p-8 md:p-12 z-30 transition-opacity duration-300">
+      
+      <!-- Top Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div>
+          <h2 class="font-arcade text-4xl font-extrabold text-cyan-400">ARCADE CONFIGURATION</h2>
+          <p class="text-slate-400 text-sm">Select game parameters before calibrating motion tracking</p>
+        </div>
+        <button id="btn-fullscreen" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade text-sm font-semibold rounded-lg border border-slate-700 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4"/></svg>
+          FULLSCREEN (1080P)
+        </button>
+      </div>
+
+      <!-- Settings Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-auto">
+        
+        <!-- Game Mode Selection -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3">
+          <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold">1. Game Mode</label>
+          <div class="space-y-2 flex-1" id="mode-selector">
+            <button data-value="RUSH" class="mode-btn option-active w-full text-left p-3 rounded-xl border border-slate-700 bg-slate-900/50 font-arcade text-sm font-bold flex flex-col transition">
+              <span>TARGET RUSH</span>
+              <span class="text-[10px] text-slate-400 font-normal">Fast-paced 60s target clearance</span>
+            </button>
+            <button data-value="COMBO" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 font-arcade text-sm font-bold flex flex-col hover:border-slate-700 transition">
+              <span>COMBO ATTACK</span>
+              <span class="text-[10px] text-slate-400 font-normal">Maintain streak, zero misses allowed</span>
+            </button>
+            <button data-value="POWER" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 font-arcade text-sm font-bold flex flex-col hover:border-slate-700 transition">
+              <span>POWER STRIKE</span>
+              <span class="text-[10px] text-slate-400 font-normal">Max velocity heavy impact tests</span>
+            </button>
+            <button data-value="DRILL" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 font-arcade text-sm font-bold flex flex-col hover:border-slate-700 transition">
+              <span>BOXING DRILL</span>
+              <span class="text-[10px] text-slate-400 font-normal">Follow punch voice sequences</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Target Count Selection -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3">
+          <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold">2. Active Target Count</label>
+          <div class="grid grid-cols-2 gap-3 my-auto" id="target-count-selector">
+            <button data-value="3" class="target-btn p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">3</button>
+            <button data-value="5" class="target-btn option-active p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">5</button>
+            <button data-value="7" class="target-btn p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">7</button>
+            <button data-value="9" class="target-btn p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">9</button>
+          </div>
+          <p class="text-[11px] text-slate-500 text-center font-mono">Higher target counts require wider arm reach</p>
+        </div>
+
+        <!-- Visual Theme Selection -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3">
+          <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold">3. Visual Arena Theme</label>
+          <div class="space-y-2 flex-1" id="theme-selector">
+            <button data-value="NEO_BLUE" class="theme-btn option-active w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>NEO BLUE</span>
+              <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+            </button>
+            <button data-value="REVV_RED" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>REVV RED</span>
+              <span class="w-3 h-3 rounded-full bg-red-500"></span>
+            </button>
+            <button data-value="PURPLE_VOID" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>PURPLE VOID</span>
+              <span class="w-3 h-3 rounded-full bg-fuchsia-500"></span>
+            </button>
+            <button data-value="CYBER_GREEN" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>CYBER GREEN</span>
+              <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+            </button>
+            <button data-value="GOLDEN_ARENA" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>GOLDEN ARENA</span>
+              <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Target & Glove Color Customization Panel -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between space-y-3">
+          <div>
+            <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold block mb-2">4. Target Color</label>
+            <div class="grid grid-cols-8 gap-1.5" id="target-color-presets">
+              <button data-color="#00f0ff" class="target-color-btn h-7 rounded-lg bg-[#00f0ff] border-2 border-white ring-2 ring-cyan-400 scale-105 transition-all cursor-pointer" title="Cyan"></button>
+              <button data-color="#0066ff" class="target-color-btn h-7 rounded-lg bg-[#0066ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Electric Blue"></button>
+              <button data-color="#ff2a2a" class="target-color-btn h-7 rounded-lg bg-[#ff2a2a] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Crimson Red"></button>
+              <button data-color="#00ff88" class="target-color-btn h-7 rounded-lg bg-[#00ff88] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Laser Green"></button>
+              <button data-color="#ffaa00" class="target-color-btn h-7 rounded-lg bg-[#ffaa00] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Solar Gold"></button>
+              <button data-color="#e024ff" class="target-color-btn h-7 rounded-lg bg-[#e024ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Plasma Pink"></button>
+              <button data-color="#ffffff" class="target-color-btn h-7 rounded-lg bg-[#ffffff] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="White"></button>
+              <button data-color="#000000" class="target-color-btn h-7 rounded-lg bg-[#000000] border border-slate-500 transition-all hover:scale-105 cursor-pointer" title="Black"></button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold block">5. Glove Colors</label>
+            
+            <!-- Left Glove Swatches -->
+            <div>
+              <div class="flex items-center justify-between text-[10px] font-arcade text-red-400 font-bold mb-1">
+                <span>LEFT GLOVE</span>
+                <span id="label-left-glove" class="text-slate-400">#ff2a2a</span>
+              </div>
+              <div class="grid grid-cols-8 gap-1.5" id="left-glove-presets">
+                <button data-color="#00f0ff" class="left-glove-btn h-6 rounded-md bg-[#00f0ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#0066ff" class="left-glove-btn h-6 rounded-md bg-[#0066ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ff2a2a" class="left-glove-btn h-6 rounded-md bg-[#ff2a2a] border-2 border-white ring-2 ring-red-500 scale-105 transition-all cursor-pointer"></button>
+                <button data-color="#00ff88" class="left-glove-btn h-6 rounded-md bg-[#00ff88] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffaa00" class="left-glove-btn h-6 rounded-md bg-[#ffaa00] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#e024ff" class="left-glove-btn h-6 rounded-md bg-[#e024ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffffff" class="left-glove-btn h-6 rounded-md bg-[#ffffff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#000000" class="left-glove-btn h-6 rounded-md bg-[#000000] border border-slate-500 transition-all hover:scale-105 cursor-pointer"></button>
+              </div>
+            </div>
+
+            <!-- Right Glove Swatches -->
+            <div>
+              <div class="flex items-center justify-between text-[10px] font-arcade text-cyan-400 font-bold mb-1">
+                <span>RIGHT GLOVE</span>
+                <span id="label-right-glove" class="text-slate-400">#00f0ff</span>
+              </div>
+              <div class="grid grid-cols-8 gap-1.5" id="right-glove-presets">
+                <button data-color="#00f0ff" class="right-glove-btn h-6 rounded-md bg-[#00f0ff] border-2 border-white ring-2 ring-cyan-400 scale-105 transition-all cursor-pointer"></button>
+                <button data-color="#0066ff" class="right-glove-btn h-6 rounded-md bg-[#0066ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ff2a2a" class="right-glove-btn h-6 rounded-md bg-[#ff2a2a] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#00ff88" class="right-glove-btn h-6 rounded-md bg-[#00ff88] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffaa00" class="right-glove-btn h-6 rounded-md bg-[#ffaa00] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#e024ff" class="right-glove-btn h-6 rounded-md bg-[#e024ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffffff" class="right-glove-btn h-6 rounded-md bg-[#ffffff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#000000" class="right-glove-btn h-6 rounded-md bg-[#000000] border border-slate-500 transition-all hover:scale-105 cursor-pointer"></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-arcade">AUDIO PROFILE</span>
+              <div class="flex items-center gap-1" id="audio-profile-selector">
+                <button data-value="AMBIENT" class="audio-btn px-2.5 py-1 text-[11px] font-arcade rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer">AMBIENT</button>
+                <button data-value="REVV" class="audio-btn option-active-red px-2.5 py-1 text-[11px] font-arcade rounded border border-slate-700 font-bold cursor-pointer">REVV</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-arcade">GLOVE RADIUS (PX)</span>
+              <div class="flex items-center gap-2">
+                <button id="btn-glove-minus" class="w-7 h-7 bg-slate-800 border border-slate-700 rounded text-cyan-400 font-bold hover:bg-slate-700">-</button>
+                <span id="glove-size-display" class="font-arcade text-cyan-400 font-bold text-sm">55</span>
+                <button id="btn-glove-plus" class="w-7 h-7 bg-slate-800 border border-slate-700 rounded text-cyan-400 font-bold hover:bg-slate-700">+</button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-arcade">VOICE ANNOUNCER</span>
+              <input type="checkbox" id="chk-announcer" checked class="w-5 h-5 accent-cyan-500 rounded cursor-pointer">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+        <button id="btn-show-leaderboard" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-arcade text-sm font-bold rounded-xl transition">
+          VIEW LEADERBOARD
+        </button>
+        <button id="btn-proceed-calibration" class="px-10 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-arcade text-xl font-black rounded-xl shadow-lg transition transform hover:scale-105 glow-cyan cursor-pointer">
+          PROCEED TO CALIBRATION →
+        </button>
+      </div>
+
+    </div>
+
+    <!-- CALIBRATION OVERLAY -->
+    <div id="calibration-overlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-between p-12 z-30 transition-opacity duration-300">
+      
+      <!-- Top Instruction Banner -->
+      <div class="text-center space-y-2">
+        <span id="calib-stage-badge" class="px-4 py-1.5 bg-cyan-950 border border-cyan-500 text-cyan-300 font-arcade text-xs rounded-full uppercase tracking-widest animate-pulse">
+          STAGE 1 / 2: DISTANCE & ALIGNMENT
+        </span>
+        <h2 id="calib-status-text" class="font-arcade text-5xl font-black text-slate-100 tracking-wider">
+          STEP INTO POSITION
+        </h2>
+        <p id="calib-sub-text" class="text-slate-400 text-lg font-medium">
+          Stand back until your shoulders and extended wrists fit within the target boundary boxes.
+        </p>
+      </div>
+
+      <!-- Stage 1 Visual Guide Box -->
+      <div id="calib-stage1-container" class="relative w-[80%] h-[55%] border-2 border-dashed border-cyan-500/40 rounded-3xl flex items-center justify-between p-8 bg-slate-900/20 backdrop-blur-xs">
+        
+        <!-- Left Wrist Target Zone -->
+        <div id="left-calib-zone" class="w-36 h-36 rounded-2xl border-2 border-red-500/60 bg-red-950/20 flex flex-col items-center justify-center transition-colors">
+          <span class="font-arcade text-xs text-red-400 font-bold">LEFT WRIST</span>
+          <div class="w-4 h-4 rounded-full bg-red-500 animate-ping mt-2"></div>
+        </div>
+
+        <!-- Center Body Guide -->
+        <div class="text-center text-slate-400 font-arcade text-sm">
+          <div class="text-5xl mb-2">🧍</div>
+          EXTEND BOTH ARMS HORIZONTALLY
+        </div>
+
+        <!-- Right Wrist Target Zone -->
+        <div id="right-calib-zone" class="w-36 h-36 rounded-2xl border-2 border-cyan-500/60 bg-cyan-950/20 flex flex-col items-center justify-center transition-colors">
+          <span class="font-arcade text-xs text-cyan-400 font-bold">RIGHT WRIST</span>
+          <div class="w-4 h-4 rounded-full bg-cyan-500 animate-ping mt-2"></div>
+        </div>
+
+      </div>
+
+      <!-- Stage 2 Reach Indicator Box -->
+      <div id="calib-stage2-container" class="hidden relative w-[80%] h-[55%] border-2 border-amber-500/50 rounded-3xl flex flex-col items-center justify-between p-6 bg-slate-900/20 backdrop-blur-xs">
+        <div class="font-arcade text-amber-400 text-sm font-bold uppercase tracking-wider text-center">
+          PUNCH ALL 4 CORNER TARGETS TO MAP YOUR FULL REACH BOUNDARY
+        </div>
+        <div id="reach-progress-text" class="font-arcade text-2xl font-black text-cyan-300">
+          REACHED: 0 / 4 CORNERS
+        </div>
+      </div>
+
+      <!-- Calibration Footer Controls -->
+      <div class="flex items-center gap-6">
+        <button id="btn-cancel-calib" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 font-arcade text-sm rounded-xl">
+          CANCEL
+        </button>
+        <button id="btn-bypass-calib" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-arcade text-sm font-bold border border-cyan-500/40 rounded-xl">
+          MANUAL LOCK & PLAY
+        </button>
+      </div>
+
+    </div>
+
+    <!-- COUNTDOWN OVERLAY -->
+    <div id="countdown-overlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-xl flex flex-col items-center justify-center z-40">
+      <div id="countdown-number" class="font-arcade text-[180px] md:text-[240px] font-black text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 via-indigo-300 to-cyan-600 drop-shadow-[0_0_50px_rgba(6,182,212,0.9)] animate-bounce">
+        3
+      </div>
+      <p id="countdown-subtitle" class="font-arcade text-2xl text-cyan-400 tracking-[0.5em] uppercase font-bold">
+        GET READY
+      </p>
+    </div>
+
+    <!-- HIGH SCORE ENTRY MODAL OVERLAY -->
+    <div id="highscore-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-8 z-50">
+      <div class="bg-slate-900 border-2 border-amber-500/80 p-8 md:p-12 rounded-3xl max-w-xl w-full text-center space-y-6 glow-gold">
+        <div class="text-amber-400 font-arcade text-sm tracking-[0.4em] uppercase font-bold">NEW HIGH SCORE DETECTED</div>
+        <h2 class="font-arcade text-4xl md:text-5xl font-black text-slate-100">ENTER INITIALS</h2>
+        
+        <div id="final-score-display" class="font-arcade text-3xl font-extrabold text-cyan-400">
+          SCORE: 0
+        </div>
+
+        <!-- Interactive Arcade Initials Input Slots -->
+        <div class="flex items-center justify-center gap-4 py-4" id="initials-container">
+          <button data-slot="0" class="initial-slot w-16 h-20 bg-slate-950 border-2 border-amber-400/80 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-amber-300 scale-105 transition cursor-pointer">A</button>
+          <button data-slot="1" class="initial-slot w-16 h-20 bg-slate-950 border-2 border-slate-800 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-slate-500 transition cursor-pointer">A</button>
+          <button data-slot="2" class="initial-slot w-16 h-20 bg-slate-950 border-2 border-slate-800 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-slate-500 transition cursor-pointer">A</button>
+        </div>
+
+        <!-- Controls for letter cycling and slot navigation -->
+        <div class="flex items-center justify-center gap-3">
+          <button id="btn-initial-prev-slot" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-arcade text-xs rounded-lg border border-slate-700">◄ SLOT</button>
+          <button id="btn-initial-prev" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade text-sm font-bold rounded-lg border border-slate-700">▲ CHAR</button>
+          <button id="btn-initial-next" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade text-sm font-bold rounded-lg border border-slate-700">▼ CHAR</button>
+          <button id="btn-initial-next-slot" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-arcade text-xs rounded-lg border border-slate-700">SLOT ►</button>
+        </div>
+
+        <button id="btn-initial-confirm" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-arcade font-extrabold text-lg rounded-xl glow-gold cursor-pointer transition">
+          CONFIRM ENTRY
+        </button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD OVERLAY -->
+    <div id="leaderboard-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-between p-12 z-50">
+      <div class="text-center space-y-2">
+        <h2 class="font-arcade text-5xl font-black text-cyan-400">HALL OF FAME</h2>
+        <p class="text-slate-400 text-sm">TOP 5 CHAMPIONS</p>
+      </div>
+
+      <div class="w-full max-w-2xl bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3" id="leaderboard-list">
+        <!-- Generated dynamically -->
+      </div>
+
+      <button id="btn-close-leaderboard" class="px-10 py-4 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-arcade font-bold text-lg rounded-xl border border-slate-700">
+        RETURN TO MENU
+      </button>
+    </div>
+
+    <!-- GAME OVER SUMMARY OVERLAY -->
+    <div id="gameover-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-8 z-40">
+      <div class="max-w-2xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 md:p-12 text-center space-y-8">
+        <h2 class="font-arcade text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-300">
+          SESSION COMPLETE
+        </h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">TOTAL SCORE</span>
+            <span id="stat-final-score" class="font-arcade text-2xl font-bold text-cyan-400">0</span>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">ACCURACY</span>
+            <span id="stat-final-accuracy" class="font-arcade text-2xl font-bold text-emerald-400">0%</span>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">MAX COMBO</span>
+            <span id="stat-final-combo" class="font-arcade text-2xl font-bold text-amber-400">x0</span>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">MAX POWER</span>
+            <span id="stat-final-power" class="font-arcade text-2xl font-bold text-red-400">0</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-6 pt-4">
+          <button id="btn-restart-game" class="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-arcade font-bold text-lg rounded-xl glow-cyan">
+            PLAY AGAIN
+          </button>
+          <button id="btn-return-menu" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-arcade font-bold text-lg rounded-xl border border-slate-700">
+            MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Theme Presets Configuration
+    const THEMES = {
+      NEO_BLUE: {
+        bgGrad: ['#030712', '#0f172a'],
+        targetColor: '#00f0ff',
+        accent: '#06b6d4',
+        accentGlow: 'rgba(6, 182, 212, 0.4)',
+        particleColors: ['#00f0ff', '#38bdf8', '#818cf8', '#ffffff']
+      },
+      REVV_RED: {
+        bgGrad: ['#180202', '#2a0808'],
+        targetColor: '#ff2a2a',
+        accent: '#ef4444',
+        accentGlow: 'rgba(239, 68, 68, 0.4)',
+        particleColors: ['#ff2a2a', '#fca5a5', '#f87171', '#ffffff']
+      },
+      PURPLE_VOID: {
+        bgGrad: ['#090214', '#1e0b36'],
+        targetColor: '#e024ff',
+        accent: '#c084fc',
+        accentGlow: 'rgba(192, 132, 252, 0.4)',
+        particleColors: ['#e024ff', '#c084fc', '#e879f9', '#ffffff']
+      },
+      CYBER_GREEN: {
+        bgGrad: ['#02140a', '#082a18'],
+        targetColor: '#00ff88',
+        accent: '#34d399',
+        accentGlow: 'rgba(52, 211, 153, 0.4)',
+        particleColors: ['#00ff88', '#34d399', '#6ee7b7', '#ffffff']
+      },
+      GOLDEN_ARENA: {
+        bgGrad: ['#140d02', '#2a1a08'],
+        targetColor: '#ffaa00',
+        accent: '#fbbf24',
+        accentGlow: 'rgba(251, 191, 36, 0.4)',
+        particleColors: ['#ffaa00', '#fbbf24', '#fde047', '#ffffff']
+      }
+    };
+
+    // Global Application State
+    const AppState = {
+      currentScreen: 'ATTRACT', // ATTRACT, MENU, CALIBRATION, COUNTDOWN, PLAYING, GAMEOVER, HIGH_SCORE, LEADERBOARD
+      gameMode: 'RUSH', // RUSH, COMBO, POWER, DRILL
+      targetCountSetting: 5,
+      activeThemeKey: 'NEO_BLUE',
+      audioProfile: 'REVV', // AMBIENT or REVV
+      announcerEnabled: true,
+      gloveRadius: 55, // Configurable glove boundary radius
+      
+      // Custom Target & Glove Colors
+      targetColor: '#00f0ff',
+      leftGloveColor: '#ef4444',
+      rightGloveColor: '#06b6d4',
+      
+      // Live Gameplay State
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+      totalPunches: 0,
+      successfulHits: 0,
+      recentPower: 0,
+      maxPower: 0,
+      timeRemaining: 60,
+      currentDrillPunch: 'JAB', // Required punch in Drill mode
+      
+      // Tracking & 2-Stage Calibration State
+      calibrationStage: 1, // 1: Distance, 2: Reach 4 Corners
+      isCalibrated: false,
+      calibHoldTimer: 0,
+      reachCorners: {
+        topLeft: false,
+        topRight: false,
+        bottomLeft: false,
+        bottomRight: false
+      },
+      // Calibrated Motion Bounds (in normalized video space 0..1)
+      reachBounds: {
+        minX: 0.1,
+        maxX: 0.9,
+        minY: 0.1,
+        maxY: 0.9
+      }
+    };
+
+    /* =========================================================================
+       2. WEBAUDIO PROCEDURAL SOUND SYNTHESIS ENGINE
+       ========================================================================= */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioCtx();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.8;
+        this.masterGain.connect(this.ctx.destination);
+      }
+
+      ensureContext() {
+        if (!this.ctx) this.init();
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // Target Spawn Tone
+      playTargetSpawn() {
+        this.ensureContext();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(660, this.ctx.currentTime + 0.12);
+        
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+
+      // Dynamic Impact Audio Generator based on punch velocity & audio mode
+      playTargetHit(power = 50) {
+        this.ensureContext();
+        const now = this.ctx.currentTime;
+        const isRevV = AppState.audioProfile === 'REVV';
+        
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+        
+        const startFreq = isRevV ? 160 + power * 2.5 : 120 + power;
+        osc.type = isRevV ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(25, now + 0.28);
+        
+        const maxVol = Math.min(1.0, 0.35 + (power / 100) * 0.65);
+        oscGain.gain.setValueAtTime(maxVol, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+        osc.connect(oscGain);
+
+        // Noise Snap Layer
+        const bufferSize = this.ctx.sampleRate * 0.1;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = isRevV ? 1400 : 900;
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(maxVol * 0.6, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+        noise.connect(filter);
+        filter.connect(noiseGain);
+
+        if (isRevV && power > 50) {
+          const distortion = this.ctx.createWaveShaper();
+          distortion.curve = this.makeDistortionCurve(power * 2);
+          oscGain.connect(distortion);
+          noiseGain.connect(distortion);
+          distortion.connect(this.masterGain);
+        } else {
+          oscGain.connect(this.masterGain);
+          noiseGain.connect(this.masterGain);
+        }
+
+        osc.start(now);
+        noise.start(now);
+        osc.stop(now + 0.28);
+        noise.stop(now + 0.12);
+      }
+
+      playMissSound() {
+        this.ensureContext();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.2);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+
+      playComboBeep(comboCount) {
+        this.ensureContext();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        const scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+        const note = scale[comboCount % scale.length];
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(note, now);
+        
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+
+      playCountdownBeep(isFinal = false) {
+        this.ensureContext();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isFinal ? 1200 : 600, now);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + (isFinal ? 0.4 : 0.2));
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + (isFinal ? 0.4 : 0.2));
+      }
+
+      makeDistortionCurve(amount) {
+        const k = typeof amount === 'number' ? amount : 50;
+        const n_samples = 44100;
+        const curve = new Float32Array(n_samples);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n_samples; ++i) {
+          const x = (i * 2) / n_samples - 1;
+          curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+      }
+    }
+
+    const soundEngine = new SoundEngine();
+
+    /* =========================================================================
+       3. VOICE ANNOUNCER SYSTEM
+       ========================================================================= */
+    class AnnouncerSystem {
+      constructor() {
+        this.synth = window.speechSynthesis;
+      }
+
+      speak(phrase) {
+        if (!AppState.announcerEnabled || !this.synth) return;
+        this.synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.rate = 1.1;
+        utterance.pitch = 0.9;
+        utterance.volume = 0.9;
+        this.synth.speak(utterance);
+      }
+    }
+
+    const announcer = new AnnouncerSystem();
+
+    /* =========================================================================
+       4. PARTICLE & EXPLOSION RENDERER
+       ========================================================================= */
+    class ParticleSystem {
+      constructor() {
+        this.particles = [];
+      }
+
+      spawnExplosion(x, y, count = 35, themeKey = 'NEO_BLUE', power = 50) {
+        const colors = THEMES[themeKey].particleColors;
+        const speedMult = 1 + (power / 40);
+
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = (Math.random() * 9 + 4) * speedMult;
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const size = Math.random() * 10 + 4;
+          const life = Math.random() * 25 + 20;
+
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size,
+            maxLife: life,
+            life,
+            color,
+            alpha: 1.0
+          });
+        }
+      }
+
+      updateAndDraw(ctx) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.93;
+          p.vy *= 0.93;
+          p.life--;
+          p.alpha = Math.max(0, p.life / p.maxLife);
+
+          if (p.life <= 0) {
+            this.particles.splice(i, 1);
+            continue;
+          }
+
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
+    const particleEngine = new ParticleSystem();
+
+    /* =========================================================================
+       5. TARGET MANAGEMENT & LOGIC
+       ========================================================================= */
+    const PUNCH_TYPES = ['JAB', 'HOOK', 'UPPERCUT'];
+
+    class TargetManager {
+      constructor() {
+        this.targets = [];
+        this.reachCornerTargets = [
+          { id: 'topLeft', name: 'TOP LEFT', x: 250, y: 220, hit: false },
+          { id: 'topRight', name: 'TOP RIGHT', x: 1670, y: 220, hit: false },
+          { id: 'bottomLeft', name: 'BOTTOM LEFT', x: 250, y: 860, hit: false },
+          { id: 'bottomRight', name: 'BOTTOM RIGHT', x: 1670, y: 860, hit: false }
+        ];
+      }
+
+      reset(count = 5) {
+        this.targets = [];
+        this.populateTargets(count);
+      }
+
+      populateTargets(count) {
+        const columns = 3;
+        const rows = 3;
+        const marginX = 420;
+        const marginY = 260;
+        const widthStep = (1920 - marginX * 2) / (columns - 1);
+        const heightStep = (1080 - marginY * 2) / (rows - 1);
+
+        const possiblePositions = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < columns; c++) {
+            possiblePositions.push({
+              x: marginX + c * widthStep,
+              y: marginY + r * heightStep
+            });
+          }
+        }
+
+        possiblePositions.sort(() => Math.random() - 0.5);
+
+        for (let i = 0; i < Math.min(count, possiblePositions.length); i++) {
+          this.targets.push(this.createTarget(possiblePositions[i].x, possiblePositions[i].y));
+        }
+      }
+
+      createTarget(x, y) {
+        const requiredPunch = AppState.gameMode === 'DRILL' ? AppState.currentDrillPunch : (Math.random() < 0.6 ? 'ANY' : PUNCH_TYPES[Math.floor(Math.random() * PUNCH_TYPES.length)]);
+        return {
+          id: Math.random(),
+          x,
+          y,
+          radius: 80,
+          active: true,
+          requiredPunch,
+          pulseAngle: Math.random() * Math.PI * 2,
+          cooldown: 0
+        };
+      }
+
+      drawTargets(ctx, theme) {
+        for (const target of this.targets) {
+          if (!target.active) continue;
+
+          // Fix: Decrement cooldown every frame so targets don't lock/freeze after being hit!
+          if (target.cooldown > 0) {
+            target.cooldown--;
+          }
+
+          target.pulseAngle += 0.05;
+          const currentRadius = target.radius + Math.sin(target.pulseAngle) * 6;
+
+          const colorToUse = AppState.targetColor || theme.targetColor;
+
+          ctx.save();
+          ctx.translate(target.x, target.y);
+
+          // Outer Pulsing Glow
+          ctx.shadowColor = colorToUse;
+          ctx.shadowBlur = 25;
+
+          // Outer Ring
+          ctx.beginPath();
+          ctx.arc(0, 0, currentRadius, 0, Math.PI * 2);
+          ctx.strokeStyle = colorToUse;
+          ctx.lineWidth = 6;
+          ctx.stroke();
+
+          // Inner Translucent Fill
+          ctx.fillStyle = hexToRgba(colorToUse, 0.35);
+          ctx.beginPath();
+          ctx.arc(0, 0, currentRadius * 0.75, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Text Label
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 22px Orbitron';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(target.requiredPunch, 0, 0);
+
+          ctx.restore();
+        }
+      }
+
+      drawReachTargets(ctx) {
+        for (const corner of this.reachCornerTargets) {
+          ctx.save();
+          ctx.translate(corner.x, corner.y);
+
+          const isHit = AppState.reachCorners[corner.id];
+          ctx.shadowColor = isHit ? '#10b981' : '#f59e0b';
+          ctx.shadowBlur = 20;
+
+          ctx.beginPath();
+          ctx.arc(0, 0, 85, 0, Math.PI * 2);
+          ctx.fillStyle = isHit ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.3)';
+          ctx.fill();
+
+          ctx.strokeStyle = isHit ? '#10b981' : '#f59e0b';
+          ctx.lineWidth = 6;
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 20px Orbitron';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(isHit ? '✓ COMPLETED' : corner.name, 0, 0);
+
+          ctx.restore();
+        }
+      }
+
+      // Check Reach Calibration Corner Touches / Punches
+      checkReachTouch(gloveX, gloveY, gloveRadius) {
+        let hitsCount = 0;
+        for (const corner of this.reachCornerTargets) {
+          if (AppState.reachCorners[corner.id]) {
+            hitsCount++;
+            continue;
+          }
+
+          const dx = gloveX - corner.x;
+          const dy = gloveY - corner.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist <= 85 + gloveRadius) {
+            AppState.reachCorners[corner.id] = true;
+            particleEngine.spawnExplosion(corner.x, corner.y, 40, 'GOLDEN_ARENA', 80);
+            soundEngine.playTargetHit(80);
+            hitsCount++;
+          }
+        }
+        return hitsCount;
+      }
+
+      // Enhanced Continuous Punch & Glove Circle Collision Engine
+      checkPunchCollision(gloveX, gloveY, gloveRadius, punchType, power) {
+        for (const target of this.targets) {
+          if (!target.active || target.cooldown > 0) continue;
+
+          const dx = gloveX - target.x;
+          const dy = gloveY - target.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // Combined Collision Radius: target radius + virtual glove ring radius
+          const maxImpactDist = target.radius + gloveRadius;
+
+          if (distance <= maxImpactDist) {
+            if (target.requiredPunch === 'ANY' || target.requiredPunch === punchType || AppState.gameMode !== 'DRILL') {
+              
+              particleEngine.spawnExplosion(target.x, target.y, 40, AppState.activeThemeKey, power);
+              soundEngine.playTargetHit(power);
+              
+              AppState.successfulHits++;
+              AppState.combo++;
+              if (AppState.combo > AppState.maxCombo) AppState.maxCombo = AppState.combo;
+              
+              const comboBonus = AppState.combo * 25;
+              const powerBonus = Math.floor(power * 2.5);
+              AppState.score += 100 + comboBonus + powerBonus;
+              AppState.recentPower = Math.floor(power);
+              if (power > AppState.maxPower) AppState.maxPower = Math.floor(power);
+
+              soundEngine.playComboBeep(AppState.combo);
+
+              this.respawnTarget(target);
+
+              if (AppState.audioProfile === 'REVV' && power > 50) {
+                document.getElementById('game-container').classList.add('shake');
+                setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 250);
+              }
+
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      respawnTarget(target) {
+        target.x = 350 + Math.random() * (1920 - 700);
+        target.y = 200 + Math.random() * (1080 - 400);
+        target.requiredPunch = AppState.gameMode === 'DRILL' ? AppState.currentDrillPunch : (Math.random() < 0.6 ? 'ANY' : PUNCH_TYPES[Math.floor(Math.random() * PUNCH_TYPES.length)]);
+        target.cooldown = 10;
+        soundEngine.playTargetSpawn();
+      }
+    }
+
+    const targetManager = new TargetManager();
+
+    /* =========================================================================
+       6. TENSORFLOW MOVENET MOTION TRACKING & PUNCH CLASSIFIER
+       ========================================================================= */
+    class PoseTracker {
+      constructor() {
+        this.detector = null;
+        this.videoEl = document.getElementById('webcam-video');
+        this.rawPoses = [];
+        
+        // Smoothed Wrist Positions for display & collision
+        this.leftWristSmoothed = { x: 960, y: 540, rawX: 0.5, rawY: 0.5, vx: 0, vy: 0 };
+        this.rightWristSmoothed = { x: 960, y: 540, rawX: 0.5, rawY: 0.5, vx: 0, vy: 0 };
+
+        this.leftWristHistory = [];
+        this.rightWristHistory = [];
+        this.isReady = false;
+        this.lastFrameTime = Date.now();
+      }
+
+      async init() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720, facingMode: 'user' },
+            audio: false
+          });
+          this.videoEl.srcObject = stream;
+          await this.videoEl.play();
+
+          const detectorConfig = {
+            modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+          };
+          this.detector = await poseDetection.createDetector(
+            poseDetection.SupportedModels.MoveNet,
+            detectorConfig
+          );
+
+          this.isReady = true;
+          this.detectLoop();
+        } catch (err) {
+          console.warn("Camera or TensorFlow MoveNet setup issue. Touch/click fallback ready.", err);
+        }
+      }
+
+      async detectLoop() {
+        if (this.detector && this.videoEl.readyState >= 2) {
+          try {
+            const poses = await this.detector.estimatePoses(this.videoEl);
+            this.rawPoses = poses;
+            if (poses.length > 0) {
+              this.processPose(poses[0]);
+            }
+          } catch (e) {
+            console.error("Pose detection loop error:", e);
+          }
+        }
+        requestAnimationFrame(() => this.detectLoop());
+      }
+
+      processPose(pose) {
+        if (!pose || !pose.keypoints) return;
+        const kps = pose.keypoints;
+        const now = Date.now();
+        const dt = Math.max(0.001, (now - this.lastFrameTime) / 1000);
+        this.lastFrameTime = now;
+
+        const vidW = this.videoEl.videoWidth || 1280;
+        const vidH = this.videoEl.videoHeight || 720;
+
+        const lw = kps[9];  // Left Wrist
+        const rw = kps[10]; // Right Wrist
+        const ls = kps[5];  // Left Shoulder
+        const rs = kps[6];  // Right Shoulder
+
+        // Process Left Wrist
+        if (lw && lw.score > 0.25) {
+          const normX = 1 - (lw.x / vidW); // Mirrored horizontal
+          const normY = lw.y / vidH;
+          this.updateWristState(this.leftWristSmoothed, normX, normY, dt);
+          this.updatePunchVelocity(this.leftWristHistory, this.leftWristSmoothed, 'LEFT', now);
+        }
+
+        // Process Right Wrist
+        if (rw && rw.score > 0.25) {
+          const normX = 1 - (rw.x / vidW); // Mirrored horizontal
+          const normY = rw.y / vidH;
+          this.updateWristState(this.rightWristSmoothed, normX, normY, dt);
+          this.updatePunchVelocity(this.rightWristHistory, this.rightWristSmoothed, 'RIGHT', now);
+        }
+
+        // Calibration Checks
+        if (AppState.currentScreen === 'CALIBRATION') {
+          if (AppState.calibrationStage === 1 && ls && rs && lw && rw) {
+            this.checkStage1Calibration(lw, rw, vidW);
+          } else if (AppState.calibrationStage === 2) {
+            this.checkStage2Calibration();
+          }
+        }
+      }
+
+      // Map normalized video coords (0..1) to 1920x1080 canvas using calibrated reach bounds
+      updateWristState(wristObj, normX, normY, dt) {
+        wristObj.rawX = normX;
+        wristObj.rawY = normY;
+
+        // Apply reach bounds scaling
+        const b = AppState.reachBounds;
+        const mappedNormX = Math.max(0, Math.min(1, (normX - b.minX) / (b.maxX - b.minX || 0.8)));
+        const mappedNormY = Math.max(0, Math.min(1, (normY - b.minY) / (b.maxY - b.minY || 0.8)));
+
+        const targetX = mappedNormX * 1920;
+        const targetY = mappedNormY * 1080;
+
+        // Exponential Moving Average (EMA) smoothing for crisp tracking without jitter
+        const alpha = 0.45;
+        const prevX = wristObj.x;
+        const prevY = wristObj.y;
+
+        wristObj.x = prevX + alpha * (targetX - prevX);
+        wristObj.y = prevY + alpha * (targetY - prevY);
+
+        wristObj.vx = (wristObj.x - prevX) / dt;
+        wristObj.vy = (wristObj.y - prevY) / dt;
+      }
+
+      updatePunchVelocity(history, wristObj, handLabel, now) {
+        history.push({ x: wristObj.x, y: wristObj.y, timestamp: now });
+        if (history.length > 5) history.shift();
+
+        if (history.length < 3) return;
+
+        const first = history[0];
+        const last = history[history.length - 1];
+        const dt = (last.timestamp - first.timestamp) / 1000;
+        if (dt <= 0) return;
+
+        const dx = last.x - first.x;
+        const dy = last.y - first.y;
+        const speed = Math.sqrt(dx * dx + dy * dy) / dt;
+
+        // Improved velocity threshold & collision check
+        if (speed > 800) { // Dynamic speed threshold
+          let punchType = 'JAB';
+          if (Math.abs(dy) > Math.abs(dx) * 1.4 && dy < 0) {
+            punchType = 'UPPERCUT';
+          } else if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+            punchType = 'HOOK';
+          }
+
+          const power = Math.min(100, Math.max(30, (speed / 2800) * 100));
+
+          if (AppState.currentScreen === 'PLAYING') {
+            const hit = targetManager.checkPunchCollision(
+              wristObj.x,
+              wristObj.y,
+              AppState.gloveRadius,
+              punchType,
+              power
+            );
+
+            if (hit) {
+              AppState.totalPunches++;
+              history.length = 0;
+            }
+          }
+        } else if (AppState.currentScreen === 'PLAYING') {
+          // Touch / Sweep Collision even at moderate motion
+          targetManager.checkPunchCollision(
+            wristObj.x,
+            wristObj.y,
+            AppState.gloveRadius,
+            'ANY',
+            45
+          );
+        }
+      }
+
+      checkStage1Calibration(lw, rw, vidW) {
+        const normL = 1 - (lw.x / vidW);
+        const normR = 1 - (rw.x / vidW);
+
+        const leftInZone = normL > 0.65;
+        const rightInZone = normR < 0.35;
+
+        const lZone = document.getElementById('left-calib-zone');
+        const rZone = document.getElementById('right-calib-zone');
+
+        if (leftInZone) lZone.classList.add('bg-emerald-950/50', 'border-emerald-400');
+        else lZone.classList.remove('bg-emerald-950/50', 'border-emerald-400');
+
+        if (rightInZone) rZone.classList.add('bg-emerald-950/50', 'border-emerald-400');
+        else rZone.classList.remove('bg-emerald-950/50', 'border-emerald-400');
+
+        if (leftInZone && rightInZone) {
+          AppState.calibHoldTimer++;
+          document.getElementById('calib-status-text').textContent = "POSITION LOCKED!";
+          document.getElementById('calib-status-text').classList.add('text-emerald-400');
+
+          if (AppState.calibHoldTimer > 35) { // ~1.2s hold lock
+            announcer.speak("Distance locked. Stage 2: Reach Calibration.");
+            
+            // Advance to Stage 2
+            AppState.calibrationStage = 2;
+            document.getElementById('calib-stage-badge').textContent = "STAGE 2 / 2: REACH BOUNDARY";
+            document.getElementById('calib-status-text').textContent = "PUNCH ALL 4 CORNERS";
+            document.getElementById('calib-status-text').classList.remove('text-emerald-400');
+            document.getElementById('calib-sub-text').textContent = "Reach out and touch or punch each corner target to calibrate playing space.";
+            
+            document.getElementById('calib-stage1-container').classList.add('hidden');
+            document.getElementById('calib-stage2-container').classList.remove('hidden');
+          }
+        } else {
+          AppState.calibHoldTimer = 0;
+          document.getElementById('calib-status-text').textContent = "STEP INTO POSITION";
+          document.getElementById('calib-status-text').classList.remove('text-emerald-400');
+        }
+      }
+
+      checkStage2Calibration() {
+        const lCount = targetManager.checkReachTouch(this.leftWristSmoothed.x, this.leftWristSmoothed.y, AppState.gloveRadius);
+        const rCount = targetManager.checkReachTouch(this.rightWristSmoothed.x, this.rightWristSmoothed.y, AppState.gloveRadius);
+        const totalHit = Math.max(lCount, rCount);
+
+        document.getElementById('reach-progress-text').textContent = `REACHED: ${totalHit} / 4 CORNERS`;
+
+        if (totalHit >= 4) {
+          announcer.speak("Reach Calibration Complete!");
+          AppState.isCalibrated = true;
+          startCountdown();
+        }
+      }
+
+      // Render crisp, vibrant MoveNet Skeleton & Body Joint Keypoints
+      drawSkeleton(ctx, opacity = 1.0) {
+        if (this.rawPoses.length === 0) return;
+        const pose = this.rawPoses[0];
+        if (!pose || !pose.keypoints) return;
+
+        const vidW = this.videoEl.videoWidth || 1280;
+        const vidH = this.videoEl.videoHeight || 720;
+
+        ctx.save();
+        ctx.globalAlpha = opacity;
+
+        const adjacentPairs = poseDetection.util.getAdjacentPairs(poseDetection.SupportedModels.MoveNet);
+        
+        // 1. Draw Skeleton Bone Connections
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#06b6d4';
+        ctx.shadowColor = '#06b6d4';
+        ctx.shadowBlur = 10;
+
+        for (const pair of adjacentPairs) {
+          const kp1 = pose.keypoints[pair[0]];
+          const kp2 = pose.keypoints[pair[1]];
+
+          if (kp1.score > 0.25 && kp2.score > 0.25) {
+            const x1 = (1 - (kp1.x / vidW)) * 1920;
+            const y1 = (kp1.y / vidH) * 1080;
+            const x2 = (1 - (kp2.x / vidW)) * 1920;
+            const y2 = (kp2.y / vidH) * 1080;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+
+        // 2. Draw Keypoint Joints
+        for (const kp of pose.keypoints) {
+          if (kp.score > 0.25) {
+            const mappedX = (1 - (kp.x / vidW)) * 1920;
+            const mappedY = (kp.y / vidH) * 1080;
+
+            ctx.beginPath();
+            ctx.arc(mappedX, mappedY, 7, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#00f0ff';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+
+        ctx.restore();
+      }
+
+      // Render Virtual Boxing Gloves around Left & Right Wrists
+      drawGloveIndicators(ctx, opacity = 1.0) {
+        ctx.save();
+        ctx.globalAlpha = opacity;
+
+        const r = AppState.gloveRadius;
+
+        // Left Glove
+        if (this.leftWristSmoothed) {
+          const lColor = AppState.leftGloveColor || '#ef4444';
+          this.renderGloveRing(ctx, this.leftWristSmoothed.x, this.leftWristSmoothed.y, r, lColor, hexToRgba(lColor, 0.35), 'L');
+        }
+
+        // Right Glove
+        if (this.rightWristSmoothed) {
+          const rColor = AppState.rightGloveColor || '#06b6d4';
+          this.renderGloveRing(ctx, this.rightWristSmoothed.x, this.rightWristSmoothed.y, r, rColor, hexToRgba(rColor, 0.35), 'R');
+        }
+
+        ctx.restore();
+      }
+
+      renderGloveRing(ctx, x, y, radius, color, fillColor, label) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        const isBlack = color === '#000000';
+        const strokeColor = isBlack ? '#ffffff' : color;
+        const shadowColor = isBlack ? '#ffffff' : color;
+
+        // Glow Shadow
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = 20;
+
+        // Outer Ring
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        // Inner Translucent Fill
+        ctx.fillStyle = isBlack ? 'rgba(0, 0, 0, 0.85)' : fillColor;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.85, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fist Center Dot
+        ctx.fillStyle = isBlack ? '#00f0ff' : '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glove Label Text (L / R)
+        ctx.fillStyle = isBlack ? '#00f0ff' : '#ffffff';
+        ctx.font = '900 18px Orbitron';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, 0, 0);
+
+        ctx.restore();
+      }
+    }
+
+    const poseTracker = new PoseTracker();
+
+    /* =========================================================================
+       7. CANVAS RENDERER & ARCADE GAUGE HUD
+       ========================================================================= */
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function renderGameLoop() {
+      ctx.clearRect(0, 0, 1920, 1080);
+
+      const activeTheme = THEMES[AppState.activeThemeKey];
+
+      // 1. Draw Theme Background Gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 1080);
+      bgGrad.addColorStop(0, activeTheme.bgGrad[0]);
+      bgGrad.addColorStop(1, activeTheme.bgGrad[1]);
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // 2. Render State Visuals
+      if (AppState.currentScreen === 'ATTRACT') {
+        renderAttractVisuals(ctx, activeTheme);
+      } else if (AppState.currentScreen === 'CALIBRATION') {
+        renderCalibrationGrid(ctx);
+        
+        if (AppState.calibrationStage === 2) {
+          targetManager.drawReachTargets(ctx);
+        }
+
+        // Full opacity skeleton and gloves in calibration
+        poseTracker.drawSkeleton(ctx, 0.9);
+        poseTracker.drawGloveIndicators(ctx, 1.0);
+      } else if (AppState.currentScreen === 'PLAYING') {
+        // Targets
+        targetManager.drawTargets(ctx, activeTheme);
+        particleEngine.updateAndDraw(ctx);
+
+        // Low-opacity skeleton overlay during gameplay for feedback without clutter
+        poseTracker.drawSkeleton(ctx, 0.35);
+        // Clear glove indicators always visible
+        poseTracker.drawGloveIndicators(ctx, 0.85);
+
+        renderArcadeHUD(ctx, activeTheme);
+      }
+
+      requestAnimationFrame(renderGameLoop);
+    }
+
+    function renderAttractVisuals(ctx, theme) {
+      const now = Date.now() * 0.002;
+      ctx.save();
+      ctx.strokeStyle = theme.accentGlow;
+      ctx.lineWidth = 2;
+
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        for (let x = 0; x < 1920; x += 20) {
+          const y = 540 + Math.sin(now + x * 0.003 + i) * 80 * (i + 1);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function renderCalibrationGrid(ctx) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+      ctx.lineWidth = 1;
+      const gridSize = 80;
+
+      for (let x = 0; x < 1920; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0); ctx.lineTo(x, 1080);
+        ctx.stroke();
+      }
+      for (let y = 0; y < 1080; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y); ctx.lineTo(1920, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function renderArcadeHUD(ctx, theme) {
+      ctx.save();
+
+      // Top Score Banner
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 60px Orbitron';
+      ctx.textAlign = 'left';
+      ctx.fillText(`SCORE: ${AppState.score.toLocaleString()}`, 80, 90);
+
+      // Timer Display
+      ctx.textAlign = 'right';
+      const timeStr = `00:${AppState.timeRemaining < 10 ? '0' : ''}${AppState.timeRemaining}`;
+      ctx.fillStyle = AppState.timeRemaining <= 10 ? '#ef4444' : theme.accent;
+      ctx.fillText(timeStr, 1840, 90);
+
+      // Combo Display
+      if (AppState.combo > 1) {
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = '900 48px Orbitron';
+        ctx.fillText(`COMBO x${AppState.combo}`, 960, 90);
+      }
+
+      // Bottom Power & Accuracy Circular Gauges
+      drawCircularGauge(ctx, 150, 960, 55, AppState.recentPower, 100, "POWER", "#ef4444");
+      
+      const accuracy = AppState.totalPunches > 0 ? Math.floor((AppState.successfulHits / AppState.totalPunches) * 100) : 100;
+      drawCircularGauge(ctx, 290, 960, 55, accuracy, 100, "ACCURACY", "#10b981");
+
+      ctx.restore();
+    }
+
+    function drawCircularGauge(ctx, x, y, radius, value, maxVal, label, color) {
+      const pct = Math.min(1.0, value / maxVal);
+      const startAngle = Math.PI * 0.75;
+      const endAngle = Math.PI * 2.25;
+      const currentAngle = startAngle + (endAngle - startAngle) * pct;
+
+      ctx.save();
+      ctx.lineWidth = 10;
+
+      // Track
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.beginPath();
+      ctx.arc(x, y, radius, startAngle, endAngle);
+      ctx.stroke();
+
+      // Progress Fill
+      ctx.strokeStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, startAngle, currentAngle);
+      ctx.stroke();
+
+      // Gauge Text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 12px Orbitron';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x, y + 5);
+      ctx.font = '900 18px Orbitron';
+      ctx.fillText(`${value}${label === 'ACCURACY' ? '%' : ''}`, x, y - 14);
+
+      ctx.restore();
+    }
+
+    /* =========================================================================
+       8. STORAGE & LEADERBOARD SYSTEM
+       ========================================================================= */
+    let initialsState = ['A', 'A', 'A'];
+    let currentInitialSlot = 0;
+
+    function updateInitialsDisplay() {
+      const slots = document.querySelectorAll('.initial-slot');
+      slots.forEach((slot, index) => {
+        slot.textContent = initialsState[index];
+        if (index === currentInitialSlot) {
+          slot.className = "initial-slot w-16 h-20 bg-slate-950 border-2 border-amber-400 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-amber-300 scale-105 shadow-[0_0_15px_rgba(245,158,11,0.5)] transition cursor-pointer";
+        } else {
+          slot.className = "initial-slot w-16 h-20 bg-slate-950 border-2 border-slate-800 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-slate-500 transition cursor-pointer hover:border-slate-700";
+        }
+      });
+    }
+
+    function cycleInitialChar(direction) {
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let charIdx = alphabet.indexOf(initialsState[currentInitialSlot]);
+      if (charIdx === -1) charIdx = 0;
+
+      if (direction === 'UP') {
+        charIdx = (charIdx + 1) % alphabet.length;
+      } else {
+        charIdx = (charIdx - 1 + alphabet.length) % alphabet.length;
+      }
+      initialsState[currentInitialSlot] = alphabet[charIdx];
+      updateInitialsDisplay();
+    }
+
+    const DEFAULT_LEADERBOARD = [
+      { rank: 1, initials: "NEO", score: 12450, date: "SEP 08 2026" },
+      { rank: 2, initials: "REVV", score: 9820, date: "SEP 07 2026" },
+      { rank: 3, initials: "BOX", score: 7400, date: "SEP 06 2026" },
+      { rank: 4, initials: "MAX", score: 6250, date: "SEP 05 2026" },
+      { rank: 5, initials: "ACE", score: 4800, date: "SEP 04 2026" }
+    ];
+
+    function getLeaderboard() {
+      const stored = localStorage.getItem('neoBoxingLeaderboard');
+      return stored ? JSON.parse(stored) : DEFAULT_LEADERBOARD;
+    }
+
+    function saveLeaderboard(data) {
+      localStorage.setItem('neoBoxingLeaderboard', JSON.stringify(data));
+    }
+
+    function renderLeaderboardUI() {
+      const leaderboard = getLeaderboard();
+      const listEl = document.getElementById('leaderboard-list');
+      listEl.innerHTML = '';
+
+      leaderboard.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-4 bg-slate-950/60 rounded-xl border border-slate-800 font-arcade';
+        row.innerHTML = `
+          <div class="flex items-center gap-4">
+            <span class="text-xl font-black ${index === 0 ? 'text-amber-400' : 'text-slate-500'}">#${index + 1}</span>
+            <span class="text-2xl font-black text-slate-200 tracking-widest">${item.initials}</span>
+          </div>
+          <span class="text-2xl font-black text-cyan-400">${item.score.toLocaleString()} PTS</span>
+          <span class="text-xs text-slate-500 font-mono">${item.date}</span>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    /* =========================================================================
+       9. GAME FLOW & STATE MACHINE CONTROLLER
+       ========================================================================= */
+    let gameTimerInterval = null;
+
+    function switchScreen(targetScreen) {
+      AppState.currentScreen = targetScreen;
+
+      const overlays = ['attract-overlay', 'menu-overlay', 'calibration-overlay', 'countdown-overlay', 'gameover-overlay', 'highscore-overlay', 'leaderboard-overlay'];
+      overlays.forEach(id => document.getElementById(id).classList.add('hidden'));
+
+      if (targetScreen === 'ATTRACT') {
+        document.getElementById('attract-overlay').classList.remove('hidden');
+      } else if (targetScreen === 'MENU') {
+        document.getElementById('menu-overlay').classList.remove('hidden');
+      } else if (targetScreen === 'CALIBRATION') {
+        AppState.calibrationStage = 1;
+        AppState.reachCorners = { topLeft: false, topRight: false, bottomLeft: false, bottomRight: false };
+        document.getElementById('calib-stage1-container').classList.remove('hidden');
+        document.getElementById('calib-stage2-container').classList.add('hidden');
+        document.getElementById('calib-stage-badge').textContent = "STAGE 1 / 2: DISTANCE & ALIGNMENT";
+        document.getElementById('calib-status-text').textContent = "STEP INTO POSITION";
+        document.getElementById('calib-sub-text').textContent = "Stand back until your shoulders and extended wrists fit within the target boundary boxes.";
+        
+        document.getElementById('calibration-overlay').classList.remove('hidden');
+        announcer.speak("Step into position and extend both arms");
+      } else if (targetScreen === 'COUNTDOWN') {
+        document.getElementById('countdown-overlay').classList.remove('hidden');
+      } else if (targetScreen === 'GAMEOVER') {
+        document.getElementById('gameover-overlay').classList.remove('hidden');
+        renderGameOverStats();
+      } else if (targetScreen === 'LEADERBOARD') {
+        renderLeaderboardUI();
+        document.getElementById('leaderboard-overlay').classList.remove('hidden');
+      }
+    }
+
+    function startCountdown() {
+      switchScreen('COUNTDOWN');
+      let count = 3;
+      const numEl = document.getElementById('countdown-number');
+      numEl.textContent = count;
+      soundEngine.playCountdownBeep(false);
+
+      const countInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          numEl.textContent = count;
+          soundEngine.playCountdownBeep(false);
+          announcer.speak(count.toString());
+        } else {
+          clearInterval(countInterval);
+          numEl.textContent = "GO!";
+          soundEngine.playCountdownBeep(true);
+          announcer.speak("Fight!");
+          setTimeout(launchGameplay, 800);
+        }
+      }, 1000);
+    }
+
+    function launchGameplay() {
+      switchScreen('PLAYING');
+      AppState.score = 0;
+      AppState.combo = 0;
+      AppState.totalPunches = 0;
+      AppState.successfulHits = 0;
+      AppState.timeRemaining = 60;
+      targetManager.reset(AppState.targetCountSetting);
+
+      if (gameTimerInterval) clearInterval(gameTimerInterval);
+      gameTimerInterval = setInterval(() => {
+        AppState.timeRemaining--;
+        if (AppState.timeRemaining === 10) {
+          announcer.speak("Ten seconds remaining");
+        }
+        if (AppState.timeRemaining <= 0) {
+          clearInterval(gameTimerInterval);
+          finishGame();
+        }
+      }, 1000);
+    }
+
+    function finishGame() {
+      announcer.speak("Game Over");
+      
+      const leaderboard = getLeaderboard();
+      const isHighScore = leaderboard.some(entry => AppState.score > entry.score) || leaderboard.length < 5;
+
+      if (isHighScore) {
+        initialsState = ['A', 'A', 'A'];
+        currentInitialSlot = 0;
+        updateInitialsDisplay();
+        document.getElementById('final-score-display').textContent = `FINAL SCORE: ${AppState.score.toLocaleString()}`;
+        document.getElementById('highscore-overlay').classList.remove('hidden');
+      } else {
+        switchScreen('GAMEOVER');
+      }
+    }
+
+    function renderGameOverStats() {
+      document.getElementById('stat-final-score').textContent = AppState.score.toLocaleString();
+      const accuracy = AppState.totalPunches > 0 ? Math.floor((AppState.successfulHits / AppState.totalPunches) * 100) : 100;
+      document.getElementById('stat-final-accuracy').textContent = `${accuracy}%`;
+      document.getElementById('stat-final-combo').textContent = `x${AppState.maxCombo}`;
+      document.getElementById('stat-final-power').textContent = AppState.maxPower;
+    }
+
+    /* =========================================================================
+       10. EVENT LISTENERS & INITIALIZATION
+       ========================================================================= */
+    window.addEventListener('load', () => {
+      poseTracker.init();
+      renderGameLoop();
+
+      // Attract Start Button
+      document.getElementById('btn-start-game').addEventListener('click', () => {
+        soundEngine.ensureContext();
+        switchScreen('MENU');
+      });
+
+      // Proceed to Calibration
+      document.getElementById('btn-proceed-calibration').addEventListener('click', () => {
+        switchScreen('CALIBRATION');
+      });
+
+      // Bypass Calibration Button
+      document.getElementById('btn-bypass-calib').addEventListener('click', () => {
+        announcer.speak("Position Confirmed");
+        startCountdown();
+      });
+
+      document.getElementById('btn-cancel-calib').addEventListener('click', () => {
+        switchScreen('MENU');
+      });
+
+      // Fullscreen Toggle Button
+      document.getElementById('btn-fullscreen').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => console.log(err));
+        } else {
+          document.exitFullscreen();
+        }
+      });
+
+      // Glove Size Adjustment Buttons
+      document.getElementById('btn-glove-minus').addEventListener('click', () => {
+        AppState.gloveRadius = Math.max(30, AppState.gloveRadius - 5);
+        document.getElementById('glove-size-display').textContent = AppState.gloveRadius;
+      });
+      document.getElementById('btn-glove-plus').addEventListener('click', () => {
+        AppState.gloveRadius = Math.min(100, AppState.gloveRadius + 5);
+        document.getElementById('glove-size-display').textContent = AppState.gloveRadius;
+      });
+
+      // Target Color Preset Buttons
+      const targetColorBtns = document.querySelectorAll('.target-color-btn');
+      targetColorBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          targetColorBtns.forEach(b => {
+            b.classList.remove('ring-2', 'ring-cyan-400', 'scale-105', 'border-2', 'border-white', 'z-10');
+            b.classList.add('border', 'border-slate-700');
+          });
+          btn.classList.remove('border', 'border-slate-700');
+          btn.classList.add('ring-2', 'ring-cyan-400', 'scale-105', 'border-2', 'border-white', 'z-10');
+          AppState.targetColor = btn.getAttribute('data-color');
+        });
+      });
+
+      // Left Glove Preset Buttons
+      const leftGloveBtns = document.querySelectorAll('.left-glove-btn');
+      leftGloveBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          leftGloveBtns.forEach(b => {
+            b.classList.remove('ring-2', 'ring-red-500', 'scale-105', 'border-2', 'border-white', 'z-10');
+            b.classList.add('border', 'border-slate-700');
+          });
+          btn.classList.remove('border', 'border-slate-700');
+          btn.classList.add('ring-2', 'ring-red-500', 'scale-105', 'border-2', 'border-white', 'z-10');
+          AppState.leftGloveColor = btn.getAttribute('data-color');
+          const label = document.getElementById('label-left-glove');
+          if (label) label.textContent = AppState.leftGloveColor;
+        });
+      });
+
+      // Right Glove Preset Buttons
+      const rightGloveBtns = document.querySelectorAll('.right-glove-btn');
+      rightGloveBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          rightGloveBtns.forEach(b => {
+            b.classList.remove('ring-2', 'ring-cyan-400', 'scale-105', 'border-2', 'border-white', 'z-10');
+            b.classList.add('border', 'border-slate-700');
+          });
+          btn.classList.remove('border', 'border-slate-700');
+          btn.classList.add('ring-2', 'ring-cyan-400', 'scale-105', 'border-2', 'border-white', 'z-10');
+          AppState.rightGloveColor = btn.getAttribute('data-color');
+          const label = document.getElementById('label-right-glove');
+          if (label) label.textContent = AppState.rightGloveColor;
+        });
+      });
+
+      // Selection Groups for Menu
+      setupSelectionGroup('mode-selector', 'mode-btn', (val) => AppState.gameMode = val);
+      setupSelectionGroup('target-count-selector', 'target-btn', (val) => AppState.targetCountSetting = parseInt(val));
+      setupSelectionGroup('theme-selector', 'theme-btn', (val) => AppState.activeThemeKey = val);
+      setupSelectionGroup('audio-profile-selector', 'audio-btn', (val) => AppState.audioProfile = val);
+
+      // Voice Announcer Checkbox
+      document.getElementById('chk-announcer').addEventListener('change', (e) => {
+        AppState.announcerEnabled = e.target.checked;
+      });
+
+      // Leaderboard Modal Buttons
+      document.getElementById('btn-show-leaderboard').addEventListener('click', () => switchScreen('LEADERBOARD'));
+      document.getElementById('btn-close-leaderboard').addEventListener('click', () => switchScreen('MENU'));
+
+      // Game Over Screen Buttons
+      document.getElementById('btn-restart-game').addEventListener('click', () => switchScreen('CALIBRATION'));
+      document.getElementById('btn-return-menu').addEventListener('click', () => switchScreen('MENU'));
+
+      const slotBtns = document.querySelectorAll('.initial-slot');
+      slotBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentInitialSlot = parseInt(btn.getAttribute('data-slot'));
+          updateInitialsDisplay();
+        });
+      });
+
+      document.getElementById('btn-initial-prev').addEventListener('click', () => cycleInitialChar('UP'));
+      document.getElementById('btn-initial-next').addEventListener('click', () => cycleInitialChar('DOWN'));
+      
+      document.getElementById('btn-initial-prev-slot').addEventListener('click', () => {
+        currentInitialSlot = (currentInitialSlot - 1 + 3) % 3;
+        updateInitialsDisplay();
+      });
+      document.getElementById('btn-initial-next-slot').addEventListener('click', () => {
+        currentInitialSlot = (currentInitialSlot + 1) % 3;
+        updateInitialsDisplay();
+      });
+
+      // Keyboard support for initial entry
+      window.addEventListener('keydown', (e) => {
+        const overlay = document.getElementById('highscore-overlay');
+        if (overlay && !overlay.classList.contains('hidden')) {
+          if (e.key === 'ArrowUp') {
+            cycleInitialChar('UP');
+          } else if (e.key === 'ArrowDown') {
+            cycleInitialChar('DOWN');
+          } else if (e.key === 'ArrowLeft') {
+            currentInitialSlot = (currentInitialSlot - 1 + 3) % 3;
+            updateInitialsDisplay();
+          } else if (e.key === 'ArrowRight') {
+            currentInitialSlot = (currentInitialSlot + 1) % 3;
+            updateInitialsDisplay();
+          } else if (e.key === 'Enter') {
+            document.getElementById('btn-initial-confirm').click();
+          } else if (/^[a-zA-Z0-9]$/.test(e.key)) {
+            initialsState[currentInitialSlot] = e.key.toUpperCase();
+            currentInitialSlot = (currentInitialSlot + 1) % 3;
+            updateInitialsDisplay();
+          }
+        }
+      });
+
+      // High Score Confirmation
+      document.getElementById('btn-initial-confirm').addEventListener('click', () => {
+        const initials = initialsState.join('');
+        const leaderboard = getLeaderboard();
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase();
+        
+        leaderboard.push({ rank: 0, initials, score: AppState.score, date: dateStr });
+        leaderboard.sort((a, b) => b.score - a.score);
+        saveLeaderboard(leaderboard.slice(0, 5));
+
+        document.getElementById('highscore-overlay').classList.add('hidden');
+        switchScreen('LEADERBOARD');
+      });
+
+      // Canvas Touch / Mouse Fallback Input
+      canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = 1920 / rect.width;
+        const scaleY = 1080 / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const clickY = (e.clientY - rect.top) * scaleY;
+
+        if (AppState.currentScreen === 'CALIBRATION' && AppState.calibrationStage === 2) {
+          targetManager.checkReachTouch(clickX, clickY, AppState.gloveRadius);
+          poseTracker.checkStage2Calibration();
+        } else if (AppState.currentScreen === 'PLAYING') {
+          AppState.totalPunches++;
+          const hit = targetManager.checkPunchCollision(clickX, clickY, AppState.gloveRadius, 'ANY', 85);
+          if (!hit && AppState.gameMode === 'COMBO') {
+            soundEngine.playMissSound();
+            AppState.combo = 0;
+          }
+        }
+      });
+    });
+
+    function setupSelectionGroup(containerId, btnClass, callback) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const buttons = container.getElementsByClassName(btnClass);
+      Array.from(buttons).forEach(btn => {
+        btn.addEventListener('click', () => {
+          Array.from(buttons).forEach(b => b.classList.remove('option-active', 'option-active-red'));
+          const isActiveRed = btn.getAttribute('data-value') === 'REVV';
+          btn.classList.add(isActiveRed ? 'option-active-red' : 'option-active');
+          callback(btn.getAttribute('data-value'));
+        });
+      });
+    }
+
+    function hexToRgba(hex, alpha = 0.35) {
+      if (!hex) return `rgba(6, 182, 212, ${alpha})`;
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      if (isNaN(num)) return `rgba(6, 182, 212, ${alpha})`;
+      return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+    }
+  </script>
+</body>
+</html>
