@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shape Plotter - Interactive Polygon Mapping & Centroid Visualization</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              900: '#134e4a',
+            },
+            gold: {
+              300: '#fde047',
+              400: '#facc15',
+              500: '#eab308',
+              600: '#ca8a04',
+              glow: '#ffe600',
+            },
+            matrix: {
+              bg: '#090d16',
+              panel: '#111827',
+              border: '#1f2937',
+              grid: '#1e293b',
+              axis: '#38bdf8'
+            }
+          },
+          fontFamily: {
+            mono: ['Fira Code', 'JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #06090e;
+      color: #e2e8f0;
+      user-select: none;
+    }
+    
+    .font-mono-code {
+      font-family: 'Fira Code', monospace;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d131f;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #233148;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+
+    /* Range input dark styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #1e293b;
+      border-radius: 9999px;
+      height: 6px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Subtle pulsing ring for selected items */
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+    .active-point-glow {
+      animation: pulse-ring 2s infinite;
+    }
+
+    /* Glassmorphic panels */
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Color Swatch Selected Indicator */
+    .swatch-selected {
+      ring: 2px;
+      ring-color: #ffffff;
+      transform: scale(1.15);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col antialiased select-none">
+
+  <!-- HEADER TOOLBAR -->
+  <header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between z-20 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+        <i class="fa-solid fa-draw-polygon text-base"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-wide bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+          SHAPE PLOTTER
+        </h1>
+        <p class="text-[10px] text-slate-400 font-mono-code uppercase tracking-wider">Polygon & Centroid Matrix Analysis</p>
+      </div>
+    </div>
+
+    <!-- Active Project Name & Switcher -->
+    <div class="flex items-center space-x-3 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800">
+      <i class="fa-solid fa-folder-open text-xs text-cyan-400"></i>
+      <span class="text-xs font-medium text-slate-300">Project:</span>
+      <span id="headerProjectName" class="text-xs font-semibold text-white max-w-[150px] truncate">My Geometry Study</span>
+      <button id="btnOpenProjectManager" class="text-slate-400 hover:text-cyan-400 text-xs pl-2 transition" title="Project Manager">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+      </button>
+    </div>
+
+    <!-- Top Quick Controls -->
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <!-- Centroid Toggle -->
+      <label class="flex items-center space-x-2 cursor-pointer bg-slate-800/80 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700/60 transition">
+        <input type="checkbox" id="topCentroidToggle" class="sr-only peer" checked>
+        <div class="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500 relative"></div>
+        <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+          <i class="fa-solid fa-bullseye text-amber-400"></i> Centroids
+        </span>
+      </label>
+
+      <!-- Label Display Toggle -->
+      <label class="flex items-center space-x-2 cursor-pointer bg-slate-800/80 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700/60 transition">
+        <input type="checkbox" id="topLabelToggle" class="sr-only peer">
+        <div class="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500 relative"></div>
+        <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+          <i class="fa-solid fa-tag text-indigo-400"></i> All Labels
+        </span>
+      </label>
+
+      <!-- Blend Mode Toggle -->
+      <label class="flex items-center space-x-2 cursor-pointer bg-slate-800/80 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700/60 transition">
+        <input type="checkbox" id="topBlendToggle" class="sr-only peer" checked>
+        <div class="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-500 relative"></div>
+        <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group text-cyan-400"></i> Blend Mode
+        </span>
+      </label>
+
+      <!-- Snap to Grid Toggle -->
+      <button id="btnToggleSnap" class="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 text-xs text-slate-300 font-mono-code transition flex items-center gap-1.5">
+        <i class="fa-solid fa-magnet text-emerald-400"></i>
+        <span id="snapStatusText">Snap: OFF</span>
+      </button>
+
+      <!-- Import JSON Button & Hidden Input -->
+      <button id="btnImportTrigger" class="p-1.5 px-3 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 text-slate-200 text-xs font-medium transition flex items-center gap-1.5" title="Import Project JSON">
+        <i class="fa-solid fa-file-import text-cyan-400"></i>
+        <span class="hidden sm:inline">Import</span>
+      </button>
+      <input type="file" id="importJsonFileInput" accept=".json" class="hidden">
+
+      <!-- Export Dropdown -->
+      <div class="relative inline-block text-left" id="exportDropdownContainer">
+        <button id="btnExportDropdown" class="p-1.5 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition shadow-lg shadow-cyan-600/20 flex items-center gap-1.5" title="Export Options">
+          <i class="fa-solid fa-download"></i>
+          <span class="hidden sm:inline">Export</span>
+          <i class="fa-solid fa-chevron-down text-[10px] opacity-80 ml-0.5"></i>
+        </button>
+        <!-- Dropdown Menu -->
+        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden py-1">
+          <button id="btnExportPng" class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-cyan-400 flex items-center gap-2 transition">
+            <i class="fa-solid fa-file-image text-cyan-400 w-4"></i>
+            <span>Export Canvas (.PNG)</span>
+          </button>
+          <button id="btnExportJson" class="w-full text-left px-3.5 py-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-emerald-400 flex items-center gap-2 transition">
+            <i class="fa-solid fa-file-code text-emerald-400 w-4"></i>
+            <span>Export Data (.JSON)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- macOS Style Top Right Clock -->
+      <div id="macClock" class="hidden xl:flex items-center space-x-2 text-xs font-medium text-slate-300 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800 select-none ml-1">
+        <span id="macClockDate" class="text-slate-400 font-sans tracking-tight">Thu Sep 10</span>
+        <span id="macClockTime" class="text-slate-100 font-semibold font-sans tracking-tight">10:19 AM</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+    
+    <!-- LEFT SIDEBAR: CONTROL PANEL -->
+    <aside class="w-full md:w-[380px] xl:w-[420px] bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 overflow-hidden z-10">
+      
+      <!-- SHAPE SELECTOR TABS -->
+      <div class="p-3 bg-slate-950/60 border-b border-slate-800 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Shapes</span>
+          <button id="btnAddShape" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-400 hover:text-cyan-300 rounded-lg text-xs font-medium flex items-center gap-1 shrink-0 transition" title="Add New Shape">
+            <i class="fa-solid fa-plus"></i>
+            <span>Shape</span>
+          </button>
+        </div>
+        <div id="shapeTabsContainer" class="grid grid-cols-3 gap-1.5 w-full">
+          <!-- Dynamic shape tabs in 3-column matrix -->
+        </div>
+      </div>
+
+      <!-- SIDEBAR SCROLLABLE CONTENT -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-5">
+
+        <!-- SHAPE NAME & POINT COUNT -->
+        <div class="glass-panel p-3.5 rounded-xl space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-pen text-cyan-400"></i> Shape Name
+            </label>
+            <input type="text" id="shapeNameInput" class="w-full bg-slate-950 border border-slate-700 rounded-lg text-xs font-semibold text-white px-3 py-1.5 focus:outline-none focus:border-cyan-500 transition" placeholder="Shape Name">
+          </div>
+
+          <div class="flex items-center justify-between border-t border-slate-800/80 pt-2">
+            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-vector-square text-cyan-400"></i> Point Count
+            </label>
+            <select id="pointCountSelect" class="bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200 px-3 py-1 font-mono-code focus:outline-none focus:border-cyan-500 transition cursor-pointer">
+              <option value="6">6 Points (3 Vertices)</option>
+              <option value="8">8 Points (4 Vertices)</option>
+              <option value="10">10 Points (5 Vertices)</option>
+              <option value="12">12 Points (6 Vertices)</option>
+              <option value="14">14 Points (7 Vertices)</option>
+              <option value="16">16 Points (8 Vertices)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center justify-between pt-1 border-t border-slate-800/80">
+            <span class="text-xs text-slate-400">Total Active Shapes:</span>
+            <div class="flex items-center gap-2">
+              <span id="shapeCountBadge" class="text-xs font-mono-code bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-800/60">1</span>
+              <button id="btnDeleteCurrentShape" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded hover:bg-rose-950/40 border border-transparent hover:border-rose-800/50 transition" title="Delete Active Shape">
+                <i class="fa-solid fa-trash-can"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLOR PALETTE & BORDER & OPACITY -->
+        <div class="glass-panel p-3.5 rounded-xl space-y-3.5">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-palette text-amber-400"></i> Fill Color
+              </span>
+              <input type="text" id="selectedColorHex" class="text-[11px] font-mono-code text-slate-200 bg-slate-950/80 border border-slate-700/80 rounded px-1.5 py-0.5 w-20 uppercase focus:outline-none focus:border-cyan-500 transition" value="#FF3B30">
+            </div>
+            <div id="fillColorSwatches" class="grid grid-cols-10 gap-1.5">
+              <!-- Preset 10 Swatches JS generated -->
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-border-all text-blue-400"></i> Border Color
+              </span>
+              <input type="text" id="selectedBorderHex" class="text-[11px] font-mono-code text-slate-200 bg-slate-950/80 border border-slate-700/80 rounded px-1.5 py-0.5 w-20 uppercase focus:outline-none focus:border-blue-500 transition" value="#FFFFFF">
+            </div>
+            <div id="borderColorSwatches" class="grid grid-cols-10 gap-1.5">
+              <!-- Preset 10 Swatches JS generated -->
+            </div>
+          </div>
+
+          <!-- Opacity Slider -->
+          <div class="pt-1">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs font-medium text-slate-400">Fill Opacity</span>
+              <span id="opacityValueText" class="text-xs font-mono-code text-cyan-400">75%</span>
+            </div>
+            <input type="range" id="shapeOpacitySlider" min="0.1" max="1" step="0.05" value="0.75" class="w-full cursor-pointer">
+          </div>
+        </div>
+
+        <!-- COORDINATE INPUT FIELDS -->
+        <div class="glass-panel p-3.5 rounded-xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-input-numeric text-emerald-400"></i> Matrix Coordinates
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono-code">Range: [0.00 – 10.00]</span>
+          </div>
+
+          <!-- Dynamic Coordinate Input Grid -->
+          <div id="coordinateInputsContainer" class="grid grid-cols-1 gap-2.5">
+            <!-- Dynamically populated X/Y text inputs per point -->
+          </div>
+        </div>
+
+        <!-- CENTROID & GEOMETRY STATS -->
+        <div class="glass-panel p-3.5 rounded-xl space-y-2.5 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 border border-amber-500/20">
+          <div class="flex items-center justify-between text-amber-400">
+            <span class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-bullseye"></i> Centroid Analysis
+            </span>
+            <span class="text-[10px] font-mono-code bg-amber-500/10 px-2 py-0.5 rounded text-amber-300 border border-amber-500/30">Geometric</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs font-mono-code pt-1">
+            <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+              <div class="text-[10px] text-slate-400 uppercase">Active Centroid</div>
+              <div id="activeCentroidText" class="text-sm font-semibold text-amber-400 mt-0.5">X: 5.00, Y: 5.00</div>
+            </div>
+            <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+              <div class="text-[10px] text-slate-400 uppercase">Derived Centroid</div>
+              <div id="goldPolygonAreaText" class="text-xs font-semibold text-gold-400 mt-0.5">Area: --</div>
+              <div id="goldCentroidCoordsText" class="text-[10px] text-amber-300 font-mono mt-0.5">C: --</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER / QUICK STATUS -->
+      <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between items-center font-mono-code">
+        <span><i class="fa-solid fa-mouse-pointer text-cyan-400 mr-1"></i> Drag / Click Matrix</span>
+        <span id="saveStatusIndicator" class="text-emerald-400 flex items-center gap-1">
+          <i class="fa-solid fa-check-circle"></i> Saved
+        </span>
+      </div>
+    </aside>
+
+    <!-- RIGHT SECTION: PLOTTING MATRIX CANVAS AREA -->
+    <main class="flex-1 bg-matrix-bg flex flex-col relative overflow-hidden items-center justify-center p-3 sm:p-6">
+      
+      <!-- Canvas Wrapper (Enforces Square Aspect Ratio) -->
+      <div id="canvasContainer" class="relative w-full h-full max-w-[85vh] max-h-[85vh] aspect-square flex items-center justify-center shadow-2xl rounded-2xl border border-slate-800/80 overflow-hidden bg-slate-950/90">
+        
+        <!-- Main Plotting Canvas -->
+        <canvas id="plottingCanvas" class="w-full h-full cursor-crosshair block"></canvas>
+
+        <!-- CANVAS HUD / OVERLAY LABELS -->
+        <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-mono-code text-slate-300 flex items-center space-x-3 pointer-events-none shadow-lg">
+          <div><span class="text-slate-400">X:</span> <span id="hudX" class="text-cyan-400 font-semibold">0.00</span></div>
+          <div><span class="text-slate-400">Y:</span> <span id="hudY" class="text-cyan-400 font-semibold">0.00</span></div>
+          <div id="hudSelectedPointBadge" class="hidden text-amber-400 border-l border-slate-700 pl-2 font-bold">Point A</div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- MODAL 1: STARTUP / WELCOME PROJECT CREATION MODAL -->
+  <div id="welcomeModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xl mx-auto shadow-lg shadow-cyan-500/30">
+          <i class="fa-solid fa-draw-polygon"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white tracking-wide">Welcome to Shape Plotter</h2>
+        <p class="text-xs text-slate-400">Interactive Polygon Mapping & Centroid Visualization Matrix</p>
+      </div>
+
+      <form id="startupProjectForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Project Name</label>
+          <input type="text" id="startupProjectNameInput" placeholder="e.g., Logo Geometry Study" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition font-medium" required>
+        </div>
+
+        <div class="pt-2 flex flex-col gap-2">
+          <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-cyan-500/25 transition">
+            Create Project & Get Started
+          </button>
+          <button type="button" id="btnLoadDemoProject" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-xs transition border border-slate-700">
+            Load Demo Project
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: PROJECT MANAGER MODAL -->
+  <div id="projectManagerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-5 flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-folder-tree text-cyan-400"></i> My Projects
+        </h3>
+        <button id="btnCloseProjectManager" class="text-slate-400 hover:text-white p-1 rounded-lg transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Create New Project Section inside Manager -->
+      <div class="flex gap-2">
+        <input type="text" id="newProjectNameInput" placeholder="New project name..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+        <button id="btnCreateNewProjectInManager" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-semibold transition shrink-0">
+          <i class="fa-solid fa-plus mr-1"></i> New
+        </button>
+      </div>
+
+      <!-- Projects List Scrollable -->
+      <div id="projectsListContainer" class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[200px]">
+        <!-- Dynamic list of projects -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CONFIRM DELETE MODAL -->
+  <div id="confirmDeleteModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
+      <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl mx-auto border border-rose-500/20">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h4 class="text-base font-bold text-white">Delete Project?</h4>
+        <p id="deleteConfirmProjectName" class="text-xs text-slate-400 mt-1">This action cannot be undone.</p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button id="btnCancelDelete" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">Cancel</button>
+        <button id="btnConfirmDelete" class="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-rose-600/20">Delete</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    const LOCAL_STORAGE_KEY = 'SHAPE_PLOTTER_PROJECTS_DATA_V1';
+
+    const POINT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+    const PRESET_COLORS = [
+      { name: 'Red', hex: '#FF3B30' },
+      { name: 'Orange', hex: '#FF9500' },
+      { name: 'Yellow', hex: '#FFCC00' },
+      { name: 'Green', hex: '#34C759' },
+      { name: 'Mint', hex: '#00C7BE' },
+      { name: 'Teal', hex: '#30B0C7' },
+      { name: 'Cyan', hex: '#32ADE6' },
+      { name: 'Blue', hex: '#007AFF' },
+      { name: 'Indigo', hex: '#5856D6' },
+      { name: 'Purple', hex: '#AF52DE' }
+    ];
+
+    let appState = {
+      projects: [],
+      currentProjectId: null,
+      activeShapeIndex: 0,
+      selectedPointIndex: null, // 0 to N-1
+      settings: {
+        showCentroids: true,
+        showAllLabels: false,
+        blendMode: true,
+        snapToGrid: false,
+        snapInterval: 0.5
+      }
+    };
+
+    // Canvas Mouse / Touch Dragging State
+    let dragInfo = {
+      isDragging: false,
+      shapeIndex: null,
+      pointIndex: null,
+      startMouseX: 0,
+      startMouseY: 0
+    };
+
+    /* ==========================================================================
+       GEOMETRY & CENTROID MATH CALCULATIONS
+       ========================================================================== */
+    
+    /**
+     * Radial angle sorting algorithm
+     * Ensures points form a simple, non-self-intersecting polygon regardless of drag positions
+     */
+    function getOrderedPoints(points) {
+      if (!points || points.length <= 2) return points ? [...points] : [];
+      
+      // Calculate geometric mean (center point)
+      let sumX = 0, sumY = 0;
+      points.forEach(p => {
+        sumX += p.x;
+        sumY += p.y;
+      });
+      const centerX = sumX / points.length;
+      const centerY = sumY / points.length;
+
+      // Sort vertices counter-clockwise by polar angle relative to center
+      return [...points].sort((a, b) => {
+        const angleA = Math.atan2(a.y - centerY, a.x - centerX);
+        const angleB = Math.atan2(b.y - centerY, b.x - centerX);
+        return angleA - angleB;
+      });
+    }
+
+    /**
+     * True Polygon Geometric Centroid Algorithm
+     * Formula:
+     * Area = 0.5 * sum(x_i * y_{i+1} - x_{i+1} * y_i)
+     * C_x = (1 / (6 * Area)) * sum((x_i + x_{i+1}) * (x_i * y_{i+1} - x_{i+1} * y_i))
+     * C_y = (1 / (6 * Area)) * sum((y_i + y_{i+1}) * (x_i * y_{i+1} - x_{i+1} * y_i))
+     */
+    function calculatePolygonCentroid(rawPoints) {
+      if (!rawPoints || rawPoints.length === 0) return { x: 5, y: 5, area: 0 };
+      const points = getOrderedPoints(rawPoints);
+      const n = points.length;
+      
+      let signedArea = 0;
+      let cx = 0;
+      let cy = 0;
+
+      for (let i = 0; i < n; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % n];
+
+        const crossProduct = (p1.x * p2.y) - (p2.x * p1.y);
+        signedArea += crossProduct;
+        cx += (p1.x + p2.x) * crossProduct;
+        cy += (p1.y + p2.y) * crossProduct;
+      }
+
+      signedArea = signedArea * 0.5;
+
+      // Fallback if degenerate/flat polygon with ~0 area (average vertices)
+      if (Math.abs(signedArea) < 0.0001) {
+        let sumX = 0, sumY = 0;
+        points.forEach(p => { sumX += p.x; sumY += p.y; });
+        return {
+          x: Number((sumX / n).toFixed(2)),
+          y: Number((sumY / n).toFixed(2)),
+          area: 0
+        };
+      }
+
+      cx = cx / (6 * signedArea);
+      cy = cy / (6 * signedArea);
+
+      return {
+        x: Number(cx.toFixed(2)),
+        y: Number(cy.toFixed(2)),
+        area: Number(Math.abs(signedArea).toFixed(2))
+      };
+    }
+
+    /**
+     * Calculates the derived Gold Centroid Polygon from all shape centroids
+     */
+    function calculateGoldCentroidPolygon(shapes) {
+      if (!shapes || shapes.length === 0) return null;
+
+      const centroids = shapes.map(s => calculatePolygonCentroid(s.points));
+      const orderedCentroids = getOrderedPoints(centroids);
+      
+      // Calculate gold polygon area & derived centroid
+      const goldStats = calculatePolygonCentroid(orderedCentroids);
+
+      return {
+        points: orderedCentroids,
+        area: goldStats.area,
+        centroid: { x: goldStats.x, y: goldStats.y }
+      };
+    }
+
+    /* ==========================================================================
+       CANVAS & COORDINATE SYSTEM TRANSFORMATIONS
+       ========================================================================== */
+    
+    let canvas, ctx;
+    let canvasPadding = 45; // Pixel padding for grid numbers
+
+    function setupCanvas() {
+      canvas = document.getElementById('plottingCanvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+    }
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvasContainer');
+      const rect = container.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      const size = Math.min(rect.width, rect.height);
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      canvas.style.width = `${size}px`;
+      canvas.style.height = `${size}px`;
+
+      ctx.scale(dpr, dpr);
+      render();
+    }
+
+    // Convert Matrix Coords (0..10, 0..10) to Canvas Screen Pixels
+    function coordToScreen(x, y) {
+      const displayWidth = canvas.width / (window.devicePixelRatio || 1);
+      const displayHeight = canvas.height / (window.devicePixelRatio || 1);
+      const drawWidth = displayWidth - (canvasPadding * 2);
+      const drawHeight = displayHeight - (canvasPadding * 2);
+
+      const screenX = canvasPadding + (x / 10) * drawWidth;
+      // Invert Y axis so Y=10 is TOP and Y=0 is BOTTOM
+      const screenY = displayHeight - canvasPadding - (y / 10) * drawHeight;
+
+      return { x: screenX, y: screenY };
+    }
+
+    // Convert Canvas Screen Pixels to Matrix Coords (0..10, 0..10)
+    function screenToCoord(screenX, screenY) {
+      const displayWidth = canvas.width / (window.devicePixelRatio || 1);
+      const displayHeight = canvas.height / (window.devicePixelRatio || 1);
+      const drawWidth = displayWidth - (canvasPadding * 2);
+      const drawHeight = displayHeight - (canvasPadding * 2);
+
+      let x = ((screenX - canvasPadding) / drawWidth) * 10;
+      let y = ((displayHeight - canvasPadding - screenY) / drawHeight) * 10;
+
+      // Clamp to 0..10 range
+      x = Math.max(0, Math.min(10, x));
+      y = Math.max(0, Math.min(10, y));
+
+      if (appState.settings.snapToGrid) {
+        const interval = appState.settings.snapInterval;
+        x = Math.round(x / interval) * interval;
+        y = Math.round(y / interval) * interval;
+      } else {
+        x = Number(x.toFixed(2));
+        y = Number(y.toFixed(2));
+      }
+
+      return { x, y };
+    }
+
+    /* ==========================================================================
+       CANVAS RENDERING ENGINE (60 FPS LOOP)
+       ========================================================================== */
+
+    function render() {
+      if (!ctx || !canvas) return;
+
+      const displayWidth = canvas.width / (window.devicePixelRatio || 1);
+      const displayHeight = canvas.height / (window.devicePixelRatio || 1);
+
+      // Clear background
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, displayWidth, displayHeight);
+
+      // 1. Draw Grid Lines & Axis Scale Labels
+      drawGrid(displayWidth, displayHeight);
+
+      const currentProj = getCurrentProject();
+      if (!currentProj) return;
+
+      // Set global composite blend mode
+      if (appState.settings.blendMode) {
+        ctx.globalCompositeOperation = 'screen';
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      // 2. Draw User Shapes (Only visible shapes)
+      currentProj.shapes.forEach((shape, sIdx) => {
+        if (shape.visible === false) return;
+        const isActiveShape = (sIdx === appState.activeShapeIndex);
+        drawPolygonShape(shape, isActiveShape, sIdx);
+      });
+
+      // Reset composite mode for centroids, text, and handles
+      ctx.globalCompositeOperation = 'source-over';
+
+      // 3. Draw Centroids
+      if (appState.settings.showCentroids) {
+        currentProj.shapes.forEach((shape, sIdx) => {
+          if (shape.visible === false) return;
+          const centroid = calculatePolygonCentroid(shape.points);
+          drawCentroidMarker(centroid, sIdx === appState.activeShapeIndex);
+        });
+
+        // 4. Draw Gold Centroid Polygon & Its Centroid for visible shapes
+      const visibleShapes = currentProj.shapes.filter(s => s.visible !== false);
+      if (visibleShapes.length >= 2) {
+        const goldPoly = calculateGoldCentroidPolygon(visibleShapes);
+        if (goldPoly) {
+          drawGoldCentroidPolygon(goldPoly);
+        }
+      }
+    }
+
+    // 5. Draw Interactive Handles & Smart Non-Overlapping Labels
+    const handlesToDraw = [];
+    if (appState.settings.showAllLabels) {
+      currentProj.shapes.forEach((shape, sIdx) => {
+        if (shape.visible === false) return;
+        const isActiveShape = (sIdx === appState.activeShapeIndex);
+        shape.points.forEach((pt, pIdx) => {
+          const isSelectedPoint = isActiveShape && (pIdx === appState.selectedPointIndex);
+          handlesToDraw.push({
+            point: pt,
+            screenPos: coordToScreen(pt.x, pt.y),
+            isSelected: isSelectedPoint,
+            borderColor: shape.borderColor,
+            shapeTitle: shape.title
+          });
+        });
+      });
+    } else {
+      const activeShape = currentProj.shapes[appState.activeShapeIndex];
+      if (activeShape && activeShape.visible !== false) {
+        activeShape.points.forEach((pt, pIdx) => {
+          const isSelectedPoint = (pIdx === appState.selectedPointIndex);
+          handlesToDraw.push({
+            point: pt,
+            screenPos: coordToScreen(pt.x, pt.y),
+            isSelected: isSelectedPoint,
+            borderColor: activeShape.borderColor,
+            shapeTitle: null
+          });
+        });
+      }
+    }
+
+    renderPointHandlesAndLabels(handlesToDraw);
+  }
+
+  // SMART POINT HANDLE & NON-OVERLAPPING LABEL RENDERER
+  function renderPointHandlesAndLabels(handlesToDraw) {
+    if (!handlesToDraw || handlesToDraw.length === 0) return;
+
+    // 1. First, render all point node markers
+    handlesToDraw.forEach(item => {
+      drawPointNode(item.point, item.screenPos, item.isSelected, item.borderColor);
+    });
+
+    // 2. Prepare items for smart label collision resolution
+    ctx.save();
+    ctx.font = 'bold 11px "Inter", sans-serif';
+
+    const labels = handlesToDraw.map((item, index) => {
+      const displayLabel = item.shapeTitle ? `${item.shapeTitle}:${item.point.label}` : item.point.label;
+      const textWidth = ctx.measureText(displayLabel).width;
+      const textHeight = 14;
+      return {
+        index,
+        point: item.point,
+        screenPos: item.screenPos,
+        isSelected: item.isSelected,
+        borderColor: item.borderColor,
+        displayLabel,
+        width: textWidth + 10,
+        height: textHeight,
+        x: item.screenPos.x,
+        y: item.screenPos.y - 18
+      };
+    });
+
+    // 3. Cluster points that are close to each other (distance < 40px)
+    const CLUSTER_DIST = 40;
+    const clusters = [];
+    const visited = new Array(labels.length).fill(false);
+
+    for (let i = 0; i < labels.length; i++) {
+      if (visited[i]) continue;
+      const cluster = [labels[i]];
+      visited[i] = true;
+
+      for (let j = i + 1; j < labels.length; j++) {
+        if (visited[j]) continue;
+        const dx = labels[j].screenPos.x - labels[i].screenPos.x;
+        const dy = labels[j].screenPos.y - labels[i].screenPos.y;
+        if (Math.hypot(dx, dy) < CLUSTER_DIST) {
+          cluster.push(labels[j]);
+          visited[j] = true;
+        }
+      }
+      clusters.push(cluster);
+    }
+
+    // 4. Fan out labels radially within clusters
+    clusters.forEach(cluster => {
+      if (cluster.length === 1) {
+        // Single isolated point: position right above unless near top edge
+        const item = cluster[0];
+        if (item.screenPos.y < 35) {
+          item.y = item.screenPos.y + 20; // Flip below if near top boundary
+        }
+      } else {
+        // Multi-point cluster: calculate center of mass
+        let cx = 0, cy = 0;
+        cluster.forEach(item => {
+          cx += item.screenPos.x;
+          cy += item.screenPos.y;
+        });
+        cx /= cluster.length;
+        cy /= cluster.length;
+
+        // Assign angular direction from center
+        const itemsWithAngles = cluster.map((item, idx) => {
+          let angle = Math.atan2(item.screenPos.y - cy, item.screenPos.x - cx);
+          // If points are perfectly coincident, space evenly in a circle
+          if (cluster.every(c => Math.hypot(c.screenPos.x - cluster[0].screenPos.x, c.screenPos.y - cluster[0].screenPos.y) < 1)) {
+            angle = (idx / cluster.length) * Math.PI * 2 - (Math.PI / 2);
+          }
+          return { item, angle };
+        });
+
+        // Fan out radially outward with minimum radial distance
+        const radius = Math.max(28, cluster.length * 8 + 14);
+
+        itemsWithAngles.forEach(obj => {
+          obj.item.x = obj.item.screenPos.x + Math.cos(obj.angle) * radius;
+          obj.item.y = obj.item.screenPos.y + Math.sin(obj.angle) * radius;
+        });
+      }
+    });
+
+    // 5. Relaxation pass to prevent box overlaps between text badges
+    for (let iter = 0; iter < 8; iter++) {
+      for (let i = 0; i < labels.length; i++) {
+        for (let j = i + 1; j < labels.length; j++) {
+          const a = labels[i];
+          const b = labels[j];
+
+          const overlapX = (a.width / 2 + b.width / 2 + 4) - Math.abs(a.x - b.x);
+          const overlapY = (a.height / 2 + b.height / 2 + 4) - Math.abs(a.y - b.y);
+
+          if (overlapX > 0 && overlapY > 0) {
+            if (overlapX < overlapY) {
+              const shift = overlapX / 2;
+              if (a.x < b.x) { a.x -= shift; b.x += shift; }
+              else { a.x += shift; b.x -= shift; }
+            } else {
+              const shift = overlapY / 2;
+              if (a.y < b.y) { a.y -= shift; b.y += shift; }
+              else { a.y += shift; b.y -= shift; }
+            }
+          }
+        }
+      }
+    }
+
+    // 6. Draw Dotted Leader Lines & Text Badges
+    labels.forEach(item => {
+      const nodeX = item.screenPos.x;
+      const nodeY = item.screenPos.y;
+      const labelX = item.x;
+      const labelY = item.y;
+
+      const dist = Math.hypot(labelX - nodeX, labelY - nodeY);
+
+      // Draw thin dotted line if fanned out or displaced
+      if (dist > 18 || item.isSelected) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([2, 3]);
+        ctx.strokeStyle = item.isSelected ? 'rgba(56, 189, 248, 0.85)' : 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.moveTo(nodeX, nodeY);
+        ctx.lineTo(labelX, labelY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Draw Badge Container & Text
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const halfW = item.width / 2;
+      const halfH = item.height / 2;
+
+      ctx.fillStyle = item.isSelected ? '#0f172a' : 'rgba(15, 23, 42, 0.85)';
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(labelX - halfW, labelY - halfH, item.width, item.height, 4);
+      } else {
+        ctx.rect(labelX - halfW, labelY - halfH, item.width, item.height);
+      }
+      ctx.fill();
+
+      ctx.strokeStyle = item.isSelected ? '#38bdf8' : (item.borderColor || 'rgba(255, 255, 255, 0.3)');
+      ctx.lineWidth = item.isSelected ? 1.5 : 1;
+      ctx.stroke();
+
+      ctx.fillStyle = item.isSelected ? '#38bdf8' : '#ffffff';
+      ctx.fillText(item.displayLabel, labelX, labelY);
+
+      ctx.restore();
+    });
+
+    ctx.restore();
+  }
+
+  // DRAW POINT NODE MARKER CIRCLE / GLOW
+  function drawPointNode(point, screenPos, isSelected, borderColor) {
+    ctx.save();
+
+    if (isSelected) {
+      // Glowing Outer Target Ring
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, 12, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.fill();
+    }
+
+    // Point Node
+    ctx.fillStyle = isSelected ? '#38bdf8' : '#ffffff';
+    ctx.beginPath();
+    ctx.arc(screenPos.x, screenPos.y, isSelected ? 6 : 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = borderColor || '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // DRAW GOLD CENTROID POLYGON & DERIVED CENTROID
+    function drawGoldCentroidPolygon(goldPoly) {
+      if (!goldPoly.points || goldPoly.points.length < 2) return;
+
+      const screenPoints = goldPoly.points.map(p => coordToScreen(p.x, p.y));
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+      for (let i = 1; i < screenPoints.length; i++) {
+        ctx.lineTo(screenPoints[i].x, screenPoints[i].y);
+      }
+      ctx.closePath();
+
+      // Gold Translucent Fill
+      ctx.fillStyle = 'rgba(234, 179, 8, 0.25)';
+      ctx.fill();
+
+      // Glowing Gold Border
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 3]);
+      ctx.shadowColor = '#ffe600';
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+
+      // DRAW CENTROID OF THE DERIVED GOLD POLYGON
+      if (goldPoly.centroid) {
+        const screenPos = coordToScreen(goldPoly.centroid.x, goldPoly.centroid.y);
+
+        // Gold Outer Ring
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#ffe600';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, 9, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Crosshairs
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(screenPos.x - 12, screenPos.y);
+        ctx.lineTo(screenPos.x + 12, screenPos.y);
+        ctx.moveTo(screenPos.x, screenPos.y - 12);
+        ctx.lineTo(screenPos.x, screenPos.y + 12);
+        ctx.stroke();
+
+        // Center Dot
+        ctx.fillStyle = '#facc15';
+        ctx.shadowColor = '#ffe600';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Label for Derived Gold Centroid
+        ctx.font = 'bold 10px "Fira Code", monospace';
+        ctx.fillStyle = '#ffe600';
+        ctx.textAlign = 'left';
+        ctx.fillText(`C_gold(${goldPoly.centroid.x}, ${goldPoly.centroid.y})`, screenPos.x + 14, screenPos.y + 4);
+      }
+
+      ctx.restore();
+    }
+
+    // DRAW POINT HANDLE & TYPOGRAPHY LABEL
+    function drawPointHandle(point, isSelected, borderColor, shapeTitle = null) {
+      const screenPos = coordToScreen(point.x, point.y);
+
+      ctx.save();
+
+      if (isSelected) {
+        // Glowing Outer Target Ring
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, 12, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.fill();
+      }
+
+      // Point Node
+      ctx.fillStyle = isSelected ? '#38bdf8' : '#ffffff';
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, isSelected ? 6 : 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = borderColor || '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Label Typography
+      const displayLabel = shapeTitle ? `${shapeTitle}:${point.label}` : point.label;
+      ctx.font = 'bold 11px "Inter", sans-serif';
+      ctx.fillStyle = isSelected ? '#38bdf8' : '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      
+      if (isSelected) {
+        const textWidth = ctx.measureText(displayLabel).width;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(screenPos.x - (textWidth / 2) - 4, screenPos.y - 25, textWidth + 8, 14);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(screenPos.x - (textWidth / 2) - 4, screenPos.y - 25, textWidth + 8, 14);
+        ctx.fillStyle = '#38bdf8';
+      }
+
+      ctx.fillText(displayLabel, screenPos.x, screenPos.y - 12);
+
+      ctx.restore();
+    }
+
+    // DRAW USER POLYGON
+    function drawPolygonShape(shape, isActive, shapeIdx) {
+      if (!shape.points || shape.points.length < 3) return;
+
+      const orderedPoints = getOrderedPoints(shape.points);
+      const screenPoints = orderedPoints.map(p => coordToScreen(p.x, p.y));
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(screenPoints[0].x, screenPoints[0].y);
+      for (let i = 1; i < screenPoints.length; i++) {
+        ctx.lineTo(screenPoints[i].x, screenPoints[i].y);
+      }
+      ctx.closePath();
+
+      // Hex to RGBA conversion for fill opacity
+      const hex = shape.fillColor || '#FF3B30';
+      const opacity = shape.opacity !== undefined ? shape.opacity : 0.75;
+      
+      ctx.fillStyle = hexToRgba(hex, opacity);
+      ctx.fill();
+
+      // Stroke / Border
+      ctx.strokeStyle = shape.borderColor || '#FFFFFF';
+      ctx.lineWidth = isActive ? 3 : 1.8;
+      if (isActive) {
+        ctx.shadowColor = shape.borderColor;
+        ctx.shadowBlur = 8;
+      }
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // DRAW CENTROID MARKER
+    function drawCentroidMarker(centroid, isActiveShape) {
+      const screenPos = coordToScreen(centroid.x, centroid.y);
+
+      ctx.save();
+      // Target Ring
+      ctx.strokeStyle = isActiveShape ? '#facc15' : 'rgba(250, 204, 21, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, 7, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Crosshair lines
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(screenPos.x - 10, screenPos.y);
+      ctx.lineTo(screenPos.x + 10, screenPos.y);
+      ctx.moveTo(screenPos.x, screenPos.y - 10);
+      ctx.lineTo(screenPos.x, screenPos.y + 10);
+      ctx.stroke();
+
+      // Center Dot
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(screenPos.x, screenPos.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Text Label
+      ctx.font = 'bold 9px "Fira Code", monospace';
+      ctx.fillStyle = '#fde047';
+      ctx.textAlign = 'left';
+      ctx.fillText(`C(${centroid.x}, ${centroid.y})`, screenPos.x + 10, screenPos.y - 6);
+
+      ctx.restore();
+    }
+
+    // Utility: Hex to RGBA
+    function hexToRgba(hex, alpha = 1) {
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function isPointInPolygon(screenX, screenY, shape) {
+      if (!shape || !shape.points || shape.points.length < 3) return false;
+      const ordered = getOrderedPoints(shape.points);
+      const screenPts = ordered.map(p => coordToScreen(p.x, p.y));
+
+      let inside = false;
+      for (let i = 0, j = screenPts.length - 1; i < screenPts.length; j = i++) {
+        const xi = screenPts[i].x, yi = screenPts[i].y;
+        const xj = screenPts[j].x, yj = screenPts[j].y;
+
+        const intersect = ((yi > screenY) !== (yj > screenY))
+            && (screenX < (xj - xi) * (screenY - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function drawGrid(displayWidth, displayHeight) {
+      const drawWidth = displayWidth - (canvasPadding * 2);
+      const drawHeight = displayHeight - (canvasPadding * 2);
+
+      ctx.save();
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i <= 10; i++) {
+        const x = canvasPadding + (i / 10) * drawWidth;
+        const y = displayHeight - canvasPadding - (i / 10) * drawHeight;
+
+        ctx.strokeStyle = (i === 0 || i === 10) ? '#38bdf8' : '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(x, canvasPadding);
+        ctx.lineTo(x, displayHeight - canvasPadding);
+        ctx.stroke();
+
+        ctx.strokeStyle = (i === 0 || i === 10) ? '#38bdf8' : '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(canvasPadding, y);
+        ctx.lineTo(displayWidth - canvasPadding, y);
+        ctx.stroke();
+
+        ctx.font = '10px "Fira Code", monospace';
+        ctx.fillStyle = '#64748b';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(i.toString(), x, displayHeight - canvasPadding + 8);
+
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(i.toString(), canvasPadding - 8, y);
+      }
+
+      ctx.restore();
+    }
+
+
+    /* ==========================================================================
+       DATA CONTROLLER & SYNCHRONIZATION (TRIPLE-SYNC ENGINE)
+       ========================================================================== */
+
+    function createNewProject(name) {
+      const newProj = {
+        id: 'proj_' + Date.now(),
+        name: name || 'Untitled Geometry',
+        pointCount: 6, // 3 Plotted points A, B, C
+        shapes: [
+          createDefaultShape('Shape 1', '#FF3B30', '#FFFFFF', [
+            { label: 'A', x: 2, y: 8 },
+            { label: 'B', x: 8, y: 9 },
+            { label: 'C', x: 6, y: 2 }
+          ])
+        ]
+      };
+
+      appState.projects.push(newProj);
+      appState.currentProjectId = newProj.id;
+      appState.activeShapeIndex = 0;
+      appState.selectedPointIndex = 0;
+
+      saveAppState();
+      updateUI();
+    }
+
+    function createDefaultShape(title, fillColor, borderColor, initialPoints) {
+      const pts = initialPoints || [
+        { label: 'A', x: 2, y: 8 },
+        { label: 'B', x: 8, y: 8 },
+        { label: 'C', x: 5, y: 3 }
+      ];
+      return {
+        id: 'shape_' + Math.random().toString(36).substring(2, 9),
+        title: title,
+        fillColor: fillColor,
+        borderColor: borderColor,
+        opacity: 0.75,
+        visible: true,
+        points: pts,
+        pointPool: pts.map(p => ({ ...p }))
+      };
+    }
+
+    function getCurrentProject() {
+      return appState.projects.find(p => p.id === appState.currentProjectId);
+    }
+
+    function getCurrentShape() {
+      const proj = getCurrentProject();
+      if (!proj) return null;
+      return proj.shapes[appState.activeShapeIndex] || proj.shapes[0];
+    }
+
+    function saveAppState() {
+      try {
+        const activeShape = getCurrentShape();
+        if (activeShape) {
+          if (!activeShape.pointPool) activeShape.pointPool = [];
+          activeShape.points.forEach((p, idx) => {
+            activeShape.pointPool[idx] = { ...p };
+          });
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appState));
+        const indicator = document.getElementById('saveStatusIndicator');
+        if (indicator) {
+          indicator.innerHTML = `<i class="fa-solid fa-check-circle"></i> Saved`;
+          indicator.className = 'text-emerald-400 flex items-center gap-1';
+        }
+      } catch (e) {
+        console.error('LocalStorage save failed:', e);
+      }
+    }
+
+    function loadAppState() {
+      const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (data) {
+        try {
+          appState = JSON.parse(data);
+          if (appState.projects.length === 0) {
+            showWelcomeModal();
+            return;
+          }
+          if (!getCurrentProject()) {
+            appState.currentProjectId = appState.projects[0].id;
+          }
+          hideWelcomeModal();
+          updateUI();
+        } catch (e) {
+          console.error('Failed to parse localStorage data:', e);
+          showWelcomeModal();
+        }
+      } else {
+        showWelcomeModal();
+      }
+    }
+
+
+    /* ==========================================================================
+       UI CONTROLLER & EVENT LISTENERS
+       ========================================================================== */
+
+    function updateUI() {
+      const currentProj = getCurrentProject();
+      if (!currentProj) return;
+
+      // Update Header
+      document.getElementById('headerProjectName').textContent = currentProj.name;
+
+      // Update Toggles
+      document.getElementById('topCentroidToggle').checked = appState.settings.showCentroids;
+      document.getElementById('topLabelToggle').checked = appState.settings.showAllLabels;
+      document.getElementById('topBlendToggle').checked = appState.settings.blendMode;
+      document.getElementById('snapStatusText').textContent = appState.settings.snapToGrid ? 'Snap: ON' : 'Snap: OFF';
+
+      // Update Shape Tabs & Badges
+      renderShapeTabs();
+      document.getElementById('shapeCountBadge').textContent = currentProj.shapes.length;
+
+      // Update Active Shape Name & Inputs
+      const activeShape = getCurrentShape();
+      if (activeShape) {
+        document.getElementById('shapeNameInput').value = activeShape.title || `Shape ${appState.activeShapeIndex + 1}`;
+
+        const expectedPointCount = activeShape.points.length * 2;
+        document.getElementById('pointCountSelect').value = expectedPointCount.toString();
+
+        const opacitySlider = document.getElementById('shapeOpacitySlider');
+        if (opacitySlider) {
+          const opacityVal = activeShape.opacity !== undefined ? activeShape.opacity : 0.75;
+          opacitySlider.value = opacityVal;
+          document.getElementById('opacityValueText').textContent = `${Math.round(opacityVal * 100)}%`;
+        }
+
+        renderColorSwatches();
+        renderCoordinateInputs();
+
+        const centroid = calculatePolygonCentroid(activeShape.points);
+        document.getElementById('activeCentroidText').textContent = `X: ${centroid.x}, Y: ${centroid.y}`;
+      }
+
+      // Update Derived Gold Polygon Stats
+      const visibleShapes = currentProj.shapes.filter(s => s.visible !== false);
+      if (visibleShapes.length >= 2) {
+        const goldPoly = calculateGoldCentroidPolygon(visibleShapes);
+        if (goldPoly) {
+          document.getElementById('goldPolygonAreaText').textContent = `Area: ${goldPoly.area}`;
+          document.getElementById('goldCentroidCoordsText').textContent = `C: (${goldPoly.centroid.x}, ${goldPoly.centroid.y})`;
+        } else {
+          document.getElementById('goldPolygonAreaText').textContent = 'Area: --';
+          document.getElementById('goldCentroidCoordsText').textContent = 'C: --';
+        }
+      } else {
+        document.getElementById('goldPolygonAreaText').textContent = 'Area: --';
+        document.getElementById('goldCentroidCoordsText').textContent = 'C: --';
+      }
+
+      render();
+    }
+
+    // RENDER SHAPE TABS WITH DYNAMIC SHAPE TITLES & VISIBILITY NEON TOGGLE
+    function renderShapeTabs() {
+      const container = document.getElementById('shapeTabsContainer');
+      container.innerHTML = '';
+
+      const currentProj = getCurrentProject();
+      if (!currentProj) return;
+
+      currentProj.shapes.forEach((shape, idx) => {
+        if (shape.visible === undefined) shape.visible = true;
+
+        const isActive = (idx === appState.activeShapeIndex);
+        const isVisible = shape.visible !== false;
+
+        const btn = document.createElement('button');
+        
+        btn.className = `px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between gap-1 border transition truncate shadow-sm ${
+          isActive 
+            ? 'ring-2 ring-white border-white scale-[1.02] shadow-md' 
+            : 'border-white/20 hover:opacity-95'
+        }`;
+
+        btn.style.backgroundColor = shape.fillColor || '#FF3B30';
+
+        // Blue neon light when showing, grey dot when hidden
+        const indicatorClass = isVisible 
+          ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)] border border-cyan-200' 
+          : 'bg-slate-400/60 shadow-none border border-slate-500/50';
+
+        btn.innerHTML = `
+          <div class="flex items-center min-w-0 w-full">
+            <span class="visibility-dot w-2.5 h-2.5 rounded-full ${indicatorClass} mr-1.5 shrink-0 transition-all cursor-pointer" title="Click to show/hide polygon"></span>
+            <span class="truncate text-white font-semibold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1);">${shape.title || ('Shape ' + (idx + 1))}</span>
+          </div>
+        `;
+
+        btn.onclick = (e) => {
+          // If the neon blue / grey indicator dot was clicked, toggle shape visibility
+          if (e.target.classList.contains('visibility-dot')) {
+            e.stopPropagation();
+            shape.visible = !shape.visible;
+            saveAppState();
+            updateUI();
+            return;
+          }
+
+          appState.activeShapeIndex = idx;
+          appState.selectedPointIndex = 0;
+          updateUI();
+        };
+
+        container.appendChild(btn);
+      });
+    }
+
+    // Helper to select readable text color (dark/light) based on polygon color contrast
+    function getContrastingTextColor(hexColor) {
+      if (!hexColor) return '#ffffff';
+      let hex = hexColor.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+      return (yiq >= 128) ? '#0f172a' : '#ffffff';
+    }
+
+    // RENDER COLOR SWATCHES
+    function renderColorSwatches() {
+      const fillContainer = document.getElementById('fillColorSwatches');
+      const borderContainer = document.getElementById('borderColorSwatches');
+      fillContainer.innerHTML = '';
+      borderContainer.innerHTML = '';
+
+      const activeShape = getCurrentShape();
+      if (!activeShape) return;
+
+      const fillInput = document.getElementById('selectedColorHex');
+      const borderInput = document.getElementById('selectedBorderHex');
+
+      if (document.activeElement !== fillInput) {
+        fillInput.value = activeShape.fillColor;
+      }
+      if (document.activeElement !== borderInput) {
+        borderInput.value = activeShape.borderColor;
+      }
+
+      PRESET_COLORS.forEach(color => {
+        // Fill Swatch
+        const fillSwatch = document.createElement('button');
+        const isFillSel = (activeShape.fillColor.toUpperCase() === color.hex.toUpperCase());
+        fillSwatch.className = `w-full aspect-square rounded-md border border-white/20 transition cursor-pointer hover:scale-110 ${
+          isFillSel ? 'ring-2 ring-cyan-400 scale-110 shadow-lg shadow-cyan-400/30' : 'opacity-80'
+        }`;
+        fillSwatch.style.backgroundColor = color.hex;
+        fillSwatch.title = color.name;
+        fillSwatch.onclick = () => {
+          activeShape.fillColor = color.hex;
+          saveAppState();
+          updateUI();
+        };
+        fillContainer.appendChild(fillSwatch);
+
+        // Border Swatch
+        const borderSwatch = document.createElement('button');
+        const isBorderSel = (activeShape.borderColor.toUpperCase() === color.hex.toUpperCase());
+        borderSwatch.className = `w-full aspect-square rounded-md border border-white/20 transition cursor-pointer hover:scale-110 ${
+          isBorderSel ? 'ring-2 ring-blue-400 scale-110 shadow-lg shadow-blue-400/30' : 'opacity-80'
+        }`;
+        borderSwatch.style.backgroundColor = color.hex;
+        borderSwatch.title = color.name;
+        borderSwatch.onclick = () => {
+          activeShape.borderColor = color.hex;
+          saveAppState();
+          updateUI();
+        };
+        borderContainer.appendChild(borderSwatch);
+      });
+    }
+
+    // RENDER DYNAMIC COORDINATE INPUT FIELDS
+    function renderCoordinateInputs() {
+      const container = document.getElementById('coordinateInputsContainer');
+      container.innerHTML = '';
+
+      const activeShape = getCurrentShape();
+      if (!activeShape) return;
+
+      activeShape.points.forEach((pt, idx) => {
+        const isSelected = (idx === appState.selectedPointIndex);
+        
+        const card = document.createElement('div');
+        card.className = `p-2 rounded-lg border transition ${
+          isSelected 
+            ? 'bg-slate-800/90 border-cyan-500/80 shadow-md shadow-cyan-500/10 active-point-glow' 
+            : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+        }`;
+
+        card.onclick = (e) => {
+          // If clicked outside text fields, set active selected point
+          if (e.target.tagName !== 'INPUT') {
+            appState.selectedPointIndex = idx;
+            updateUI();
+          }
+        };
+
+        const badgeSymbol = (pt.label && pt.label.trim().length > 0) ? pt.label.trim().charAt(0).toUpperCase() : (idx + 1);
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/60 text-xs font-bold font-mono-code flex items-center justify-center shrink-0">${badgeSymbol}</span>
+              <div class="relative flex items-center group">
+                <input type="text" value="${pt.label}" data-pt-idx="${idx}" class="point-label-input text-xs font-semibold text-slate-200 bg-slate-900/70 hover:bg-slate-900 focus:bg-slate-950 border border-slate-700/60 hover:border-slate-600 focus:border-cyan-500 rounded px-2 py-0.5 w-28 focus:outline-none transition" title="Click to edit point name" placeholder="Point Name">
+                <i class="fa-solid fa-pen-to-square text-[10px] text-slate-500 group-hover:text-cyan-400 pointer-events-none absolute right-2 transition"></i>
+              </div>
+            </div>
+            ${isSelected ? '<span class="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono-code">ACTIVE TARGET</span>' : ''}
+          </div>
+          <div class="grid grid-cols-2 gap-2 font-mono-code text-xs">
+            <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded border border-slate-800">
+              <span class="text-slate-400 font-bold truncate max-w-[45px]" title="${pt.label}">${pt.label}(X):</span>
+              <input type="number" step="0.1" min="0" max="10" value="${pt.x}" data-pt-idx="${idx}" data-axis="x" class="coord-input w-full bg-transparent text-slate-100 font-semibold focus:outline-none">
+            </div>
+            <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded border border-slate-800">
+              <span class="text-slate-400 font-bold truncate max-w-[45px]" title="${pt.label}">${pt.label}(Y):</span>
+              <input type="number" step="0.1" min="0" max="10" value="${pt.y}" data-pt-idx="${idx}" data-axis="y" class="coord-input w-full bg-transparent text-slate-100 font-semibold focus:outline-none">
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // Bind input field events for numerical coordinates
+      const inputs = container.querySelectorAll('.coord-input');
+      inputs.forEach(input => {
+        input.onfocus = () => {
+          const ptIdx = parseInt(input.getAttribute('data-pt-idx'));
+          appState.selectedPointIndex = ptIdx;
+          render(); // Redraw selection ring
+        };
+
+        input.oninput = (e) => {
+          const ptIdx = parseInt(input.getAttribute('data-pt-idx'));
+          const axis = input.getAttribute('data-axis');
+          let val = parseFloat(e.target.value);
+
+          if (isNaN(val)) val = 0;
+          val = Math.max(0, Math.min(10, val));
+
+          activeShape.points[ptIdx][axis] = Number(val.toFixed(2));
+          saveAppState();
+          
+          // Live render without recreating whole DOM to maintain focus
+          const centroid = calculatePolygonCentroid(activeShape.points);
+          document.getElementById('activeCentroidText').textContent = `X: ${centroid.x}, Y: ${centroid.y}`;
+          render();
+        };
+      });
+
+      // Bind point label editable input events
+      const labelInputs = container.querySelectorAll('.point-label-input');
+      labelInputs.forEach(input => {
+        input.onfocus = () => {
+          const ptIdx = parseInt(input.getAttribute('data-pt-idx'));
+          appState.selectedPointIndex = ptIdx;
+          render();
+        };
+
+        input.oninput = (e) => {
+          const ptIdx = parseInt(input.getAttribute('data-pt-idx'));
+          const newLabel = e.target.value;
+          activeShape.points[ptIdx].label = newLabel;
+          saveAppState();
+          render();
+        };
+
+        input.onchange = () => {
+          if (!input.value.trim()) {
+            const ptIdx = parseInt(input.getAttribute('data-pt-idx'));
+            activeShape.points[ptIdx].label = POINT_LABELS[ptIdx] || `P${ptIdx + 1}`;
+            input.value = activeShape.points[ptIdx].label;
+            saveAppState();
+          }
+          updateUI();
+        };
+      });
+    }
+
+    /* ==========================================================================
+       CANVAS INTERACTION (DRAG & DROP, DIRECT PLOTTING)
+       ========================================================================== */
+
+    function setupCanvasInteractions() {
+      const container = document.getElementById('canvasContainer');
+
+      // Mouse & Touch Pointer Position Mapper
+      function getCanvasPointerPos(evt) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+        const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+        return {
+          screenX: clientX - rect.left,
+          screenY: clientY - rect.top
+        };
+      }
+
+      // Hit test: Find if pointer is near any point handle
+      function findPointHit(screenX, screenY, targetShape = null) {
+        const activeShape = targetShape || getCurrentShape();
+        if (!activeShape) return null;
+
+        const hitRadius = 16; // Pixels distance threshold
+
+        for (let i = 0; i < activeShape.points.length; i++) {
+          const pt = activeShape.points[i];
+          const pos = coordToScreen(pt.x, pt.y);
+          const dist = Math.hypot(pos.x - screenX, pos.y - screenY);
+          if (dist <= hitRadius) {
+            return i;
+          }
+        }
+        return null;
+      }
+
+      // Find hit inside any visible polygon body
+      function findShapeBodyHit(screenX, screenY) {
+        const proj = getCurrentProject();
+        if (!proj) return null;
+
+        // Check active shape first, then other visible shapes in reverse layer order
+        for (let i = proj.shapes.length - 1; i >= 0; i--) {
+          const shape = proj.shapes[i];
+          if (shape.visible !== false && isPointInPolygon(screenX, screenY, shape)) {
+            return i;
+          }
+        }
+        return null;
+      }
+
+      // Pointer Down
+      function handlePointerDown(evt) {
+        const { screenX, screenY } = getCanvasPointerPos(evt);
+
+        // 1. Check if clicking active shape's point handle -> Start Dragging
+        let hitIdx = findPointHit(screenX, screenY);
+        if (hitIdx !== null) {
+          dragInfo.isDragging = true;
+          dragInfo.pointIndex = hitIdx;
+          appState.selectedPointIndex = hitIdx;
+          updateUI();
+          return;
+        }
+
+        // 2. Check if clicking a point handle on ANY other visible shape
+        const proj = getCurrentProject();
+        if (proj) {
+          for (let sIdx = 0; sIdx < proj.shapes.length; sIdx++) {
+            if (sIdx === appState.activeShapeIndex) continue;
+            const shape = proj.shapes[sIdx];
+            if (shape.visible !== false) {
+              const ptHit = findPointHit(screenX, screenY, shape);
+              if (ptHit !== null) {
+                appState.activeShapeIndex = sIdx;
+                appState.selectedPointIndex = ptHit;
+                dragInfo.isDragging = true;
+                dragInfo.pointIndex = ptHit;
+                updateUI();
+                return;
+              }
+            }
+          }
+        }
+
+        // 3. Hand Selector: Check if clicking inside any polygon's interior area
+        const shapeHitIdx = findShapeBodyHit(screenX, screenY);
+        if (shapeHitIdx !== null) {
+          appState.activeShapeIndex = shapeHitIdx;
+          appState.selectedPointIndex = 0;
+          updateUI();
+          return;
+        }
+
+        // Clicking open matrix space no longer moves points! Point values change ONLY by dragging handles.
+      }
+
+      // Pointer Move
+      function handlePointerMove(evt) {
+        const { screenX, screenY } = getCanvasPointerPos(evt);
+        const coords = screenToCoord(screenX, screenY);
+
+        // Update HUD hover coordinates readout
+        document.getElementById('hudX').textContent = coords.x.toFixed(2);
+        document.getElementById('hudY').textContent = coords.y.toFixed(2);
+
+        // Cursor visual feedback: pointer / grab cursor when hovering over shapes or handles
+        if (dragInfo.isDragging) {
+          canvas.style.cursor = 'grabbing';
+        } else {
+          const ptHit = findPointHit(screenX, screenY);
+          const bodyHit = findShapeBodyHit(screenX, screenY);
+          if (ptHit !== null) {
+            canvas.style.cursor = 'grab';
+          } else if (bodyHit !== null) {
+            canvas.style.cursor = 'pointer';
+          } else {
+            canvas.style.cursor = 'crosshair';
+          }
+        }
+
+        const activeShape = getCurrentShape();
+        if (activeShape && appState.selectedPointIndex !== null) {
+          const selectedPt = activeShape.points[appState.selectedPointIndex];
+          const badge = document.getElementById('hudSelectedPointBadge');
+          if (selectedPt) {
+            badge.classList.remove('hidden');
+            badge.textContent = `Target Point ${selectedPt.label}`;
+          }
+        }
+
+        // If actively dragging point
+        if (dragInfo.isDragging && dragInfo.pointIndex !== null) {
+          const activeShape = getCurrentShape();
+          if (activeShape && activeShape.points[dragInfo.pointIndex]) {
+            activeShape.points[dragInfo.pointIndex].x = coords.x;
+            activeShape.points[dragInfo.pointIndex].y = coords.y;
+
+            // Update sidebar inputs live
+            const inputs = document.querySelectorAll('.coord-input');
+            inputs.forEach(input => {
+              const ptIdx = parseInt(input.getAttribute('data-pt-idx'));
+              const axis = input.getAttribute('data-axis');
+              if (ptIdx === dragInfo.pointIndex) {
+                input.value = coords[axis];
+              }
+            });
+
+            const centroid = calculatePolygonCentroid(activeShape.points);
+            document.getElementById('activeCentroidText').textContent = `X: ${centroid.x}, Y: ${centroid.y}`;
+
+            render();
+          }
+        }
+      }
+
+      // Pointer Up / Leave
+      function handlePointerUp() {
+        if (dragInfo.isDragging) {
+          dragInfo.isDragging = false;
+          dragInfo.pointIndex = null;
+          saveAppState();
+          updateUI();
+        }
+      }
+
+      canvas.addEventListener('mousedown', handlePointerDown);
+      canvas.addEventListener('mousemove', handlePointerMove);
+      window.addEventListener('mouseup', handlePointerUp);
+
+      // Touch Events for Mobile / Tablet support
+      canvas.addEventListener('touchstart', (e) => {
+        handlePointerDown(e);
+        e.preventDefault();
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        handlePointerMove(e);
+        e.preventDefault();
+      }, { passive: false });
+
+      window.addEventListener('touchend', handlePointerUp);
+    }
+
+
+    /* ==========================================================================
+       MODAL CONTROLLERS & EVENT BINDINGS
+       ========================================================================== */
+
+    function showWelcomeModal() {
+      document.getElementById('welcomeModal').classList.remove('hidden');
+    }
+
+    function hideWelcomeModal() {
+      document.getElementById('welcomeModal').classList.add('hidden');
+    }
+
+    function setupEventListeners() {
+      // 1. Startup Modal Form
+      document.getElementById('startupProjectForm').onsubmit = (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('startupProjectNameInput');
+        createNewProject(nameInput.value.trim() || 'My Shape Project');
+        hideWelcomeModal();
+      };
+
+      // Shape Fill Opacity Slider Listener
+      const opacitySlider = document.getElementById('shapeOpacitySlider');
+      if (opacitySlider) {
+        opacitySlider.oninput = (e) => {
+          const val = parseFloat(e.target.value);
+          const activeShape = getCurrentShape();
+          if (activeShape) {
+            activeShape.opacity = val;
+            document.getElementById('opacityValueText').textContent = `${Math.round(val * 100)}%`;
+            saveAppState();
+            render();
+          }
+        };
+      }
+
+      // Editable HEX Color Inputs
+      const fillInput = document.getElementById('selectedColorHex');
+      fillInput.oninput = (e) => {
+        let val = e.target.value.trim();
+        if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+        const activeShape = getCurrentShape();
+        if (activeShape && /^#([0-9A-F]{3}){1,2}$/i.test(val)) {
+          activeShape.fillColor = val;
+          saveAppState();
+          renderShapeTabs();
+          render();
+        }
+      };
+
+      const borderInput = document.getElementById('selectedBorderHex');
+      borderInput.oninput = (e) => {
+        let val = e.target.value.trim();
+        if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+        const activeShape = getCurrentShape();
+        if (activeShape && /^#([0-9A-F]{3}){1,2}$/i.test(val)) {
+          activeShape.borderColor = val;
+          saveAppState();
+          renderShapeTabs();
+          render();
+        }
+      };
+
+      // Load Demo Project Button
+      document.getElementById('btnLoadDemoProject').onclick = () => {
+        createNewDemoProject();
+        hideWelcomeModal();
+      };
+
+      // 2. Point Count Dropdown Change
+      document.getElementById('pointCountSelect').onchange = (e) => {
+        const entryCount = parseInt(e.target.value);
+        const targetPointCount = entryCount / 2;
+        
+        const activeShape = getCurrentShape();
+        if (!activeShape) return;
+
+        if (!activeShape.pointPool) {
+          activeShape.pointPool = activeShape.points.map(p => ({ ...p }));
+        }
+
+        activeShape.points.forEach((p, idx) => {
+          activeShape.pointPool[idx] = { ...p };
+        });
+
+        const newPts = [];
+
+        for (let i = 0; i < targetPointCount; i++) {
+          if (activeShape.points[i]) {
+            newPts.push({ ...activeShape.points[i] });
+          } else if (activeShape.pointPool[i]) {
+            newPts.push({ ...activeShape.pointPool[i] });
+          } else {
+            const defaultLabel = POINT_LABELS[i] || `P${i + 1}`;
+            const defaultCoords = [
+              { x: 2, y: 8 }, { x: 8, y: 8 }, { x: 8, y: 2 },
+              { x: 2, y: 2 }, { x: 5, y: 9 }, { x: 5, y: 1 },
+              { x: 1, y: 5 }, { x: 9, y: 5 }
+            ];
+            const newPt = {
+              label: defaultLabel,
+              x: defaultCoords[i] ? defaultCoords[i].x : 5,
+              y: defaultCoords[i] ? defaultCoords[i].y : 5
+            };
+            newPts.push(newPt);
+            activeShape.pointPool[i] = { ...newPt };
+          }
+        }
+
+        activeShape.points = newPts;
+        if (appState.selectedPointIndex >= targetPointCount) {
+          appState.selectedPointIndex = 0;
+        }
+
+        saveAppState();
+        updateUI();
+      };
+
+      // 3. Add Shape Button
+      document.getElementById('btnAddShape').onclick = () => {
+        const currentProj = getCurrentProject();
+        if (!currentProj) return;
+
+        const shapeNum = currentProj.shapes.length + 1;
+        const color = PRESET_COLORS[(shapeNum - 1) % PRESET_COLORS.length];
+        
+        const newShape = createDefaultShape(
+          `Shape ${shapeNum}`,
+          color.hex,
+          '#FFFFFF',
+          [
+            { label: 'A', x: 3 + (shapeNum % 3), y: 7 },
+            { label: 'B', x: 7, y: 7 - (shapeNum % 3) },
+            { label: 'C', x: 5, y: 3 }
+          ]
+        );
+
+        currentProj.shapes.push(newShape);
+        appState.activeShapeIndex = currentProj.shapes.length - 1;
+        appState.selectedPointIndex = 0;
+
+        saveAppState();
+        updateUI();
+      };
+
+      // Delete Current Shape
+      document.getElementById('btnDeleteCurrentShape').onclick = () => {
+        const currentProj = getCurrentProject();
+        if (!currentProj || currentProj.shapes.length <= 1) return;
+
+        currentProj.shapes.splice(appState.activeShapeIndex, 1);
+        if (appState.activeShapeIndex >= currentProj.shapes.length) {
+          appState.activeShapeIndex = currentProj.shapes.length - 1;
+        }
+        appState.selectedPointIndex = 0;
+        saveAppState();
+        updateUI();
+      };
+
+      // Shape Name Input Field Listener
+      document.getElementById('shapeNameInput').oninput = (e) => {
+        const activeShape = getCurrentShape();
+        if (activeShape) {
+          activeShape.title = e.target.value;
+          saveAppState();
+          renderShapeTabs();
+          render();
+        }
+      };
+
+      // Top Label Visibility Toggle
+      document.getElementById('topLabelToggle').onchange = (e) => {
+        appState.settings.showAllLabels = e.target.checked;
+        saveAppState();
+        render();
+      };
+
+      // Top Centroid Toggle
+      document.getElementById('topCentroidToggle').onchange = (e) => {
+        appState.settings.showCentroids = e.target.checked;
+        saveAppState();
+        render();
+      };
+
+      // Top Blend Toggle
+      document.getElementById('topBlendToggle').onchange = (e) => {
+        appState.settings.blendMode = e.target.checked;
+        saveAppState();
+        render();
+      };
+
+      // Snap to Grid Toggle
+      document.getElementById('btnToggleSnap').onclick = () => {
+        appState.settings.snapToGrid = !appState.settings.snapToGrid;
+        document.getElementById('snapStatusText').textContent = appState.settings.snapToGrid ? 'Snap: ON' : 'Snap: OFF';
+        saveAppState();
+      };
+
+      // Export Dropdown Toggle
+      const btnExportDropdown = document.getElementById('btnExportDropdown');
+      const exportMenu = document.getElementById('exportMenu');
+
+      btnExportDropdown.onclick = (e) => {
+        e.stopPropagation();
+        exportMenu.classList.toggle('hidden');
+      };
+
+      document.addEventListener('click', (e) => {
+        if (exportMenu && !exportMenu.contains(e.target)) {
+          exportMenu.classList.add('hidden');
+        }
+      });
+
+      // Export Canvas PNG
+      document.getElementById('btnExportPng').onclick = () => {
+        exportMenu.classList.add('hidden');
+        const link = document.createElement('a');
+        link.download = `${getCurrentProject()?.name || 'Shape_Plotter'}_matrix.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+
+      // Export Project JSON
+      document.getElementById('btnExportJson').onclick = () => {
+        exportMenu.classList.add('hidden');
+        const currentProj = getCurrentProject();
+        if (!currentProj) return;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentProj, null, 2));
+        const link = document.createElement('a');
+        link.download = `${currentProj.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_project.json`;
+        link.href = dataStr;
+        link.click();
+      };
+
+      // Import JSON File
+      const btnImportTrigger = document.getElementById('btnImportTrigger');
+      const importFileInput = document.getElementById('importJsonFileInput');
+
+      btnImportTrigger.onclick = () => {
+        importFileInput.click();
+      };
+
+      importFileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const importedData = JSON.parse(event.target.result);
+            
+            // Schema validation check
+            if (!importedData.shapes || !Array.isArray(importedData.shapes)) {
+              throw new Error('Invalid project file format.');
+            }
+
+            importedData.id = 'proj_imp_' + Date.now();
+            if (!importedData.name) importedData.name = 'Imported Project';
+
+            appState.projects.push(importedData);
+            appState.currentProjectId = importedData.id;
+            appState.activeShapeIndex = 0;
+            appState.selectedPointIndex = 0;
+
+            saveAppState();
+            updateUI();
+
+            const indicator = document.getElementById('saveStatusIndicator');
+            if (indicator) {
+              indicator.innerHTML = `<i class="fa-solid fa-file-circle-check"></i> Imported`;
+              indicator.className = 'text-cyan-400 flex items-center gap-1';
+              setTimeout(() => {
+                indicator.innerHTML = `<i class="fa-solid fa-check-circle"></i> Saved`;
+                indicator.className = 'text-emerald-400 flex items-center gap-1';
+              }, 2500);
+            }
+          } catch (err) {
+            const indicator = document.getElementById('saveStatusIndicator');
+            if (indicator) {
+              indicator.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Import Failed`;
+              indicator.className = 'text-rose-400 flex items-center gap-1';
+            }
+          } finally {
+            importFileInput.value = '';
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      // 4. Project Manager Modal Events
+      const mgrModal = document.getElementById('projectManagerModal');
+      document.getElementById('btnOpenProjectManager').onclick = () => {
+        renderProjectManagerList();
+        mgrModal.classList.remove('hidden');
+      };
+
+      document.getElementById('btnCloseProjectManager').onclick = () => {
+        mgrModal.classList.add('hidden');
+      };
+
+      document.getElementById('btnCreateNewProjectInManager').onclick = () => {
+        const nameInput = document.getElementById('newProjectNameInput');
+        const name = nameInput.value.trim() || 'New Geometry Project';
+        createNewProject(name);
+        nameInput.value = '';
+        renderProjectManagerList();
+      };
+
+      // Confirm Delete Modal Events
+      let projectToDeleteId = null;
+      document.getElementById('btnCancelDelete').onclick = () => {
+        document.getElementById('confirmDeleteModal').classList.add('hidden');
+      };
+
+      document.getElementById('btnConfirmDelete').onclick = () => {
+        if (projectToDeleteId) {
+          appState.projects = appState.projects.filter(p => p.id !== projectToDeleteId);
+          if (appState.currentProjectId === projectToDeleteId) {
+            if (appState.projects.length > 0) {
+              appState.currentProjectId = appState.projects[0].id;
+            } else {
+              createNewProject('Default Project');
+            }
+          }
+          saveAppState();
+          updateUI();
+          renderProjectManagerList();
+        }
+        document.getElementById('confirmDeleteModal').classList.add('hidden');
+      };
+
+      window.openDeleteConfirm = (projId, projName) => {
+        projectToDeleteId = projId;
+        document.getElementById('deleteConfirmProjectName').textContent = `Project: "${projName}"`;
+        document.getElementById('confirmDeleteModal').classList.remove('hidden');
+      };
+    }
+
+    // RENDER PROJECT MANAGER LIST
+    function renderProjectManagerList() {
+      const container = document.getElementById('projectsListContainer');
+      container.innerHTML = '';
+
+      appState.projects.forEach(proj => {
+        const isCurrent = (proj.id === appState.currentProjectId);
+
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-xl border flex items-center justify-between transition ${
+          isCurrent 
+            ? 'bg-slate-800/90 border-cyan-500/80 shadow-md' 
+            : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-center space-x-3 truncate">
+            <i class="fa-solid fa-cube text-cyan-400"></i>
+            <div>
+              <div class="text-xs font-bold text-white truncate">${proj.name}</div>
+              <div class="text-[10px] text-slate-400 font-mono-code">${proj.shapes.length} Shapes | ${proj.pointCount / 2} Points</div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1.5 shrink-0">
+            ${
+              !isCurrent ? `
+                <button onclick="switchProject('${proj.id}')" class="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[11px] font-semibold transition">
+                  Open
+                </button>
+              ` : '<span class="text-[10px] text-cyan-400 font-mono-code font-bold mr-1">ACTIVE</span>'
+            }
+            <button onclick="openEditProjectName('${proj.id}', '${proj.name}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition" title="Rename">
+              <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+            <button onclick="openDeleteConfirm('${proj.id}', '${proj.name}')" class="p-1.5 text-rose-400 hover:text-rose-300 rounded-lg hover:bg-rose-950/40 transition" title="Delete">
+              <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    window.switchProject = (projId) => {
+      appState.currentProjectId = projId;
+      appState.activeShapeIndex = 0;
+      appState.selectedPointIndex = 0;
+      saveAppState();
+      updateUI();
+      document.getElementById('projectManagerModal').classList.add('hidden');
+    };
+
+    window.openEditProjectName = (projId, currentName) => {
+      const newName = prompt('Enter new project name:', currentName);
+      if (newName && newName.trim()) {
+        const proj = appState.projects.find(p => p.id === projId);
+        if (proj) {
+          proj.name = newName.trim();
+          saveAppState();
+          updateUI();
+          renderProjectManagerList();
+        }
+      }
+    };
+
+    // CREATE DEMO MULTI-SHAPE PROJECT
+    function createNewDemoProject() {
+      const demoProj = {
+        id: 'proj_demo_' + Date.now(),
+        name: 'Color Spectrum Study',
+        pointCount: 6,
+        shapes: [
+          createDefaultShape('Shape 1', '#FF3B30', '#FFFFFF', [
+            { label: 'A', x: 2, y: 8 },
+            { label: 'B', x: 6, y: 9 },
+            { label: 'C', x: 4, y: 3 }
+          ]),
+          createDefaultShape('Shape 2', '#007AFF', '#5AC8FA', [
+            { label: 'A', x: 5, y: 7 },
+            { label: 'B', x: 9, y: 8 },
+            { label: 'C', x: 7, y: 2 }
+          ]),
+          createDefaultShape('Shape 3', '#34C759', '#FFCC00', [
+            { label: 'A', x: 3, y: 5 },
+            { label: 'B', x: 7, y: 4 },
+            { label: 'C', x: 5, y: 1 }
+          ])
+        ]
+      };
+
+      appState.projects.push(demoProj);
+      appState.currentProjectId = demoProj.id;
+      appState.activeShapeIndex = 0;
+      appState.selectedPointIndex = 0;
+
+      saveAppState();
+      updateUI();
+    }
+
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    function updateMacClock() {
+      const now = new Date();
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      const dayStr = days[now.getDay()];
+      const monthStr = months[now.getMonth()];
+      const dateNum = now.getDate();
+      
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // Regular 12-hour format
+      
+      const dateEl = document.getElementById('macClockDate');
+      const timeEl = document.getElementById('macClockTime');
+      if (dateEl) dateEl.textContent = `${dayStr} ${monthStr} ${dateNum}`;
+      if (timeEl) timeEl.textContent = `${hours}:${minutes} ${ampm}`;
+    }
+
+    window.onload = function () {
+      setupCanvas();
+      setupCanvasInteractions();
+      setupEventListeners();
+      loadAppState();
+
+      updateMacClock();
+      setInterval(updateMacClock, 1000);
+
+      // Continuous 60 FPS Render loop
+      function loop() {
+        render();
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    };
+  </script>
+</body>
+</html>
