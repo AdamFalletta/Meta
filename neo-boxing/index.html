@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEO BOXING — Motion Arcade Experience</title>
+  
+  <!-- Google Fonts for Arcade Aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- TensorFlow.js Core & Pose Detection Models -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
+
+  <!-- Custom Modular Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="w-screen h-screen relative flex items-center justify-center bg-black crt-overlay">
+
+  <!-- Hidden webcam element for MoveNet AI inference -->
+  <video id="webcam-video" class="hidden" playsinline muted></video>
+
+  <!-- Main 1080p Canvas container maintaining 16:9 Aspect Ratio -->
+  <div id="game-container" class="relative w-full h-full max-w-[1920px] max-h-[1080px] aspect-video flex items-center justify-center bg-slate-950 overflow-hidden shadow-2xl">
+    
+    <!-- Game World & Dynamic HUD Canvas -->
+    <canvas id="game-canvas" width="1920" height="1080" class="w-full h-full object-contain block bg-slate-950"></canvas>
+
+    <!-- ATTRACT MODE OVERLAY -->
+    <div id="attract-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-between p-12 z-30 transition-opacity duration-500">
+      <div class="text-center mt-8 space-y-4">
+        <p class="text-cyan-400 font-arcade text-lg tracking-[0.4em] uppercase animate-pulse">TensorFlow MoveNet Motion Arcade</p>
+        <h1 id="app-title" class="font-arcade text-7xl md:text-9xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-200 to-fuchsia-500 drop-shadow-[0_0_35px_rgba(6,182,212,0.8)]">
+          NEO BOXING
+        </h1>
+        <p class="text-slate-400 text-xl font-medium tracking-wide">Full-Body Camera Controlled Punch Target Simulator</p>
+      </div>
+
+      <div class="flex flex-col items-center gap-6">
+        <button id="btn-start-game" class="group relative px-12 py-6 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-arcade text-3xl font-black tracking-widest rounded-xl transition-all transform hover:scale-105 active:scale-95 glow-cyan cursor-pointer overflow-hidden">
+          <span class="relative z-10 flex items-center gap-4">
+            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            START BOXING SESSION
+          </span>
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        </button>
+        <p class="text-slate-500 text-sm font-arcade tracking-widest">REQUIRES WEBCAM ACCESS & DISTANCE CLEARANCE</p>
+      </div>
+
+      <!-- High Score Ticker -->
+      <div class="w-full max-w-4xl bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between backdrop-blur-lg">
+        <div class="flex items-center gap-3 text-amber-400 font-arcade text-sm">
+          <span class="inline-block w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
+          CURRENT CHAMPION
+        </div>
+        <div id="attract-top-score" class="font-arcade text-2xl font-bold text-slate-200 tracking-wider">
+          NEO — 12,450 PTS
+        </div>
+        <div class="text-xs text-slate-500 font-mono">TARGET RUSH MODE</div>
+      </div>
+    </div>
+
+    <!-- MAIN CONFIGURATION MENU OVERLAY -->
+    <div id="menu-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-xl flex flex-col justify-between p-8 md:p-12 z-30 transition-opacity duration-300">
+      
+      <!-- Top Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div>
+          <h2 class="font-arcade text-4xl font-extrabold text-cyan-400">ARCADE CONFIGURATION</h2>
+          <p class="text-slate-400 text-sm">Select game parameters before calibrating motion tracking</p>
+        </div>
+        <button id="btn-fullscreen" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade text-sm font-semibold rounded-lg border border-slate-700 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4"/></svg>
+          FULLSCREEN (1080P)
+        </button>
+      </div>
+
+      <!-- Settings Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-auto">
+        
+        <!-- Game Mode Selection -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3">
+          <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold">1. Game Mode</label>
+          <div class="space-y-2 flex-1" id="mode-selector">
+            <button data-value="RUSH" class="mode-btn option-active w-full text-left p-3 rounded-xl border border-slate-700 bg-slate-900/50 font-arcade text-sm font-bold flex flex-col transition">
+              <span>TARGET RUSH</span>
+              <span class="text-[10px] text-slate-400 font-normal">Fast-paced 60s target clearance</span>
+            </button>
+            <button data-value="COMBO" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 font-arcade text-sm font-bold flex flex-col hover:border-slate-700 transition">
+              <span>COMBO ATTACK</span>
+              <span class="text-[10px] text-slate-400 font-normal">Maintain streak, zero misses allowed</span>
+            </button>
+            <button data-value="POWER" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 font-arcade text-sm font-bold flex flex-col hover:border-slate-700 transition">
+              <span>POWER STRIKE</span>
+              <span class="text-[10px] text-slate-400 font-normal">Max velocity heavy impact tests</span>
+            </button>
+            <button data-value="DRILL" class="mode-btn w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 font-arcade text-sm font-bold flex flex-col hover:border-slate-700 transition">
+              <span>BOXING DRILL</span>
+              <span class="text-[10px] text-slate-400 font-normal">Follow punch voice sequences</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Target Count Selection -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3">
+          <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold">2. Active Target Count</label>
+          <div class="grid grid-cols-2 gap-3 my-auto" id="target-count-selector">
+            <button data-value="3" class="target-btn p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">3</button>
+            <button data-value="5" class="target-btn option-active p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">5</button>
+            <button data-value="7" class="target-btn p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">7</button>
+            <button data-value="9" class="target-btn p-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-2xl font-black transition">9</button>
+          </div>
+          <p class="text-[11px] text-slate-500 text-center font-mono">Higher target counts require wider arm reach</p>
+        </div>
+
+        <!-- Visual Theme Selection -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col gap-3">
+          <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold">3. Visual Arena Theme</label>
+          <div class="space-y-2 flex-1" id="theme-selector">
+            <button data-value="NEO_BLUE" class="theme-btn option-active w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>NEO BLUE</span>
+              <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+            </button>
+            <button data-value="REVV_RED" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>REVV RED</span>
+              <span class="w-3 h-3 rounded-full bg-red-500"></span>
+            </button>
+            <button data-value="PURPLE_VOID" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>PURPLE VOID</span>
+              <span class="w-3 h-3 rounded-full bg-fuchsia-500"></span>
+            </button>
+            <button data-value="CYBER_GREEN" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>CYBER GREEN</span>
+              <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+            </button>
+            <button data-value="GOLDEN_ARENA" class="theme-btn w-full p-2.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 font-arcade text-xs font-bold flex items-center justify-between transition">
+              <span>GOLDEN ARENA</span>
+              <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Target & Glove Color Customization Panel -->
+        <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between space-y-3">
+          <div>
+            <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold block mb-2">4. Target Color</label>
+            <div class="grid grid-cols-8 gap-1.5" id="target-color-presets">
+              <button data-color="#00f0ff" class="target-color-btn h-7 rounded-lg bg-[#00f0ff] border-2 border-white ring-2 ring-cyan-400 scale-105 transition-all cursor-pointer" title="Cyan"></button>
+              <button data-color="#0066ff" class="target-color-btn h-7 rounded-lg bg-[#0066ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Electric Blue"></button>
+              <button data-color="#ff2a2a" class="target-color-btn h-7 rounded-lg bg-[#ff2a2a] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Crimson Red"></button>
+              <button data-color="#00ff88" class="target-color-btn h-7 rounded-lg bg-[#00ff88] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Laser Green"></button>
+              <button data-color="#ffaa00" class="target-color-btn h-7 rounded-lg bg-[#ffaa00] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Solar Gold"></button>
+              <button data-color="#e024ff" class="target-color-btn h-7 rounded-lg bg-[#e024ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="Plasma Pink"></button>
+              <button data-color="#ffffff" class="target-color-btn h-7 rounded-lg bg-[#ffffff] border border-slate-700 transition-all hover:scale-105 cursor-pointer" title="White"></button>
+              <button data-color="#000000" class="target-color-btn h-7 rounded-lg bg-[#000000] border border-slate-500 transition-all hover:scale-105 cursor-pointer" title="Black"></button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="font-arcade text-xs text-cyan-400 tracking-wider uppercase font-bold block">5. Glove Colors</label>
+            
+            <!-- Left Glove Swatches -->
+            <div>
+              <div class="flex items-center justify-between text-[10px] font-arcade text-red-400 font-bold mb-1">
+                <span>LEFT GLOVE</span>
+                <span id="label-left-glove" class="text-slate-400">#ff2a2a</span>
+              </div>
+              <div class="grid grid-cols-8 gap-1.5" id="left-glove-presets">
+                <button data-color="#00f0ff" class="left-glove-btn h-6 rounded-md bg-[#00f0ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#0066ff" class="left-glove-btn h-6 rounded-md bg-[#0066ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ff2a2a" class="left-glove-btn h-6 rounded-md bg-[#ff2a2a] border-2 border-white ring-2 ring-red-500 scale-105 transition-all cursor-pointer"></button>
+                <button data-color="#00ff88" class="left-glove-btn h-6 rounded-md bg-[#00ff88] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffaa00" class="left-glove-btn h-6 rounded-md bg-[#ffaa00] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#e024ff" class="left-glove-btn h-6 rounded-md bg-[#e024ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffffff" class="left-glove-btn h-6 rounded-md bg-[#ffffff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#000000" class="left-glove-btn h-6 rounded-md bg-[#000000] border border-slate-500 transition-all hover:scale-105 cursor-pointer"></button>
+              </div>
+            </div>
+
+            <!-- Right Glove Swatches -->
+            <div>
+              <div class="flex items-center justify-between text-[10px] font-arcade text-cyan-400 font-bold mb-1">
+                <span>RIGHT GLOVE</span>
+                <span id="label-right-glove" class="text-slate-400">#00f0ff</span>
+              </div>
+              <div class="grid grid-cols-8 gap-1.5" id="right-glove-presets">
+                <button data-color="#00f0ff" class="right-glove-btn h-6 rounded-md bg-[#00f0ff] border-2 border-white ring-2 ring-cyan-400 scale-105 transition-all cursor-pointer"></button>
+                <button data-color="#0066ff" class="right-glove-btn h-6 rounded-md bg-[#0066ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ff2a2a" class="right-glove-btn h-6 rounded-md bg-[#ff2a2a] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#00ff88" class="right-glove-btn h-6 rounded-md bg-[#00ff88] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffaa00" class="right-glove-btn h-6 rounded-md bg-[#ffaa00] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#e024ff" class="right-glove-btn h-6 rounded-md bg-[#e024ff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#ffffff" class="right-glove-btn h-6 rounded-md bg-[#ffffff] border border-slate-700 transition-all hover:scale-105 cursor-pointer"></button>
+                <button data-color="#000000" class="right-glove-btn h-6 rounded-md bg-[#000000] border border-slate-500 transition-all hover:scale-105 cursor-pointer"></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-arcade">AUDIO PROFILE</span>
+              <div class="flex items-center gap-1" id="audio-profile-selector">
+                <button data-value="AMBIENT" class="audio-btn px-2.5 py-1 text-[11px] font-arcade rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer">AMBIENT</button>
+                <button data-value="REVV" class="audio-btn option-active-red px-2.5 py-1 text-[11px] font-arcade rounded border border-slate-700 font-bold cursor-pointer">REVV</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-arcade">GLOVE RADIUS (PX)</span>
+              <div class="flex items-center gap-2">
+                <button id="btn-glove-minus" class="w-7 h-7 bg-slate-800 border border-slate-700 rounded text-cyan-400 font-bold hover:bg-slate-700">-</button>
+                <span id="glove-size-display" class="font-arcade text-cyan-400 font-bold text-sm">55</span>
+                <button id="btn-glove-plus" class="w-7 h-7 bg-slate-800 border border-slate-700 rounded text-cyan-400 font-bold hover:bg-slate-700">+</button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-arcade">VOICE ANNOUNCER</span>
+              <input type="checkbox" id="chk-announcer" checked class="w-5 h-5 accent-cyan-500 rounded cursor-pointer">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+        <button id="btn-show-leaderboard" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-arcade text-sm font-bold rounded-xl transition">
+          VIEW LEADERBOARD
+        </button>
+        <button id="btn-proceed-calibration" class="px-10 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-arcade text-xl font-black rounded-xl shadow-lg transition transform hover:scale-105 glow-cyan cursor-pointer">
+          PROCEED TO CALIBRATION →
+        </button>
+      </div>
+
+    </div>
+
+    <!-- CALIBRATION OVERLAY -->
+    <div id="calibration-overlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-between p-12 z-30 transition-opacity duration-300">
+      
+      <!-- Top Instruction Banner -->
+      <div class="text-center space-y-2">
+        <span id="calib-stage-badge" class="px-4 py-1.5 bg-cyan-950 border border-cyan-500 text-cyan-300 font-arcade text-xs rounded-full uppercase tracking-widest animate-pulse">
+          STAGE 1 / 2: DISTANCE & ALIGNMENT
+        </span>
+        <h2 id="calib-status-text" class="font-arcade text-5xl font-black text-slate-100 tracking-wider">
+          STEP INTO POSITION
+        </h2>
+        <p id="calib-sub-text" class="text-slate-400 text-lg font-medium">
+          Stand back until your shoulders and extended wrists fit within the target boundary boxes.
+        </p>
+      </div>
+
+      <!-- Stage 1 Visual Guide Box -->
+      <div id="calib-stage1-container" class="relative w-[80%] h-[55%] border-2 border-dashed border-cyan-500/40 rounded-3xl flex items-center justify-between p-8 bg-slate-900/20 backdrop-blur-xs">
+        
+        <!-- Left Wrist Target Zone -->
+        <div id="left-calib-zone" class="w-36 h-36 rounded-2xl border-2 border-red-500/60 bg-red-950/20 flex flex-col items-center justify-center transition-colors">
+          <span class="font-arcade text-xs text-red-400 font-bold">LEFT WRIST</span>
+          <div class="w-4 h-4 rounded-full bg-red-500 animate-ping mt-2"></div>
+        </div>
+
+        <!-- Center Body Guide -->
+        <div class="text-center text-slate-400 font-arcade text-sm">
+          <div class="text-5xl mb-2">🧍</div>
+          EXTEND BOTH ARMS HORIZONTALLY
+        </div>
+
+        <!-- Right Wrist Target Zone -->
+        <div id="right-calib-zone" class="w-36 h-36 rounded-2xl border-2 border-cyan-500/60 bg-cyan-950/20 flex flex-col items-center justify-center transition-colors">
+          <span class="font-arcade text-xs text-cyan-400 font-bold">RIGHT WRIST</span>
+          <div class="w-4 h-4 rounded-full bg-cyan-500 animate-ping mt-2"></div>
+        </div>
+
+      </div>
+
+      <!-- Stage 2 Reach Indicator Box -->
+      <div id="calib-stage2-container" class="hidden relative w-[80%] h-[55%] border-2 border-amber-500/50 rounded-3xl flex flex-col items-center justify-between p-6 bg-slate-900/20 backdrop-blur-xs">
+        <div class="font-arcade text-amber-400 text-sm font-bold uppercase tracking-wider text-center">
+          PUNCH ALL 4 CORNER TARGETS TO MAP YOUR FULL REACH BOUNDARY
+        </div>
+        <div id="reach-progress-text" class="font-arcade text-2xl font-black text-cyan-300">
+          REACHED: 0 / 4 CORNERS
+        </div>
+      </div>
+
+      <!-- Calibration Footer Controls -->
+      <div class="flex items-center gap-6">
+        <button id="btn-cancel-calib" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 font-arcade text-sm rounded-xl">
+          CANCEL
+        </button>
+        <button id="btn-bypass-calib" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-arcade text-sm font-bold border border-cyan-500/40 rounded-xl">
+          MANUAL LOCK & PLAY
+        </button>
+      </div>
+
+    </div>
+
+    <!-- COUNTDOWN OVERLAY -->
+    <div id="countdown-overlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-xl flex flex-col items-center justify-center z-40">
+      <div id="countdown-number" class="font-arcade text-[180px] md:text-[240px] font-black text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 via-indigo-300 to-cyan-600 drop-shadow-[0_0_50px_rgba(6,182,212,0.9)] animate-bounce">
+        3
+      </div>
+      <p id="countdown-subtitle" class="font-arcade text-2xl text-cyan-400 tracking-[0.5em] uppercase font-bold">
+        GET READY
+      </p>
+    </div>
+
+    <!-- HIGH SCORE ENTRY MODAL OVERLAY -->
+    <div id="highscore-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-8 z-50">
+      <div class="bg-slate-900 border-2 border-amber-500/80 p-8 md:p-12 rounded-3xl max-w-xl w-full text-center space-y-6 glow-gold">
+        <div class="text-amber-400 font-arcade text-sm tracking-[0.4em] uppercase font-bold">NEW HIGH SCORE DETECTED</div>
+        <h2 class="font-arcade text-4xl md:text-5xl font-black text-slate-100">ENTER INITIALS</h2>
+        
+        <div id="final-score-display" class="font-arcade text-3xl font-extrabold text-cyan-400">
+          SCORE: 0
+        </div>
+
+        <!-- Interactive Arcade Initials Input Slots -->
+        <div class="flex items-center justify-center gap-4 py-4" id="initials-container">
+          <button data-slot="0" class="initial-slot w-16 h-20 bg-slate-950 border-2 border-amber-400/80 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-amber-300 scale-105 transition cursor-pointer">A</button>
+          <button data-slot="1" class="initial-slot w-16 h-20 bg-slate-950 border-2 border-slate-800 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-slate-500 transition cursor-pointer">A</button>
+          <button data-slot="2" class="initial-slot w-16 h-20 bg-slate-950 border-2 border-slate-800 rounded-xl flex items-center justify-center font-arcade text-4xl font-black text-slate-500 transition cursor-pointer">A</button>
+        </div>
+
+        <!-- Controls for letter cycling and slot navigation -->
+        <div class="flex items-center justify-center gap-3">
+          <button id="btn-initial-prev-slot" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-arcade text-xs rounded-lg border border-slate-700">◄ SLOT</button>
+          <button id="btn-initial-prev" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade text-sm font-bold rounded-lg border border-slate-700">▲ CHAR</button>
+          <button id="btn-initial-next" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade text-sm font-bold rounded-lg border border-slate-700">▼ CHAR</button>
+          <button id="btn-initial-next-slot" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-arcade text-xs rounded-lg border border-slate-700">SLOT ►</button>
+        </div>
+
+        <button id="btn-initial-confirm" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-arcade font-extrabold text-lg rounded-xl glow-gold cursor-pointer transition">
+          CONFIRM ENTRY
+        </button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD OVERLAY -->
+    <div id="leaderboard-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-between p-12 z-50">
+      <div class="text-center space-y-2">
+        <h2 class="font-arcade text-5xl font-black text-cyan-400">HALL OF FAME</h2>
+        <p class="text-slate-400 text-sm">TOP 5 CHAMPIONS</p>
+      </div>
+
+      <div class="w-full max-w-2xl bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3" id="leaderboard-list">
+        <!-- Generated dynamically -->
+      </div>
+
+      <button id="btn-close-leaderboard" class="px-10 py-4 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-arcade font-bold text-lg rounded-xl border border-slate-700">
+        RETURN TO MENU
+      </button>
+    </div>
+
+    <!-- GAME OVER SUMMARY OVERLAY -->
+    <div id="gameover-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-8 z-40">
+      <div class="max-w-2xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 md:p-12 text-center space-y-8">
+        <h2 class="font-arcade text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-300">
+          SESSION COMPLETE
+        </h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">TOTAL SCORE</span>
+            <span id="stat-final-score" class="font-arcade text-2xl font-bold text-cyan-400">0</span>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">ACCURACY</span>
+            <span id="stat-final-accuracy" class="font-arcade text-2xl font-bold text-emerald-400">0%</span>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">MAX COMBO</span>
+            <span id="stat-final-combo" class="font-arcade text-2xl font-bold text-amber-400">x0</span>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-500 font-arcade block">MAX POWER</span>
+            <span id="stat-final-power" class="font-arcade text-2xl font-bold text-red-400">0</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-6 pt-4">
+          <button id="btn-restart-game" class="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-arcade font-bold text-lg rounded-xl glow-cyan">
+            PLAY AGAIN
+          </button>
+          <button id="btn-return-menu" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-arcade font-bold text-lg rounded-xl border border-slate-700">
+            MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Entry Point Script -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
