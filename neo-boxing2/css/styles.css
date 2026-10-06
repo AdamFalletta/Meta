@@ -1,0 +1,77 @@
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background-color: #030712;
+  color: #f3f4f6;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.font-arcade {
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* Neon glow utility classes */
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.7), inset 0 0 10px rgba(6, 182, 212, 0.4);
+  text-shadow: 0 0 12px rgba(6, 182, 212, 0.9);
+}
+.glow-red {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), inset 0 0 15px rgba(239, 68, 68, 0.4);
+  text-shadow: 0 0 15px rgba(239, 68, 68, 0.9);
+}
+.glow-gold {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.7), inset 0 0 10px rgba(245, 158, 11, 0.4);
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+}
+
+/* Selected Option Active States */
+.option-active {
+  border-color: #06b6d4 !important;
+  background-color: rgba(6, 182, 212, 0.25) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+}
+
+.option-active-red {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.25) !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+/* CRT Scanline Overlay */
+.crt-overlay::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 40;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Screen Shake animation class */
+.shake {
+  animation: shake 0.25s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+  40%, 60% { transform: translate3d(8px, 0, 0); }
+}
+
+/* Custom Scrollbar for Leaderboard */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.5);
+  border-radius: 4px;
+}
