@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dot Matrix Studio HD 64x128 - Pro Signage Suite</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            matrix: {
+              bg: '#05070a',
+              panel: '#0e131f',
+              border: '#1e293b',
+              accent: '#00ff88',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0e131f; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Scanlines effect overlay */
+    .scanlines-overlay {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.45) 50%
+      );
+      background-size: 100% 4px;
+      pointer-events: none;
+    }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-hidden select-none text-slate-200">
+  <header class="h-14 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between px-4 z-20 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-amber-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+        <i class="fa-solid fa-border-all text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-sm tracking-wide text-slate-100 flex items-center gap-2">
+          DOT MATRIX STUDIO <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">64x128 PRO MAX</span>
+        </h1>
+        <p class="text-[10px] text-slate-400">High-Resolution Multi-Line & FX Signage Engine</p>
+      </div>
+    </div>
+
+    <!-- Central View Mode Tabs -->
+    <nav class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-medium">
+      <button id="nav-editor" onclick="app.setPage('editor')" class="px-3 py-1.5 rounded-md flex items-center gap-2 transition-all bg-emerald-500/20 text-emerald-400 font-semibold shadow-sm">
+        <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Studio & Builder</span>
+      </button>
+      <button id="nav-presets" onclick="app.setPage('presets')" class="px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> <span class="hidden sm:inline">Industry Sets</span>
+      </button>
+      <button id="nav-library" onclick="app.setPage('library')" class="px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-folder-open"></i> <span class="hidden sm:inline">Saved Signs</span>
+      </button>
+      <button id="nav-clock" onclick="app.setPage('clock')" class="px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-clock"></i> <span class="hidden sm:inline">Time & Weather</span>
+      </button>
+    </nav>
+
+    <!-- Right Controls -->
+    <div class="flex items-center space-x-2">
+      <!-- Resolution Toggle -->
+      <button id="res-toggle-btn" onclick="app.toggleSilkResolution()" title="Toggle Matrix Grid Size Mode" class="text-xs px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-tv text-cyan-400"></i>
+        <span id="res-badge" class="font-mono text-[11px]">128x64 Matrix</span>
+      </button>
+
+      <!-- Fullscreen Display Button -->
+      <button onclick="app.enterFullscreen()" class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition">
+        <i class="fa-solid fa-expand"></i>
+        <span>Full Screen</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 relative flex overflow-hidden">
+    
+    <!-- PAGE 1: STUDIO & ANIMATION BUILDER -->
+    <div id="page-editor" class="w-full h-full flex flex-col lg:flex-row overflow-hidden">
+      
+      <!-- Left Panel: Matrix Canvas Preview & Controls -->
+      <div class="lg:w-7/12 flex-1 flex flex-col bg-slate-950 border-r border-slate-800 p-4 overflow-y-auto">
+        <!-- Canvas Card -->
+        <div class="relative flex-1 min-h-[300px] bg-black rounded-xl border border-slate-800 shadow-2xl flex flex-col items-center justify-center p-3 overflow-hidden group">
+          
+          <!-- Virtual LED Display Frame -->
+          <div class="relative max-w-full max-h-full flex items-center justify-center bg-slate-950/80 p-2 rounded-lg border border-slate-800 shadow-inner">
+            <canvas id="matrix-canvas" class="w-full h-auto max-h-[440px] object-contain rounded bg-black cursor-pointer" onclick="app.enterFullscreen()"></canvas>
+            <div id="scanline-layer" class="scanlines-overlay absolute inset-0 rounded pointer-events-none transition-opacity duration-300 opacity-100"></div>
+          </div>
+
+          <!-- Quick Canvas Overlay Controls -->
+          <div class="absolute top-3 right-3 flex items-center space-x-2 bg-slate-900/80 backdrop-blur px-2 py-1 rounded-lg border border-slate-800 text-xs">
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
+              <input type="checkbox" id="scanline-toggle" checked onchange="app.toggleScanlines(this.checked)" class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0">
+              <span>Scanlines</span>
+            </label>
+            <span class="text-slate-700">|</span>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
+              <input type="checkbox" id="glow-toggle" onchange="app.toggleGlow(this.checked)" class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0">
+              <span>Neon Glow</span>
+            </label>
+          </div>
+
+          <!-- Playback Status Indicator -->
+          <div class="absolute bottom-3 left-3 flex items-center space-x-2 bg-slate-900/80 backdrop-blur px-3 py-1 rounded-lg border border-slate-800 text-xs text-slate-400 font-mono">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="display-info">LIVE VIEW • 128x64 HD</span>
+          </div>
+        </div>
+
+        <!-- Matrix Global Style Toolbar -->
+        <div class="mt-3 p-3 glass-panel rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Matrix Color Style</label>
+            <select id="color-preset-select" onchange="app.setColorPreset(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="emerald">Amber Neon Green</option>
+              <option value="cyberpunk">Cyberpunk Pink & Cyan</option>
+              <option value="amber">Classic Amber Orange</option>
+              <option value="ruby">Ruby Red LED</option>
+              <option value="ice">Ice Blue Matrix</option>
+              <option value="rainbow">RGB Rainbow Cycle</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Background Theme</label>
+            <select id="bg-theme-select" onchange="app.setBgTheme(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="dim">Matrix Glow (Dim)</option>
+              <option value="black">Pure Black Screen (#000)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Brightness / Intensity</label>
+            <input type="range" id="brightness-slider" min="0.3" max="1.0" step="0.05" value="0.9" oninput="app.setBrightness(this.value)" class="w-full accent-emerald-500 mt-2">
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Sign Title</label>
+            <input type="text" id="sign-title-input" value="Pro Matrix Display" onchange="app.currentSign.title = this.value" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Animation Studio & Timeline -->
+      <div class="lg:w-5/12 flex flex-col bg-slate-900 p-4 border-l border-slate-800 overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <h2 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-emerald-400"></i> Sequence Timeline
+          </h2>
+          <div class="flex space-x-2">
+            <button onclick="app.saveCurrentSign()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-md shadow flex items-center gap-1">
+              <i class="fa-solid fa-floppy-disk"></i> Save Sign
+            </button>
+            <button onclick="app.createNewSign()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-md border border-slate-700" title="New Blank Sign">
+              <i class="fa-solid fa-plus"></i> New
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Frame / Block Selector Toolbar -->
+        <div class="mt-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Add Modular Block</label>
+          <div id="animation-buttons-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <!-- Populated automatically from ANIMATION_REGISTRY config -->
+          </div>
+        </div>
+
+        <!-- Interactive Timeline Sequence List -->
+        <div class="mt-4 flex-1 flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase text-slate-400">Timeline Sequence (<span id="block-count">0</span>)</span>
+            <span class="text-[11px] text-slate-500">Order & adjust timings</span>
+          </div>
+
+          <div id="timeline-list" class="flex-1 space-y-2 overflow-y-auto pr-1 min-h-[220px]">
+            <!-- Timeline Item Blocks dynamically generated here -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAGE 2: INDUSTRY ANIMATION SET PRESETS -->
+    <div id="page-presets" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden">
+      <div class="max-w-5xl mx-auto space-y-6">
+        <div class="border-b border-slate-800 pb-4">
+          <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i> Industry Animation Preset Packs
+          </h2>
+          <p class="text-xs text-slate-400">Select a pre-configured modular animation set tailored for your business industry.</p>
+        </div>
+
+        <!-- Preset Packs Grid -->
+        <div id="industry-presets-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Dynamically populated from INDUSTRY_PRESETS config -->
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: SAVED SIGNS LIBRARY -->
+    <div id="page-library" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden">
+      <div class="max-w-5xl mx-auto space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-folder-open text-emerald-400"></i> Store Signage Library
+            </h2>
+            <p class="text-xs text-slate-400">Manage saved digital signs stored in browser storage (LocalStorage)</p>
+          </div>
+          <button onclick="app.createNewSign(); app.setPage('editor');" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg shadow-lg flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Create New Sign
+          </button>
+        </div>
+
+        <div id="signs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Dynamically populated signs -->
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: TIME & WEATHER SIGNAGE -->
+    <div id="page-clock" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden flex flex-col items-center justify-center">
+      <div class="max-w-2xl w-full glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 text-center">
+        <div class="inline-flex p-3 rounded-full bg-emerald-500/10 text-emerald-400 text-2xl mb-2">
+          <i class="fa-solid fa-cloud-sun font-black"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-100">Store Clock & Weather Station</h2>
+        <p class="text-sm text-slate-400">Display continuous time, date, and weather updates on your matrix canvas.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+            <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Location City</label>
+            <input type="text" id="weather-city-input" value="NEW YORK" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+            <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Temperature Unit</label>
+            <select id="weather-unit-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+              <option value="fahrenheit">Fahrenheit (°F)</option>
+              <option value="celsius">Celsius (°C)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-center gap-3 pt-2">
+          <button onclick="app.launchClockMode()" class="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-play"></i> Run Live Clock Mode
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FULLSCREEN DOT MATRIX DISPLAY OVERLAY -->
+  <div id="fullscreen-overlay" class="fixed inset-0 bg-black z-50 hidden flex flex-col items-center justify-center cursor-pointer select-none p-2 sm:p-6" onclick="app.exitFullscreen()">
+    <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
+      <canvas id="fullscreen-matrix-canvas" class="w-full h-full object-contain max-w-none max-h-none"></canvas>
+    </div>
+    <div id="fullscreen-scanline" class="scanlines-overlay absolute inset-0 pointer-events-none"></div>
+    <div class="absolute top-4 right-4 bg-slate-900/80 text-slate-400 px-3 py-1.5 rounded-full text-xs opacity-40 hover:opacity-100 transition pointer-events-none z-10">
+      Press ESC or Click Anywhere to Exit Fullscreen
+    </div>
+  </div>
+
+  <script>
+    // --- Font Bitmaps Definitions ---
+    const LED_FONT_STANDARD = {
+      'A': [0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
+      'B': [0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E],
+      'C': [0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E],
+      'D': [0x1C, 0x12, 0x11, 0x11, 0x11, 0x12, 0x1C],
+      'E': [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F],
+      'F': [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10],
+      'G': [0x0E, 0x11, 0x10, 0x13, 0x11, 0x11, 0x0F],
+      'H': [0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
+      'I': [0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E],
+      'J': [0x1F, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C],
+      'K': [0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11],
+      'L': [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F],
+      'M': [0x11, 0x1B, 0x15, 0x11, 0x11, 0x11, 0x11],
+      'N': [0x11, 0x11, 0x19, 0x15, 0x13, 0x11, 0x11],
+      'O': [0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E],
+      'P': [0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10],
+      'Q': [0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D],
+      'R': [0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11],
+      'S': [0x0E, 0x11, 0x10, 0x0E, 0x01, 0x11, 0x0E],
+      'T': [0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04],
+      'U': [0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E],
+      'V': [0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04],
+      'W': [0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11],
+      'X': [0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11],
+      'Y': [0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04],
+      'Z': [0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F],
+      '0': [0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E],
+      '1': [0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E],
+      '2': [0x0E, 0x11, 0x01, 0x06, 0x08, 0x10, 0x1F],
+      '3': [0x1F, 0x02, 0x04, 0x02, 0x01, 0x11, 0x0E],
+      '4': [0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02],
+      '5': [0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E],
+      '6': [0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E],
+      '7': [0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08],
+      '8': [0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E],
+      '9': [0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C],
+      ' ': [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+      ':': [0x00, 0x0C, 0x0C, 0x00, 0x0C, 0x0C, 0x00],
+      '!': [0x04, 0x04, 0x04, 0x04, 0x04, 0x00, 0x04],
+      '-': [0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00],
+      '.': [0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C],
+      '%': [0x18, 0x19, 0x02, 0x04, 0x08, 0x13, 0x03],
+      '$': [0x04, 0x0F, 0x14, 0x0E, 0x05, 0x1E, 0x04],
+      '°': [0x0C, 0x12, 0x12, 0x0C, 0x00, 0x00, 0x00],
+      '•': [0x00, 0x00, 0x0E, 0x0E, 0x0E, 0x00, 0x00]
+    };
+
+    const LED_FONT_MINI = {
+      'A': [0x2, 0x5, 0x7, 0x5, 0x5],
+      'B': [0x6, 0x5, 0x6, 0x5, 0x6],
+      'C': [0x3, 0x4, 0x4, 0x4, 0x3],
+      'D': [0x6, 0x5, 0x5, 0x5, 0x6],
+      'E': [0x7, 0x4, 0x6, 0x4, 0x7],
+      'F': [0x7, 0x4, 0x6, 0x4, 0x4],
+      'G': [0x3, 0x4, 0x5, 0x5, 0x3],
+      'H': [0x5, 0x5, 0x7, 0x5, 0x5],
+      'I': [0x7, 0x2, 0x2, 0x2, 0x7],
+      'J': [0x1, 0x1, 0x1, 0x5, 0x2],
+      'K': [0x5, 0x5, 0x6, 0x5, 0x5],
+      'L': [0x4, 0x4, 0x4, 0x4, 0x7],
+      'M': [0x5, 0x7, 0x5, 0x5, 0x5],
+      'N': [0x5, 0x7, 0x7, 0x5, 0x5],
+      'O': [0x2, 0x5, 0x5, 0x5, 0x2],
+      'P': [0x6, 0x5, 0x6, 0x4, 0x4],
+      'Q': [0x2, 0x5, 0x5, 0x3, 0x1],
+      'R': [0x6, 0x5, 0x6, 0x5, 0x5],
+      'S': [0x3, 0x4, 0x2, 0x1, 0x6],
+      'T': [0x7, 0x2, 0x2, 0x2, 0x2],
+      'U': [0x5, 0x5, 0x5, 0x5, 0x2],
+      'V': [0x5, 0x5, 0x5, 0x5, 0x2],
+      'W': [0x5, 0x5, 0x5, 0x7, 0x5],
+      'X': [0x5, 0x5, 0x2, 0x5, 0x5],
+      'Y': [0x5, 0x5, 0x2, 0x2, 0x2],
+      'Z': [0x7, 0x1, 0x2, 0x4, 0x7],
+      '0': [0x2, 0x5, 0x5, 0x5, 0x2],
+      '1': [0x2, 0x6, 0x2, 0x2, 0x7],
+      '2': [0x6, 0x1, 0x2, 0x4, 0x7],
+      '3': [0x6, 0x1, 0x2, 0x1, 0x6],
+      '4': [0x5, 0x5, 0x7, 0x1, 0x1],
+      '5': [0x7, 0x4, 0x6, 0x1, 0x6],
+      '6': [0x2, 0x4, 0x6, 0x5, 0x2],
+      '7': [0x7, 0x1, 0x2, 0x2, 0x2],
+      '8': [0x2, 0x5, 0x2, 0x5, 0x2],
+      '9': [0x2, 0x5, 0x3, 0x1, 0x2],
+      ' ': [0x0, 0x0, 0x0, 0x0, 0x0],
+      ':': [0x0, 0x2, 0x0, 0x2, 0x0],
+      '!': [0x2, 0x2, 0x2, 0x0, 0x2],
+      '-': [0x0, 0x0, 0x7, 0x0, 0x0],
+      '.': [0x0, 0x0, 0x0, 0x0, 0x2],
+      '$': [0x2, 0x7, 0x2, 0x7, 0x2],
+      '°': [0x6, 0x6, 0x0, 0x0, 0x0],
+      '•': [0x0, 0x2, 0x2, 0x0, 0x0]
+    };
+
+    const LED_FONTS = {
+      standard: { width: 5, height: 7, data: LED_FONT_STANDARD },
+      mini: { width: 3, height: 5, data: LED_FONT_MINI },
+      heavy: { width: 5, height: 7, data: LED_FONT_STANDARD, bold: true }
+    };
+
+    // Color Presets Palette Definitions
+    const COLOR_PRESETS = {
+      emerald: { main: '#00ff88', glow: 'rgba(0,255,136,0.6)', bgDim: '#002614' },
+      cyberpunk: { main: '#ff007f', secondary: '#00f0ff', glow: 'rgba(255,0,127,0.7)', bgDim: '#2b0018' },
+      amber: { main: '#ffaa00', glow: 'rgba(255,170,0,0.6)', bgDim: '#2b1c00' },
+      ruby: { main: '#ff2244', glow: 'rgba(255,34,68,0.7)', bgDim: '#2b0008' },
+      ice: { main: '#00d0ff', glow: 'rgba(0,208,255,0.6)', bgDim: '#00202b' },
+      rainbow: { main: '#00ff88', rainbow: true, glow: 'rgba(255,255,255,0.5)', bgDim: '#111827' }
+    };
+
+    const CUSTOM_COLOR_OPTIONS = [
+      { id: 'preset', label: 'Matrix Global Default' },
+      { id: '#00ff88', label: 'Neon Green' },
+      { id: '#ffcc00', label: 'Lotto Gold / Amber' },
+      { id: '#00d0ff', label: 'Cyan / Ice Blue' },
+      { id: '#ff0055', label: 'Bright Red / Crimson' },
+      { id: '#ff00ff', label: 'Neon Pink' },
+      { id: '#ffffff', label: 'Bright White' }
+    ];
+
+    const BORDER_STYLE_OPTIONS = [
+      { id: 'none', label: 'No Border' },
+      { id: 'strobe', label: 'Strobe Flash Frame' },
+      { id: 'chase', label: 'Dot Chase Frame' },
+      { id: 'double', label: 'Double Solid Line' },
+      { id: 'pulse', label: 'Pulsing Glow Box' }
+    ];
+
+    // =========================================================================
+    // MODULAR CONFIGURATIONS & ANIMATION REGISTRY
+    // =========================================================================
+
+    const ANIMATION_REGISTRY = {
+      'text_multi_line': {
+        name: 'Multi-Line Signage',
+        icon: 'fa-align-left',
+        color: 'text-emerald-400',
+        desc: 'Custom 3-line display with colors',
+        supports3Lines: true,
+        supportsText: false,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: {
+          line1: 'MEGA JACKPOT', color1: '#ffcc00',
+          line2: '$500 MILLION', color2: '#00ff88',
+          line3: 'DRAWING TONIGHT', color3: '#00d0ff',
+          motionFx: 'none',
+          borderStyle: 'chase'
+        },
+        render: (engine, block, state) => {
+          engine.renderMultiLineFX(
+            block.line1 || '', block.color1 || 'preset',
+            block.line2 || '', block.color2 || 'preset',
+            block.line3 || '', block.color3 || 'preset',
+            block.motionFx || 'none',
+            block.borderStyle || 'none',
+            state.timestamp, state.elapsed
+          );
+        }
+      },
+
+      'money_flow_up': {
+        name: 'Money Sign Flow Up',
+        icon: 'fa-sack-dollar',
+        color: 'text-amber-400',
+        desc: 'Rising $ signs for Lotto',
+        supportsText: true,
+        supports3Lines: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { 
+          text: 'JACKPOT $500M',
+          line1: 'POWERBALL', color1: '#ffcc00',
+          line2: '$500 MILLION', color2: '#00ff88',
+          line3: 'GET YOUR TICKET', color3: '#00d0ff',
+          use3Lines: false,
+          motionFx: 'none',
+          borderStyle: 'pulse'
+        },
+        render: (engine, block, state) => {
+          if (block.use3Lines) {
+            engine.renderMultiLineFX(
+              block.line1 || '', block.color1 || 'preset',
+              block.line2 || '', block.color2 || 'preset',
+              block.line3 || '', block.color3 || 'preset',
+              block.motionFx || 'none',
+              block.borderStyle || 'none',
+              state.timestamp, state.elapsed
+            );
+          } else {
+            engine.renderMoneyFlowUpFX(
+              block.text || 'JACKPOT $500M',
+              block.font || 'heavy',
+              block.size || 'medium',
+              !!block.rainbowText,
+              block.motionFx || 'none',
+              block.borderStyle || 'none',
+              state.timestamp,
+              state.elapsed
+            );
+          }
+        }
+      },
+
+      'text_scroll': {
+        name: 'Marquee Scroll',
+        icon: 'fa-text-width',
+        color: 'text-cyan-400',
+        desc: 'Scrolling banner text',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { speed: 2, text: 'WELCOME TO OUR STORE', motionFx: 'none', borderStyle: 'none' },
+        render: (engine, block, state) => {
+          const speed = block.speed || 2;
+          engine.textOffset -= speed * 0.5;
+          const font = block.font || 'heavy';
+          const size = block.size || 'medium';
+          const tw = engine.getTextWidth(block.text || '', font, size);
+          if (engine.textOffset < -tw) engine.textOffset = engine.cols;
+          
+          engine.renderTextWithFX(
+            block.text || '', 
+            Math.floor(engine.textOffset), 
+            null, 
+            state.timestamp * 0.05, 
+            font, 
+            size, 
+            block.align || 'center', 
+            !!block.rainbowText, 
+            block.motionFx || 'none', 
+            state.elapsed
+          );
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'text_flash': {
+        name: 'Flasher Text',
+        icon: 'fa-bolt',
+        color: 'text-yellow-400',
+        desc: 'Bold flashing message',
+        supportsText: true,
+        supports3Lines: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { 
+          text: 'MEGA JACKPOT', 
+          line1: 'SPECIAL ALERT', color1: '#ff0055',
+          line2: 'MEGA WINNER', color2: '#ffcc00',
+          line3: 'CHECK TICKETS', color3: '#ffffff',
+          use3Lines: false,
+          motionFx: 'none', 
+          borderStyle: 'strobe' 
+        },
+        render: (engine, block, state) => {
+          if (block.use3Lines) {
+            engine.renderMultiLineFX(
+              block.line1 || '', block.color1 || 'preset',
+              block.line2 || '', block.color2 || 'preset',
+              block.line3 || '', block.color3 || 'preset',
+              block.motionFx || 'none',
+              block.borderStyle || 'none',
+              state.timestamp, state.elapsed
+            );
+          } else {
+            if (Math.floor(state.timestamp / 300) % 2 === 0) {
+              const font = block.font || 'heavy';
+              const size = block.size || 'medium';
+              const tw = engine.getTextWidth(block.text || '', font, size);
+              const tx = Math.floor((engine.cols - tw) / 2);
+              engine.renderTextWithFX(block.text || '', tx, null, state.timestamp * 0.05, font, size, block.align || 'center', !!block.rainbowText, block.motionFx || 'none', state.elapsed);
+            }
+            engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+          }
+        }
+      },
+
+      'text_typewriter': {
+        name: 'Typewriter',
+        icon: 'fa-keyboard',
+        color: 'text-emerald-400',
+        desc: 'Character by char reveal',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { text: 'WINNER TAKES ALL', motionFx: 'none', borderStyle: 'none' },
+        render: (engine, block, state) => {
+          const font = block.font || 'heavy';
+          const size = block.size || 'medium';
+          const fullText = block.text || 'TYPEWRITER EFFECT';
+          const charsToShow = Math.min(fullText.length, Math.floor(state.elapsed * 6));
+          const currentSub = fullText.substring(0, charsToShow);
+          const tw = engine.getTextWidth(currentSub, font, size);
+          const tx = Math.max(2, Math.floor((engine.cols - tw) / 2));
+          engine.renderTextWithFX(currentSub, tx, null, state.timestamp * 0.05, font, size, block.align || 'center', !!block.rainbowText, block.motionFx || 'none', state.elapsed);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'fireworks': {
+        name: 'Fireworks Burst',
+        icon: 'fa-burst',
+        color: 'text-pink-400',
+        desc: 'HD particle explosion',
+        supportsText: true,
+        supports3Lines: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { 
+          text: 'LOTTO WINNER',
+          line1: 'CONGRATULATIONS', color1: '#ffcc00',
+          line2: 'BIG WINNER', color2: '#00ff88',
+          line3: '$1,000,000', color3: '#ff0055',
+          use3Lines: false,
+          motionFx: 'none', 
+          borderStyle: 'pulse' 
+        },
+        render: (engine, block, state) => {
+          if (block.use3Lines) {
+            engine.renderMultiLineFX(
+              block.line1 || '', block.color1 || 'preset',
+              block.line2 || '', block.color2 || 'preset',
+              block.line3 || '', block.color3 || 'preset',
+              block.motionFx || 'none',
+              block.borderStyle || 'none',
+              state.timestamp, state.elapsed
+            );
+          } else {
+            engine.updateFireworks(block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText);
+            engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+          }
+        }
+      },
+
+      'fire_fx': {
+        name: 'Fire & Flames (High)',
+        icon: 'fa-fire',
+        color: 'text-orange-500',
+        desc: 'Intense high flame simulation',
+        supportsText: true,
+        supports3Lines: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { 
+          text: 'HOT NUMBERS',
+          line1: 'ON FIRE', color1: '#ff3300',
+          line2: 'JACKPOT DRAW', color2: '#ffcc00',
+          line3: 'PLAY NOW', color3: '#ffffff',
+          use3Lines: false,
+          motionFx: 'none', 
+          borderStyle: 'strobe' 
+        },
+        render: (engine, block, state) => {
+          if (block.use3Lines) {
+            engine.renderMultiLineFX(
+              block.line1 || '', block.color1 || 'preset',
+              block.line2 || '', block.color2 || 'preset',
+              block.line3 || '', block.color3 || 'preset',
+              block.motionFx || 'none',
+              block.borderStyle || 'none',
+              state.timestamp, state.elapsed
+            );
+          } else {
+            engine.renderFireFX(block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText);
+            engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+          }
+        }
+      },
+
+      'beer_mug': {
+        name: 'Draft Beer Fill',
+        icon: 'fa-beer-mug-empty',
+        color: 'text-amber-400',
+        desc: 'Beer cup + foam cap',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { text: 'GAME DAY DRAFTS', motionFx: 'none', borderStyle: 'none' },
+        render: (engine, block, state) => {
+          engine.renderBeerMugFX(state.timestamp, block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText, block.motionFx || 'none', state.elapsed);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'coffee_mug': {
+        name: 'Star Coffee Cup',
+        icon: 'fa-mug-hot',
+        color: 'text-amber-600',
+        desc: 'Cup + star logo & lid',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { text: 'FRESH COFFEE', motionFx: 'none', borderStyle: 'none' },
+        render: (engine, block, state) => {
+          engine.renderCoffeeMugFX(state.timestamp, block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText, block.motionFx || 'none', state.elapsed);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'bubbles_fx': {
+        name: 'Rising Bubbles',
+        icon: 'fa-soap',
+        color: 'text-cyan-300',
+        desc: 'Aquatic bubble stream',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { text: 'LUCKY BUBBLES', motionFx: 'none', borderStyle: 'none' },
+        render: (engine, block, state) => {
+          engine.renderBubblesFX(state.timestamp, block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'star_burst_border': {
+        name: 'Starburst Border',
+        icon: 'fa-star',
+        color: 'text-yellow-400',
+        desc: 'Flashing star frame',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { text: 'DAILY LOTTERY', motionFx: 'none', borderStyle: 'chase' },
+        render: (engine, block, state) => {
+          engine.renderStarburstBorderFX(state.timestamp, block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'water_wave': {
+        name: 'Water Ripple',
+        icon: 'fa-water',
+        color: 'text-cyan-400',
+        desc: 'Liquid wave animation',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { text: 'OCEAN CASH', motionFx: 'none', borderStyle: 'none' },
+        render: (engine, block, state) => {
+          engine.renderWaterWave(state.timestamp, block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'pixel_burst': {
+        name: 'Pixel Burst',
+        icon: 'fa-table-cells',
+        color: 'text-purple-400',
+        desc: 'Scattered pixel storm',
+        supportsText: true,
+        supportsMotion: true,
+        supportsBorder: true,
+        defaultParams: { text: 'JACKPOT ALARM', motionFx: 'none', borderStyle: 'pulse' },
+        render: (engine, block, state) => {
+          engine.renderPixelBurst(state.timestamp, block.text, block.font || 'heavy', block.size || 'medium', !!block.rainbowText);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'neon_open': {
+        name: 'OPEN Sign',
+        icon: 'fa-store',
+        color: 'text-purple-400',
+        desc: 'Pulsing Neon Sign',
+        supportsBorder: true,
+        defaultParams: { borderStyle: 'strobe' },
+        render: (engine, block, state) => {
+          engine.renderNeonOpen(state.timestamp);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      },
+
+      'clock_view': {
+        name: 'Time & Date',
+        icon: 'fa-clock',
+        color: 'text-amber-400',
+        desc: 'Live clock banner',
+        supportsBorder: true,
+        defaultParams: { borderStyle: 'none' },
+        render: (engine, block, state) => {
+          engine.renderClockAndWeather(state.timestamp);
+          engine.renderBlockBorder(block.borderStyle || 'none', state.timestamp);
+        }
+      }
+    };
+
+    const INDUSTRY_PRESETS = [
+      {
+        id: 'lotto_sports',
+        title: 'Lotto & Sports Lounge',
+        icon: 'fa-sack-dollar',
+        color: 'text-amber-400',
+        presetColor: 'amber',
+        blocks: [
+          { 
+            type: 'money_flow_up', 
+            text: 'MEGA MILLIONS $450M', 
+            duration: 7, 
+            font: 'heavy', 
+            size: 'large',
+            motionFx: 'float',
+            borderStyle: 'pulse'
+          },
+          { 
+            type: 'text_multi_line', 
+            line1: 'NBA • LIVE 4TH', color1: '#ffcc00',
+            line2: 'LAKERS  108', color2: '#00d0ff',
+            line3: 'CELTICS 105', color3: '#00ff88',
+            motionFx: 'none',
+            borderStyle: 'chase',
+            duration: 8 
+          },
+          { 
+            type: 'text_multi_line', 
+            line1: 'POWERBALL WINNERS', color1: '#ff0055',
+            line2: '07 15 23 38 42', color2: '#ffffff',
+            line3: 'POWERBALL: 12', color3: '#ffcc00',
+            motionFx: 'pulse',
+            borderStyle: 'strobe',
+            duration: 8 
+          },
+          { 
+            type: 'fireworks', 
+            text: 'PLAY LOTTO HERE', 
+            duration: 6, 
+            font: 'heavy', 
+            size: 'large',
+            rainbowText: true,
+            borderStyle: 'double'
+          }
+        ]
+      },
+      {
+        id: 'pub_bars',
+        title: 'Pubs, Bars & Taprooms',
+        icon: 'fa-beer-mug-empty',
+        color: 'text-amber-400',
+        presetColor: 'amber',
+        blocks: [
+          { type: 'neon_open', duration: 4, borderStyle: 'strobe' },
+          { type: 'beer_mug', text: 'CRAFT BEER ON TAP', duration: 7, font: 'heavy', size: 'large', borderStyle: 'pulse' },
+          { 
+            type: 'text_multi_line', 
+            line1: 'MLB • TOP 8TH', color1: '#ffcc00',
+            line2: 'YANKEES   5', color2: '#00d0ff',
+            line3: 'RED SOX   3', color3: '#ff0055',
+            borderStyle: 'chase',
+            duration: 7 
+          },
+          { type: 'text_scroll', text: 'HAPPY HOUR 4PM - 7PM • ALL DRAFTS 20% OFF', speed: 2, duration: 8, font: 'standard', borderStyle: 'double' }
+        ]
+      },
+      {
+        id: 'cafe_bakery',
+        title: 'Café & Bakery Suite',
+        icon: 'fa-mug-hot',
+        color: 'text-amber-600',
+        presetColor: 'amber',
+        blocks: [
+          { type: 'coffee_mug', text: 'FRESH ESPRESSO', duration: 7, font: 'heavy', size: 'large', borderStyle: 'pulse' },
+          { type: 'text_typewriter', text: 'WARM CROISSANTS', duration: 6, font: 'heavy', borderStyle: 'double' },
+          { type: 'star_burst_border', text: 'MORNING SPECIAL', duration: 6, font: 'heavy', borderStyle: 'chase' },
+          { type: 'clock_view', duration: 6, borderStyle: 'none' }
+        ]
+      },
+      {
+        id: 'retail_sales',
+        title: 'Retail & Megastore Sales',
+        icon: 'fa-tag',
+        color: 'text-emerald-400',
+        presetColor: 'emerald',
+        blocks: [
+          { type: 'text_flash', text: 'MEGA CLEARANCE', duration: 5, font: 'heavy', size: 'xl', borderStyle: 'strobe' },
+          { type: 'money_flow_up', text: 'SAVE UP TO 70% OFF', duration: 7, font: 'heavy', size: 'large', borderStyle: 'pulse' },
+          { type: 'text_scroll', text: 'LIMITED STOCK • BUY 1 GET 1 FREE ON ALL APPAREL', speed: 3, duration: 8, font: 'standard', borderStyle: 'chase' },
+          { type: 'star_burst_border', text: 'VIP DISCOUNTS', duration: 6, font: 'heavy', borderStyle: 'double' }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // CORE STUDIO ENGINE
+    // =========================================================================
+
+    class DotMatrixStudio {
+      constructor() {
+        this.cols = 128;
+        this.rows = 64;
+        this.dotSize = 5;
+        this.dotGap = 1;
+
+        this.isSilkFallback = false;
+
+        this.canvas = document.getElementById('matrix-canvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        this.fsCanvas = document.getElementById('fullscreen-matrix-canvas');
+        this.fsCtx = this.fsCanvas.getContext('2d');
+
+        this.offCanvas = document.createElement('canvas');
+        this.offCtx = this.offCanvas.getContext('2d');
+
+        this.scanlines = true;
+        this.neonGlow = true;
+        this.brightness = 0.9;
+        this.dotShape = 'square';
+        this.colorPreset = 'amber';
+        this.bgTheme = 'dim'; // 'dim' or 'black'
+
+        this.particles = [];
+        this.moneyParticles = [];
+        this.fireGrid = new Array(128 * 64).fill(0);
+
+        this.currentSign = {
+          id: 'sign_' + Date.now(),
+          title: 'Pro Matrix Display',
+          blocks: JSON.parse(JSON.stringify(INDUSTRY_PRESETS[0].blocks))
+        };
+
+        this.activeBlockIndex = 0;
+        this.blockStartTime = performance.now();
+        this.textOffset = 0;
+        this.bubbles = [];
+
+        this.initUI();
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+
+        this.renderTimelineUI();
+        
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      initUI() {
+        const grid = document.getElementById('animation-buttons-grid');
+        if (grid) {
+          grid.innerHTML = Object.keys(ANIMATION_REGISTRY).map(key => {
+            const anim = ANIMATION_REGISTRY[key];
+            return `
+              <button onclick="app.addSequenceBlock('${key}')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-lg text-left transition text-xs">
+                <i class="fa-solid ${anim.icon} ${anim.color} mb-1 block"></i>
+                <span class="font-medium block text-slate-200">${anim.name}</span>
+                <span class="text-[10px] text-slate-500">${anim.desc}</span>
+              </button>
+            `;
+          }).join('');
+        }
+
+        const presetGrid = document.getElementById('industry-presets-grid');
+        if (presetGrid) {
+          presetGrid.innerHTML = INDUSTRY_PRESETS.map(p => `
+            <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4 hover:border-emerald-500/40 transition group">
+              <div>
+                <div class="flex items-center space-x-3 mb-2">
+                  <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-lg ${p.color}">
+                    <i class="fa-solid ${p.icon}"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-slate-100 text-sm group-hover:text-emerald-400 transition">${p.title}</h3>
+                    <span class="text-[10px] font-mono text-slate-400">${p.blocks.length} Configured Blocks</span>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">
+                  Includes sequence: <span class="text-slate-300 font-medium">${p.blocks.map(b => ANIMATION_REGISTRY[b.type]?.name || b.type).join(', ')}</span>
+                </p>
+              </div>
+
+              <button onclick="app.loadIndustryPreset('${p.id}')" class="w-full py-2 bg-slate-800 hover:bg-emerald-600 hover:text-slate-950 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> Load Industry Pack
+              </button>
+            </div>
+          `).join('');
+        }
+      }
+
+      loadIndustryPreset(presetId) {
+        const found = INDUSTRY_PRESETS.find(p => p.id === presetId);
+        if (!found) return;
+
+        this.currentSign = {
+          id: 'sign_' + Date.now(),
+          title: found.title,
+          blocks: JSON.parse(JSON.stringify(found.blocks))
+        };
+
+        if (found.presetColor) {
+          this.setColorPreset(found.presetColor);
+          const sel = document.getElementById('color-preset-select');
+          if (sel) sel.value = found.presetColor;
+        }
+
+        document.getElementById('sign-title-input').value = this.currentSign.title;
+        this.activeBlockIndex = 0;
+        this.blockStartTime = performance.now();
+        this.renderTimelineUI();
+        this.setPage('editor');
+        this.showToast(`Loaded ${found.title} Preset Pack`);
+      }
+
+      getSavedSigns() {
+        try {
+          const raw = localStorage.getItem('dot_matrix_signs_64_v2');
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          console.error(e);
+          return [];
+        }
+      }
+
+      resizeCanvas() {
+        if (this.isSilkFallback) {
+          this.cols = 96;
+          this.rows = 48;
+          this.dotSize = 5;
+          this.dotGap = 1;
+        } else {
+          this.cols = 128;
+          this.rows = 64;
+          this.dotSize = 5;
+          this.dotGap = 1;
+        }
+
+        const width = this.cols * (this.dotSize + this.dotGap) + this.dotGap;
+        const height = this.rows * (this.dotSize + this.dotGap) + this.dotGap;
+
+        this.canvas.width = width;
+        this.canvas.height = height;
+
+        this.offCanvas.width = this.cols;
+        this.offCanvas.height = this.rows;
+
+        this.fsCanvas.width = width;
+        this.fsCanvas.height = height;
+
+        this.fireGrid = new Array(this.cols * this.rows).fill(0);
+
+        const badge = document.getElementById('res-badge');
+        if (badge) badge.innerText = `${this.cols}x${this.rows} ${this.isSilkFallback ? '(Compact)' : 'HD Matrix'}`;
+        const info = document.getElementById('display-info');
+        if (info) info.innerText = `LIVE VIEW • ${this.cols}x${this.rows} HD`;
+      }
+
+      toggleSilkResolution() {
+        this.isSilkFallback = !this.isSilkFallback;
+        this.resizeCanvas();
+      }
+
+      setPage(pageName) {
+        ['editor', 'presets', 'library', 'clock'].forEach(p => {
+          const el = document.getElementById(`page-${p}`);
+          const nav = document.getElementById(`nav-${p}`);
+          if (p === pageName) {
+            el.classList.remove('hidden');
+            nav.classList.add('bg-emerald-500/20', 'text-emerald-400', 'font-semibold');
+            nav.classList.remove('text-slate-400');
+          } else {
+            el.classList.add('hidden');
+            nav.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'font-semibold');
+            nav.classList.add('text-slate-400');
+          }
+        });
+
+        if (pageName === 'library') {
+          this.renderLibraryGrid();
+        }
+      }
+
+      getCalculatedY(align, glyphHeight, scale) {
+        const totalHeight = glyphHeight * scale;
+        if (align === 'top') return 4;
+        if (align === 'bottom') return Math.max(0, this.rows - totalHeight - 4);
+        return Math.floor((this.rows - totalHeight) / 2);
+      }
+
+      renderTextToOffscreen(text, xOffset, yOffset = null, hueOffset = 0, fontKey = 'standard', sizeKey = 'medium', alignKey = 'center', forceRainbow = false, customColor = null, motionFx = 'none', elapsed = 0) {
+        const fontObj = LED_FONTS[fontKey] || LED_FONTS.standard;
+        const fontWidth = fontObj.width;
+        const fontHeight = fontObj.height;
+        const bitmapDict = fontObj.data;
+        const isBold = fontObj.bold || false;
+
+        let scale = 1;
+        if (sizeKey === 'large') scale = 2;
+        if (sizeKey === 'xl' || sizeKey === 'huge') scale = 3;
+        if (sizeKey === 'small') scale = 1;
+
+        let motionOffsetX = 0;
+        let motionOffsetY = 0;
+
+        if (motionFx === 'wave') {
+          motionOffsetY = Math.sin(elapsed * 6 + xOffset * 0.1) * 3;
+        } else if (motionFx === 'bounce') {
+          motionOffsetY = Math.abs(Math.sin(elapsed * 5)) * -4;
+        } else if (motionFx === 'jitter') {
+          motionOffsetX = (Math.random() - 0.5) * 2;
+          motionOffsetY = (Math.random() - 0.5) * 2;
+        } else if (motionFx === 'float') {
+          motionOffsetY = Math.sin(elapsed * 2) * 2;
+        } else if (motionFx === 'pulse_size') {
+          if (Math.sin(elapsed * 4) > 0.5) scale = Math.max(1, scale + 1);
+        }
+
+        const computedY = (yOffset !== null) ? yOffset + Math.round(motionOffsetY) : this.getCalculatedY(alignKey, fontHeight, scale) + Math.round(motionOffsetY);
+        const finalXOffset = xOffset + Math.round(motionOffsetX);
+
+        const uppercaseText = (text || '').toString().toUpperCase();
+        let currX = finalXOffset;
+
+        for (let i = 0; i < uppercaseText.length; i++) {
+          const char = uppercaseText[i];
+          const bitmap = bitmapDict[char] || bitmapDict[' '];
+
+          if (!bitmap) {
+            currX += (fontWidth + 1) * scale;
+            continue;
+          }
+
+          for (let r = 0; r < fontHeight; r++) {
+            const rowBits = bitmap[r] || 0;
+            for (let c = 0; c < fontWidth; c++) {
+              const bitShift = fontWidth - 1 - c;
+              if ((rowBits >> bitShift) & 1) {
+                for (let sy = 0; sy < scale; sy++) {
+                  for (let sx = 0; sx < scale; sx++) {
+                    const px = currX + (c * scale) + sx;
+                    const py = computedY + (r * scale) + sy;
+
+                    if (px >= 0 && px < this.cols && py >= 0 && py < this.rows) {
+                      if (customColor && customColor !== 'preset') {
+                        this.offCtx.fillStyle = customColor;
+                      } else if (forceRainbow || this.colorPreset === 'rainbow') {
+                        const hue = (px * 6 + hueOffset) % 360;
+                        this.offCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                      } else if (this.colorPreset === 'cyberpunk' && i % 2 === 0) {
+                        this.offCtx.fillStyle = COLOR_PRESETS.cyberpunk.secondary;
+                      } else {
+                        this.offCtx.fillStyle = COLOR_PRESETS[this.colorPreset].main;
+                      }
+                      this.offCtx.fillRect(px, py, 1, 1);
+
+                      if (isBold && px + 1 < this.cols) {
+                        this.offCtx.fillRect(px + 1, py, 1, 1);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          currX += (fontWidth + 1) * scale + (isBold ? 1 : 0);
+        }
+      }
+
+      getTextWidth(text, fontKey = 'standard', sizeKey = 'medium') {
+        const fontObj = LED_FONTS[fontKey] || LED_FONTS.standard;
+        const fontWidth = fontObj.width;
+        const isBold = fontObj.bold || false;
+        let scale = 1;
+        if (sizeKey === 'large') scale = 2;
+        if (sizeKey === 'xl' || sizeKey === 'huge') scale = 3;
+        if (sizeKey === 'small') scale = 1;
+
+        const str = (text || '').toString();
+        if (str.length === 0) return 0;
+
+        const charWidth = (fontWidth + 1) * scale + (isBold ? 1 : 0);
+        return (str.length * charWidth) - (1 * scale);
+      }
+
+      renderTextWithFX(text, xOffset, yOffset, hueOffset, fontKey, sizeKey, alignKey, isRainbow, textFx = 'none', elapsed = 0) {
+        if (!text) return;
+        this.renderTextToOffscreen(text, xOffset, yOffset, hueOffset, fontKey, sizeKey, alignKey, isRainbow, null, textFx, elapsed);
+      }
+
+      // --- RENDER DOT MATRIX BORDER STYLES ---
+      renderBlockBorder(borderStyle, timestamp) {
+        if (!borderStyle || borderStyle === 'none') return;
+
+        const maxCol = this.cols - 1;
+        const maxRow = this.rows - 1;
+
+        if (borderStyle === 'double') {
+          this.offCtx.fillStyle = COLOR_PRESETS[this.colorPreset].main;
+          // Outer box
+          for (let x = 0; x < this.cols; x++) {
+            this.offCtx.fillRect(x, 0, 1, 1);
+            this.offCtx.fillRect(x, maxRow, 1, 1);
+          }
+          for (let y = 0; y < this.rows; y++) {
+            this.offCtx.fillRect(0, y, 1, 1);
+            this.offCtx.fillRect(maxCol, y, 1, 1);
+          }
+          // Inner box
+          for (let x = 2; x < this.cols - 2; x++) {
+            this.offCtx.fillRect(x, 2, 1, 1);
+            this.offCtx.fillRect(x, maxRow - 2, 1, 1);
+          }
+          for (let y = 2; y < this.rows - 2; y++) {
+            this.offCtx.fillRect(2, y, 1, 1);
+            this.offCtx.fillRect(maxCol - 2, y, 1, 1);
+          }
+        } else if (borderStyle === 'strobe') {
+          const flash = Math.floor(timestamp / 200) % 2 === 0;
+          this.offCtx.fillStyle = flash ? '#ff0055' : '#00ff88';
+          for (let x = 0; x < this.cols; x += 2) {
+            this.offCtx.fillRect(x, 0, 1, 1);
+            this.offCtx.fillRect(x, maxRow, 1, 1);
+          }
+          for (let y = 0; y < this.rows; y += 2) {
+            this.offCtx.fillRect(0, y, 1, 1);
+            this.offCtx.fillRect(maxCol, y, 1, 1);
+          }
+        } else if (borderStyle === 'chase') {
+          const step = Math.floor(timestamp / 80) % (this.cols * 2 + this.rows * 2);
+          this.offCtx.fillStyle = '#ffaa00';
+          // Draw full faint border
+          for (let x = 0; x < this.cols; x++) {
+            this.offCtx.fillStyle = 'rgba(255,170,0,0.2)';
+            this.offCtx.fillRect(x, 0, 1, 1);
+            this.offCtx.fillRect(x, maxRow, 1, 1);
+          }
+          for (let y = 0; y < this.rows; y++) {
+            this.offCtx.fillStyle = 'rgba(255,170,0,0.2)';
+            this.offCtx.fillRect(0, y, 1, 1);
+            this.offCtx.fillRect(maxCol, y, 1, 1);
+          }
+          // Moving bright LED dot on border
+          this.offCtx.fillStyle = '#ffffff';
+          let curX = 0, curY = 0;
+          if (step < this.cols) { curX = step; curY = 0; }
+          else if (step < this.cols + this.rows) { curX = maxCol; curY = step - this.cols; }
+          else if (step < this.cols * 2 + this.rows) { curX = maxCol - (step - this.cols - this.rows); curY = maxRow; }
+          else { curX = 0; curY = maxRow - (step - this.cols * 2 - this.rows); }
+          this.offCtx.fillRect(curX, curY, 2, 2);
+        } else if (borderStyle === 'pulse') {
+          const intensity = (Math.sin(timestamp * 0.006) + 1) / 2;
+          const r = Math.floor(intensity * 255);
+          const g = Math.floor(intensity * 200 + 55);
+          this.offCtx.fillStyle = `rgb(${r}, ${g}, 255)`;
+          for (let x = 0; x < this.cols; x++) {
+            this.offCtx.fillRect(x, 0, 1, 1);
+            this.offCtx.fillRect(x, maxRow, 1, 1);
+          }
+          for (let y = 0; y < this.rows; y++) {
+            this.offCtx.fillRect(0, y, 1, 1);
+            this.offCtx.fillRect(maxCol, y, 1, 1);
+          }
+        }
+      }
+
+      // --- 3-LINE MULTI-LINE SIGNAGE ---
+      renderMultiLineFX(l1, c1, l2, c2, l3, c3, motionFx, borderStyle, timestamp, elapsed) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        // Header dividers
+        this.offCtx.fillStyle = '#1e293b';
+        this.offCtx.fillRect(0, 0, this.cols, 1);
+        this.offCtx.fillRect(0, 20, this.cols, 1);
+        this.offCtx.fillRect(0, 42, this.cols, 1);
+        this.offCtx.fillRect(0, this.rows - 1, this.cols, 1);
+
+        const tw1 = this.getTextWidth(l1, 'heavy', 'medium');
+        const x1 = Math.max(2, Math.floor((this.cols - tw1) / 2));
+        this.renderTextToOffscreen(l1, x1, 6, timestamp * 0.05, 'heavy', 'medium', 'top', false, c1, motionFx, elapsed);
+
+        const tw2 = this.getTextWidth(l2, 'heavy', 'medium');
+        const x2 = Math.max(2, Math.floor((this.cols - tw2) / 2));
+        this.renderTextToOffscreen(l2, x2, 26, timestamp * 0.05, 'heavy', 'medium', 'top', false, c2, motionFx, elapsed);
+
+        const tw3 = this.getTextWidth(l3, 'heavy', 'medium');
+        const x3 = Math.max(2, Math.floor((this.cols - tw3) / 2));
+        this.renderTextToOffscreen(l3, x3, 48, timestamp * 0.05, 'heavy', 'medium', 'top', false, c3, motionFx, elapsed);
+
+        this.renderBlockBorder(borderStyle, timestamp);
+      }
+
+      // --- MONEY FLOW UP ANIMATION ---
+      renderMoneyFlowUpFX(textOverlay, font = 'heavy', size = 'medium', isRainbow = false, motionFx = 'none', borderStyle = 'none', timestamp, elapsed) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        if (this.moneyParticles.length < 40) {
+          this.moneyParticles.push({
+            x: Math.floor(Math.random() * (this.cols - 6)),
+            y: this.rows + Math.random() * 12,
+            speed: Math.random() * 0.7 + 0.3,
+            gold: Math.random() > 0.3,
+            wobble: Math.random() * Math.PI * 2
+          });
+        }
+
+        for (let i = this.moneyParticles.length - 1; i >= 0; i--) {
+          const p = this.moneyParticles[i];
+          p.y -= p.speed;
+          p.wobble += 0.04;
+          const px = Math.floor(p.x + Math.sin(p.wobble) * 2);
+
+          if (p.y < -10) {
+            this.moneyParticles.splice(i, 1);
+            continue;
+          }
+
+          const color = p.gold ? '#ffaa00' : '#00ff88';
+          this.renderTextToOffscreen('$', px, Math.floor(p.y), timestamp * 0.1, 'mini', 'small', 'top', false, color, 'none', 0);
+        }
+
+        if (textOverlay) {
+          const tw = this.getTextWidth(textOverlay, font, size);
+          const tx = Math.floor((this.cols - tw) / 2);
+          const ty = Math.floor((this.rows - 16) / 2);
+
+          this.offCtx.fillStyle = 'rgba(5, 7, 10, 0.9)';
+          this.offCtx.fillRect(Math.max(0, tx - 6), ty - 4, tw + 12, 20);
+          this.offCtx.fillStyle = '#ffaa00';
+          this.offCtx.fillRect(Math.max(0, tx - 6), ty - 4, tw + 12, 1);
+          this.offCtx.fillRect(Math.max(0, tx - 6), ty + 16, tw + 12, 1);
+
+          this.renderTextToOffscreen(textOverlay, tx, ty, timestamp * 0.1, font, size, 'center', isRainbow, '#ffffff', motionFx, elapsed);
+        }
+
+        this.renderBlockBorder(borderStyle, timestamp);
+      }
+
+      // --- FIREWORKS ---
+      updateFireworks(textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false, motionFx = 'none', borderStyle = 'none', timestamp = 0, elapsed = 0) {
+        this.offCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        if (Math.random() < 0.22 || this.particles.length === 0) {
+          const rx = Math.floor(Math.random() * (this.cols - 20)) + 10;
+          const ry = Math.floor(Math.random() * (this.rows - 20)) + 10;
+          const count = 45;
+          const hue = Math.floor(Math.random() * 360);
+
+          for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 2.5 + 0.4;
+            this.particles.push({
+              x: rx, y: ry,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              life: 1.0,
+              decay: Math.random() * 0.035 + 0.015,
+              hue: hue
+            });
+          }
+        }
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.025;
+          p.life -= p.decay;
+
+          if (p.life <= 0 || p.x < 0 || p.x >= this.cols || p.y < 0 || p.y >= this.rows) {
+            this.particles.splice(i, 1);
+            continue;
+          }
+
+          this.offCtx.fillStyle = `hsl(${p.hue}, 100%, ${Math.floor(p.life * 70 + 30)}%)`;
+          this.offCtx.fillRect(Math.floor(p.x), Math.floor(p.y), 1, 1);
+        }
+
+        if (textOverlay) {
+          const tw = this.getTextWidth(textOverlay, font, size);
+          const tx = Math.floor((this.cols - tw) / 2);
+          this.renderTextToOffscreen(textOverlay, tx, null, performance.now() * 0.1, font, size, 'center', isRainbow, null, motionFx, elapsed);
+        }
+      }
+
+      // --- HIGHER, INTENSE FIRE FX ---
+      renderFireFX(textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false, motionFx = 'none', borderStyle = 'none', timestamp = 0, elapsed = 0) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        // Multiple spark ignition rows at the bottom for higher flames reaching up to 50 rows high
+        for (let x = 0; x < this.cols; x++) {
+          this.fireGrid[(this.rows - 1) * this.cols + x] = Math.random() > 0.2 ? 255 : 0;
+          if (Math.random() > 0.5) {
+            this.fireGrid[(this.rows - 2) * this.cols + x] = Math.random() > 0.3 ? 240 : 0;
+          }
+        }
+
+        for (let y = 0; y < this.rows - 1; y++) {
+          for (let x = 0; x < this.cols; x++) {
+            const idx = y * this.cols + x;
+            const belowIdx = (y + 1) * this.cols + x;
+            const decay = Math.floor(Math.random() * 16); // Lower decay = higher flame reach
+            const val = Math.max(0, (this.fireGrid[belowIdx] || 0) - decay);
+            this.fireGrid[idx] = val;
+
+            if (val > 8) {
+              const r = val;
+              const g = Math.floor(val * 0.5);
+              const b = Math.floor(val * 0.08);
+              this.offCtx.fillStyle = `rgb(${r},${g},${b})`;
+              this.offCtx.fillRect(x, y, 1, 1);
+            }
+          }
+        }
+
+        if (textOverlay) {
+          const tw = this.getTextWidth(textOverlay, font, size);
+          const tx = Math.floor((this.cols - tw) / 2);
+          this.renderTextToOffscreen(textOverlay, tx, null, performance.now() * 0.1, font, size, 'center', isRainbow, null, motionFx, elapsed);
+        }
+      }
+
+      renderBeerMugFX(time, textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false, textFx = 'none', blockElapsed = 0) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        const mugWidth = 26;
+        const mugHeight = 32;
+        const mugX = 10;
+        const mugY = Math.floor((this.rows - mugHeight) / 2);
+
+        this.offCtx.fillStyle = '#00d0ff';
+        this.offCtx.fillRect(mugX, mugY, mugWidth, 1);
+        this.offCtx.fillRect(mugX, mugY + mugHeight, mugWidth, 1);
+        this.offCtx.fillRect(mugX, mugY, 1, mugHeight);
+        this.offCtx.fillRect(mugX + mugWidth, mugY, 1, mugHeight);
+
+        this.offCtx.fillRect(mugX - 5, mugY + 6, 5, 1);
+        this.offCtx.fillRect(mugX - 5, mugY + mugHeight - 6, 5, 1);
+        this.offCtx.fillRect(mugX - 5, mugY + 6, 1, mugHeight - 12);
+
+        const cycleDuration = 6.0;
+        const cycleTime = blockElapsed % cycleDuration;
+
+        let fillLevel = cycleTime < 3.0 ? (cycleTime / 3.0) : 1.0;
+        let showFoam = cycleTime >= 3.0;
+
+        const liquidHeight = Math.floor((mugHeight - 2) * fillLevel);
+        const liquidTop = mugY + mugHeight - 1 - liquidHeight;
+
+        if (liquidHeight > 0) {
+          this.offCtx.fillStyle = '#ffaa00';
+          this.offCtx.fillRect(mugX + 1, liquidTop, mugWidth - 1, liquidHeight);
+
+          for (let i = 0; i < 6; i++) {
+            const bx = mugX + 2 + Math.floor((time * 0.02 + i * 4) % (mugWidth - 3));
+            const by = liquidTop + Math.floor((time * 0.03 + i * 6) % Math.max(1, liquidHeight));
+            if (by < mugY + mugHeight - 1 && by >= liquidTop) {
+              this.offCtx.fillStyle = '#ffffaa';
+              this.offCtx.fillRect(bx, by, 1, 1);
+            }
+          }
+        }
+
+        if (showFoam) {
+          const foamThickness = 4;
+          this.offCtx.fillStyle = '#ffffff';
+          const wave = Math.floor(Math.sin(time * 0.008) * 1);
+          this.offCtx.fillRect(mugX + 1, mugY - 2, mugWidth - 1, foamThickness + wave);
+        }
+
+        const overlayText = textOverlay || 'ICE COLD BEER';
+        const startX = mugX + mugWidth + 6;
+        const availableWidth = this.cols - startX;
+        const tw = this.getTextWidth(overlayText, font, size);
+        const textX = startX + Math.max(0, Math.floor((availableWidth - tw) / 2));
+
+        this.renderTextWithFX(overlayText, textX, null, time * 0.1, font, size, 'center', isRainbow, textFx, blockElapsed);
+      }
+
+      // --- FIXED COFFEE MUG WITH STAR LOGO & LID ON TOP ---
+      renderCoffeeMugFX(time, textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false, textFx = 'none', blockElapsed = 0) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        const mugTopWidth = 22;
+        const mugBottomWidth = 14;
+        const mugHeight = 28;
+        const mugX = 12;
+        const mugY = Math.floor((this.rows - mugHeight) / 2) + 6;
+
+        // Coffee Lid on Top
+        this.offCtx.fillStyle = '#cbd5e1';
+        this.offCtx.fillRect(mugX - 2, mugY - 3, mugTopWidth + 4, 2);
+        this.offCtx.fillRect(mugX + 4, mugY - 5, mugTopWidth - 8, 2); // Sipper cap bump
+
+        // Mug Body & Coffee Fill
+        for (let y = 0; y < mugHeight; y++) {
+          const progress = y / (mugHeight - 1);
+          const currentWidth = Math.round(mugTopWidth - progress * (mugTopWidth - mugBottomWidth));
+          const currentX = Math.round(mugX + (mugTopWidth - currentWidth) / 2);
+
+          this.offCtx.fillStyle = '#f8fafc'; // Ceramic cup white
+          this.offCtx.fillRect(currentX, mugY + y, currentWidth, 1);
+
+          if (y >= 9 && y <= 20) {
+            this.offCtx.fillStyle = '#b45309'; // Coffee brown
+            this.offCtx.fillRect(currentX, mugY + y, currentWidth, 1);
+          }
+        }
+
+        // Green Star Logo on Mug
+        const logoY = mugY + 13;
+        const logoX = mugX + Math.floor(mugTopWidth / 2);
+        this.offCtx.fillStyle = '#059669'; // Green circle emblem
+        this.offCtx.fillRect(logoX - 3, logoY - 2, 7, 7);
+
+        // White Star Details inside logo
+        this.offCtx.fillStyle = '#ffffff';
+        this.offCtx.fillRect(logoX, logoY - 2, 1, 5);
+        this.offCtx.fillRect(logoX - 2, logoY, 5, 1);
+        this.offCtx.fillRect(logoX - 1, logoY - 1, 3, 1);
+        this.offCtx.fillRect(logoX - 1, logoY + 1, 3, 1);
+
+        // Rising Steam
+        const steamColumns = [mugX + 4, mugX + 11, mugX + 18];
+        for (let i = 0; i < steamColumns.length; i++) {
+          const sx = steamColumns[i];
+          for (let sy = mugY - 6; sy >= 2; sy--) {
+            const wave = Math.sin((sy * 0.35) - (time * 0.008) + i * 1.5) * 2;
+            const px = Math.floor(sx + wave);
+            const alpha = (sy / (mugY - 2));
+            if (Math.random() < alpha) {
+              this.offCtx.fillStyle = `rgba(230, 230, 240, ${alpha.toFixed(2)})`;
+              this.offCtx.fillRect(px, sy, 1, 1);
+            }
+          }
+        }
+
+        const overlayText = textOverlay || 'FRESH STAR COFFEE';
+        const startX = mugX + mugTopWidth + 8;
+        const availableWidth = this.cols - startX;
+        const tw = this.getTextWidth(overlayText, font, size);
+        const textX = startX + Math.max(0, Math.floor((availableWidth - tw) / 2));
+
+        this.renderTextWithFX(overlayText, textX, null, time * 0.1, font, size, 'center', isRainbow, textFx, blockElapsed);
+      }
+
+      renderBubblesFX(time, textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        if (this.bubbles.length < 30) {
+          this.bubbles.push({
+            x: Math.floor(Math.random() * this.cols),
+            y: this.rows + Math.random() * 5,
+            speed: Math.random() * 0.5 + 0.2,
+            size: Math.random() > 0.5 ? 2 : 1,
+            wobble: Math.random() * Math.PI * 2
+          });
+        }
+
+        for (let i = this.bubbles.length - 1; i >= 0; i--) {
+          const b = this.bubbles[i];
+          b.y -= b.speed;
+          b.wobble += 0.05;
+          const wx = Math.floor(b.x + Math.sin(b.wobble) * 1.5);
+
+          if (b.y < -5) {
+            this.bubbles.splice(i, 1);
+            continue;
+          }
+
+          this.offCtx.fillStyle = 'rgba(56, 189, 248, 0.8)';
+          this.offCtx.fillRect(wx, Math.floor(b.y), b.size, b.size);
+        }
+
+        if (textOverlay) {
+          const tw = this.getTextWidth(textOverlay, font, size);
+          const tx = Math.floor((this.cols - tw) / 2);
+          this.renderTextToOffscreen(textOverlay, tx, null, time * 0.1, font, size, 'center', isRainbow);
+        }
+      }
+
+      renderStarburstBorderFX(time, textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        const step = Math.floor(time / 100) % 4;
+        this.offCtx.fillStyle = step % 2 === 0 ? '#facc15' : '#f43f5e';
+
+        for (let x = 0; x < this.cols; x += 3) {
+          if ((x / 3 + step) % 2 === 0) {
+            this.offCtx.fillRect(x, 0, 2, 2);
+            this.offCtx.fillRect(x, this.rows - 2, 2, 2);
+          }
+        }
+        for (let y = 0; y < this.rows; y += 3) {
+          if ((y / 3 + step) % 2 === 0) {
+            this.offCtx.fillRect(0, y, 2, 2);
+            this.offCtx.fillRect(this.cols - 2, y, 2, 2);
+          }
+        }
+
+        if (textOverlay) {
+          const tw = this.getTextWidth(textOverlay, font, size);
+          const tx = Math.floor((this.cols - tw) / 2);
+          this.renderTextToOffscreen(textOverlay, tx, null, time * 0.1, font, size, 'center', isRainbow);
+        }
+      }
+
+      renderWaterWave(time, textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        this.offCtx.fillStyle = '#0284c7';
+        for (let x = 0; x < this.cols; x++) {
+          const waveHeight = Math.floor(this.rows - 16 + Math.sin(x * 0.15 + time * 0.005) * 5);
+          this.offCtx.fillRect(x, waveHeight, 1, this.rows - waveHeight);
+        }
+
+        if (textOverlay) {
+          const tw = this.getTextWidth(textOverlay, font, size);
+          const tx = Math.floor((this.cols - tw) / 2);
+          this.renderTextToOffscreen(textOverlay, tx, null, time * 0.1, font, size, 'center', isRainbow);
+        }
+      }
+
+      renderPixelBurst(time, textOverlay = '', font = 'heavy', size = 'medium', isRainbow = false) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        const count = 60;
+        for (let i = 0; i < count; i++) {
+          const px = (Math.floor(time * 0.1) + i * 17) % this.cols;
+          const py = (Math.floor(time * 0.05) + i * 11) % this.rows;
+          this.offCtx.fillStyle = `hsl(${(i * 25 + time * 0.1) % 360}, 100%, 60%)`;
+          this.offCtx.fillRect(px, py, 1, 1);
+        }
+
+        if (textOverlay) {
+          const tw = this.getTextWidth(textOverlay, font, size);
+          const tx = Math.floor((this.cols - tw) / 2);
+          this.renderTextToOffscreen(textOverlay, tx, null, time * 0.1, font, size, 'center', isRainbow);
+        }
+      }
+
+      renderNeonOpen(time) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        const borderFlash = Math.floor(time / 400) % 2 === 0;
+        this.offCtx.fillStyle = borderFlash ? '#00f0ff' : '#003344';
+
+        for (let x = 2; x < this.cols - 2; x++) {
+          this.offCtx.fillRect(x, 2, 1, 2);
+          this.offCtx.fillRect(x, this.rows - 4, 1, 2);
+        }
+        for (let y = 2; y < this.rows - 2; y++) {
+          this.offCtx.fillRect(2, y, 2, 1);
+          this.offCtx.fillRect(this.cols - 4, y, 2, 1);
+        }
+
+        const openText = 'OPEN';
+        const tw = this.getTextWidth(openText, 'heavy', 'large');
+        const tx = Math.floor((this.cols - tw) / 2);
+        this.renderTextToOffscreen(openText, tx, null, time * 0.1, 'heavy', 'large', 'center', false);
+      }
+
+      renderClockAndWeather(time) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        const now = new Date();
+        const hrs = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const secs = String(now.getSeconds()).padStart(2, '0');
+        const timeStr = `${hrs}:${mins}:${secs}`;
+
+        const tw = this.getTextWidth(timeStr, 'heavy', 'large');
+        const tx = Math.floor((this.cols - tw) / 2);
+
+        this.renderTextToOffscreen(timeStr, tx, 10, 0, 'heavy', 'large', 'top', false);
+
+        const city = (document.getElementById('weather-city-input')?.value || 'NEW YORK').toUpperCase();
+        const unit = document.getElementById('weather-unit-select')?.value === 'celsius' ? '21°C' : '70°F';
+        const weatherStr = `${city} • ${unit} SUNNY`;
+
+        const tw2 = this.getTextWidth(weatherStr, 'standard', 'medium');
+        const tx2 = Math.floor((this.cols - tw2) / 2);
+
+        this.renderTextToOffscreen(weatherStr, tx2, 42, 0, 'standard', 'medium', 'top', false);
+      }
+
+      // Master Config-Driven Animation Loop
+      loop(timestamp) {
+        this.offCtx.fillStyle = '#000000';
+        this.offCtx.fillRect(0, 0, this.cols, this.rows);
+
+        if (!this.currentSign.blocks || this.currentSign.blocks.length === 0) {
+          this.renderTextToOffscreen('NO SEQUENCE BLOCKS', 10, null, 0, 'standard', 'medium', 'center');
+        } else {
+          const activeBlock = this.currentSign.blocks[this.activeBlockIndex] || this.currentSign.blocks[0];
+          const elapsed = (timestamp - this.blockStartTime) / 1000;
+
+          if (elapsed >= (activeBlock.duration || 5)) {
+            this.activeBlockIndex = (this.activeBlockIndex + 1) % this.currentSign.blocks.length;
+            this.blockStartTime = timestamp;
+            this.textOffset = this.cols;
+          }
+
+          const animDef = ANIMATION_REGISTRY[activeBlock.type];
+          if (animDef && typeof animDef.render === 'function') {
+            animDef.render(this, activeBlock, { timestamp, elapsed });
+          } else {
+            this.renderTextToOffscreen('MODULAR DISPLAY', 10, null, 0, 'standard', 'medium', 'center');
+          }
+        }
+
+        this.drawGridToCanvas(this.ctx, this.canvas.width, this.canvas.height);
+        
+        if (!document.getElementById('fullscreen-overlay').classList.contains('hidden')) {
+          this.drawGridToCanvas(this.fsCtx, this.fsCanvas.width, this.fsCanvas.height);
+        }
+
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      drawGridToCanvas(targetCtx, canvasWidth, canvasHeight) {
+        if (this.bgTheme === 'black') {
+          targetCtx.fillStyle = '#000000';
+        } else {
+          targetCtx.fillStyle = COLOR_PRESETS[this.colorPreset].bgDim || '#05070a';
+        }
+        targetCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        const cellW = canvasWidth / this.cols;
+        const cellH = canvasHeight / this.rows;
+
+        const offData = this.offCtx.getImageData(0, 0, this.cols, this.rows).data;
+
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            const idx = (r * this.cols + c) * 4;
+            const red = offData[idx];
+            const green = offData[idx + 1];
+            const blue = offData[idx + 2];
+            const alpha = offData[idx + 3];
+
+            const x = c * cellW;
+            const y = r * cellH;
+            const sizeW = cellW - this.dotGap;
+            const sizeH = cellH - this.dotGap;
+
+            if (alpha > 0 && (red > 0 || green > 0 || blue > 0)) {
+              targetCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${this.brightness})`;
+
+              if (this.neonGlow) {
+                targetCtx.shadowColor = `rgb(${red}, ${green}, ${blue})`;
+                targetCtx.shadowBlur = 4;
+              } else {
+                targetCtx.shadowBlur = 0;
+              }
+
+              if (this.dotShape === 'circle') {
+                targetCtx.beginPath();
+                targetCtx.arc(x + sizeW / 2, y + sizeH / 2, Math.min(sizeW, sizeH) / 2, 0, Math.PI * 2);
+                targetCtx.fill();
+              } else {
+                targetCtx.fillRect(x, y, sizeW, sizeH);
+              }
+            } else {
+              targetCtx.shadowBlur = 0;
+              targetCtx.fillStyle = this.bgTheme === 'black' ? 'rgba(10, 10, 10, 0.4)' : 'rgba(255, 255, 255, 0.025)';
+              if (this.dotShape === 'circle') {
+                targetCtx.beginPath();
+                targetCtx.arc(x + sizeW / 2, y + sizeH / 2, Math.min(sizeW, sizeH) / 2, 0, Math.PI * 2);
+                targetCtx.fill();
+              } else {
+                targetCtx.fillRect(x, y, sizeW, sizeH);
+              }
+            }
+          }
+        }
+      }
+
+      renderTimelineUI() {
+        const list = document.getElementById('timeline-list');
+        const countSpan = document.getElementById('block-count');
+        if (!list) return;
+
+        countSpan.innerText = this.currentSign.blocks.length;
+        list.innerHTML = '';
+
+        this.currentSign.blocks.forEach((block, idx) => {
+          const div = document.createElement('div');
+          div.className = `p-3 rounded-xl border transition flex flex-col gap-2 ${
+            idx === this.activeBlockIndex 
+              ? 'bg-slate-800/90 border-emerald-500/50 shadow-md' 
+              : 'bg-slate-950/70 border-slate-800'
+          }`;
+
+          const animDef = ANIMATION_REGISTRY[block.type] || {};
+
+          div.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-mono text-emerald-400">${idx + 1}</span>
+                <i class="fa-solid ${animDef.icon || 'fa-cube'} ${animDef.color || 'text-slate-400'}"></i> ${animDef.name || block.type}
+              </span>
+              <div class="flex items-center space-x-1">
+                <button onclick="app.moveBlock(${idx}, -1)" class="p-1 text-slate-400 hover:text-slate-100 text-xs"><i class="fa-solid fa-arrow-up"></i></button>
+                <button onclick="app.moveBlock(${idx}, 1)" class="p-1 text-slate-400 hover:text-slate-100 text-xs"><i class="fa-solid fa-arrow-down"></i></button>
+                <button onclick="app.removeBlock('${block.id}')" class="p-1 text-rose-400 hover:text-rose-300 text-xs ml-1"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+
+            ${animDef.supports3Lines ? `
+              <div class="space-y-2 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 text-[10px]">
+                  <span class="text-slate-400 font-bold uppercase">Display Mode</span>
+                  <label class="flex items-center gap-1.5 cursor-pointer text-emerald-400">
+                    <input type="checkbox" ${block.use3Lines ? 'checked' : ''} onchange="app.updateBlockOption('${block.id}', 'use3Lines', this.checked)" class="rounded bg-slate-800 border-slate-700 text-emerald-500">
+                    <span>Use 3-Line Layout</span>
+                  </label>
+                </div>
+                
+                <div class="${block.use3Lines ? 'block' : 'hidden'} space-y-2">
+                  <div class="grid grid-cols-12 gap-2 items-center">
+                    <span class="col-span-2 text-[10px] text-slate-400 font-semibold">Line 1:</span>
+                    <input type="text" value="${block.line1 || ''}" onchange="app.updateBlockOption('${block.id}', 'line1', this.value)" placeholder="Line 1 Text" class="col-span-6 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+                    <select onchange="app.updateBlockOption('${block.id}', 'color1', this.value)" class="col-span-4 bg-slate-950 border border-slate-700 rounded px-1 py-1 text-xs text-slate-200">
+                      ${CUSTOM_COLOR_OPTIONS.map(c => `<option value="${c.id}" ${block.color1 === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div class="grid grid-cols-12 gap-2 items-center">
+                    <span class="col-span-2 text-[10px] text-slate-400 font-semibold">Line 2:</span>
+                    <input type="text" value="${block.line2 || ''}" onchange="app.updateBlockOption('${block.id}', 'line2', this.value)" placeholder="Line 2 Text" class="col-span-6 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+                    <select onchange="app.updateBlockOption('${block.id}', 'color2', this.value)" class="col-span-4 bg-slate-950 border border-slate-700 rounded px-1 py-1 text-xs text-slate-200">
+                      ${CUSTOM_COLOR_OPTIONS.map(c => `<option value="${c.id}" ${block.color2 === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div class="grid grid-cols-12 gap-2 items-center">
+                    <span class="col-span-2 text-[10px] text-slate-400 font-semibold">Line 3:</span>
+                    <input type="text" value="${block.line3 || ''}" onchange="app.updateBlockOption('${block.id}', 'line3', this.value)" placeholder="Line 3 Text" class="col-span-6 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+                    <select onchange="app.updateBlockOption('${block.id}', 'color3', this.value)" class="col-span-4 bg-slate-950 border border-slate-700 rounded px-1 py-1 text-xs text-slate-200">
+                      ${CUSTOM_COLOR_OPTIONS.map(c => `<option value="${c.id}" ${block.color3 === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
+            ${animDef.supportsText && (!block.use3Lines) ? `
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-0.5">Display Message</label>
+                <input type="text" value="${block.text || ''}" onchange="app.updateBlockText('${block.id}', this.value)" placeholder="Enter Text" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+                <div>
+                  <label class="block text-slate-500 mb-0.5">Font Style</label>
+                  <select onchange="app.updateBlockOption('${block.id}', 'font', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                    <option value="heavy" ${block.font === 'heavy' || !block.font ? 'selected' : ''}>Bold Heavy</option>
+                    <option value="standard" ${block.font === 'standard' ? 'selected' : ''}>Standard 5x7</option>
+                    <option value="mini" ${block.font === 'mini' ? 'selected' : ''}>Mini 3x5</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-slate-500 mb-0.5">Font Size</label>
+                  <select onchange="app.updateBlockOption('${block.id}', 'size', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                    <option value="medium" ${block.size === 'medium' || !block.size ? 'selected' : ''}>Medium (1x)</option>
+                    <option value="large" ${block.size === 'large' ? 'selected' : ''}>Large (2x)</option>
+                    <option value="xl" ${block.size === 'xl' ? 'selected' : ''}>XL / Huge (3x)</option>
+                    <option value="small" ${block.size === 'small' ? 'selected' : ''}>Small</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-slate-500 mb-0.5">Text FX</label>
+                  <select onchange="app.updateBlockOption('${block.id}', 'textFx', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                    <option value="none" ${!block.textFx || block.textFx === 'none' ? 'selected' : ''}>None</option>
+                    <option value="fade" ${block.textFx === 'fade' ? 'selected' : ''}>Fade In/Out</option>
+                    <option value="blink" ${block.textFx === 'blink' ? 'selected' : ''}>Blink Flash</option>
+                    <option value="wave" ${block.textFx === 'wave' ? 'selected' : ''}>Wave Motion</option>
+                    <option value="remove_letters" ${block.textFx === 'remove_letters' ? 'selected' : ''}>Remove 1-by-1</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center pt-3">
+                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                    <input type="checkbox" ${block.rainbowText ? 'checked' : ''} onchange="app.updateBlockOption('${block.id}', 'rainbowText', this.checked)" class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0">
+                    <span>Rainbow</span>
+                  </label>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Universal Motion FX & Border Style Selector for ALL Blocks -->
+            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80 text-[11px]">
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-0.5">Motion FX</label>
+                <select onchange="app.updateBlockOption('${block.id}', 'motionFx', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-slate-200 text-xs">
+                  <option value="none" ${block.motionFx === 'none' || !block.motionFx ? 'selected' : ''}>None (Static)</option>
+                  <option value="wave" ${block.motionFx === 'wave' ? 'selected' : ''}>Wave Float</option>
+                  <option value="bounce" ${block.motionFx === 'bounce' ? 'selected' : ''}>Bounce Step</option>
+                  <option value="jitter" ${block.motionFx === 'jitter' ? 'selected' : ''}>Jitter Shaker</option>
+                  <option value="float" ${block.motionFx === 'float' ? 'selected' : ''}>Smooth Float</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-0.5">Dot Matrix Border</label>
+                <select onchange="app.updateBlockOption('${block.id}', 'borderStyle', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-slate-200 text-xs">
+                  ${BORDER_STYLE_OPTIONS.map(bo => `<option value="${bo.id}" ${block.borderStyle === bo.id ? 'selected' : ''}>${bo.label}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/50">
+              <label class="flex items-center gap-2">
+                <span>Duration (s):</span>
+                <input type="number" min="1" max="60" value="${block.duration || 5}" onchange="app.updateBlockDuration('${block.id}', this.value)" class="w-14 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200 focus:outline-none text-center">
+              </label>
+
+              ${block.type === 'text_scroll' ? `
+                <label class="flex items-center gap-1">
+                  <span>Speed:</span>
+                  <input type="number" min="1" max="5" value="${block.speed || 2}" onchange="app.updateBlockSpeed('${block.id}', this.value)" class="w-10 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200 focus:outline-none text-center">
+                </label>
+              ` : ''}
+            </div>
+          `;
+
+          list.appendChild(div);
+        });
+      }
+
+      addSequenceBlock(type) {
+        const animDef = ANIMATION_REGISTRY[type];
+        const defaults = animDef ? animDef.defaultParams : {};
+
+        const newBlock = {
+          id: 'b_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          type: type,
+          text: defaults.text !== undefined ? defaults.text : 'NEW MESSAGE',
+          line1: defaults.line1 || 'LINE 1',
+          line2: defaults.line2 || 'LINE 2',
+          line3: defaults.line3 || 'LINE 3',
+          color1: defaults.color1 || 'preset',
+          color2: defaults.color2 || 'preset',
+          color3: defaults.color3 || 'preset',
+          use3Lines: defaults.use3Lines || false,
+          motionFx: defaults.motionFx || 'none',
+          borderStyle: defaults.borderStyle || 'none',
+          duration: 6,
+          speed: defaults.speed || 2,
+          font: 'heavy',
+          size: 'large',
+          align: 'center'
+        };
+
+        this.currentSign.blocks.push(newBlock);
+        this.renderTimelineUI();
+      }
+
+      removeBlock(id) {
+        this.currentSign.blocks = this.currentSign.blocks.filter(b => b.id !== id);
+        this.activeBlockIndex = 0;
+        this.renderTimelineUI();
+      }
+
+      moveBlock(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= this.currentSign.blocks.length) return;
+        const temp = this.currentSign.blocks[index];
+        this.currentSign.blocks[index] = this.currentSign.blocks[newIndex];
+        this.currentSign.blocks[newIndex] = temp;
+        this.renderTimelineUI();
+      }
+
+      updateBlockText(id, val) {
+        const b = this.currentSign.blocks.find(x => x.id === id);
+        if (b) b.text = val;
+      }
+
+      updateBlockOption(id, key, val) {
+        const b = this.currentSign.blocks.find(x => x.id === id);
+        if (b) b[key] = val;
+      }
+
+      updateBlockDuration(id, val) {
+        const b = this.currentSign.blocks.find(x => x.id === id);
+        if (b) b.duration = parseFloat(val) || 5;
+      }
+
+      updateBlockSpeed(id, val) {
+        const b = this.currentSign.blocks.find(x => x.id === id);
+        if (b) b.speed = parseInt(val) || 2;
+      }
+
+      saveCurrentSign() {
+        const signs = this.getSavedSigns();
+        const existingIdx = signs.findIndex(s => s.id === this.currentSign.id);
+
+        if (existingIdx >= 0) {
+          signs[existingIdx] = this.currentSign;
+        } else {
+          signs.push(this.currentSign);
+        }
+
+        localStorage.setItem('dot_matrix_signs_64_v2', JSON.stringify(signs));
+        this.showToast('Sign saved to LocalStorage!');
+      }
+
+      loadSign(id) {
+        const signs = this.getSavedSigns();
+        const found = signs.find(s => s.id === id);
+        if (found) {
+          this.currentSign = JSON.parse(JSON.stringify(found));
+          document.getElementById('sign-title-input').value = this.currentSign.title;
+          this.activeBlockIndex = 0;
+          this.renderTimelineUI();
+          this.setPage('editor');
+          this.showToast(`Loaded "${this.currentSign.title}"`);
+        }
+      }
+
+      deleteSign(id) {
+        let signs = this.getSavedSigns();
+        signs = signs.filter(s => s.id !== id);
+        localStorage.setItem('dot_matrix_signs_64_v2', JSON.stringify(signs));
+        this.renderLibraryGrid();
+        this.showToast('Sign deleted.');
+      }
+
+      createNewSign() {
+        this.currentSign = {
+          id: 'sign_' + Date.now(),
+          title: 'New Pro Matrix Sign',
+          blocks: [
+            { 
+              id: 'b1', 
+              type: 'money_flow_up', 
+              text: 'MEGA LOTTO $250M', 
+              duration: 8, 
+              font: 'heavy', 
+              size: 'large',
+              motionFx: 'float',
+              borderStyle: 'chase'
+            }
+          ]
+        };
+        document.getElementById('sign-title-input').value = this.currentSign.title;
+        this.activeBlockIndex = 0;
+        this.renderTimelineUI();
+      }
+
+      renderLibraryGrid() {
+        const grid = document.getElementById('signs-grid');
+        if (!grid) return;
+
+        const signs = this.getSavedSigns();
+        if (signs.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full text-center py-12 glass-panel rounded-2xl">
+              <i class="fa-solid fa-folder-open text-4xl text-slate-600 mb-3 block"></i>
+              <p class="text-slate-400 font-medium">No saved 64x128 Pro displays found in LocalStorage.</p>
+              <button onclick="app.createNewSign(); app.setPage('editor');" class="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg">
+                Create First Sign
+              </button>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = signs.map(s => `
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4 hover:border-emerald-500/40 transition">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-bold text-slate-100 text-sm">${s.title || 'Untitled Sign'}</h3>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${s.blocks.length} Blocks</span>
+              </div>
+              <p class="text-xs text-slate-400 truncate">
+                ${s.blocks.map(b => b.text || b.line1 || b.type).join(' • ')}
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+              <button onclick="app.loadSign('${s.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square"></i> Open in Editor
+              </button>
+              <button onclick="app.deleteSign('${s.id}')" class="px-2 py-1.5 text-rose-400 hover:text-rose-300 text-xs hover:bg-rose-500/10 rounded-lg">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      toggleScanlines(val) {
+        this.scanlines = val;
+        document.getElementById('scanline-layer').style.opacity = val ? '1' : '0';
+        document.getElementById('fullscreen-scanline').style.opacity = val ? '1' : '0';
+      }
+
+      toggleGlow(val) {
+        this.neonGlow = val;
+      }
+
+      setColorPreset(presetKey) {
+        if (COLOR_PRESETS[presetKey]) {
+          this.colorPreset = presetKey;
+        }
+      }
+
+      setBgTheme(theme) {
+        this.bgTheme = theme;
+      }
+
+      setDotShape(shape) {
+        this.dotShape = shape;
+      }
+
+      setBrightness(val) {
+        this.brightness = parseFloat(val) || 0.9;
+      }
+
+      launchClockMode() {
+        this.currentSign = {
+          id: 'clock_sign',
+          title: 'Store Clock & Weather',
+          blocks: [{ id: 'cb1', type: 'clock_view', duration: 999999, borderStyle: 'pulse' }]
+        };
+        this.activeBlockIndex = 0;
+        this.blockStartTime = performance.now();
+        this.setPage('editor');
+        this.enterFullscreen();
+      }
+
+      enterFullscreen() {
+        const fsOverlay = document.getElementById('fullscreen-overlay');
+        fsOverlay.classList.remove('hidden');
+
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      }
+
+      exitFullscreen() {
+        const fsOverlay = document.getElementById('fullscreen-overlay');
+        fsOverlay.classList.add('hidden');
+
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+
+      showToast(msg) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-5 right-5 bg-emerald-500 text-slate-950 px-4 py-2.5 rounded-xl font-bold text-xs shadow-xl z-50 transition transform translate-y-0';
+        toast.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> ${msg}`;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(10px)';
+          setTimeout(() => toast.remove(), 300);
+        }, 2500);
+      }
+    }
+
+    let app = null;
+    window.addEventListener('DOMContentLoaded', () => {
+      app = new DotMatrixStudio();
+    });
+  </script>
+</body>
+</html>
