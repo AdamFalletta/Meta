@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dot Matrix Studio HD - 256x128 True RGB Buffer Converter</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            matrix: {
+              bg: '#05070c',
+              panel: 'rgba(15, 23, 42, 0.85)',
+              amber: '#ffaa00',
+              cyan: '#00f0ff',
+              green: '#00ff66',
+              purple: '#b026ff'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    .pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-input {
+      background: rgba(2, 6, 23, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .glass-input:focus {
+      border-color: #00f0ff;
+      outline: none;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-[#05070c] text-slate-200 font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-cyan-500 selection:text-black">
+
+  <!-- TOP NAV HEADER -->
+  <header class="w-full h-16 border-b border-slate-800/80 glass-panel sticky top-0 z-40 px-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-600 via-amber-500 to-purple-600 p-[1px] flex items-center justify-center shadow-lg shadow-cyan-900/30">
+        <div class="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center">
+          <i class="fa-solid fa-bolt text-cyan-400"></i>
+        </div>
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-wider text-white flex items-center gap-2">
+          DOT MATRIX STUDIO <span class="text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50">256x128 TRUE RGB PRO</span>
+        </h1>
+        <p class="text-[11px] text-slate-400">Raw Unfiltered 24-Bit RGB Base64 Buffer Exporter</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div id="statusIndicator" class="text-xs px-3 py-1 rounded-full bg-slate-900 text-slate-400 border border-slate-800 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ready (True RGB)
+      </div>
+      <button id="btnShowCode" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 shadow-md shadow-cyan-500/20 transition flex items-center gap-2">
+        <i class="fa-solid fa-code text-slate-950"></i> EXPORT CODE & REGISTRY
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE GRID -->
+  <main class="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1920px] mx-auto w-full">
+
+    <!-- LEFT SIDEBAR: CONTROLS & PARAMS (4 Cols) -->
+    <section class="lg:col-span-4 flex flex-col gap-4">
+      
+      <!-- ASSET IDENTIFIER -->
+      <div class="glass-panel p-4 rounded-xl space-y-2">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-signature text-cyan-400"></i> Asset Identifier
+        </h2>
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 block mb-1">Function & Registry Name</label>
+          <input type="text" id="txtAssetName" value="haunted_ghost_scene" class="glass-input w-full rounded-lg px-2.5 py-1.5 text-xs text-white" placeholder="e.g. haunted_ghost_scene">
+          <p class="text-[10px] text-slate-500 mt-1">Generates <span id="lblFunctionPreview" class="text-cyan-400 font-mono">renderHauntedGhostSceneFX</span> and <span id="lblKeyPreview" class="text-purple-400 font-mono">'haunted_ghost_scene'</span> registry key.</p>
+        </div>
+      </div>
+
+      <!-- DROPZONE -->
+      <div class="glass-panel p-4 rounded-xl">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-file-arrow-up text-cyan-400"></i> Media Source Upload
+        </h2>
+        
+        <div id="dropzone" class="border-2 border-dashed border-slate-700/80 hover:border-cyan-500/70 rounded-xl p-4 text-center cursor-pointer bg-slate-950/40 hover:bg-cyan-950/10 transition group">
+          <input type="file" id="fileInput" accept="image/*,video/*" class="hidden">
+          <div class="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center mx-auto mb-2 text-slate-400 group-hover:text-cyan-400 group-hover:scale-110 transition">
+            <i class="fa-solid fa-photo-film text-base"></i>
+          </div>
+          <p class="text-xs font-semibold text-slate-300">Drag & Drop Image or Video</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Supports MP4, WEBM, MOV, PNG, JPG, GIF</p>
+        </div>
+      </div>
+
+      <!-- VIDEO CONTROLS & EXTRACTION -->
+      <div id="panelVideoControls" class="glass-panel p-4 rounded-xl space-y-3 hidden">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+          <i class="fa-solid fa-film text-amber-400"></i> Video Frame Extractor
+        </h2>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[10px] font-medium text-slate-400 block mb-1">Sampling FPS</label>
+            <select id="selVideoFps" class="glass-input w-full rounded-lg px-2 py-1 text-xs text-slate-200">
+              <option value="10">10 FPS (Ultra Compact)</option>
+              <option value="15" selected>15 FPS (Standard DMD)</option>
+              <option value="20">20 FPS (Fluid)</option>
+              <option value="30">30 FPS (High Density)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-medium text-slate-400 block mb-1">Max Frames Limit</label>
+            <select id="selMaxFrames" class="glass-input w-full rounded-lg px-2 py-1 text-xs text-slate-200">
+              <option value="15">15 Frames (~1s)</option>
+              <option value="30" selected>30 Frames (~2s)</option>
+              <option value="60">60 Frames (~4s)</option>
+              <option value="120">120 Frames (~8s)</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="btnExtractVideo" class="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs rounded-lg shadow-md transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-scissors"></i> Extract True RGB Video Frames
+        </button>
+
+        <div class="pt-2 border-t border-slate-800/80 space-y-2">
+          <div class="flex items-center justify-between text-[10px] text-slate-400">
+            <span id="lblPlaybackStatus">Playback: Stopped</span>
+            <span id="lblFrameCounter">Frame 0 / 0</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnPlayVideo" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-cyan-400 border border-slate-700">
+              <i class="fa-solid fa-play"></i>
+            </button>
+            <input type="range" id="rngVideoScrubber" min="0" max="0" value="0" class="flex-1 accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+          </div>
+        </div>
+      </div>
+
+      <!-- PALETTE & DITHERING -->
+      <div class="glass-panel p-4 rounded-xl space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-palette text-amber-400"></i> Color & Dithering Engine
+        </h2>
+
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 block mb-1">Color Palette Mapping</label>
+          <select id="selPaletteMode" class="glass-input w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+            <option value="full" selected>Full RGB True Color (Unfiltered)</option>
+            <option value="halloween">Spooky Halloween Glow (Red / Orange / Purple)</option>
+            <option value="amber">Classic Pinball Amber / Gold</option>
+            <option value="neon">Cyber Neon (Cyan / Magenta)</option>
+            <option value="mono">Monochromatic B&W</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-medium text-slate-400 block mb-1">Dithering Algorithm</label>
+          <select id="selDitherMode" class="glass-input w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+            <option value="none" selected>None (Pass-Through / Direct Threshold)</option>
+            <option value="atkinson">Atkinson Dithering (Retro Mac Style)</option>
+            <option value="floyd">Floyd-Steinberg Error Diffusion</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PRE-PROCESSING FILTERS (TRUE RGB NEUTRAL DEFAULTS) -->
+      <div class="glass-panel p-4 rounded-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-purple-400"></i> Pre-Processing Filters
+          </h2>
+          <button id="btnResetFilters" class="text-[10px] text-cyan-400 hover:text-cyan-300 underline">Reset to True RGB</button>
+        </div>
+
+        <!-- Brightness -->
+        <div>
+          <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+            <span>Brightness</span>
+            <span id="valBrightness">1.00</span>
+          </div>
+          <input type="range" id="rngBrightness" min="0.2" max="2.5" step="0.05" value="1.0" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+        </div>
+
+        <!-- Contrast -->
+        <div>
+          <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+            <span>Contrast</span>
+            <span id="valContrast">1.00</span>
+          </div>
+          <input type="range" id="rngContrast" min="0.2" max="3.0" step="0.05" value="1.0" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+        </div>
+
+        <!-- Alpha Cutoff -->
+        <div>
+          <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+            <span>Alpha Cutoff Threshold</span>
+            <span id="valAlphaCutoff">0</span>
+          </div>
+          <input type="range" id="rngAlphaCutoff" min="0" max="255" step="1" value="0" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT MAIN WORKSPACE: CANVAS PREVIEWS & SAMPLES (8 Cols) -->
+    <section class="lg:col-span-8 flex flex-col gap-4">
+      
+      <!-- PREVIEW PANEL -->
+      <div class="glass-panel p-5 rounded-xl flex-1 flex flex-col min-h-[520px]">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/80">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-display text-green-400"></i>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200">
+              Live 256x128 Matrix Display Preview (True RGB Canvas)
+            </h2>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+              <input type="checkbox" id="chkShowGrid" checked class="rounded border-slate-700 text-cyan-500 focus:ring-0">
+              <span>LED Grid Overlay</span>
+            </label>
+            <span class="text-slate-700">|</span>
+            <span id="lblActivePixels" class="text-xs font-mono text-cyan-400 bg-cyan-950/60 px-2.5 py-0.5 rounded border border-cyan-800/50">Frames: 1 | Active Dots: 0</span>
+          </div>
+        </div>
+
+        <!-- CANVAS WORKSPACE VIEWPORT -->
+        <div class="flex-1 flex flex-col items-center justify-center gap-6 bg-slate-950/90 rounded-xl p-4 border border-slate-800/60 relative overflow-hidden">
+          
+          <div class="w-full flex flex-col items-center gap-3">
+            <div class="relative border-2 border-slate-800 rounded-lg p-1 bg-black shadow-2xl shadow-cyan-950/30 max-w-full overflow-hidden">
+              <canvas id="canvasRender" width="256" height="128" class="w-[640px] h-[320px] max-w-full pixelated block rounded bg-black"></canvas>
+              <div id="gridOverlay" class="absolute inset-1 pointer-events-none rounded opacity-30 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:2.5px_2.5px]"></div>
+            </div>
+          </div>
+
+          <!-- Media Source Info -->
+          <div class="flex items-center gap-4 bg-slate-900/60 px-4 py-2 rounded-lg border border-slate-800/60">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Loaded Source:</span>
+            <div class="flex items-center gap-2">
+              <img id="imgSource" class="w-12 h-6 object-contain hidden border border-slate-800 bg-black rounded">
+              <video id="videoSource" class="w-16 h-8 object-contain hidden border border-slate-800 bg-black rounded" muted playsinline></video>
+              <span id="imgPlaceholder" class="text-[10px] text-slate-500">Default Preset Loaded</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Presets Bar -->
+        <div id="presetsBar" class="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto">
+          <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1 shrink-0 mr-1">
+            <i class="fa-solid fa-ghost text-amber-400"></i> Sample Presets:
+          </span>
+          <button data-preset="pumpkin" class="btnPresetItem px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 transition shrink-0">
+            🎃 True RGB Pumpkin
+          </button>
+          <button data-preset="spider" class="btnPresetItem px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 transition shrink-0">
+            🕷️ Creepy Spider
+          </button>
+          <button data-preset="cat" class="btnPresetItem px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 transition shrink-0">
+            🐈 Black Cat
+          </button>
+          <button data-preset="bat" class="btnPresetItem px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 transition shrink-0">
+            🦇 Flying Bat
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- CODE OUTPUT MODAL -->
+  <div id="modalCode" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="glass-panel w-full max-w-5xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-cyan-950 border border-cyan-800 flex items-center justify-center text-cyan-400">
+            <i class="fa-solid fa-code text-sm"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Generated True RGB Buffer Engine Code</h3>
+            <p class="text-[11px] text-slate-400">Pure 24-bit RGB Base64 compact buffer array format without color conversion or filtering</p>
+          </div>
+        </div>
+        <button id="btnCloseModal" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 flex-1 overflow-y-auto space-y-6">
+        
+        <!-- Code Block 1: Class Render Method -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-semibold text-cyan-400 flex items-center gap-2">
+              <i class="fa-regular fa-file-code text-amber-400"></i> 1. Class Render Method (<span id="lblFunctionName" class="font-mono">renderMethod</span>)
+            </span>
+            <button id="btnCopyRender" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 border border-slate-700 transition">
+              <i class="fa-regular fa-copy"></i> Copy Render Method
+            </button>
+          </div>
+          <pre class="bg-slate-950 border border-slate-800/90 rounded-xl p-4 text-xs font-mono text-slate-200 overflow-x-auto max-h-60 leading-relaxed"><code id="codeBlockRender">// Code generating...</code></pre>
+        </div>
+
+        <!-- Code Block 2: Registry Entry -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-semibold text-purple-400 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-purple-400"></i> 2. ANIMATION_REGISTRY Entry
+            </span>
+            <button id="btnCopyRegistry" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-purple-300 border border-slate-700 transition">
+              <i class="fa-regular fa-copy"></i> Copy Registry Entry
+            </button>
+          </div>
+          <pre class="bg-slate-950 border border-slate-800/90 rounded-xl p-4 text-xs font-mono text-purple-200 overflow-x-auto max-h-40 leading-relaxed"><code id="codeBlockRegistry">// Registry entry generating...</code></pre>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
+        <span class="text-[11px] text-slate-500">True RGB Base64 Stream • 60 FPS ImageData Blitter</span>
+        <button id="btnCopyAllCode" class="px-5 py-2 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-copy"></i> Copy Both Blocks
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <canvas id="canvasOffscreen" width="256" height="128" class="hidden"></canvas>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 px-4 py-2.5 rounded-xl bg-slate-900 border border-cyan-500/50 text-cyan-300 text-xs font-semibold shadow-2xl flex items-center gap-2 transform translate-y-10 opacity-0 transition duration-300 pointer-events-none z-50">
+    <i class="fa-solid fa-circle-check text-cyan-400"></i>
+    <span id="toastMsg">Code copied to clipboard!</span>
+  </div>
+
+  <!-- LOGIC ENGINE -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const COLS = 256;
+      const ROWS = 128;
+
+      // DOM Elements
+      const fileInput = document.getElementById('fileInput');
+      const dropzone = document.getElementById('dropzone');
+      const imgSource = document.getElementById('imgSource');
+      const videoSource = document.getElementById('videoSource');
+      const imgPlaceholder = document.getElementById('imgPlaceholder');
+      const canvasRender = document.getElementById('canvasRender');
+      const canvasOffscreen = document.getElementById('canvasOffscreen');
+      const ctxRender = canvasRender.getContext('2d');
+      const ctxOffscreen = canvasOffscreen.getContext('2d', { willReadFrequently: true });
+
+      const txtAssetName = document.getElementById('txtAssetName');
+      const lblFunctionPreview = document.getElementById('lblFunctionPreview');
+      const lblKeyPreview = document.getElementById('lblKeyPreview');
+
+      const panelVideoControls = document.getElementById('panelVideoControls');
+      const selVideoFps = document.getElementById('selVideoFps');
+      const selMaxFrames = document.getElementById('selMaxFrames');
+      const btnExtractVideo = document.getElementById('btnExtractVideo');
+      const btnPlayVideo = document.getElementById('btnPlayVideo');
+      const rngVideoScrubber = document.getElementById('rngVideoScrubber');
+      const lblPlaybackStatus = document.getElementById('lblPlaybackStatus');
+      const lblFrameCounter = document.getElementById('lblFrameCounter');
+
+      const selPaletteMode = document.getElementById('selPaletteMode');
+      const selDitherMode = document.getElementById('selDitherMode');
+      const rngBrightness = document.getElementById('rngBrightness');
+      const rngContrast = document.getElementById('rngContrast');
+      const rngAlphaCutoff = document.getElementById('rngAlphaCutoff');
+      const valBrightness = document.getElementById('valBrightness');
+      const valContrast = document.getElementById('valContrast');
+      const valAlphaCutoff = document.getElementById('valAlphaCutoff');
+      const btnResetFilters = document.getElementById('btnResetFilters');
+
+      const chkShowGrid = document.getElementById('chkShowGrid');
+      const gridOverlay = document.getElementById('gridOverlay');
+      const lblActivePixels = document.getElementById('lblActivePixels');
+      const statusIndicator = document.getElementById('statusIndicator');
+
+      const btnShowCode = document.getElementById('btnShowCode');
+      const modalCode = document.getElementById('modalCode');
+      const btnCloseModal = document.getElementById('btnCloseModal');
+      const btnCopyRender = document.getElementById('btnCopyRender');
+      const btnCopyRegistry = document.getElementById('btnCopyRegistry');
+      const btnCopyAllCode = document.getElementById('btnCopyAllCode');
+      const codeBlockRender = document.getElementById('codeBlockRender');
+      const codeBlockRegistry = document.getElementById('codeBlockRegistry');
+      const lblFunctionName = document.getElementById('lblFunctionName');
+
+      const presetButtons = document.querySelectorAll('.btnPresetItem');
+
+      let isVideoSource = false;
+      let extractedFramesData = []; 
+      let playbackInterval = null;
+      let currentPreviewFrameIdx = 0;
+      let isProcessing = false;
+
+      // Reset Filters to True RGB Neutral
+      function resetFiltersToTrueRGB() {
+        selPaletteMode.value = 'full';
+        selDitherMode.value = 'none';
+        rngBrightness.value = 1.0;
+        rngContrast.value = 1.0;
+        rngAlphaCutoff.value = 0;
+        valBrightness.textContent = '1.00';
+        valContrast.textContent = '1.00';
+        valAlphaCutoff.textContent = '0';
+        reprocessCurrentMedia();
+      }
+      btnResetFilters.addEventListener('click', resetFiltersToTrueRGB);
+
+      // Update Naming Previews
+      txtAssetName.addEventListener('input', updateNamingPreviews);
+      function updateNamingPreviews() {
+        const raw = txtAssetName.value.trim() || 'custom_scene';
+        const fn = 'render' + raw.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('') + 'FX';
+        const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        lblFunctionPreview.textContent = fn;
+        lblKeyPreview.textContent = `'${key}'`;
+        lblFunctionName.textContent = fn;
+      }
+      updateNamingPreviews();
+
+      // Drag and Drop
+      dropzone.addEventListener('click', () => fileInput.click());
+      dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-cyan-500'); });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-cyan-500'));
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-cyan-500');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+      });
+
+      function handleFile(file) {
+        if (file.type.startsWith('video/')) {
+          isVideoSource = true;
+          panelVideoControls.classList.remove('hidden');
+          imgSource.classList.add('hidden');
+          videoSource.classList.remove('hidden');
+          imgPlaceholder.classList.add('hidden');
+
+          const url = URL.createObjectURL(file);
+          videoSource.src = url;
+          videoSource.onloadeddata = () => {
+            statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Video Loaded`;
+            lblPlaybackStatus.textContent = `Video Duration: ${videoSource.duration.toFixed(1)}s`;
+          };
+        } else {
+          isVideoSource = false;
+          panelVideoControls.classList.add('hidden');
+          videoSource.classList.add('hidden');
+          imgSource.classList.remove('hidden');
+          imgPlaceholder.classList.add('hidden');
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            imgSource.src = evt.target.result;
+            imgSource.onload = () => requestProcessSingleFrame();
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      // Slider & Filter Listeners
+      rngBrightness.addEventListener('input', (e) => { valBrightness.textContent = parseFloat(e.target.value).toFixed(2); reprocessCurrentMedia(); });
+      rngContrast.addEventListener('input', (e) => { valContrast.textContent = parseFloat(e.target.value).toFixed(2); reprocessCurrentMedia(); });
+      rngAlphaCutoff.addEventListener('input', (e) => { valAlphaCutoff.textContent = e.target.value; reprocessCurrentMedia(); });
+
+      selPaletteMode.addEventListener('change', reprocessCurrentMedia);
+      selDitherMode.addEventListener('change', reprocessCurrentMedia);
+      chkShowGrid.addEventListener('change', (e) => gridOverlay.style.display = e.target.checked ? 'block' : 'none');
+
+      presetButtons.forEach(btn => btn.addEventListener('click', () => loadPreset(btn.dataset.preset)));
+
+      function reprocessCurrentMedia() {
+        if (isVideoSource) {
+          if (extractedFramesData.length > 0) processVideoFrames();
+        } else {
+          requestProcessSingleFrame();
+        }
+      }
+
+      // Video Extraction Pipeline
+      btnExtractVideo.addEventListener('click', processVideoFrames);
+
+      function processVideoFrames() {
+        if (!videoSource.src || isProcessing) return;
+        isProcessing = true;
+        stopPlayback();
+
+        const fps = parseInt(selVideoFps.value);
+        const maxLimit = parseInt(selMaxFrames.value);
+        const duration = videoSource.duration || 2;
+        const totalFrames = Math.min(maxLimit, Math.floor(duration * fps));
+        const frameInterval = 1 / fps;
+
+        extractedFramesData = [];
+        let currentFrame = 0;
+
+        statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> Extracting Frame ${currentFrame}/${totalFrames}`;
+
+        function captureFrame() {
+          videoSource.currentTime = currentFrame * frameInterval;
+        }
+
+        videoSource.onseeked = () => {
+          ctxOffscreen.clearRect(0, 0, COLS, ROWS);
+          ctxOffscreen.drawImage(videoSource, 0, 0, COLS, ROWS);
+
+          const frameBuffer = processCanvasToRGBABuffer(ctxOffscreen);
+          extractedFramesData.push(frameBuffer);
+
+          currentFrame++;
+          lblFrameCounter.textContent = `Extracted ${currentFrame} / ${totalFrames}`;
+
+          if (currentFrame < totalFrames) {
+            captureFrame();
+          } else {
+            isProcessing = false;
+            statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Video Extracted (True RGB)`;
+            rngVideoScrubber.max = extractedFramesData.length - 1;
+            rngVideoScrubber.value = 0;
+            renderFrameIndex(0);
+            startPlayback();
+          }
+        };
+
+        captureFrame();
+      }
+
+      // Processes Canvas to RGBA Buffer (UNFILTERED TRUE RGB BY DEFAULT)
+      function processCanvasToRGBABuffer(ctxSource) {
+        const imgData = ctxSource.getImageData(0, 0, COLS, ROWS);
+        const data = imgData.data;
+
+        const brightness = parseFloat(rngBrightness.value);
+        const contrast = parseFloat(rngContrast.value);
+        const alphaCutoff = parseInt(rngAlphaCutoff.value);
+        const paletteMode = selPaletteMode.value;
+        const ditherMode = selDitherMode.value;
+
+        const isTrueRGBPassThrough = (paletteMode === 'full' && brightness === 1.0 && contrast === 1.0 && alphaCutoff === 0 && ditherMode === 'none');
+
+        // Direct Fast-Path for Pure Unfiltered True RGB
+        if (isTrueRGBPassThrough) {
+          const outData = new Uint8ClampedArray(COLS * ROWS * 4);
+          for (let i = 0; i < data.length; i += 4) {
+            outData[i]     = data[i];     // Red
+            outData[i + 1] = data[i + 1]; // Green
+            outData[i + 2] = data[i + 2]; // Blue
+            outData[i + 3] = 255;          // Full Opaque
+          }
+          return outData;
+        }
+
+        // Pass 1: Apply Filters (if modified from default 1.0)
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] < alphaCutoff) {
+            data[i + 3] = 0;
+            data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
+            continue;
+          }
+          let r = data[i];
+          let g = data[i + 1];
+          let b = data[i + 2];
+
+          if (brightness !== 1.0) {
+            r *= brightness; g *= brightness; b *= brightness;
+          }
+
+          if (contrast !== 1.0) {
+            r = ((r / 255 - 0.5) * contrast + 0.5) * 255;
+            g = ((g / 255 - 0.5) * contrast + 0.5) * 255;
+            b = ((b / 255 - 0.5) * contrast + 0.5) * 255;
+          }
+
+          data[i]     = Math.min(255, Math.max(0, r));
+          data[i + 1] = Math.min(255, Math.max(0, g));
+          data[i + 2] = Math.min(255, Math.max(0, b));
+        }
+
+        // Pass 2: Palette Mapping / Dithering (Only applied if non-default selected)
+        const outData = new Uint8ClampedArray(COLS * ROWS * 4);
+
+        for (let y = 0; y < ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            const idx = (y * COLS + x) * 4;
+
+            if (data[idx + 3] === 0) {
+              outData[idx] = 0; outData[idx + 1] = 0; outData[idx + 2] = 0; outData[idx + 3] = 255;
+              continue;
+            }
+
+            let oldR = data[idx], oldG = data[idx + 1], oldB = data[idx + 2];
+            const newColor = snapToPalette(oldR, oldG, oldB, paletteMode);
+
+            data[idx]     = newColor.r;
+            data[idx + 1] = newColor.g;
+            data[idx + 2] = newColor.b;
+
+            if (ditherMode === 'floyd') {
+              const errR = oldR - newColor.r, errG = oldG - newColor.g, errB = oldB - newColor.b;
+              distributeError(data, COLS, ROWS, x + 1, y, errR, errG, errB, 7 / 16);
+              distributeError(data, COLS, ROWS, x - 1, y + 1, errR, errG, errB, 3 / 16);
+              distributeError(data, COLS, ROWS, x, y + 1, errR, errG, errB, 5 / 16);
+              distributeError(data, COLS, ROWS, x + 1, y + 1, errR, errG, errB, 1 / 16);
+            } else if (ditherMode === 'atkinson') {
+              const errR = oldR - newColor.r, errG = oldG - newColor.g, errB = oldB - newColor.b;
+              distributeError(data, COLS, ROWS, x + 1, y, errR, errG, errB, 1 / 8);
+              distributeError(data, COLS, ROWS, x + 2, y, errR, errG, errB, 1 / 8);
+              distributeError(data, COLS, ROWS, x - 1, y + 1, errR, errG, errB, 1 / 8);
+              distributeError(data, COLS, ROWS, x, y + 1, errR, errG, errB, 1 / 8);
+              distributeError(data, COLS, ROWS, x + 1, y + 1, errR, errG, errB, 1 / 8);
+              distributeError(data, COLS, ROWS, x, y + 2, errR, errG, errB, 1 / 8);
+            }
+
+            outData[idx]     = newColor.r;
+            outData[idx + 1] = newColor.g;
+            outData[idx + 2] = newColor.b;
+            outData[idx + 3] = 255;
+          }
+        }
+        return outData;
+      }
+
+      function requestProcessSingleFrame() {
+        if (!imgSource.src || imgSource.naturalWidth === 0) return;
+        ctxOffscreen.clearRect(0, 0, COLS, ROWS);
+        ctxOffscreen.drawImage(imgSource, 0, 0, COLS, ROWS);
+
+        const frameBuffer = processCanvasToRGBABuffer(ctxOffscreen);
+        extractedFramesData = [frameBuffer];
+        renderFrameIndex(0);
+      }
+
+      function renderFrameIndex(idx) {
+        if (extractedFramesData.length === 0) return;
+        currentPreviewFrameIdx = idx % extractedFramesData.length;
+        const frameBuffer = extractedFramesData[currentPreviewFrameIdx];
+
+        const imgData = ctxRender.createImageData(COLS, ROWS);
+        imgData.data.set(frameBuffer);
+        ctxRender.putImageData(imgData, 0, 0);
+
+        lblActivePixels.textContent = `Frames: ${extractedFramesData.length} | 256x128 True RGB`;
+        lblFrameCounter.textContent = `Frame ${currentPreviewFrameIdx + 1} / ${extractedFramesData.length}`;
+        rngVideoScrubber.value = currentPreviewFrameIdx;
+      }
+
+      // Playback Controls
+      btnPlayVideo.addEventListener('click', () => {
+        if (playbackInterval) stopPlayback();
+        else startPlayback();
+      });
+
+      rngVideoScrubber.addEventListener('input', (e) => {
+        stopPlayback();
+        renderFrameIndex(parseInt(e.target.value));
+      });
+
+      function startPlayback() {
+        if (extractedFramesData.length <= 1) return;
+        const fps = parseInt(selVideoFps.value);
+        playbackInterval = setInterval(() => {
+          renderFrameIndex((currentPreviewFrameIdx + 1) % extractedFramesData.length);
+        }, 1000 / fps);
+        btnPlayVideo.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+        lblPlaybackStatus.textContent = 'Playback: Playing';
+      }
+
+      function stopPlayback() {
+        if (playbackInterval) {
+          clearInterval(playbackInterval);
+          playbackInterval = null;
+        }
+        btnPlayVideo.innerHTML = `<i class="fa-solid fa-play"></i>`;
+        lblPlaybackStatus.textContent = 'Playback: Stopped';
+      }
+
+      // Presets
+      function loadPreset(type) {
+        isVideoSource = false;
+        panelVideoControls.classList.add('hidden');
+        videoSource.classList.add('hidden');
+        imgSource.classList.remove('hidden');
+        imgPlaceholder.classList.add('hidden');
+
+        const pCanvas = document.createElement('canvas');
+        pCanvas.width = COLS; pCanvas.height = ROWS;
+        const pCtx = pCanvas.getContext('2d');
+        pCtx.fillStyle = '#05070c'; pCtx.fillRect(0, 0, COLS, ROWS);
+
+        if (type === 'pumpkin') {
+          // Rich RGB Gradient Pumpkin
+          const grad = pCtx.createRadialGradient(128, 70, 10, 128, 70, 70);
+          grad.addColorStop(0, '#ffcc00');
+          grad.addColorStop(0.5, '#ff5500');
+          grad.addColorStop(1, '#990000');
+          pCtx.fillStyle = grad;
+          pCtx.beginPath(); pCtx.ellipse(128, 70, 70, 48, 0, 0, Math.PI * 2); pCtx.fill();
+          
+          pCtx.fillStyle = '#228b22'; pCtx.fillRect(123, 14, 10, 16);
+          pCtx.fillStyle = '#00ffff'; // Vibrant Cyan glowing eyes for True RGB test
+          pCtx.beginPath();
+          pCtx.moveTo(90, 60); pCtx.lineTo(108, 60); pCtx.lineTo(99, 45); pCtx.closePath();
+          pCtx.moveTo(148, 60); pCtx.lineTo(166, 60); pCtx.lineTo(157, 45); pCtx.closePath();
+          pCtx.fill();
+          pCtx.fillStyle = '#ff00ff'; pCtx.fillRect(94, 85, 68, 12);
+        } else if (type === 'spider') {
+          pCtx.fillStyle = '#00ffcc';
+          pCtx.beginPath();
+          pCtx.arc(128, 64, 28, 0, Math.PI * 2); pCtx.arc(128, 30, 18, 0, Math.PI * 2); pCtx.fill();
+          pCtx.strokeStyle = '#ff3388'; pCtx.lineWidth = 4;
+          for(let i=0; i<4; i++) {
+            pCtx.beginPath(); pCtx.moveTo(128, 50); pCtx.lineTo(50, 15 + i*30); pCtx.stroke();
+            pCtx.beginPath(); pCtx.moveTo(128, 50); pCtx.lineTo(206, 15 + i*30); pCtx.stroke();
+          }
+        } else if (type === 'cat') {
+          pCtx.fillStyle = '#ff8800';
+          pCtx.fillRect(110, 50, 36, 60); pCtx.fillRect(114, 20, 28, 30);
+          pCtx.beginPath(); pCtx.moveTo(114, 20); pCtx.lineTo(108, 5); pCtx.lineTo(122, 20); pCtx.fill();
+          pCtx.beginPath(); pCtx.moveTo(142, 20); pCtx.lineTo(148, 5); pCtx.lineTo(134, 20); pCtx.fill();
+          pCtx.fillStyle = '#00ff00';
+          pCtx.fillRect(118, 30, 5, 5); pCtx.fillRect(131, 30, 5, 5);
+        } else if (type === 'bat') {
+          pCtx.fillStyle = '#9933ff';
+          pCtx.beginPath(); pCtx.ellipse(128, 64, 24, 32, 0, 0, Math.PI * 2); pCtx.fill();
+          pCtx.beginPath();
+          pCtx.moveTo(128, 50); pCtx.lineTo(20, 20); pCtx.lineTo(60, 100); pCtx.closePath();
+          pCtx.moveTo(128, 50); pCtx.lineTo(236, 20); pCtx.lineTo(196, 100); pCtx.closePath();
+          pCtx.fill();
+        }
+
+        imgSource.src = pCanvas.toDataURL();
+        imgSource.onload = () => requestProcessSingleFrame();
+      }
+
+      loadPreset('pumpkin');
+
+      // Helper Algorithms
+      function distributeError(data, width, height, x, y, errR, errG, errB, factor) {
+        if (x < 0 || x >= width || y < 0 || y >= height) return;
+        const idx = (y * width + x) * 4;
+        data[idx]     = Math.min(255, Math.max(0, data[idx]     + errR * factor));
+        data[idx + 1] = Math.min(255, Math.max(0, data[idx + 1] + errG * factor));
+        data[idx + 2] = Math.min(255, Math.max(0, data[idx + 2] + errB * factor));
+      }
+
+      function snapToPalette(r, g, b, mode) {
+        if (mode === 'full') return { r, g, b }; // Unfiltered True RGB
+        if (mode === 'amber') {
+          const luma = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+          if (luma < 0.2) return { r: 0, g: 0, b: 0 };
+          if (luma < 0.5) return { r: 180, g: 80, b: 0 };
+          if (luma < 0.8) return { r: 255, g: 150, b: 0 };
+          return { r: 255, g: 210, b: 100 };
+        }
+        if (mode === 'halloween') {
+          const luma = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+          if (luma < 0.15) return { r: 10, g: 2, b: 15 };
+          if (luma < 0.4) return { r: 160, g: 0, b: 40 };
+          if (luma < 0.75) return { r: 255, g: 100, b: 0 };
+          return { r: 255, g: 230, b: 100 };
+        }
+        if (mode === 'neon') {
+          const luma = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+          if (luma < 0.2) return { r: 0, g: 0, b: 0 };
+          if (luma < 0.6) return { r: 0, g: 240, b: 255 };
+          return { r: 255, g: 0, b: 200 };
+        }
+        if (mode === 'mono') {
+          const luma = (r * 0.299 + g * 0.587 + b * 0.114);
+          const v = luma > 128 ? 255 : 0;
+          return { r: v, g: v, b: v };
+        }
+        return { r, g, b };
+      }
+
+      // BINARY COMPACT BUFFER EXPORT GENERATOR (TRUE 24-BIT RGB BLITTING)
+      btnShowCode.addEventListener('click', () => {
+        generateCompactBufferCode();
+        modalCode.classList.remove('opacity-0', 'pointer-events-none');
+      });
+
+      btnCloseModal.addEventListener('click', () => modalCode.classList.add('opacity-0', 'pointer-events-none'));
+
+      function generateCompactBufferCode() {
+        if (extractedFramesData.length === 0) return;
+
+        const rawName = txtAssetName.value.trim() || 'custom_scene';
+        const fnName = 'render' + rawName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('') + 'FX';
+        const regKey = rawName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        const humanName = rawName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+        const fps = parseInt(selVideoFps.value) || 15;
+        const frameMs = Math.floor(1000 / fps);
+
+        // Encode Full True RGB Stream (Packed RLE uint8 stream maintaining 24-bit RGB)
+        const encodedFramesBase64 = extractedFramesData.map(frameBuffer => {
+          const bytes = [];
+          let lastR = frameBuffer[0], lastG = frameBuffer[1], lastB = frameBuffer[2];
+          let count = 0;
+
+          for (let i = 0; i < frameBuffer.length; i += 4) {
+            const r = frameBuffer[i], g = frameBuffer[i + 1], b = frameBuffer[i + 2];
+            if (r === lastR && g === lastG && b === lastB && count < 255) {
+              count++;
+            } else {
+              if (count > 0) {
+                bytes.push(count, lastR, lastG, lastB);
+              }
+              lastR = r; lastG = g; lastB = b;
+              count = 1;
+            }
+          }
+          if (count > 0) {
+            bytes.push(count, lastR, lastG, lastB);
+          }
+
+          const u8 = new Uint8Array(bytes);
+          let binary = '';
+          for (let b = 0; b < u8.length; b++) {
+            binary += String.fromCharCode(u8[b]);
+          }
+          return btoa(binary);
+        });
+
+        // Compact JavaScript Render Method with Native Image Buffer Blitting (True RGB)
+        const renderCode = `      // --- TRUE RGB BUFFER ASSET: ${humanName} (${extractedFramesData.length} Frames) ---
+      ${fnName}(block, state) {
+        // Cache decoded True RGB ImageData frames in memory for fast 60 FPS blitting
+        if (!this._assetCache_${regKey}) {
+          const base64Frames = [
+${encodedFramesBase64.map(b64 => `            "${b64}"`).join(',\n')}
+          ];
+
+          this._assetCache_${regKey} = base64Frames.map(b64 => {
+            const binary = atob(b64);
+            const imgData = this.offCtx.createImageData(256, 128);
+            const data = imgData.data;
+            let px = 0;
+
+            for (let i = 0; i < binary.length; i += 4) {
+              const run = binary.charCodeAt(i);
+              const r = binary.charCodeAt(i + 1);
+              const g = binary.charCodeAt(i + 2);
+              const b = binary.charCodeAt(i + 3);
+
+              for (let k = 0; k < run; k++) {
+                const pixelIdx = (px + k) * 4;
+                data[pixelIdx]     = r;
+                data[pixelIdx + 1] = g;
+                data[pixelIdx + 2] = b;
+                data[pixelIdx + 3] = 255;
+              }
+              px += run;
+            }
+            return imgData;
+          });
+        }
+
+        // Frame selection based on state timestamp
+        const frames = this._assetCache_${regKey};
+        const frameMs = ${frameMs};
+        const currentFrameIdx = Math.floor(state.timestamp / frameMs) % frames.length;
+
+        // Native True RGB ImageData blit pass
+        this.offCtx.putImageData(frames[currentFrameIdx], 0, 0);
+
+        // Optional Text Engine Overlay Integration (1, 3, 5 Line Modes)
+        const font = block.font || 'heavy';
+        const size = (block.layoutMode === '5') ? 'small' : (block.size || 'medium');
+
+        if (block.layoutMode === '3') {
+          const lines = [
+            { text: block.line1 || '', color: block.color1 || '#ffaa00' },
+            { text: block.line2 || '', color: block.color2 || '#ffaa00' },
+            { text: block.line3 || '', color: block.color3 || '#ffaa00' }
+          ];
+          const yPositions = [4, 48, 92];
+          lines.forEach((l, idx) => {
+            if (l.text) {
+              const tw = this.getTextWidth(l.text, font, size);
+              const tx = Math.max(4, Math.floor((this.cols - tw) / 2));
+              this.renderTextWithFX(l.text, tx, yPositions[idx], state.timestamp * 0.05, font, size, 'top', block.rainbowText, block.textFx, block.motionFx, state.elapsed, l.color);
+            }
+          });
+        } else if (block.layoutMode === '5') {
+          const lines = [
+            { text: block.line1 || '', color: block.color1 || '#ffaa00' },
+            { text: block.line2 || '', color: block.color2 || '#ffaa00' },
+            { text: block.line3 || '', color: block.color3 || '#ffaa00' },
+            { text: block.line4 || '', color: block.color4 || '#ffaa00' },
+            { text: block.line5 || '', color: block.color5 || '#ffaa00' }
+          ];
+          const yPositions = [2, 28, 54, 80, 106];
+          lines.forEach((l, idx) => {
+            if (l.text) {
+              const tw = this.getTextWidth(l.text, font, size);
+              const tx = Math.max(4, Math.floor((this.cols - tw) / 2));
+              this.renderTextWithFX(l.text, tx, yPositions[idx], state.timestamp * 0.05, font, size, 'top', block.rainbowText, block.textFx, block.motionFx, state.elapsed, l.color);
+            }
+          });
+        } else if (block.text) {
+          const tw = this.getTextWidth(block.text, font, size);
+          const tx = Math.max(4, Math.floor((this.cols - tw) / 2));
+          this.renderTextWithFX(block.text, tx, 4, state.timestamp * 0.1, font, size, 'top', !!block.rainbowText, block.textFx, block.motionFx, state.elapsed, block.color1 || '#ffaa00');
+        }
+
+        this.renderBlockBorder(block.borderStyle || 'none', block.borderThickness || 1, state.timestamp);
+      }`;
+
+        const registryCode = `      '${regKey}': {
+        name: '${humanName}',
+        icon: '${isVideoSource ? 'fa-film' : 'fa-image'}',
+        color: 'text-cyan-400',
+        desc: '256x128 ${isVideoSource ? 'True RGB Video DMD Animation' : 'True RGB Static Asset'}',
+        defaultParams: { text: 'SCENE TITLE', layoutMode: '1', borderStyle: 'none', borderThickness: 1 },
+        render: (engine, block, state) => { engine.${fnName}(block, state); }
+      },`;
+
+        codeBlockRender.textContent = renderCode;
+        codeBlockRegistry.textContent = registryCode;
+      }
+
+      // Copy Handlers
+      btnCopyRender.addEventListener('click', () => copyToClipboard(codeBlockRender.textContent, 'Render method copied!'));
+      btnCopyRegistry.addEventListener('click', () => copyToClipboard(codeBlockRegistry.textContent, 'Registry entry copied!'));
+      btnCopyAllCode.addEventListener('click', () => {
+        const combined = codeBlockRender.textContent + "\n\n" + codeBlockRegistry.textContent;
+        copyToClipboard(combined, 'Both code blocks copied to clipboard!');
+      });
+
+      function copyToClipboard(text, msg) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        toast.classList.remove('translate-y-10', 'opacity-0');
+        setTimeout(() => toast.classList.add('translate-y-10', 'opacity-0'), 3000);
+      }
+    });
+  </script>
+</body>
+</html>
