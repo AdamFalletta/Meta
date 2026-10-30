@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dot Matrix Studio - Client Operations</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ios: {
+              bgLight: '#E2E8F0',     /* Darker light-theme background requested */
+              cardLight: '#F8FAFC',   /* Off-white light panel color requested */
+              subLight: '#EDF2F7',
+              bgDark: '#09090B',
+              cardDark: '#18181B',
+              subDark: '#27272A',
+              blue: '#0A84FF',
+              green: '#30D158',
+              orange: '#FF9F0A',
+              red: '#FF453A',
+              purple: '#BF5AF2',
+              gray: '#8E8E93',
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- html2pdf.js for client-side PDF export fallback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    
+    /* iOS Glassmorphism styling */
+    .ios-glass {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Dedicated Print Stylesheet for PDF/Printer export */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #printable-invoice-container, #printable-invoice-container * {
+        visibility: visible !important;
+      }
+      #printable-invoice-container {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 20px !important;
+        box-shadow: none !important;
+        z-index: 999999 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-ios-bgLight dark:bg-ios-bgDark text-gray-900 dark:text-gray-100 font-sans min-h-screen antialiased pb-24 md:pb-6 transition-colors duration-200 selection:bg-ios-blue selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none"></div>
+
+  <!-- App Main Layout -->
+  <div id="app" class="max-w-6xl mx-auto min-h-screen flex flex-col relative">
+
+    <!-- Top Navigation / Header Bar -->
+    <header class="sticky top-0 z-30 bg-ios-cardLight/90 dark:bg-ios-cardDark/90 ios-glass border-b border-gray-300/60 dark:border-gray-800/80 px-4 py-3 flex items-center justify-between transition-colors">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-ios-blue to-purple-600 flex items-center justify-center text-white font-bold shadow-md shadow-ios-blue/20">
+          <i class="fa-solid fa-border-all text-lg"></i>
+        </div>
+        <div>
+          <h1 id="header-biz-name" class="font-bold text-base leading-tight tracking-tight">Dot Matrix Studio</h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Client Operations & Matrix Rig Manager</p>
+        </div>
+      </div>
+
+      <!-- Settings & Theme Buttons -->
+      <div class="flex items-center space-x-2">
+        <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-gray-200/80 dark:bg-ios-subDark text-gray-700 dark:text-gray-200 hover:scale-105 active:scale-95 transition-all" title="Toggle Light/Dark Theme">
+          <i id="theme-icon" class="fa-solid fa-moon text-base"></i>
+        </button>
+        <button onclick="openSettingsModal()" class="p-2 rounded-full bg-gray-200/80 dark:bg-ios-subDark text-gray-700 dark:text-gray-200 hover:scale-105 active:scale-95 transition-all" title="Studio Settings">
+          <i class="fa-solid fa-gear text-base"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Section Tabs Container -->
+    <main class="flex-1 p-4 md:p-6 space-y-6">
+
+      <!-- DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab-content space-y-6">
+        <!-- Hero Banner -->
+        <div class="bg-gradient-to-r from-ios-blue via-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-ios-blue/15 relative overflow-hidden">
+          <div class="relative z-10">
+            <span class="text-xs uppercase tracking-wider bg-white/20 px-2.5 py-1 rounded-full font-semibold backdrop-blur-md">Studio Operational Hub</span>
+            <h2 class="text-2xl md:text-3xl font-extrabold mt-3">Dot Matrix Hardware & Clients</h2>
+            <p class="text-white/80 text-sm mt-1 max-w-xl">Track custom LED matrices, microcontrollers, invoicing, and fabrication to-dos in one iOS platform.</p>
+          </div>
+          <i class="fa-solid fa-cubes absolute -right-4 -bottom-6 text-9xl text-white/10 pointer-events-none"></i>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-4 rounded-2xl border border-gray-300/70 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Total Revenue</span>
+              <div class="w-8 h-8 rounded-full bg-green-500/10 text-ios-green flex items-center justify-center">
+                <i class="fa-solid fa-dollar-sign text-sm"></i>
+              </div>
+            </div>
+            <div>
+              <div id="metric-revenue" class="text-2xl font-bold tracking-tight">$0.00</div>
+              <p class="text-xs text-ios-green flex items-center mt-1"><i class="fa-solid fa-arrow-up text-[10px] mr-1"></i> Paid Invoices</p>
+            </div>
+          </div>
+
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-4 rounded-2xl border border-gray-300/70 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Active Clients</span>
+              <div class="w-8 h-8 rounded-full bg-blue-500/10 text-ios-blue flex items-center justify-center">
+                <i class="fa-solid fa-users text-sm"></i>
+              </div>
+            </div>
+            <div>
+              <div id="metric-clients" class="text-2xl font-bold tracking-tight">0</div>
+              <p class="text-xs text-gray-500 mt-1">Active Projects</p>
+            </div>
+          </div>
+
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-4 rounded-2xl border border-gray-300/70 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Unpaid Total</span>
+              <div class="w-8 h-8 rounded-full bg-amber-500/10 text-ios-orange flex items-center justify-center">
+                <i class="fa-solid fa-file-invoice-dollar text-sm"></i>
+              </div>
+            </div>
+            <div>
+              <div id="metric-unpaid" class="text-2xl font-bold tracking-tight">$0.00</div>
+              <p id="metric-unpaid-count" class="text-xs text-ios-orange mt-1">0 Pending</p>
+            </div>
+          </div>
+
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-4 rounded-2xl border border-gray-300/70 dark:border-gray-800 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Pending To-Dos</span>
+              <div class="w-8 h-8 rounded-full bg-purple-500/10 text-ios-purple flex items-center justify-center">
+                <i class="fa-solid fa-list-check text-sm"></i>
+              </div>
+            </div>
+            <div>
+              <div id="metric-tasks" class="text-2xl font-bold tracking-tight">0</div>
+              <p class="text-xs text-gray-500 mt-1">Open hardware tasks</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Launch Pad -->
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-1">Quick Actions</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <button onclick="openClientModal()" class="bg-ios-cardLight dark:bg-ios-cardDark p-3.5 rounded-2xl border border-gray-300/70 dark:border-gray-800 flex items-center space-x-3 hover:bg-gray-200/50 dark:hover:bg-ios-subDark active:scale-98 transition-all shadow-sm">
+              <div class="w-10 h-10 rounded-xl bg-ios-blue/10 text-ios-blue flex items-center justify-center text-lg">
+                <i class="fa-solid fa-user-plus"></i>
+              </div>
+              <div class="text-left">
+                <p class="text-sm font-semibold">New Client</p>
+                <p class="text-[11px] text-gray-500">Add matrix client</p>
+              </div>
+            </button>
+
+            <button onclick="openInvoiceModal()" class="bg-ios-cardLight dark:bg-ios-cardDark p-3.5 rounded-2xl border border-gray-300/70 dark:border-gray-800 flex items-center space-x-3 hover:bg-gray-200/50 dark:hover:bg-ios-subDark active:scale-98 transition-all shadow-sm">
+              <div class="w-10 h-10 rounded-xl bg-ios-green/10 text-ios-green flex items-center justify-center text-lg">
+                <i class="fa-solid fa-file-circle-plus"></i>
+              </div>
+              <div class="text-left">
+                <p class="text-sm font-semibold">New Invoice</p>
+                <p class="text-[11px] text-gray-500">Bill display build</p>
+              </div>
+            </button>
+
+            <button onclick="openTaskModal()" class="bg-ios-cardLight dark:bg-ios-cardDark p-3.5 rounded-2xl border border-gray-300/70 dark:border-gray-800 flex items-center space-x-3 hover:bg-gray-200/50 dark:hover:bg-ios-subDark active:scale-98 transition-all shadow-sm">
+              <div class="w-10 h-10 rounded-xl bg-ios-purple/10 text-ios-purple flex items-center justify-center text-lg">
+                <i class="fa-solid fa-square-plus"></i>
+              </div>
+              <div class="text-left">
+                <p class="text-sm font-semibold">Add To-Do</p>
+                <p class="text-[11px] text-gray-500">Wiring/Firmware task</p>
+              </div>
+            </button>
+
+            <button onclick="switchTab('invoices')" class="bg-ios-cardLight dark:bg-ios-cardDark p-3.5 rounded-2xl border border-gray-300/70 dark:border-gray-800 flex items-center space-x-3 hover:bg-gray-200/50 dark:hover:bg-ios-subDark active:scale-98 transition-all shadow-sm">
+              <div class="w-10 h-10 rounded-xl bg-ios-orange/10 text-ios-orange flex items-center justify-center text-lg">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <div class="text-left">
+                <p class="text-sm font-semibold">PDF Export</p>
+                <p class="text-[11px] text-gray-500">Generate PDF sheet</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dashboard Lists -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Featured Matrix Projects -->
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-5 rounded-2xl border border-gray-300/70 dark:border-gray-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-base flex items-center">
+                <i class="fa-solid fa-microchip text-ios-blue mr-2"></i> Active Client Builds
+              </h3>
+              <button onclick="switchTab('clients')" class="text-xs text-ios-blue font-semibold hover:underline">View All</button>
+            </div>
+            <div id="dashboard-client-list" class="space-y-3"></div>
+          </div>
+
+          <!-- High Priority To-Dos -->
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-5 rounded-2xl border border-gray-300/70 dark:border-gray-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-base flex items-center">
+                <i class="fa-solid fa-clock text-ios-orange mr-2"></i> Immediate To-Dos
+              </h3>
+              <button onclick="switchTab('tasks')" class="text-xs text-ios-blue font-semibold hover:underline">View All</button>
+            </div>
+            <div id="dashboard-task-list" class="space-y-2"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLIENTS TAB -->
+      <section id="tab-clients" class="tab-content hidden space-y-4">
+        <!-- Controls Bar -->
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="client-search" oninput="renderClients()" placeholder="Search clients, company, or LED specs..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ios-cardLight dark:bg-ios-cardDark border border-gray-300/80 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-ios-blue text-sm transition-all">
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <select id="client-status-filter" onchange="renderClients()" class="bg-ios-cardLight dark:bg-ios-cardDark border border-gray-300/80 dark:border-gray-800 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ios-blue">
+              <option value="ALL">All Statuses</option>
+              <option value="Lead">Lead</option>
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+              <option value="On Hold">On Hold</option>
+            </select>
+
+            <button onclick="openClientModal()" class="bg-ios-blue hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center space-x-1.5 shadow-md shadow-ios-blue/20 shrink-0 active:scale-95 transition-all">
+              <i class="fa-solid fa-plus text-xs"></i>
+              <span>Add Client</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid -->
+        <div id="clients-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- INVOICES TAB -->
+      <section id="tab-invoices" class="tab-content hidden space-y-4">
+        <!-- Search & Filter -->
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="invoice-search" oninput="renderInvoices()" placeholder="Search invoice # or client name..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ios-cardLight dark:bg-ios-cardDark border border-gray-300/80 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-ios-blue text-sm transition-all">
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <select id="invoice-status-filter" onchange="renderInvoices()" class="bg-ios-cardLight dark:bg-ios-cardDark border border-gray-300/80 dark:border-gray-800 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none">
+              <option value="ALL">All Invoices</option>
+              <option value="Draft">Draft</option>
+              <option value="Sent">Sent</option>
+              <option value="Paid">Paid</option>
+              <option value="Overdue">Overdue</option>
+            </select>
+
+            <button onclick="openInvoiceModal()" class="bg-ios-green hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center space-x-1.5 shadow-md shadow-ios-green/20 shrink-0 active:scale-95 transition-all">
+              <i class="fa-solid fa-plus text-xs"></i>
+              <span>Create Invoice</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="invoices-list" class="space-y-3"></div>
+      </section>
+
+      <!-- TASKS TAB -->
+      <section id="tab-tasks" class="tab-content hidden space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div class="flex items-center space-x-2 overflow-x-auto">
+            <button onclick="setTaskFilter('ALL')" id="filter-task-all" class="task-filter-btn bg-ios-blue text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-sm">All</button>
+            <button onclick="setTaskFilter('Pending')" id="filter-task-pending" class="task-filter-btn bg-gray-300/70 dark:bg-ios-subDark text-gray-700 dark:text-gray-300 px-3.5 py-1.5 rounded-full text-xs font-semibold">Pending</button>
+            <button onclick="setTaskFilter('In Progress')" id="filter-task-progress" class="task-filter-btn bg-gray-300/70 dark:bg-ios-subDark text-gray-700 dark:text-gray-300 px-3.5 py-1.5 rounded-full text-xs font-semibold">In Progress</button>
+            <button onclick="setTaskFilter('Completed')" id="filter-task-completed" class="task-filter-btn bg-gray-300/70 dark:bg-ios-subDark text-gray-700 dark:text-gray-300 px-3.5 py-1.5 rounded-full text-xs font-semibold">Completed</button>
+          </div>
+
+          <button onclick="openTaskModal()" class="bg-ios-purple hover:bg-purple-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex items-center justify-center space-x-1.5 shadow-md shadow-ios-purple/20 shrink-0 active:scale-95 transition-all">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Add Studio To-Do</span>
+          </button>
+        </div>
+
+        <div id="tasks-list" class="space-y-2.5"></div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-ios-cardLight/90 dark:bg-ios-cardDark/90 ios-glass border-t border-gray-300/70 dark:border-gray-800/90 px-4 py-2 max-w-6xl mx-auto">
+      <div class="flex items-center justify-around">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active text-ios-blue flex flex-col items-center py-1 px-3 rounded-xl transition-all">
+          <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
+          <span class="text-[10px] font-semibold tracking-tight">Overview</span>
+        </button>
+
+        <button onclick="switchTab('clients')" id="nav-clients" class="nav-item text-gray-400 flex flex-col items-center py-1 px-3 rounded-xl transition-all">
+          <i class="fa-solid fa-address-book text-lg mb-0.5"></i>
+          <span class="text-[10px] font-semibold tracking-tight">Clients</span>
+        </button>
+
+        <button onclick="switchTab('invoices')" id="nav-invoices" class="nav-item text-gray-400 flex flex-col items-center py-1 px-3 rounded-xl transition-all">
+          <i class="fa-solid fa-receipt text-lg mb-0.5"></i>
+          <span class="text-[10px] font-semibold tracking-tight">Invoices</span>
+        </button>
+
+        <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-item text-gray-400 flex flex-col items-center py-1 px-3 rounded-xl transition-all">
+          <i class="fa-solid fa-check-double text-lg mb-0.5"></i>
+          <span class="text-[10px] font-semibold tracking-tight">To-Dos</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+
+  <!-- ==================== MODALS (High Z-Index Fixes) ==================== -->
+
+  <!-- CLIENT ADD / EDIT MODAL (z-[70] ensure it stays above detail modal) -->
+  <div id="modal-client" class="fixed inset-0 z-[70] bg-black/60 ios-glass hidden flex items-center justify-center p-4">
+    <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-800 animate-in fade-in zoom-in duration-150">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <h3 id="client-modal-title" class="font-bold text-lg">Add New Client</h3>
+        <button onclick="closeModal('modal-client')" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-ios-subDark text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="client-form" onsubmit="saveClient(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <input type="hidden" id="client-id">
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Client Contact Name *</label>
+          <input type="text" id="client-name" required placeholder="e.g. Alex Vance" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Company / Venue</label>
+            <input type="text" id="client-company" placeholder="e.g. Neon Horizon Arcade" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Dot Matrix Rig Type</label>
+            <select id="client-signage-type" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+              <option value="RGB Matrix Array (P3/P4/P5)">RGB Matrix Array (P3/P4/P5)</option>
+              <option value="Monochrome LED Ticker">Monochrome LED Ticker</option>
+              <option value="ESP32 Pixel Art Panel">ESP32 Pixel Art Panel</option>
+              <option value="Volumetric 3D LED Cube">Volumetric 3D LED Cube</option>
+              <option value="Flexible LED Matrix Grid">Flexible LED Matrix Grid</option>
+              <option value="Custom Firmware & Repair">Custom Firmware & Repair</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Email</label>
+            <input type="email" id="client-email" placeholder="alex@neonarcade.io" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Phone</label>
+            <input type="tel" id="client-phone" placeholder="+1 (555) 019-2834" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Status</label>
+            <select id="client-status" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+              <option value="Lead">Lead</option>
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+              <option value="On Hold">On Hold</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Estimated Budget ($)</label>
+            <input type="number" id="client-budget" step="0.01" placeholder="3200" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Matrix Hardware Specs & Notes</label>
+          <textarea id="client-notes" rows="3" placeholder="Specify matrix resolution (e.g. 128x64), MCU model (ESP32-S3), power requirements, HUB75 pinouts..." class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none resize-none"></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeModal('modal-client')" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-200 dark:hover:bg-ios-subDark">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-ios-blue hover:bg-blue-600 text-white shadow-md shadow-ios-blue/20 active:scale-95 transition-all">Save Client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- CLIENT DETAIL VIEW MODAL (z-50) -->
+  <div id="modal-client-detail" class="fixed inset-0 z-50 bg-black/60 ios-glass hidden flex items-center justify-center p-4">
+    <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-800 max-h-[90vh] flex flex-col">
+      <div id="client-detail-header" class="p-6 border-b border-gray-200 dark:border-gray-800 flex items-start justify-between bg-gray-200/40 dark:bg-ios-subDark/30"></div>
+
+      <div class="p-6 overflow-y-auto space-y-6 flex-1">
+        <!-- Quick contact actions -->
+        <div id="client-detail-actions" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Technical Matrix Specs & Notes</h4>
+          <div id="client-detail-notes" class="p-4 rounded-2xl bg-white dark:bg-ios-subDark/60 text-sm border border-gray-300/80 dark:border-gray-800 whitespace-pre-wrap"></div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Client Invoices</h4>
+            <button id="btn-add-client-invoice" class="text-xs text-ios-blue font-bold hover:underline">+ New Invoice</button>
+          </div>
+          <div id="client-detail-invoices" class="space-y-2"></div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Hardware & Firmware Checklist</h4>
+            <button id="btn-add-client-task" class="text-xs text-ios-purple font-bold hover:underline">+ Add To-Do</button>
+          </div>
+          <div id="client-detail-tasks" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-200/40 dark:bg-ios-subDark/30">
+        <button id="btn-delete-client" class="text-ios-red font-medium text-sm hover:underline px-2"><i class="fa-solid fa-trash mr-1"></i> Delete Client</button>
+        <button onclick="closeModal('modal-client-detail')" class="px-5 py-2 rounded-xl bg-gray-300/80 dark:bg-ios-subDark text-sm font-semibold">Close</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- INVOICE BUILDER & PDF GENERATOR MODAL -->
+  <div id="modal-invoice" class="fixed inset-0 z-50 bg-black/60 ios-glass hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-800 max-h-[92vh] flex flex-col">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between no-print">
+        <h3 id="invoice-modal-title" class="font-bold text-lg">Studio Invoice Generator</h3>
+        <div class="flex items-center space-x-2">
+          <button onclick="triggerPdfExport()" class="px-3.5 py-1.5 rounded-xl bg-ios-blue hover:bg-blue-600 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-sm">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>Export / Print PDF</span>
+          </button>
+          <button onclick="closeModal('modal-invoice')" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-ios-subDark text-gray-500 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <form id="invoice-form" onsubmit="saveInvoice(event)" class="p-6 overflow-y-auto space-y-6 flex-1">
+        <input type="hidden" id="invoice-id">
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Client *</label>
+            <select id="invoice-client-id" required class="w-full px-3 py-2 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Status</label>
+            <select id="invoice-status" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+              <option value="Draft">Draft</option>
+              <option value="Sent">Sent</option>
+              <option value="Paid">Paid</option>
+              <option value="Overdue">Overdue</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Due Date</label>
+            <input type="date" id="invoice-due-date" required class="w-full px-3 py-2 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Dot Matrix Hardware & Service Items</h4>
+            <button type="button" onclick="addInvoiceLineItem()" class="text-xs text-ios-blue font-bold hover:underline flex items-center space-x-1">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Add Line Item</span>
+            </button>
+          </div>
+
+          <div class="space-y-2" id="invoice-line-items"></div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white dark:bg-ios-subDark/50 space-y-2 text-sm border border-gray-300/80 dark:border-gray-800">
+          <div class="flex justify-between text-gray-500">
+            <span>Subtotal:</span>
+            <span id="inv-subtotal" class="font-medium">$0.00</span>
+          </div>
+          <div class="flex items-center justify-between text-gray-500">
+            <span class="flex items-center space-x-2">
+              <span>Tax Rate (%):</span>
+              <input type="number" id="invoice-tax-rate" value="8.5" step="0.1" min="0" oninput="calculateInvoiceTotals()" class="w-16 px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-ios-cardDark border text-center text-xs text-gray-900 dark:text-gray-100">
+            </span>
+            <span id="inv-tax" class="font-medium">$0.00</span>
+          </div>
+          <div class="flex justify-between font-extrabold text-base border-t border-gray-200 dark:border-gray-700 pt-2 text-gray-900 dark:text-white">
+            <span>Total Amount:</span>
+            <span id="inv-total" class="text-ios-green">$0.00</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Invoice Notes / Warranty Terms</label>
+          <textarea id="invoice-notes" rows="2" placeholder="Includes 1-year LED display panel & MCU controller hardware warranty." class="w-full px-3 py-2 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none resize-none"></textarea>
+        </div>
+
+        <!-- PRINT / PDF SHEET AREA -->
+        <div id="printable-invoice-container" class="hidden">
+          <div class="p-6 bg-white text-black max-w-2xl mx-auto rounded-lg font-sans">
+            <div class="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+              <div>
+                <h2 id="print-biz-title" class="text-2xl font-black text-blue-900 uppercase tracking-tight">Dot Matrix Studio</h2>
+                <p id="print-biz-sub" class="text-xs text-gray-600 font-medium">Custom LED Displays & Controller Hardware</p>
+                <p id="print-biz-contact" class="text-xs text-gray-500 mt-1">support@dotmatrixstudio.io | +1 (800) 555-DOTS</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xl font-bold text-gray-800">INVOICE</span>
+                <p id="print-inv-num" class="text-sm font-bold text-blue-600">#INV-1001</p>
+                <p id="print-inv-date" class="text-xs text-gray-500">Date: --</p>
+              </div>
+            </div>
+
+            <div class="mb-6 p-3 bg-gray-50 rounded-md border border-gray-200">
+              <p class="text-[10px] font-bold uppercase text-gray-400">Billed To:</p>
+              <h4 id="print-client-name" class="font-bold text-base text-gray-900">--</h4>
+              <p id="print-client-company" class="text-xs text-gray-700">--</p>
+              <p id="print-client-email" class="text-xs text-gray-500">--</p>
+            </div>
+
+            <table class="w-full text-left text-xs mb-6 border-collapse">
+              <thead>
+                <tr class="border-b-2 border-gray-300 bg-gray-100 text-gray-800">
+                  <th class="py-2 px-2 font-bold">Hardware / Service</th>
+                  <th class="py-2 px-2 font-bold text-center">Qty</th>
+                  <th class="py-2 px-2 font-bold text-right">Rate</th>
+                  <th class="py-2 px-2 font-bold text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="print-line-items"></tbody>
+            </table>
+
+            <div class="flex justify-end mb-6">
+              <div class="w-1/2 space-y-1 text-xs">
+                <div class="flex justify-between text-gray-600"><span>Subtotal:</span><span id="print-subtotal">$0.00</span></div>
+                <div class="flex justify-between text-gray-600"><span>Tax:</span><span id="print-tax">$0.00</span></div>
+                <div class="flex justify-between font-extrabold text-sm text-gray-900 border-t pt-1"><span>Total Due:</span><span id="print-total">$0.00</span></div>
+              </div>
+            </div>
+
+            <div class="border-t pt-3 text-[11px] text-gray-600">
+              <p class="font-bold text-gray-800">Payment Terms & Support</p>
+              <p id="print-notes">Thank you for working with Dot Matrix Studio!</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-3 no-print">
+          <button type="button" onclick="closeModal('modal-invoice')" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-200 dark:hover:bg-ios-subDark">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-ios-green hover:bg-green-600 text-white shadow-md shadow-ios-green/20 active:scale-95 transition-all">Save Invoice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- TASK FORM MODAL -->
+  <div id="modal-task" class="fixed inset-0 z-50 bg-black/60 ios-glass hidden flex items-center justify-center p-4">
+    <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-800 animate-in fade-in zoom-in duration-150">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <h3 id="task-modal-title" class="font-bold text-lg">Studio Hardware To-Do</h3>
+        <button onclick="closeModal('modal-task')" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-ios-subDark text-gray-500 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="task-form" onsubmit="saveTask(event)" class="p-6 space-y-4">
+        <input type="hidden" id="task-id">
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Task Description *</label>
+          <input type="text" id="task-title" required placeholder="e.g. Flash ESP32 WiFi webserver firmware" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-purple outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Assign To Client</label>
+          <select id="task-client-id" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-purple outline-none"></select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Priority</label>
+            <select id="task-priority" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-purple outline-none">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Status</label>
+            <select id="task-status" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-purple outline-none">
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeModal('modal-task')" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-200 dark:hover:bg-ios-subDark">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-ios-purple hover:bg-purple-600 text-white shadow-md shadow-ios-purple/20 active:scale-95 transition-all">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- STUDIO SETTINGS MODAL -->
+  <div id="modal-settings" class="fixed inset-0 z-50 bg-black/60 ios-glass hidden flex items-center justify-center p-4">
+    <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-800 animate-in fade-in zoom-in duration-150">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <h3 class="font-bold text-lg">Studio Configuration</h3>
+        <button onclick="closeModal('modal-settings')" class="w-8 h-8 rounded-full bg-gray-200 dark:bg-ios-subDark text-gray-500 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Business Name</label>
+          <input type="text" id="setting-biz-name" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Tagline</label>
+          <input type="text" id="setting-biz-sub" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Invoice Contact Info</label>
+          <input type="text" id="setting-biz-contact" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none">
+        </div>
+
+        <div class="border-t border-gray-200 dark:border-gray-800 pt-4 flex flex-col space-y-2">
+          <p class="text-xs font-bold uppercase text-gray-500 mb-1">Data Storage & Reset</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportData()" class="px-4 py-2 rounded-xl bg-gray-200 dark:bg-ios-subDark hover:bg-gray-300 text-xs font-semibold flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-download"></i>
+              <span>Export Data JSON</span>
+            </button>
+            <button onclick="confirmAction('Reset all studio records to default demo data?', resetToSampleData)" class="px-4 py-2 rounded-xl bg-red-500/10 text-ios-red hover:bg-red-500/20 text-xs font-semibold flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>Reset Sample Data</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeModal('modal-settings')" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-200 dark:hover:bg-ios-subDark">Cancel</button>
+          <button type="button" onclick="saveSettings()" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-ios-blue hover:bg-blue-600 text-white shadow-md shadow-ios-blue/20 active:scale-95 transition-all">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CUSTOM CONFIRMATION DIALOG (No alert / confirm) -->
+  <div id="modal-confirm" class="fixed inset-0 z-[1000] bg-black/70 ios-glass hidden flex items-center justify-center p-4">
+    <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl w-full max-w-xs overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-800 text-center p-6 space-y-4 animate-in zoom-in-95 duration-150">
+      <div class="w-12 h-12 rounded-full bg-ios-orange/10 text-ios-orange flex items-center justify-center text-xl mx-auto">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="font-bold text-base text-gray-900 dark:text-white" id="confirm-modal-title">Are you sure?</h3>
+      <p id="confirm-modal-msg" class="text-xs text-gray-500 leading-relaxed">This action cannot be undone.</p>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button id="confirm-btn-cancel" class="px-4 py-2 rounded-xl text-xs font-semibold bg-gray-200 dark:bg-ios-subDark text-gray-700 dark:text-gray-300">Cancel</button>
+        <button id="confirm-btn-ok" class="px-4 py-2 rounded-xl text-xs font-semibold bg-ios-red text-white shadow-sm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- JAVASCRIPT APP CONTROLLER -->
+  <script>
+    // INITIAL DATA SEED
+    const initialData = {
+      settings: {
+        bizName: "Dot Matrix Studio",
+        bizSub: "Custom LED Displays & Controller Hardware",
+        bizContact: "support@dotmatrixstudio.io | +1 (800) 555-DOTS"
+      },
+      clients: [
+        {
+          id: "c1",
+          name: "Soren Vance",
+          company: "CyberPulse Arcade",
+          email: "soren@cyberpulse.io",
+          phone: "+1 (555) 019-2834",
+          signageType: "RGB Matrix Array (P3/P4/P5)",
+          status: "Active",
+          budget: 3800,
+          notes: "3x2 P3 64x32 RGB panel array. Running animated pixel art on ESP32-S3 over HUB75."
+        },
+        {
+          id: "c2",
+          name: "Elena Rostova",
+          company: "Aura Design Tech",
+          email: "elena@auradesign.io",
+          phone: "+1 (555) 948-1120",
+          signageType: "Monochrome LED Ticker",
+          status: "Completed",
+          budget: 1800,
+          notes: "128x16 Red LED scrolling stock/crypto ticker board for office lobby."
+        },
+        {
+          id: "c3",
+          name: "Marcus Thorne",
+          company: "Gridiron Live Stadium",
+          email: "m.thorne@gridiron.org",
+          phone: "+1 (555) 773-9011",
+          signageType: "Volumetric 3D LED Cube",
+          status: "Lead",
+          budget: 8500,
+          notes: "Proposal for custom 16x16x16 volumetric RGB LED matrix cube display."
+        }
+      ],
+      invoices: [
+        {
+          id: "INV-1001",
+          clientId: "c2",
+          dueDate: "2026-11-15",
+          status: "Paid",
+          taxRate: 8.5,
+          notes: "Full payment received for monochrome ticker installation.",
+          items: [
+            { description: "128x16 Mono LED Panel Module", qty: 1, rate: 850 },
+            { description: "Custom ESP32 WiFi Controller", qty: 1, rate: 550 },
+            { description: "On-site Mount & Setup", qty: 1, rate: 400 }
+          ]
+        },
+        {
+          id: "INV-1002",
+          clientId: "c1",
+          dueDate: "2026-11-30",
+          status: "Sent",
+          taxRate: 8.5,
+          notes: "Deposit for P3 RGB Matrix Array assembly.",
+          items: [
+            { description: "P3 64x32 RGB Matrix Panels (Qty: 6)", qty: 1, rate: 1200 },
+            { description: "Custom Aluminum Frame & PSU 5V 40A", qty: 1, rate: 850 },
+            { description: "Pixel Art Web Portal Firmware", qty: 1, rate: 1100 }
+          ]
+        }
+      ],
+      tasks: [
+        {
+          id: "t1",
+          title: "Assemble frame and power harness for CyberPulse Arcade",
+          clientId: "c1",
+          priority: "High",
+          status: "In Progress"
+        },
+        {
+          id: "t2",
+          title: "Flash HUB75 driver v2.4 to ESP32-S3 microcontrollers",
+          clientId: "",
+          priority: "Medium",
+          status: "Pending"
+        },
+        {
+          id: "t3",
+          title: "Final signoff on Aura Design monochrome ticker",
+          clientId: "c2",
+          priority: "Low",
+          status: "Completed"
+        }
+      ]
+    };
+
+    // STATE MANAGEMENT
+    let state = {
+      settings: {},
+      clients: [],
+      invoices: [],
+      tasks: [],
+      taskFilter: 'ALL'
+    };
+
+    // INIT
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      applyThemePreference();
+      renderAll();
+    });
+
+    function loadState() {
+      const stored = localStorage.getItem('dot_matrix_app_data');
+      if (stored) {
+        try {
+          state = JSON.parse(stored);
+        } catch (e) {
+          state = JSON.parse(JSON.stringify(initialData));
+        }
+      } else {
+        state = JSON.parse(JSON.stringify(initialData));
+        saveState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('dot_matrix_app_data', JSON.stringify(state));
+      renderAll();
+    }
+
+    function resetToSampleData() {
+      state = JSON.parse(JSON.stringify(initialData));
+      saveState();
+      closeModal('modal-settings');
+      showToast("Reset to sample studio records!");
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const anchor = document.createElement('a');
+      anchor.setAttribute("href", dataStr);
+      anchor.setAttribute("download", `DotMatrix_Backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      showToast("Data exported to JSON file");
+    }
+
+    // THEME CONTROLLER
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('dot_matrix_theme', isDark ? 'dark' : 'light');
+      updateThemeIcon();
+    }
+
+    function applyThemePreference() {
+      const savedTheme = localStorage.getItem('dot_matrix_theme');
+      if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const icon = document.getElementById('theme-icon');
+      icon.className = isDark ? 'fa-solid fa-sun text-ios-orange' : 'fa-solid fa-moon text-gray-700';
+    }
+
+    // TOAST NOTIFICATION ENGINE (No alert())
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let bg = 'bg-ios-cardDark text-white border-gray-700';
+      if (type === 'success') bg = 'bg-ios-green text-white';
+      if (type === 'error') bg = 'bg-ios-red text-white';
+
+      toast.className = `px-4 py-2.5 rounded-2xl shadow-xl text-xs font-semibold flex items-center space-x-2 border transition-all transform translate-y-2 opacity-0 pointer-events-auto ${bg}`;
+      toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${message}</span>`;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 200);
+      }, 3000);
+    }
+
+    // CONFIRM DIALOG ENGINE (No confirm())
+    function confirmAction(message, onConfirm) {
+      const modal = document.getElementById('modal-confirm');
+      document.getElementById('confirm-modal-msg').innerText = message;
+
+      const btnOk = document.getElementById('confirm-btn-ok');
+      const btnCancel = document.getElementById('confirm-btn-cancel');
+
+      const cleanup = () => {
+        modal.classList.add('hidden');
+        btnOk.onclick = null;
+        btnCancel.onclick = null;
+      };
+
+      btnOk.onclick = () => {
+        cleanup();
+        onConfirm();
+      };
+
+      btnCancel.onclick = cleanup;
+      modal.classList.remove('hidden');
+    }
+
+    // TAB SWITCHER
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('text-ios-blue', 'active');
+        el.classList.add('text-gray-400');
+      });
+
+      const selectedTab = document.getElementById(`tab-${tabName}`);
+      const selectedNav = document.getElementById(`nav-${tabName}`);
+
+      if (selectedTab) selectedTab.classList.remove('hidden');
+      if (selectedNav) {
+        selectedNav.classList.add('text-ios-blue', 'active');
+        selectedNav.classList.remove('text-gray-400');
+      }
+    }
+
+    // RENDER CONTROLLER
+    function renderAll() {
+      document.getElementById('header-biz-name').innerText = state.settings.bizName || "Dot Matrix Studio";
+      renderDashboardMetrics();
+      renderClients();
+      renderInvoices();
+      renderTasks();
+    }
+
+    // DASHBOARD & METRICS
+    function renderDashboardMetrics() {
+      const paidInvoices = state.invoices.filter(i => i.status === 'Paid');
+      const totalRev = paidInvoices.reduce((sum, inv) => sum + calculateInvoiceTotalVal(inv), 0);
+      document.getElementById('metric-revenue').innerText = `$${totalRev.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+      const activeClients = state.clients.filter(c => c.status === 'Active');
+      document.getElementById('metric-clients').innerText = activeClients.length;
+
+      const unpaidInvoices = state.invoices.filter(i => i.status !== 'Paid');
+      const unpaidTotal = unpaidInvoices.reduce((sum, inv) => sum + calculateInvoiceTotalVal(inv), 0);
+      document.getElementById('metric-unpaid').innerText = `$${unpaidTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById('metric-unpaid-count').innerText = `${unpaidInvoices.length} Pending`;
+
+      const pendingTasks = state.tasks.filter(t => t.status !== 'Completed');
+      document.getElementById('metric-tasks').innerText = pendingTasks.length;
+
+      // Active client previews
+      const clientContainer = document.getElementById('dashboard-client-list');
+      if (state.clients.length === 0) {
+        clientContainer.innerHTML = `<p class="text-xs text-gray-400 py-2">No active matrix projects.</p>`;
+      } else {
+        clientContainer.innerHTML = state.clients.slice(0, 3).map(c => `
+          <div onclick="openClientDetail('${c.id}')" class="p-3 rounded-xl bg-white dark:bg-ios-subDark/50 border border-gray-200/80 dark:border-gray-800 flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-ios-subDark transition-all">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-full bg-ios-blue/10 text-ios-blue flex items-center justify-center font-bold text-xs">
+                ${c.name.charAt(0)}
+              </div>
+              <div>
+                <p class="text-sm font-semibold">${c.name}</p>
+                <p class="text-[11px] text-gray-500">${c.company || 'Private'} • ${c.signageType}</p>
+              </div>
+            </div>
+            ${getStatusBadge(c.status)}
+          </div>
+        `).join('');
+      }
+
+      // Priority tasks preview
+      const taskContainer = document.getElementById('dashboard-task-list');
+      const openTasks = state.tasks.filter(t => t.status !== 'Completed').slice(0, 4);
+      if (openTasks.length === 0) {
+        taskContainer.innerHTML = `<p class="text-xs text-gray-400 py-2">All tasks completed!</p>`;
+      } else {
+        taskContainer.innerHTML = openTasks.map(t => `
+          <div class="p-2.5 rounded-xl bg-white dark:bg-ios-subDark/50 border border-gray-200/80 dark:border-gray-800 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <button onclick="toggleTaskStatus('${t.id}')" class="text-gray-400 hover:text-ios-green">
+                <i class="fa-regular fa-circle text-base"></i>
+              </button>
+              <span class="text-xs font-medium text-gray-800 dark:text-gray-200">${t.title}</span>
+            </div>
+            ${getPriorityBadge(t.priority)}
+          </div>
+        `).join('');
+      }
+    }
+
+
+    // CLIENT MANAGEMENT (CRUD)
+    function renderClients() {
+      const grid = document.getElementById('clients-grid');
+      const search = document.getElementById('client-search').value.toLowerCase();
+      const filter = document.getElementById('client-status-filter').value;
+
+      const filtered = state.clients.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(search) || 
+                              (c.company && c.company.toLowerCase().includes(search)) ||
+                              (c.signageType && c.signageType.toLowerCase().includes(search));
+        const matchesFilter = filter === 'ALL' || c.status === filter;
+        return matchesSearch && matchesFilter;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl border border-gray-300/80 dark:border-gray-800">
+            <i class="fa-solid fa-address-book text-4xl text-gray-300 dark:text-gray-700 mb-2"></i>
+            <p class="text-gray-500 font-medium text-sm">No clients match your filter criteria.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => {
+        const clientInvoices = state.invoices.filter(i => i.clientId === c.id);
+        const totalBilled = clientInvoices.reduce((sum, inv) => sum + calculateInvoiceTotalVal(inv), 0);
+
+        return `
+          <div onclick="openClientDetail('${c.id}')" class="bg-ios-cardLight dark:bg-ios-cardDark p-5 rounded-2xl border border-gray-300/80 dark:border-gray-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex items-start justify-between">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-ios-blue/20">
+                    ${c.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-base leading-tight">${c.name}</h3>
+                    <p class="text-xs text-gray-500">${c.company || 'Private Client'}</p>
+                  </div>
+                </div>
+                ${getStatusBadge(c.status)}
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800 space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+                <p class="flex items-center"><i class="fa-solid fa-microchip w-5 text-ios-blue"></i> ${c.signageType}</p>
+                <p class="flex items-center"><i class="fa-regular fa-envelope w-5 text-gray-400"></i> ${c.email || 'No email'}</p>
+                <p class="flex items-center"><i class="fa-solid fa-phone w-5 text-gray-400"></i> ${c.phone || 'No phone'}</p>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between text-xs">
+              <span class="text-gray-400">Total Billed:</span>
+              <span class="font-bold text-gray-900 dark:text-white">$${totalBilled.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openClientModal(clientId = null) {
+      const form = document.getElementById('client-form');
+      form.reset();
+
+      if (clientId) {
+        const c = state.clients.find(x => x.id === clientId);
+        if (c) {
+          document.getElementById('client-modal-title').innerText = "Edit Client Profile";
+          document.getElementById('client-id').value = c.id;
+          document.getElementById('client-name').value = c.name;
+          document.getElementById('client-company').value = c.company || '';
+          document.getElementById('client-signage-type').value = c.signageType;
+          document.getElementById('client-email').value = c.email || '';
+          document.getElementById('client-phone').value = c.phone || '';
+          document.getElementById('client-status').value = c.status;
+          document.getElementById('client-budget').value = c.budget || '';
+          document.getElementById('client-notes').value = c.notes || '';
+        }
+      } else {
+        document.getElementById('client-modal-title').innerText = "Add New Client";
+        document.getElementById('client-id').value = '';
+      }
+
+      openModal('modal-client');
+    }
+
+    function saveClient(event) {
+      event.preventDefault();
+      const id = document.getElementById('client-id').value;
+      const clientData = {
+        id: id || 'c_' + Date.now(),
+        name: document.getElementById('client-name').value.trim(),
+        company: document.getElementById('client-company').value.trim(),
+        signageType: document.getElementById('client-signage-type').value,
+        email: document.getElementById('client-email').value.trim(),
+        phone: document.getElementById('client-phone').value.trim(),
+        status: document.getElementById('client-status').value,
+        budget: parseFloat(document.getElementById('client-budget').value) || 0,
+        notes: document.getElementById('client-notes').value.trim()
+      };
+
+      if (id) {
+        const index = state.clients.findIndex(c => c.id === id);
+        if (index !== -1) state.clients[index] = clientData;
+        showToast("Client profile updated", 'success');
+      } else {
+        state.clients.push(clientData);
+        showToast("New client created", 'success');
+      }
+
+      saveState();
+      closeModal('modal-client');
+    }
+
+    function openClientDetail(clientId) {
+      const c = state.clients.find(x => x.id === clientId);
+      if (!c) return;
+
+      const header = document.getElementById('client-detail-header');
+      header.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-2xl bg-ios-blue text-white flex items-center justify-center font-bold text-lg shadow-md shadow-ios-blue/20">
+            ${c.name.charAt(0)}
+          </div>
+          <div>
+            <h3 class="font-bold text-lg">${c.name}</h3>
+            <p class="text-xs text-gray-500">${c.company || 'Private Client'} • ${c.signageType}</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          ${getStatusBadge(c.status)}
+          <button onclick="openClientModal('${c.id}')" class="p-2 rounded-xl bg-gray-300/80 dark:bg-ios-subDark text-xs font-semibold hover:bg-gray-300">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+        </div>
+      `;
+
+      const actions = document.getElementById('client-detail-actions');
+      actions.innerHTML = `
+        <a href="mailto:${c.email || '#'}" class="p-2.5 rounded-xl bg-white dark:bg-ios-subDark text-center hover:bg-gray-100 transition-all text-xs font-semibold text-ios-blue border border-gray-200/80 dark:border-gray-800">
+          <i class="fa-solid fa-envelope mb-1 block text-sm"></i> Email
+        </a>
+        <a href="tel:${c.phone || '#'}" class="p-2.5 rounded-xl bg-white dark:bg-ios-subDark text-center hover:bg-gray-100 transition-all text-xs font-semibold text-ios-green border border-gray-200/80 dark:border-gray-800">
+          <i class="fa-solid fa-phone mb-1 block text-sm"></i> Call
+        </a>
+        <button onclick="openInvoiceModal(null, '${c.id}')" class="p-2.5 rounded-xl bg-white dark:bg-ios-subDark text-center hover:bg-gray-100 transition-all text-xs font-semibold text-ios-purple border border-gray-200/80 dark:border-gray-800">
+          <i class="fa-solid fa-file-invoice mb-1 block text-sm"></i> Invoice
+        </button>
+        <button onclick="openTaskModal(null, '${c.id}')" class="p-2.5 rounded-xl bg-white dark:bg-ios-subDark text-center hover:bg-gray-100 transition-all text-xs font-semibold text-ios-orange border border-gray-200/80 dark:border-gray-800">
+          <i class="fa-solid fa-plus-square mb-1 block text-sm"></i> To-Do
+        </button>
+      `;
+
+      document.getElementById('client-detail-notes').innerText = c.notes || "No hardware specs or notes recorded.";
+
+      // Related Invoices
+      const clientInvoices = state.invoices.filter(i => i.clientId === c.id);
+      const invoicesContainer = document.getElementById('client-detail-invoices');
+      document.getElementById('btn-add-client-invoice').onclick = () => openInvoiceModal(null, c.id);
+
+      if (clientInvoices.length === 0) {
+        invoicesContainer.innerHTML = `<p class="text-xs text-gray-400">No invoices for this client yet.</p>`;
+      } else {
+        invoicesContainer.innerHTML = clientInvoices.map(inv => `
+          <div class="p-3 rounded-xl bg-white dark:bg-ios-subDark/50 border border-gray-200/80 dark:border-gray-800 flex items-center justify-between text-xs">
+            <div>
+              <span class="font-bold text-gray-900 dark:text-white">${inv.id}</span>
+              <span class="text-gray-400 ml-2">Due: ${inv.dueDate}</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <span class="font-bold text-ios-green">$${calculateInvoiceTotalVal(inv).toFixed(2)}</span>
+              ${getInvoiceBadge(inv.status)}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Related Tasks
+      const clientTasks = state.tasks.filter(t => t.clientId === c.id);
+      const tasksContainer = document.getElementById('client-detail-tasks');
+      document.getElementById('btn-add-client-task').onclick = () => openTaskModal(null, c.id);
+
+      if (clientTasks.length === 0) {
+        tasksContainer.innerHTML = `<p class="text-xs text-gray-400">No pending tasks assigned.</p>`;
+      } else {
+        tasksContainer.innerHTML = clientTasks.map(t => `
+          <div class="p-2.5 rounded-xl bg-white dark:bg-ios-subDark/50 border border-gray-200/80 dark:border-gray-800 flex items-center justify-between text-xs">
+            <span class="${t.status === 'Completed' ? 'line-through text-gray-400' : 'font-medium'}">${t.title}</span>
+            <div class="flex items-center space-x-2">
+              ${getPriorityBadge(t.priority)}
+              <span class="text-[10px] text-gray-400">${t.status}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('btn-delete-client').onclick = () => {
+        confirmAction(`Delete client profile for ${c.name}?`, () => {
+          state.clients = state.clients.filter(item => item.id !== c.id);
+          saveState();
+          closeModal('modal-client-detail');
+          showToast("Client profile removed", 'info');
+        });
+      };
+
+      openModal('modal-client-detail');
+    }
+
+
+    // INVOICING & PDF ENGINE
+    function renderInvoices() {
+      const list = document.getElementById('invoices-list');
+      const search = document.getElementById('invoice-search').value.toLowerCase();
+      const filter = document.getElementById('invoice-status-filter').value;
+
+      const filtered = state.invoices.filter(inv => {
+        const client = state.clients.find(c => c.id === inv.clientId);
+        const clientName = client ? client.name.toLowerCase() : '';
+        const matchesSearch = inv.id.toLowerCase().includes(search) || clientName.includes(search);
+        const matchesFilter = filter === 'ALL' || inv.status === filter;
+        return matchesSearch && matchesFilter;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-12 bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl border border-gray-300/80 dark:border-gray-800">
+            <i class="fa-solid fa-receipt text-4xl text-gray-300 dark:text-gray-700 mb-2"></i>
+            <p class="text-gray-500 font-medium text-sm">No invoices found.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = filtered.map(inv => {
+        const client = state.clients.find(c => c.id === inv.clientId);
+        const total = calculateInvoiceTotalVal(inv);
+
+        return `
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-4 rounded-2xl border border-gray-300/80 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-green-500/10 text-ios-green flex items-center justify-center font-bold text-base">
+                <i class="fa-solid fa-file-invoice"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h4 class="font-bold text-sm">${inv.id}</h4>
+                  ${getInvoiceBadge(inv.status)}
+                </div>
+                <p class="text-xs text-gray-500">${client ? client.name : 'Unknown Client'} • Due ${inv.dueDate}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-200 dark:border-gray-800">
+              <div class="text-left sm:text-right">
+                <span class="text-[10px] text-gray-400 block uppercase font-bold">Total</span>
+                <span class="text-base font-extrabold text-gray-900 dark:text-white">$${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              </div>
+
+              <div class="flex items-center space-x-1.5">
+                <button onclick="openInvoiceModal('${inv.id}')" class="px-3 py-1.5 rounded-xl bg-gray-200/80 dark:bg-ios-subDark text-xs font-semibold hover:bg-gray-300">
+                  Edit / PDF
+                </button>
+                <button onclick="deleteInvoice('${inv.id}')" class="p-1.5 rounded-xl text-gray-400 hover:text-ios-red text-xs">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function calculateInvoiceTotalVal(inv) {
+      const sub = (inv.items || []).reduce((s, item) => s + ((item.qty || 1) * (item.rate || 0)), 0);
+      const tax = sub * ((inv.taxRate || 0) / 100);
+      return sub + tax;
+    }
+
+    function openInvoiceModal(invoiceId = null, defaultClientId = null) {
+      const select = document.getElementById('invoice-client-id');
+      select.innerHTML = state.clients.map(c => `<option value="${c.id}">${c.name} (${c.company || 'Private'})</option>`).join('');
+
+      if (state.clients.length === 0) {
+        showToast("Please create a client profile first!", 'error');
+        return;
+      }
+
+      const container = document.getElementById('invoice-line-items');
+      container.innerHTML = '';
+
+      if (invoiceId) {
+        const inv = state.invoices.find(i => i.id === invoiceId);
+        if (inv) {
+          document.getElementById('invoice-modal-title').innerText = `Edit Invoice ${inv.id}`;
+          document.getElementById('invoice-id').value = inv.id;
+          document.getElementById('invoice-client-id').value = inv.clientId;
+          document.getElementById('invoice-status').value = inv.status;
+          document.getElementById('invoice-due-date').value = inv.dueDate;
+          document.getElementById('invoice-tax-rate').value = inv.taxRate || 8.5;
+          document.getElementById('invoice-notes').value = inv.notes || '';
+
+          (inv.items || []).forEach(item => addInvoiceLineItem(item.description, item.qty, item.rate));
+        }
+      } else {
+        document.getElementById('invoice-modal-title').innerText = "Create Studio Invoice";
+        document.getElementById('invoice-id').value = '';
+        if (defaultClientId) document.getElementById('invoice-client-id').value = defaultClientId;
+
+        const defaultDue = new Date();
+        defaultDue.setDate(defaultDue.getDate() + 14);
+        document.getElementById('invoice-due-date').value = defaultDue.toISOString().slice(0,10);
+
+        addInvoiceLineItem("Custom RGB Matrix Display Setup", 1, 1200);
+      }
+
+      calculateInvoiceTotals();
+      openModal('modal-invoice');
+    }
+
+    function addInvoiceLineItem(desc = '', qty = 1, rate = 0) {
+      const container = document.getElementById('invoice-line-items');
+      const div = document.createElement('div');
+      div.className = "flex items-center space-x-2 line-item-row";
+      div.innerHTML = `
+        <input type="text" placeholder="Matrix item / service..." value="${desc}" class="item-desc flex-1 px-3 py-2 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm focus:ring-2 focus:ring-ios-blue outline-none" required>
+        <input type="number" placeholder="Qty" value="${qty}" min="1" oninput="calculateInvoiceTotals()" class="item-qty w-16 px-2 py-2 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm text-center focus:ring-2 focus:ring-ios-blue outline-none" required>
+        <input type="number" placeholder="Rate" value="${rate}" step="0.01" oninput="calculateInvoiceTotals()" class="item-rate w-24 px-2 py-2 rounded-xl bg-white dark:bg-ios-subDark border border-gray-300 dark:border-gray-700 text-sm text-right focus:ring-2 focus:ring-ios-blue outline-none" required>
+        <button type="button" onclick="this.parentElement.remove(); calculateInvoiceTotals();" class="p-2 text-gray-400 hover:text-ios-red">
+          <i class="fa-solid fa-trash text-xs"></i>
+        </button>
+      `;
+      container.appendChild(div);
+      calculateInvoiceTotals();
+    }
+
+    function calculateInvoiceTotals() {
+      const rows = document.querySelectorAll('.line-item-row');
+      let subtotal = 0;
+
+      rows.forEach(row => {
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+        subtotal += qty * rate;
+      });
+
+      const taxRate = parseFloat(document.getElementById('invoice-tax-rate').value) || 0;
+      const tax = subtotal * (taxRate / 100);
+      const total = subtotal + tax;
+
+      document.getElementById('inv-subtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('inv-tax').innerText = `$${tax.toFixed(2)}`;
+      document.getElementById('inv-total').innerText = `$${total.toFixed(2)}`;
+    }
+
+    function saveInvoice(event) {
+      event.preventDefault();
+      const id = document.getElementById('invoice-id').value;
+      const clientId = document.getElementById('invoice-client-id').value;
+
+      const items = [];
+      document.querySelectorAll('.line-item-row').forEach(row => {
+        items.push({
+          description: row.querySelector('.item-desc').value.trim(),
+          qty: parseFloat(row.querySelector('.item-qty').value) || 1,
+          rate: parseFloat(row.querySelector('.item-rate').value) || 0
+        });
+      });
+
+      const invoiceData = {
+        id: id || 'INV-' + Math.floor(1000 + Math.random() * 9000),
+        clientId,
+        dueDate: document.getElementById('invoice-due-date').value,
+        status: document.getElementById('invoice-status').value,
+        taxRate: parseFloat(document.getElementById('invoice-tax-rate').value) || 0,
+        notes: document.getElementById('invoice-notes').value.trim(),
+        items
+      };
+
+      if (id) {
+        const index = state.invoices.findIndex(i => i.id === id);
+        if (index !== -1) state.invoices[index] = invoiceData;
+        showToast("Invoice updated", 'success');
+      } else {
+        state.invoices.push(invoiceData);
+        showToast("Invoice generated", 'success');
+      }
+
+      saveState();
+      closeModal('modal-invoice');
+    }
+
+    function deleteInvoice(invId) {
+      confirmAction(`Delete invoice ${invId}?`, () => {
+        state.invoices = state.invoices.filter(i => i.id !== invId);
+        saveState();
+        showToast("Invoice removed");
+      });
+    }
+
+    // PDF EXPORT / PRINT CONTROLLER
+    function triggerPdfExport() {
+      const clientId = document.getElementById('invoice-client-id').value;
+      const client = state.clients.find(c => c.id === clientId);
+
+      document.getElementById('print-biz-title').innerText = state.settings.bizName || "Dot Matrix Studio";
+      document.getElementById('print-biz-sub').innerText = state.settings.bizSub || "";
+      document.getElementById('print-biz-contact').innerText = state.settings.bizContact || "";
+
+      const invId = document.getElementById('invoice-id').value || '#INV-DRAFT';
+      document.getElementById('print-inv-num').innerText = invId;
+      document.getElementById('print-inv-date').innerText = `Due Date: ${document.getElementById('invoice-due-date').value}`;
+
+      if (client) {
+        document.getElementById('print-client-name').innerText = client.name;
+        document.getElementById('print-client-company').innerText = client.company || 'Private Client';
+        document.getElementById('print-client-email').innerText = client.email || 'No email';
+      }
+
+      const printTable = document.getElementById('print-line-items');
+      printTable.innerHTML = '';
+
+      let subtotal = 0;
+      document.querySelectorAll('.line-item-row').forEach(row => {
+        const desc = row.querySelector('.item-desc').value;
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+        const lineTotal = qty * rate;
+        subtotal += lineTotal;
+
+        printTable.innerHTML += `
+          <tr class="border-b border-gray-200">
+            <td class="py-2 px-2 text-gray-800">${desc}</td>
+            <td class="py-2 px-2 text-center text-gray-800">${qty}</td>
+            <td class="py-2 px-2 text-right text-gray-800">$${rate.toFixed(2)}</td>
+            <td class="py-2 px-2 text-right font-medium text-gray-900">$${lineTotal.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      const taxRate = parseFloat(document.getElementById('invoice-tax-rate').value) || 0;
+      const tax = subtotal * (taxRate / 100);
+      const total = subtotal + tax;
+
+      document.getElementById('print-subtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('print-tax').innerText = `$${tax.toFixed(2)}`;
+      document.getElementById('print-total').innerText = `$${total.toFixed(2)}`;
+      document.getElementById('print-notes').innerText = document.getElementById('invoice-notes').value || "Thank you for working with Dot Matrix Studio!";
+
+      // PDF rendering fallback
+      const printSheet = document.getElementById('printable-invoice-container');
+      printSheet.classList.remove('hidden');
+
+      if (window.html2pdf) {
+        const opt = {
+          margin:       0.5,
+          filename:     `${invId}_DotMatrixStudio.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(printSheet).save().then(() => {
+          showToast("PDF Downloaded", 'success');
+        }).catch(() => {
+          window.print();
+        });
+      } else {
+        window.print();
+      }
+    }
+
+
+    // TASKS CONTROLLER
+    function renderTasks() {
+      const list = document.getElementById('tasks-list');
+      const filter = state.taskFilter;
+      const filtered = state.tasks.filter(t => filter === 'ALL' || t.status === filter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-12 bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl border border-gray-300/80 dark:border-gray-800">
+            <i class="fa-solid fa-check-double text-4xl text-gray-300 dark:text-gray-700 mb-2"></i>
+            <p class="text-gray-500 font-medium text-sm">No tasks in this view.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => {
+        const client = state.clients.find(c => c.id === t.clientId);
+        const isDone = t.status === 'Completed';
+
+        return `
+          <div class="bg-ios-cardLight dark:bg-ios-cardDark p-3.5 rounded-2xl border border-gray-300/80 dark:border-gray-800 shadow-sm flex items-center justify-between space-x-3">
+            <div class="flex items-center space-x-3 flex-1">
+              <button onclick="toggleTaskStatus('${t.id}')" class="text-lg text-gray-400 hover:text-ios-green transition-all">
+                ${isDone ? '<i class="fa-solid fa-circle-check text-ios-green"></i>' : '<i class="fa-regular fa-circle"></i>'}
+              </button>
+
+              <div class="flex-1">
+                <p class="text-sm font-semibold ${isDone ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}">${t.title}</p>
+                <p class="text-xs text-gray-500">${client ? client.name : 'General Studio Task'}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              ${getPriorityBadge(t.priority)}
+              <span class="text-xs px-2.5 py-1 rounded-full ${t.status === 'In Progress' ? 'bg-ios-blue/10 text-ios-blue' : 'bg-gray-200 dark:bg-ios-subDark text-gray-600'} font-medium">
+                ${t.status}
+              </span>
+              <button onclick="deleteTask('${t.id}')" class="p-1.5 text-gray-400 hover:text-ios-red text-xs">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setTaskFilter(filter) {
+      state.taskFilter = filter;
+      document.querySelectorAll('.task-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-ios-blue', 'text-white');
+        btn.classList.add('bg-gray-300/70', 'dark:bg-ios-subDark', 'text-gray-700', 'dark:text-gray-300');
+      });
+
+      const activeBtn = document.getElementById(`filter-task-${filter.toLowerCase().replace(' ', '')}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-ios-blue', 'text-white');
+        activeBtn.classList.remove('bg-gray-300/70', 'dark:bg-ios-subDark', 'text-gray-700', 'dark:text-gray-300');
+      }
+
+      renderTasks();
+    }
+
+    function openTaskModal(taskId = null, defaultClientId = null) {
+      const select = document.getElementById('task-client-id');
+      select.innerHTML = '<option value="">-- General Studio Task (No Client) --</option>' + 
+        state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+      if (taskId) {
+        const task = state.tasks.find(t => t.id === taskId);
+        if (task) {
+          document.getElementById('task-modal-title').innerText = "Edit To-Do";
+          document.getElementById('task-id').value = task.id;
+          document.getElementById('task-title').value = task.title;
+          document.getElementById('task-client-id').value = task.clientId || '';
+          document.getElementById('task-priority').value = task.priority;
+          document.getElementById('task-status').value = task.status;
+        }
+      } else {
+        document.getElementById('task-modal-title').innerText = "New Studio To-Do";
+        document.getElementById('task-id').value = '';
+        document.getElementById('task-title').value = '';
+        if (defaultClientId) document.getElementById('task-client-id').value = defaultClientId;
+      }
+
+      openModal('modal-task');
+    }
+
+    function saveTask(event) {
+      event.preventDefault();
+      const id = document.getElementById('task-id').value;
+      const taskData = {
+        id: id || 't_' + Date.now(),
+        title: document.getElementById('task-title').value.trim(),
+        clientId: document.getElementById('task-client-id').value,
+        priority: document.getElementById('task-priority').value,
+        status: document.getElementById('task-status').value
+      };
+
+      if (id) {
+        const index = state.tasks.findIndex(t => t.id === id);
+        if (index !== -1) state.tasks[index] = taskData;
+        showToast("Task updated", 'success');
+      } else {
+        state.tasks.push(taskData);
+        showToast("To-Do created", 'success');
+      }
+
+      saveState();
+      closeModal('modal-task');
+    }
+
+    function toggleTaskStatus(taskId) {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = task.status === 'Completed' ? 'Pending' : 'Completed';
+        saveState();
+      }
+    }
+
+    function deleteTask(taskId) {
+      confirmAction("Delete this to-do task?", () => {
+        state.tasks = state.tasks.filter(t => t.id !== taskId);
+        saveState();
+        showToast("Task deleted");
+      });
+    }
+
+    // SETTINGS
+    function openSettingsModal() {
+      document.getElementById('setting-biz-name').value = state.settings.bizName || "Dot Matrix Studio";
+      document.getElementById('setting-biz-sub').value = state.settings.bizSub || "";
+      document.getElementById('setting-biz-contact').value = state.settings.bizContact || "";
+      openModal('modal-settings');
+    }
+
+    function saveSettings() {
+      state.settings.bizName = document.getElementById('setting-biz-name').value.trim();
+      state.settings.bizSub = document.getElementById('setting-biz-sub').value.trim();
+      state.settings.bizContact = document.getElementById('setting-biz-contact').value.trim();
+      saveState();
+      closeModal('modal-settings');
+      showToast("Settings saved", 'success');
+    }
+
+    // BADGE HELPERS
+    function getStatusBadge(status) {
+      switch (status) {
+        case 'Active':
+          return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-ios-green/10 text-ios-green">Active</span>`;
+        case 'Completed':
+          return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-ios-blue/10 text-ios-blue">Completed</span>`;
+        case 'Lead':
+          return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-ios-purple/10 text-ios-purple">Lead</span>`;
+        case 'On Hold':
+          return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-ios-orange/10 text-ios-orange">On Hold</span>`;
+        default:
+          return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-200 text-gray-700">${status}</span>`;
+      }
+    }
+
+    function getInvoiceBadge(status) {
+      switch (status) {
+        case 'Paid':
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-ios-green/10 text-ios-green">Paid</span>`;
+        case 'Sent':
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-ios-blue/10 text-ios-blue">Sent</span>`;
+        case 'Overdue':
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-ios-red/10 text-ios-red">Overdue</span>`;
+        default:
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gray-300 dark:bg-ios-subDark text-gray-600">Draft</span>`;
+      }
+    }
+
+    function getPriorityBadge(priority) {
+      switch (priority) {
+        case 'High':
+          return `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-ios-red/10 text-ios-red">High</span>`;
+        case 'Medium':
+          return `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-ios-orange/10 text-ios-orange">Med</span>`;
+        default:
+          return `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-gray-300 dark:bg-ios-subDark text-gray-500">Low</span>`;
+      }
+    }
+
+    // MODAL DIALOGS
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
