@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFI Mission Control OS</title>
+    <style>
+        :root {
+            --bg-base: #06080d;
+            --bg-surface: #0d111a;
+            --bg-card: #131924;
+            --border-color: #1f2a3e;
+            --border-highlight: #00f0ff;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --accent-cyan: #00f0ff;
+            --accent-green: #00ff88;
+            --accent-orange: #ff9900;
+            --accent-red: #ff3366;
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Header */
+        header {
+            height: 50px;
+            min-height: 50px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            z-index: 10;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
+        }
+
+        .header-brand svg {
+            fill: var(--accent-cyan);
+            width: 24px;
+            height: 24px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        select, input, button {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        button {
+            cursor: pointer;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: var(--border-color);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        button.btn-primary {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        button.btn-primary:hover {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        /* Split Pop-Out Dropdown Button Container */
+        .popout-dropdown-container {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .popout-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            min-width: 150px;
+        }
+
+        .popout-menu.active {
+            display: flex;
+        }
+
+        .popout-menu button {
+            background: transparent;
+            border: none;
+            text-align: left;
+            padding: 8px 12px;
+            color: var(--text-main);
+            font-size: 0.8rem;
+            width: 100%;
+            border-radius: 0;
+        }
+
+        .popout-menu button:hover {
+            background: var(--border-color);
+            color: var(--accent-cyan);
+        }
+
+        .utc-clock {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            background: #000;
+            padding: 4px 8px;
+            border-radius: 3px;
+            border: 1px solid #00ff8844;
+        }
+
+        /* Main Single Grid Area (No Sections) */
+        main {
+            flex: 1;
+            display: grid;
+            gap: 4px;
+            padding: 6px;
+            overflow: hidden;
+            background: #000;
+            min-height: 0;
+        }
+
+        /* Monitor Element */
+        .monitor {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .monitor:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+        }
+
+        .monitor-header {
+            height: 22px;
+            min-height: 22px;
+            background: #090d14;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px;
+            font-size: 0.65rem;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .monitor-title {
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+
+        .monitor-actions {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .monitor-dropdown-wrapper {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .monitor-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 2px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            min-width: 140px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .monitor-dropdown-menu.active {
+            display: flex;
+        }
+
+        .monitor-dropdown-menu button {
+            background: transparent;
+            border: none;
+            text-align: left;
+            padding: 6px 10px;
+            color: var(--text-main);
+            font-size: 0.7rem;
+            width: 100%;
+            border-radius: 0;
+        }
+
+        .monitor-dropdown-menu button:hover {
+            background: var(--border-color);
+            color: var(--accent-cyan);
+        }
+
+        .monitor-btn {
+            cursor: pointer;
+            opacity: 0.75;
+            font-size: 0.65rem;
+            padding: 2px 4px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            border-radius: 2px;
+            color: var(--text-main);
+        }
+
+        .monitor-btn:hover {
+            opacity: 1;
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        .monitor-body {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #020408;
+            min-height: 0;
+        }
+
+        canvas.monitor-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .monitor-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: auto;
+        }
+
+        .monitor-text {
+            width: 100%;
+            height: 100%;
+            padding: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent-green);
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .monitor-html {
+            width: 100%;
+            height: 100%;
+            padding: 4px;
+            overflow: auto;
+        }
+
+        /* Drawer Overlay & Modals */
+        .drawer-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            justify-content: flex-end;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer {
+            width: 750px;
+            height: 100%;
+            background: var(--bg-surface);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+        }
+
+        .drawer-overlay.active .drawer {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drawer-tabs {
+            display: flex;
+            background: var(--bg-base);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 10px 14px;
+            border: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            background: transparent;
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+
+        .tab-btn.active {
+            color: var(--accent-cyan);
+            border-bottom-color: var(--accent-cyan);
+            background: var(--bg-surface);
+        }
+
+        .drawer-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+        }
+
+        textarea {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 3px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .data-table th {
+            background: var(--bg-card);
+            color: var(--text-muted);
+        }
+
+        .checkbox-group {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 3px;
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .checkbox-item input {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--accent-cyan);
+            width: 500px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .modal-header {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+        }
+
+        .modal-body {
+            padding: 15px;
+        }
+
+        .modal-footer {
+            padding: 10px 15px;
+            background: var(--bg-card);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navigation Bar -->
+    <header>
+        <div class="header-brand">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M4.93 4.93l1.41 1.41A7.932 7.932 0 0 0 4 12c0 2.21.89 4.21 2.34 5.66l-1.41 1.41A9.969 9.969 0 0 1 2 12c0-2.76 1.12-5.26 2.93-7.07zm14.14 0A9.969 9.969 0 0 1 22 12c0 2.76-1.12 5.26-2.93 7.07l-1.41-1.41A7.932 7.932 0 0 0 20 12c0-2.21-.89-4.21-2.34-5.66l1.41-1.41z"/>
+            </svg>
+            <span>AFI MISSION CONTROL OS</span>
+        </div>
+
+        <div class="header-controls">
+            <div class="control-group">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">PROJECT:</label>
+                <select id="activeProjectSelect" onchange="switchProject(this.value)"></select>
+            </div>
+
+            <div class="control-group">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">LAYOUT:</label>
+                <select id="activeLayoutSelect" onchange="switchLayout(this.value)"></select>
+            </div>
+
+            <!-- Pop-Out Wall Dropdown Menu -->
+            <div class="popout-dropdown-container">
+                <button class="btn-primary" onclick="togglePopoutMenu(event)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    Pop-Out Wall ▾
+                </button>
+                <div class="popout-menu" id="popoutMenu">
+                    <button onclick="launchPopoutWall(24)">24 Screens</button>
+                    <button onclick="launchPopoutWall(12)">12 Screens</button>
+                    <button onclick="launchPopoutWall(8)">8 Screens</button>
+                    <button onclick="launchPopoutWall(6)">6 Screens</button>
+                    <button onclick="launchPopoutWall(4)">4 Screens</button>
+                    <button onclick="launchPopoutWall(1)">1 Screen</button>
+                </div>
+            </div>
+
+            <div class="utc-clock" id="utcClock">00:00:00 UTC</div>
+
+            <button onclick="toggleDrawer(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Options
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Single Grid Area (No Sections) -->
+    <main id="stationWall"></main>
+
+    <!-- Side Drawer Options / Management Console -->
+    <div class="drawer-overlay" id="drawerOverlay">
+        <div class="drawer">
+            <div class="drawer-header">
+                <h3>MANAGEMENT CONSOLE</h3>
+                <button onclick="toggleDrawer(false)">✕</button>
+            </div>
+            <div class="drawer-tabs">
+                <button class="tab-btn active" onclick="switchTab('projects')">Projects</button>
+                <button class="tab-btn" onclick="switchTab('layouts')">Layouts</button>
+                <button class="tab-btn" onclick="switchTab('modules')">Modules</button>
+                <button class="tab-btn" onclick="switchTab('endpoints')">Endpoints</button>
+                <button class="tab-btn" onclick="switchTab('personnel')">Personnel</button>
+                <button class="tab-btn" onclick="switchTab('tasks')">Scheduler</button>
+                <button class="tab-btn" onclick="switchTab('system')">System/IO</button>
+            </div>
+            <div class="drawer-body" id="drawerContent"></div>
+        </div>
+    </div>
+
+    <!-- Monitor Config Modal -->
+    <div class="modal-overlay" id="monitorModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="modalMonitorTitle">CONFIGURE MONITOR</span>
+                <button onclick="closeMonitorModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalMonitorId">
+                <div class="form-group">
+                    <label>Assigned Module</label>
+                    <select id="modalModuleSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>Custom Title Override</label>
+                    <input type="text" id="modalTitleOverride" placeholder="Default: Module Name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeMonitorModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveMonitorConfig()">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Entity Edit Modal -->
+    <div class="modal-overlay" id="editEntityModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="editModalTitle">EDIT ITEM</span>
+                <button onclick="closeEditModal()">✕</button>
+            </div>
+            <div class="modal-body" id="editModalBody"></div>
+            <div class="modal-footer">
+                <button onclick="closeEditModal()">Cancel</button>
+                <button class="btn-primary" onclick="submitEntityEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_STATE = {
+            activeProjectId: 'p1',
+            projectActiveLayouts: { 'p1': 'l1', 'p2': 'l2' },
+            projects: [
+                { id: 'p1', name: 'Alpha Mission Control', desc: 'Primary launch & telemetry operations' },
+                { id: 'p2', name: 'Project Cygnus', desc: 'Experimental deep-space monitoring' }
+            ],
+            layouts: [
+                { id: 'l1', projectId: 'p1', name: 'Default 24-Wall Ops', count: 24 },
+                { id: 'l2', projectId: 'p2', name: 'Cygnus 8-Screen Ops', count: 8 }
+            ],
+            personnel: [
+                { id: 'usr1', name: 'Cmdr. Vance', role: 'Lead Director' }
+            ],
+            endpoints: [
+                { id: 'ep1', name: 'Telemetry REST API', type: 'REST JSON', url: 'https://api.spaceflightnewsapi.net/v4/blogs/' },
+                { id: 'ep2', name: 'Live CCTV Stream', type: 'iFrame Video', url: 'https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&mute=1' }
+            ],
+            modules: [
+                {
+                    id: 'mod_telemetry',
+                    name: 'Orbit Radar Scan',
+                    renderEngine: 'Canvas JS',
+                    linkedEndpointIds: ['ep1'],
+                    code: `const center = width / 2;
+ctx.fillStyle = '#020408';
+ctx.fillRect(0, 0, width, height);
+
+ctx.strokeStyle = '#00f0ff33';
+ctx.lineWidth = 1;
+for(let r = 20; r < width/2; r += 20) {
+    ctx.beginPath();
+    ctx.arc(center, height/2, r, 0, Math.PI * 2);
+    ctx.stroke();
+}
+
+const angle = (time / 1000) % (Math.PI * 2);
+ctx.strokeStyle = '#00f0ff';
+ctx.beginPath();
+ctx.moveTo(center, height/2);
+ctx.lineTo(center + Math.cos(angle) * (width/2), height/2 + Math.sin(angle) * (width/2));
+ctx.stroke();
+
+ctx.fillStyle = '#00ff88';
+ctx.font = '10px monospace';
+ctx.fillText('RADAR ACTIVE', 10, 15);`
+                },
+                {
+                    id: 'mod_html_canvas',
+                    name: 'Custom JS / HTML / Canvas',
+                    renderEngine: 'JavaScript / HTML / Canvas',
+                    linkedEndpointIds: [],
+                    code: `<div style="padding:10px; color:#00f0ff; font-family:monospace;">
+    <h4>Custom HTML/JS Container</h4>
+    <p style="font-size:11px; color:#64748b;">Runs inline scripts and markup smoothly.</p>
+</div>`
+                },
+                {
+                    id: 'mod_syslog',
+                    name: 'System Logs',
+                    renderEngine: 'Static Text',
+                    linkedEndpointIds: [],
+                    code: `[SYS_OK] Initializing core offscreen buffer...
+[NET_OK] Multi-endpoint proxy connected successfully.
+[INFO] Monitoring active display pipelines.`
+                }
+            ],
+            tasks: [
+                { id: 't1', name: 'Telemetry Sync', interval: 5, lastRun: 'Never', webhook: 'https://api.internal/sync' }
+            ],
+            layoutMonitors: {
+                'l1': Array.from({ length: 24 }, (_, i) => ({
+                    id: i,
+                    moduleId: i === 0 ? 'mod_telemetry' : i === 1 ? 'mod_html_canvas' : 'mod_syslog',
+                    titleOverride: '',
+                    sourceMirrorId: null
+                })),
+                'l2': Array.from({ length: 8 }, (_, i) => ({
+                    id: i,
+                    moduleId: 'mod_syslog',
+                    titleOverride: '',
+                    sourceMirrorId: null
+                }))
+            }
+        };
+
+        let state = JSON.parse(localStorage.getItem('AFI_MISSION_CONTROL_STATE')) || DEFAULT_STATE;
+        if (!state.projectActiveLayouts) state.projectActiveLayouts = {};
+        let activeEditContext = null;
+        const animationFrames = {};
+
+        // Close dropdowns when clicking outside
+        window.addEventListener('click', (e) => {
+            if (!e.target.closest('.popout-dropdown-container')) {
+                const menu = document.getElementById('popoutMenu');
+                if (menu) menu.classList.remove('active');
+            }
+            if (!e.target.closest('.monitor-dropdown-wrapper')) {
+                document.querySelectorAll('.monitor-dropdown-menu').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        function togglePopoutMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('popoutMenu');
+            if (menu) menu.classList.toggle('active');
+        }
+
+        function toggleMonitorDropdown(e, menuId) {
+            e.stopPropagation();
+            document.querySelectorAll('.monitor-dropdown-menu').forEach(m => {
+                if (m.id !== menuId) m.classList.remove('active');
+            });
+            const menu = document.getElementById(menuId);
+            if (menu) menu.classList.toggle('active');
+        }
+
+        // Cross-window sync channel using BroadcastChannel API
+        const stateChannel = new BroadcastChannel('afi_mission_control_sync');
+        stateChannel.onmessage = (event) => {
+            if (event.data && event.data.type === 'STATE_SYNC') {
+                state = event.data.state;
+                localStorage.setItem('AFI_MISSION_CONTROL_STATE', JSON.stringify(state));
+                if (typeof renderHeaderSelectors === 'function') renderHeaderSelectors();
+                if (typeof renderWall === 'function') renderWall();
+            }
+        };
+
+        function getActiveLayout() {
+            if (!state.projectActiveLayouts) state.projectActiveLayouts = {};
+            let layoutId = state.projectActiveLayouts[state.activeProjectId];
+            let layout = state.layouts.find(l => l.id === layoutId);
+            
+            if (!layout) {
+                const projLayouts = state.layouts.filter(l => l.projectId === state.activeProjectId);
+                layout = projLayouts[0] || state.layouts[0];
+                if (layout) {
+                    state.projectActiveLayouts[state.activeProjectId] = layout.id;
+                }
+            }
+            return layout || { id: 'l_default', projectId: state.activeProjectId, name: 'Default Layout', count: 24 };
+        }
+
+        function getActiveProjectMonitors() {
+            if (!state.layoutMonitors) state.layoutMonitors = {};
+            const layout = getActiveLayout();
+            const count = layout.count || 24;
+            
+            if (!state.layoutMonitors[layout.id]) {
+                state.layoutMonitors[layout.id] = [];
+            }
+            
+            const currentList = state.layoutMonitors[layout.id];
+            const updatedList = [];
+            for (let i = 0; i < count; i++) {
+                if (currentList[i]) {
+                    updatedList.push(currentList[i]);
+                } else {
+                    updatedList.push({ id: i, moduleId: '', titleOverride: '', sourceMirrorId: null });
+                }
+            }
+            state.layoutMonitors[layout.id] = updatedList;
+            return state.layoutMonitors[layout.id];
+        }
+
+        function saveState() {
+            localStorage.setItem('AFI_MISSION_CONTROL_STATE', JSON.stringify(state));
+            stateChannel.postMessage({ type: 'STATE_SYNC', state: state });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initClock();
+            renderHeaderSelectors();
+            renderWall();
+        });
+
+        function initClock() {
+            const clockEl = document.getElementById('utcClock');
+            if (!clockEl) return;
+            setInterval(() => {
+                const now = new Date();
+                clockEl.textContent = now.toISOString().substring(11, 19) + ' UTC';
+            }, 1000);
+        }
+
+        function renderHeaderSelectors() {
+            const projSelect = document.getElementById('activeProjectSelect');
+            if (projSelect) {
+                projSelect.innerHTML = state.projects.map(p => `<option value="${p.id}" ${p.id === state.activeProjectId ? 'selected' : ''}>${p.name}</option>`).join('');
+            }
+
+            let projectLayouts = state.layouts.filter(l => l.projectId === state.activeProjectId);
+            if (projectLayouts.length === 0) {
+                const newId = 'l_' + Date.now();
+                const newLayout = { id: newId, projectId: state.activeProjectId, name: 'Default 24-Wall', count: 24 };
+                state.layouts.push(newLayout);
+                projectLayouts = [newLayout];
+                state.projectActiveLayouts[state.activeProjectId] = newId;
+            }
+
+            const activeLayout = getActiveLayout();
+            const layoutSelect = document.getElementById('activeLayoutSelect');
+            if (layoutSelect) {
+                layoutSelect.innerHTML = projectLayouts.map(l => `<option value="${l.id}" ${l.id === activeLayout.id ? 'selected' : ''}>${l.name} (${l.count || 24}-Screen)</option>`).join('');
+            }
+        }
+
+        function switchProject(val) {
+            state.activeProjectId = val;
+            saveState();
+            renderHeaderSelectors();
+            renderWall();
+        }
+
+        function switchLayout(val) {
+            if (!state.projectActiveLayouts) state.projectActiveLayouts = {};
+            state.projectActiveLayouts[state.activeProjectId] = val;
+            saveState();
+            renderHeaderSelectors();
+            renderWall();
+        }
+
+        function getModuleRuntimeContext(mod) {
+            let endpoints = [];
+            if (mod.linkedEndpointIds && Array.isArray(mod.linkedEndpointIds)) {
+                endpoints = state.endpoints.filter(e => mod.linkedEndpointIds.includes(e.id));
+            }
+            return {
+                endpoints: endpoints,
+                fetchEndpointData: async function(epId) {
+                    const target = epId ? endpoints.find(e => e.id === epId) : endpoints[0];
+                    if (!target || !target.url) return null;
+                    try {
+                        const res = await fetch(target.url);
+                        return await res.json();
+                    } catch(e) { return null; }
+                }
+            };
+        }
+
+        function renderMonitorContent(containerId, mon, mod) {
+            const body = document.getElementById(containerId);
+            if (!body) return;
+            body.innerHTML = '';
+
+            if (!mod) {
+                body.innerHTML = `<div style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-mono);">[NO MODULE ASSIGNED]</div>`;
+                return;
+            }
+
+            const runtime = getModuleRuntimeContext(mod);
+
+            if (mod.renderEngine === 'Canvas JS') {
+                const canvas = document.createElement('canvas');
+                canvas.className = 'monitor-canvas';
+                body.appendChild(canvas);
+
+                const offscreen = document.createElement('canvas');
+                const resize = () => {
+                    const rect = body.getBoundingClientRect();
+                    canvas.width = rect.width || 200;
+                    canvas.height = rect.height || 100;
+                    offscreen.width = canvas.width;
+                    offscreen.height = canvas.height;
+                };
+                resize();
+
+                const ctx = offscreen.getContext('2d');
+                const mainCtx = canvas.getContext('2d');
+
+                let startTime = performance.now();
+                const runLoop = (now) => {
+                    if (!document.getElementById(containerId)) return;
+                    const time = now - startTime;
+                    const width = offscreen.width;
+                    const height = offscreen.height;
+
+                    try {
+                        const drawFunc = new Function('ctx', 'width', 'height', 'time', 'runtime', mod.code);
+                        drawFunc(ctx, width, height, time, runtime);
+                        mainCtx.clearRect(0, 0, canvas.width, canvas.height);
+                        mainCtx.drawImage(offscreen, 0, 0);
+                    } catch (e) {
+                        mainCtx.fillStyle = '#110000';
+                        mainCtx.fillRect(0, 0, width, height);
+                        mainCtx.fillStyle = '#ff3366';
+                        mainCtx.font = '10px monospace';
+                        mainCtx.fillText('CANVAS EXEC ERROR', 10, 20);
+                    }
+                    animationFrames[containerId] = requestAnimationFrame(runLoop);
+                };
+                animationFrames[containerId] = requestAnimationFrame(runLoop);
+
+            } else if (mod.renderEngine === 'JavaScript / HTML / Canvas') {
+                const container = document.createElement('div');
+                container.style.width = '100%';
+                container.style.height = '100%';
+                container.style.position = 'relative';
+                container.innerHTML = mod.code;
+                body.appendChild(container);
+
+                setTimeout(() => {
+                    container.querySelectorAll('script').forEach(script => {
+                        try {
+                            const runner = new Function('container', 'runtime', script.textContent);
+                            runner(container, runtime);
+                        } catch(err) {
+                            console.error("Script execution error:", err);
+                        }
+                    });
+                }, 50);
+
+            } else if (mod.renderEngine === 'Static Text') {
+                const textDiv = document.createElement('div');
+                textDiv.className = 'monitor-text';
+                textDiv.textContent = mod.code;
+                body.appendChild(textDiv);
+
+            } else if (mod.renderEngine === 'Raw HTML') {
+                const htmlDiv = document.createElement('div');
+                htmlDiv.className = 'monitor-html';
+                htmlDiv.innerHTML = mod.code;
+                body.appendChild(htmlDiv);
+
+            } else if (mod.renderEngine === 'iFrame Endpoint') {
+                const ep = state.endpoints.find(e => mod.linkedEndpointIds && mod.linkedEndpointIds.includes(e.id));
+                if (ep && ep.url) {
+                    const iframe = document.createElement('iframe');
+                    iframe.className = 'monitor-iframe';
+                    iframe.src = ep.url;
+                    body.appendChild(iframe);
+                } else {
+                    body.innerHTML = `<div style="color:var(--accent-orange); font-size:0.7rem; font-family:var(--font-mono);">[NO ENDPOINT URL CONFIGURED]</div>`;
+                }
+            }
+        }
+
+        function setMonitorSource(monId, sourceIndex) {
+            const currentMonitors = getActiveProjectMonitors();
+            const mon = currentMonitors.find(m => m.id === monId);
+            if (!mon) return;
+
+            if (sourceIndex === null) {
+                mon.sourceMirrorId = null;
+            } else {
+                mon.sourceMirrorId = sourceIndex;
+            }
+            saveState();
+            renderWall();
+        }
+
+        function renderWall() {
+            Object.keys(animationFrames).forEach(id => cancelAnimationFrame(animationFrames[id]));
+
+            const layout = getActiveLayout();
+            const count = layout.count || 24;
+            const mainWall = document.getElementById('stationWall');
+            if (!mainWall) return;
+
+            mainWall.innerHTML = '';
+
+            let cols = 1;
+            let rows = 1;
+            if (count === 24) { cols = 6; rows = 4; }
+            else if (count === 12) { cols = 4; rows = 3; }
+            else if (count === 8) { cols = 4; rows = 2; }
+            else if (count === 6) { cols = 3; rows = 2; }
+            else if (count === 4) { cols = 2; rows = 2; }
+            else if (count === 1) { cols = 1; rows = 1; }
+
+            mainWall.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+            mainWall.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+
+            const currentMonitors = getActiveProjectMonitors();
+
+            currentMonitors.forEach((mon, idx) => {
+                let activeModId = mon.moduleId;
+                let activeTitleOverride = mon.titleOverride;
+                let sourceLabel = '';
+
+                if (mon.sourceMirrorId !== null && mon.sourceMirrorId !== undefined) {
+                    const sourceMon = currentMonitors.find(m => m.id === mon.sourceMirrorId);
+                    if (sourceMon) {
+                        activeModId = sourceMon.moduleId;
+                        const srcMod = state.modules.find(m => m.id === sourceMon.moduleId);
+                        sourceLabel = ` [Src #${mon.sourceMirrorId + 1}]`;
+                        activeTitleOverride = sourceMon.titleOverride || (srcMod ? srcMod.name : '');
+                    }
+                }
+
+                const mod = activeModId ? state.modules.find(m => m.id === activeModId) : null;
+                const displayTitle = (activeTitleOverride || (mod ? mod.name : 'UNASSIGNED')) + sourceLabel;
+                const containerId = `mon-body-${mon.id}`;
+                const sourceMenuId = `srcMenu-${mon.id}`;
+
+                // Dynamic screen mirror options scaling up to active layout count (1-24)
+                let sourceOptionsHtml = `<button onclick="setMonitorSource(${mon.id}, null)">-- Independent (No Mirror) --</button>`;
+                for (let s = 0; s < count; s++) {
+                    if (s !== mon.id) {
+                        sourceOptionsHtml += `<button onclick="setMonitorSource(${mon.id}, ${s})">Mirror Screen ${s + 1}</button>`;
+                    }
+                }
+
+                const monEl = document.createElement('div');
+                monEl.className = 'monitor';
+                monEl.innerHTML = `
+                    <div class="monitor-header">
+                        <span class="monitor-title" title="${displayTitle}">MON-${String(mon.id + 1).padStart(2, '0')}: ${displayTitle}</span>
+                        <div class="monitor-actions">
+                            <!-- Icon 1: Screen Source Selector (Mirrors up to current layout count) -->
+                            <div class="monitor-dropdown-wrapper">
+                                <button class="monitor-btn" onclick="toggleMonitorDropdown(event, '${sourceMenuId}')" title="Load Screen Source (Mirror 1-${count})">🖥</button>
+                                <div class="monitor-dropdown-menu" id="${sourceMenuId}">
+                                    ${sourceOptionsHtml}
+                                </div>
+                            </div>
+                            <!-- Icon 2: Configure / Load Module -->
+                            <button class="monitor-btn" onclick="openMonitorModal(${mon.id})" title="Configure / Load Module">⚡</button>
+                            <button class="monitor-btn" onclick="popoutSingleMonitor(${mon.id})" title="Pop-out Window">⤢</button>
+                        </div>
+                    </div>
+                    <div class="monitor-body" id="${containerId}"></div>
+                `;
+                mainWall.appendChild(monEl);
+
+                renderMonitorContent(containerId, mon, mod);
+            });
+        }
+
+        function popoutSingleMonitor(monId) {
+            const currentMonitors = getActiveProjectMonitors();
+            const mon = currentMonitors.find(m => m.id === monId);
+            if (!mon) return;
+
+            let activeModId = mon.moduleId;
+            if (mon.sourceMirrorId !== null && mon.sourceMirrorId !== undefined) {
+                const sourceMon = currentMonitors.find(m => m.id === mon.sourceMirrorId);
+                if (sourceMon) activeModId = sourceMon.moduleId;
+            }
+
+            const mod = state.modules.find(m => m.id === activeModId);
+            const title = mon.titleOverride || (mod ? mod.name : `Monitor ${monId + 1}`);
+
+            const win = window.open('', `Mon_${monId}_${Date.now()}`, 'width=800,height=600');
+            if (!win) return;
+
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${title} - AFI Pop-out</title>
+                    <style>
+                        body { margin:0; background:#020408; color:#e2e8f0; font-family:sans-serif; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+                        #content { flex:1; position:relative; overflow:auto; display:flex; align-items:center; justify-content:center; }
+                        canvas { width:100%; height:100%; display:block; }
+                    </style>
+                </head>
+                <body>
+                    <div id="content" style="width:100%;height:100%;position:relative;"></div>
+                    <script>
+                        const mod = ${JSON.stringify(mod || {})};
+                        const endpoints = ${JSON.stringify(state.endpoints)};
+                        const container = document.getElementById('content');
+                        
+                        const runtime = {
+                            endpoints: endpoints.filter(e => mod.linkedEndpointIds && mod.linkedEndpointIds.includes(e.id)),
+                            fetchEndpointData: async function(id) {
+                                const ep = id ? this.endpoints.find(e => e.id === id) : this.endpoints[0];
+                                if(!ep || !ep.url) return null;
+                                try { const r = await fetch(ep.url); return await r.json(); } catch(e){return null;}
+                            }
+                        };
+
+                        if (!mod.id) {
+                            container.innerHTML = '<div style="color:#64748b; font-family:monospace; padding:20px;">[UNASSIGNED]</div>';
+                        } else if (mod.renderEngine === 'Canvas JS') {
+                            const canvas = document.createElement('canvas');
+                            container.appendChild(canvas);
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = container.clientWidth || 400;
+                            canvas.height = container.clientHeight || 300;
+                            let start = performance.now();
+                            function loop(now) {
+                                try {
+                                    const draw = new Function('ctx', 'width', 'height', 'time', 'runtime', mod.code);
+                                    draw(ctx, canvas.width, canvas.height, now - start, runtime);
+                                } catch(e){}
+                                requestAnimationFrame(loop);
+                            }
+                            requestAnimationFrame(loop);
+                        } else if (mod.renderEngine === 'JavaScript / HTML / Canvas') {
+                            container.innerHTML = mod.code;
+                            setTimeout(() => {
+                                container.querySelectorAll('script').forEach(script => {
+                                    try {
+                                        const runner = new Function('container', 'runtime', script.textContent);
+                                        runner(container, runtime);
+                                    } catch(e){}
+                                });
+                            }, 50);
+                        } else {
+                            container.innerHTML = '<div style="padding:15px; font-family:monospace; color:#00ff88; white-space:pre-wrap;">' + mod.code + '</div>';
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `);
+        }
+
+        // Pop-out Wall with zero header, fully independent with dual quick-action header icons
+        function launchPopoutWall(countVal) {
+            const count = parseInt(countVal) || 24;
+            const win = window.open('', `Wall_${count}_${Date.now()}`, 'width=1280,height=800');
+            if (!win) return;
+
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>AFI Wall (${count} Screens)</title>
+                    <style>
+                        :root {
+                            --bg-base: #06080d;
+                            --bg-surface: #0d111a;
+                            --bg-card: #131924;
+                            --border-color: #1f2a3e;
+                            --text-main: #e2e8f0;
+                            --text-muted: #64748b;
+                            --accent-cyan: #00f0ff;
+                            --font-mono: 'Courier New', Courier, monospace;
+                            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                        }
+                        * { box-sizing: border-box; margin:0; padding:0; user-select: none; }
+                        body { margin:0; background:#000; color:#e2e8f0; font-family:var(--font-sans); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+                        .wall-grid { flex:1; display:grid; gap:4px; padding:4px; background:#000; overflow:hidden; min-height:0; }
+                        .mon { background:#06080d; border:1px solid #1f2a3e; border-radius:4px; display:flex; flex-direction:column; overflow:hidden; height:100%; min-height:0; }
+                        .mon-h { height:22px; min-height:22px; background:#090d14; border-bottom:1px solid #1f2a3e; display:flex; align-items:center; justify-content:space-between; padding:0 6px; font-family:var(--font-mono); font-size:0.65rem; color:#64748b; }
+                        .mon-title { color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+                        .mon-actions { display:flex; gap:3px; align-items:center; }
+                        .mon-dropdown-wrapper { position: relative; display: inline-flex; }
+                        .mon-dropdown-menu { position: absolute; top: 100%; right: 0; margin-top: 2px; background: #0d111a; border: 1px solid #1f2a3e; border-radius: 3px; box-shadow: 0 5px 12px rgba(0,0,0,0.9); display: none; flex-direction: column; z-index: 1000; min-width: 140px; max-height: 180px; overflow-y: auto; }
+                        .mon-dropdown-menu.active { display: flex; }
+                        .mon-dropdown-menu button { background: transparent; border: none; text-align: left; padding: 6px 10px; color: #e2e8f0; font-size: 0.7rem; width: 100%; border-radius: 0; cursor: pointer; }
+                        .mon-dropdown-menu button:hover { background: #1f2a3e; color: #00f0ff; }
+                        .mon-btn { cursor:pointer; opacity:0.75; font-size:0.65rem; padding:2px 4px; border:1px solid #1f2a3e; background:#131924; border-radius:2px; color:#e2e8f0; }
+                        .mon-btn:hover { opacity:1; color:#00f0ff; border-color:#00f0ff; }
+                        .mon-b { flex:1; position:relative; display:flex; align-items:center; justify-content:center; background:#020408; overflow:hidden; min-height:0; }
+                        canvas { width:100%; height:100%; display:block; }
+
+                        /* Modal inside pop-out window */
+                        .modal-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:200; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+                        .modal-overlay.active { opacity:1; pointer-events:auto; }
+                        .modal { background:#0d111a; border:1px solid #00f0ff; width:450px; max-width:90vw; border-radius:4px; box-shadow:0 0 20px rgba(0, 240, 255, 0.2); }
+                        .modal-header { background:#131924; padding:10px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1f2a3e; font-weight:bold; font-size:0.85rem; }
+                        .modal-body { padding:15px; }
+                        .modal-footer { padding:10px 15px; background:#131924; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #1f2a3e; }
+                        .form-group { margin-bottom:12px; }
+                        .form-group label { display:block; font-size:0.75rem; text-transform:uppercase; color:#64748b; margin-bottom:4px; font-weight:600; }
+                        .form-group select, .form-group input { width:100%; background:#06080d; color:#e2e8f0; border:1px solid #1f2a3e; padding:6px; border-radius:3px; font-family:inherit; }
+                        button.btn-primary { background:rgba(0, 240, 255, 0.1); border:1px solid #00f0ff; color:#00f0ff; padding:5px 12px; border-radius:3px; font-weight:600; cursor:pointer; }
+                        button.btn-primary:hover { background:#00f0ff; color:#000; }
+                        button.btn-sec { background:#131924; border:1px solid #1f2a3e; color:#e2e8f0; padding:5px 12px; border-radius:3px; cursor:pointer; }
+                    </style>
+                </head>
+                <body>
+                    <div class="wall-grid" id="wallGrid"></div>
+
+                    <!-- Pop-out Window Config Modal -->
+                    <div class="modal-overlay" id="popoutMonitorModal">
+                        <div class="modal">
+                            <div class="modal-header">
+                                <span id="popoutModalTitle">CONFIGURE MONITOR</span>
+                                <button class="mon-btn" onclick="closePopoutModal()">✕</button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="popoutModalMonId">
+                                <div class="form-group">
+                                    <label>Assigned Module</label>
+                                    <select id="popoutModalModuleSelect"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Custom Title Override</label>
+                                    <input type="text" id="popoutModalTitleOverride" placeholder="Default: Module Name">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn-sec" onclick="closePopoutModal()">Cancel</button>
+                                <button class="btn-primary" onclick="savePopoutMonitorConfig()">Save Configuration</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        let currentState = ${JSON.stringify(state)};
+                        const targetCount = ${count};
+                        const grid = document.getElementById('wallGrid');
+                        const animationFrames = {};
+
+                        window.addEventListener('click', (e) => {
+                            if (!e.target.closest('.mon-dropdown-wrapper')) {
+                                document.querySelectorAll('.mon-dropdown-menu').forEach(m => m.classList.remove('active'));
+                            }
+                        });
+
+                        function togglePopoutMonDropdown(e, menuId) {
+                            e.stopPropagation();
+                            document.querySelectorAll('.mon-dropdown-menu').forEach(m => {
+                                if (m.id !== menuId) m.classList.remove('active');
+                            });
+                            const menu = document.getElementById(menuId);
+                            if (menu) menu.classList.toggle('active');
+                        }
+
+                        const syncChannel = new BroadcastChannel('afi_mission_control_sync');
+                        syncChannel.onmessage = (event) => {
+                            if (event.data && event.data.type === 'STATE_SYNC') {
+                                currentState = event.data.state;
+                                renderPopoutWallGrid();
+                            }
+                        };
+
+                        function getActiveLayout() {
+                            let layoutId = currentState.projectActiveLayouts ? currentState.projectActiveLayouts[currentState.activeProjectId] : null;
+                            let layout = currentState.layouts.find(l => l.id === layoutId);
+                            if (!layout) {
+                                const projLayouts = currentState.layouts.filter(l => l.projectId === currentState.activeProjectId);
+                                layout = projLayouts[0] || currentState.layouts[0];
+                            }
+                            return layout || { id: 'l_default', count: targetCount };
+                        }
+
+                        function getMonitors() {
+                            if (!currentState.layoutMonitors) currentState.layoutMonitors = {};
+                            const layout = getActiveLayout();
+                            if (!currentState.layoutMonitors[layout.id]) {
+                                currentState.layoutMonitors[layout.id] = [];
+                            }
+                            const currentList = currentState.layoutMonitors[layout.id];
+                            const updatedList = [];
+                            for (let i = 0; i < targetCount; i++) {
+                                if (currentList[i]) {
+                                    updatedList.push(currentList[i]);
+                                } else {
+                                    updatedList.push({ id: i, moduleId: '', titleOverride: '', sourceMirrorId: null });
+                                }
+                            }
+                            currentState.layoutMonitors[layout.id] = updatedList;
+                            return currentState.layoutMonitors[layout.id].slice(0, targetCount);
+                        }
+
+                        function setPopoutMonitorSource(monId, sourceIndex) {
+                            const monitors = getMonitors();
+                            const mon = monitors.find(m => m.id === monId);
+                            if (!mon) return;
+                            mon.sourceMirrorId = sourceIndex;
+                            localStorage.setItem('AFI_MISSION_CONTROL_STATE', JSON.stringify(currentState));
+                            syncChannel.postMessage({ type: 'STATE_SYNC', state: currentState });
+                            renderPopoutWallGrid();
+                        }
+
+                        function popoutSingle(monId, modId, titleOverride) {
+                            const mod = currentState.modules.find(m => m.id === modId);
+                            const title = titleOverride || (mod ? mod.name : 'Monitor ' + (monId + 1));
+                            const subWin = window.open('', \`Mon_\${monId}_\${Date.now()}\`, 'width=800,height=600');
+                            if (!subWin) return;
+                            subWin.document.write(\`
+                                <!DOCTYPE html><html><head><title>\${title}</title>
+                                <style>body{margin:0;background:#020408;color:#e2e8f0;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}#c{flex:1;position:relative;display:flex;align-items:center;justify-content:center;}</style>
+                                </head><body>
+                                <div id="c" style="width:100%;height:100%;position:relative;"></div>
+                                <script>
+                                    const modData = \${JSON.stringify(mod || {})};
+                                    const eps = \${JSON.stringify(currentState.endpoints)};
+                                    const box = document.getElementById('c');
+                                    const rt = { endpoints: eps.filter(e => modData.linkedEndpointIds && modData.linkedEndpointIds.includes(e.id)) };
+                                    if(!modData.id) { box.innerHTML='<div style="color:#64748b;font-family:monospace;">[UNASSIGNED]</div>'; }
+                                    else if(modData.renderEngine === 'Canvas JS') {
+                                        const cv = document.createElement('canvas'); box.appendChild(cv);
+                                        const cx = cv.getContext('2d'); cv.width=box.clientWidth||400; cv.height=box.clientHeight||300;
+                                        let st = performance.now();
+                                        (function loop(n){ try{ const dr=new Function('ctx','width','height','time','runtime',modData.code); dr(cx,cv.width,cv.height,n-st,rt); }catch(e){} requestAnimationFrame(loop); })(performance.now());
+                                    } else if(modData.renderEngine === 'JavaScript / HTML / Canvas') {
+                                        box.innerHTML = modData.code;
+                                        setTimeout(() => { box.querySelectorAll('script').forEach(s => { try{ new Function('container','runtime',s.textContent)(box,rt); }catch(e){} }); }, 50);
+                                    } else {
+                                        box.innerHTML = '<div style="padding:15px;font-family:monospace;color:#00ff88;white-space:pre-wrap;">'+modData.code+'</div>';
+                                    }
+                                <\\/script></body></html>
+                            \`);
+                        }
+
+                        function openPopoutModal(monId) {
+                            const monitors = getMonitors();
+                            const mon = monitors.find(m => m.id === monId);
+                            if (!mon) return;
+
+                            document.getElementById('popoutModalMonId').value = monId;
+                            document.getElementById('popoutModalTitle').textContent = \`CONFIGURE MONITOR \${String(monId + 1).padStart(2, '0')}\`;
+                            document.getElementById('popoutModalTitleOverride').value = mon.titleOverride || '';
+
+                            const modSelect = document.getElementById('popoutModalModuleSelect');
+                            modSelect.innerHTML = \`<option value="">-- None (Blank) --</option>\` + currentState.modules.map(m => \`<option value="\${m.id}" \${m.id === mon.moduleId ? 'selected' : ''}>\${m.name} (\${m.renderEngine})</option>\`).join('');
+
+                            document.getElementById('popoutMonitorModal').classList.add('active');
+                        }
+
+                        function closePopoutModal() {
+                            document.getElementById('popoutMonitorModal').classList.remove('active');
+                        }
+
+                        function savePopoutMonitorConfig() {
+                            const monId = parseInt(document.getElementById('popoutModalMonId').value);
+                            const monitors = getMonitors();
+                            const mon = monitors.find(m => m.id === monId);
+                            if (!mon) return;
+
+                            mon.moduleId = document.getElementById('popoutModalModuleSelect').value;
+                            mon.titleOverride = document.getElementById('popoutModalTitleOverride').value.trim();
+
+                            localStorage.setItem('AFI_MISSION_CONTROL_STATE', JSON.stringify(currentState));
+                            syncChannel.postMessage({ type: 'STATE_SYNC', state: currentState });
+
+                            closePopoutModal();
+                            renderPopoutWallGrid();
+                        }
+
+                        function renderPopoutWallGrid() {
+                            Object.keys(animationFrames).forEach(id => cancelAnimationFrame(animationFrames[id]));
+                            grid.innerHTML = '';
+                            const monitors = getMonitors();
+
+                            let cols = 1, rows = 1;
+                            if (targetCount === 24) { cols = 6; rows = 4; }
+                            else if (targetCount === 12) { cols = 4; rows = 3; }
+                            else if (targetCount === 8) { cols = 4; rows = 2; }
+                            else if (targetCount === 6) { cols = 3; rows = 2; }
+                            else if (targetCount === 4) { cols = 2; rows = 2; }
+                            else if (targetCount === 1) { cols = 1; rows = 1; }
+
+                            grid.style.gridTemplateColumns = \`repeat(\${cols}, minmax(0, 1fr))\`;
+                            grid.style.gridTemplateRows = \`repeat(\${rows}, minmax(0, 1fr))\`;
+
+                            monitors.forEach((mon, idx) => {
+                                let activeModId = mon.moduleId;
+                                let activeTitleOverride = mon.titleOverride;
+                                let sourceLabel = '';
+
+                                if (mon.sourceMirrorId !== null && mon.sourceMirrorId !== undefined) {
+                                    const sourceMon = monitors.find(m => m.id === mon.sourceMirrorId);
+                                    if (sourceMon) {
+                                        activeModId = sourceMon.moduleId;
+                                        const srcMod = currentState.modules.find(m => m.id === sourceMon.moduleId);
+                                        sourceLabel = \` [Src #\${mon.sourceMirrorId + 1}]\`;
+                                        activeTitleOverride = sourceMon.titleOverride || (srcMod ? srcMod.name : '');
+                                    }
+                                }
+
+                                const mod = activeModId ? currentState.modules.find(m => m.id === activeModId) : null;
+                                const title = (activeTitleOverride || (mod ? mod.name : 'UNASSIGNED')) + sourceLabel;
+                                const containerId = 'popout-body-' + idx;
+                                const srcMenuId = 'popoutSrcMenu-' + idx;
+
+                                let srcOpts = \`<button onclick="setPopoutMonitorSource(\${mon.id}, null)">-- Independent --</button>\`;
+                                for(let s=0; s<targetCount; s++) {
+                                    if(s !== mon.id) srcOpts += \`<button onclick="setPopoutMonitorSource(\${mon.id}, \${s})">Mirror Screen \${s+1}</button>\`;
+                                }
+
+                                const el = document.createElement('div');
+                                el.className = 'mon';
+                                el.innerHTML = \`
+                                    <div class="mon-h">
+                                        <span class="mon-title" title="\${title}">MON-\${String(idx + 1).padStart(2, '0')}: \${title}</span>
+                                        <div class="mon-actions">
+                                            <div class="mon-dropdown-wrapper">
+                                                <button class="mon-btn" onclick="togglePopoutMonDropdown(event, '\${srcMenuId}')" title="Load Screen Source (1-\${targetCount})">🖥</button>
+                                                <div class="mon-dropdown-menu" id="\${srcMenuId}">\${srcOpts}</div>
+                                            </div>
+                                            <button class="mon-btn" onclick="openPopoutModal(\${mon.id})" title="Configure / Load Module">⚡</button>
+                                            <button class="mon-btn" onclick="popoutSingle(\${mon.id}, '\${activeModId || ''}', '\${activeTitleOverride || ''}')" title="Pop-out Window">⤢</button>
+                                        </div>
+                                    </div>
+                                    <div class="mon-b" id="\${containerId}"></div>
+                                \`;
+                                grid.appendChild(el);
+
+                                const body = document.getElementById(containerId);
+                                if (mod && body) {
+                                    const runtime = { endpoints: currentState.endpoints.filter(e => mod.linkedEndpointIds && mod.linkedEndpointIds.includes(e.id)) };
+                                    if (mod.renderEngine === 'Canvas JS') {
+                                        const canvas = document.createElement('canvas');
+                                        body.appendChild(canvas);
+                                        const ctx = canvas.getContext('2d');
+                                        canvas.width = body.clientWidth || 300;
+                                        canvas.height = body.clientHeight || 150;
+                                        let start = performance.now();
+                                        const loop = (now) => {
+                                            if (!document.getElementById(containerId)) return;
+                                            try {
+                                                const draw = new Function('ctx', 'width', 'height', 'time', 'runtime', mod.code);
+                                                draw(ctx, canvas.width, canvas.height, now - start, runtime);
+                                            } catch(e){}
+                                            animationFrames[containerId] = requestAnimationFrame(loop);
+                                        };
+                                        animationFrames[containerId] = requestAnimationFrame(loop);
+                                    } else if (mod.renderEngine === 'JavaScript / HTML / Canvas') {
+                                        const container = document.createElement('div');
+                                        container.style.width = '100%'; container.style.height = '100%'; container.style.position = 'relative';
+                                        container.innerHTML = mod.code;
+                                        body.appendChild(container);
+                                        setTimeout(() => {
+                                            container.querySelectorAll('script').forEach(script => {
+                                                try {
+                                                    const runner = new Function('container', 'runtime', script.textContent);
+                                                    runner(container, runtime);
+                                                } catch(e){}
+                                            });
+                                        }, 50);
+                                    } else {
+                                        body.innerHTML = '<div style="padding:10px; width:100%; height:100%; overflow:auto; font-family:monospace; font-size:11px; color:#00ff88;">' + mod.code + '</div>';
+                                    }
+                                }
+                            });
+                        }
+
+                        renderPopoutWallGrid();
+                    <\/script>
+                </body>
+                </html>
+            `);
+        }
+
+        function openMonitorModal(monId) {
+            const currentMonitors = getActiveProjectMonitors();
+            const mon = currentMonitors.find(m => m.id === monId);
+            if (!mon) return;
+
+            document.getElementById('modalMonitorId').value = monId;
+            document.getElementById('modalMonitorTitle').textContent = `CONFIGURE MONITOR ${String(monId + 1).padStart(2, '0')}`;
+            document.getElementById('modalTitleOverride').value = mon.titleOverride || '';
+
+            const modSelect = document.getElementById('modalModuleSelect');
+            modSelect.innerHTML = `<option value="">-- None (Blank) --</option>` + state.modules.map(m => `<option value="${m.id}" ${m.id === mon.moduleId ? 'selected' : ''}>${m.name} (${m.renderEngine})</option>`).join('');
+
+            document.getElementById('monitorModal').classList.add('active');
+        }
+
+        function closeMonitorModal() {
+            document.getElementById('monitorModal').classList.remove('active');
+        }
+
+        function saveMonitorConfig() {
+            const monId = parseInt(document.getElementById('modalMonitorId').value);
+            const currentMonitors = getActiveProjectMonitors();
+            const mon = currentMonitors.find(m => m.id === monId);
+            if (!mon) return;
+
+            mon.sourceMirrorId = null; // Direct configuration clears mirror
+            mon.moduleId = document.getElementById('modalModuleSelect').value;
+            mon.titleOverride = document.getElementById('modalTitleOverride').value.trim();
+
+            saveState();
+            closeMonitorModal();
+            renderWall();
+        }
+
+        function toggleDrawer(show) {
+            const drawer = document.getElementById('drawerOverlay');
+            if (show) {
+                drawer.classList.add('active');
+                switchTab('projects');
+            } else {
+                drawer.classList.remove('active');
+            }
+        }
+
+        function switchTab(tabKey) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${tabKey}'`));
+            });
+            renderDrawerTab(tabKey);
+        }
+
+        function renderDrawerTab(tabKey) {
+            const content = document.getElementById('drawerContent');
+            if (tabKey === 'projects') {
+                content.innerHTML = `
+                    <div class="form-group">
+                        <label>Create New Project</label>
+                        <input type="text" id="newProjName" placeholder="Project Title...">
+                        <button class="btn-primary" style="margin-top:8px; width:100%; justify-content:center;" onclick="createProject()">Add Project</button>
+                    </div>
+                    <table class="data-table">
+                        <thead><tr><th>Project Name</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${state.projects.map(p => `
+                                <tr>
+                                    <td>${p.name}</td>
+                                    <td>
+                                        <button onclick="openEditModal('project', '${p.id}')">Edit</button>
+                                        <button onclick="deleteProject('${p.id}')">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (tabKey === 'layouts') {
+                const currentProjLayouts = state.layouts.filter(l => l.projectId === state.activeProjectId);
+                content.innerHTML = `
+                    <div class="form-group">
+                        <label>Add New Blank Layout</label>
+                        <input type="text" id="newLayoutName" placeholder="Layout Name...">
+                        <label style="margin-top:8px;">Screen Count / Template</label>
+                        <select id="newLayoutCount">
+                            <option value="24">24-Screen Wall</option>
+                            <option value="12">12-Screen Wall</option>
+                            <option value="8">8-Screen Wall</option>
+                            <option value="6">6-Screen Station</option>
+                            <option value="4">4-Screen Grid</option>
+                            <option value="1">1-Screen Focus</option>
+                        </select>
+                        <button class="btn-primary" style="margin-top:10px; width:100%; justify-content:center;" onclick="createLayout()">Create Blank Layout</button>
+                    </div>
+                    <table class="data-table">
+                        <thead><tr><th>Layout Name</th><th>Screens</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${currentProjLayouts.map(l => `
+                                <tr>
+                                    <td>${l.name}</td>
+                                    <td>${l.count || 24}</td>
+                                    <td>
+                                        <button onclick="openEditModal('layout', '${l.id}')">Edit</button>
+                                        <button onclick="deleteLayout('${l.id}')">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (tabKey === 'modules') {
+                const endpointsHtml = (state.endpoints || []).map(ep => `
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="modEpCheckbox" value="${ep.id}"> [${ep.type}] ${ep.name}
+                    </label>
+                `).join('');
+
+                content.innerHTML = `
+                    <div class="form-group">
+                        <label>Module Name</label>
+                        <input type="text" id="modName" placeholder="e.g. Custom Dashboard">
+                    </div>
+                    <div class="form-group">
+                        <label>Render Engine</label>
+                        <select id="modEngine">
+                            <option value="Canvas JS">Canvas JS (Offscreen Buffer)</option>
+                            <option value="JavaScript / HTML / Canvas">JavaScript / HTML / Canvas (Inline)</option>
+                            <option value="Static Text">Static Text</option>
+                            <option value="Raw HTML">Raw HTML</option>
+                            <option value="iFrame Endpoint">iFrame Endpoint</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Linked Endpoints (Multi-Select Checkboxes)</label>
+                        <div class="checkbox-group" id="modEndpointCheckboxes">
+                            ${endpointsHtml}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Script / Code</label>
+                        <textarea id="modCode" rows="8" placeholder="// Canvas JS or HTML/JS script"></textarea>
+                    </div>
+                    <button class="btn-primary" style="width:100%; justify-content:center;" onclick="createModule()">Save New Module</button>
+                    <table class="data-table" style="margin-top:15px;">
+                        <thead><tr><th>Module</th><th>Engine</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${state.modules.map(m => `
+                                <tr>
+                                    <td>${m.name}</td>
+                                    <td>${m.renderEngine}</td>
+                                    <td>
+                                        <button onclick="openEditModal('module', '${m.id}')">Edit</button>
+                                        <button onclick="deleteModule('${m.id}')">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (tabKey === 'endpoints') {
+                content.innerHTML = `
+                    <div class="form-group">
+                        <label>Endpoint Name</label>
+                        <input type="text" id="epName" placeholder="e.g. MLB Stats API">
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="epType">
+                            <option value="REST JSON">REST JSON</option>
+                            <option value="iFrame Video">iFrame Video</option>
+                            <option value="WebSocket">WebSocket</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>URL / Connection String</label>
+                        <input type="text" id="epUrl" placeholder="https://...">
+                    </div>
+                    <button class="btn-primary" style="width:100%; justify-content:center;" onclick="createEndpoint()">Add Endpoint</button>
+                    <table class="data-table" style="margin-top:15px;">
+                        <thead><tr><th>Name</th><th>Type</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${state.endpoints.map(e => `
+                                <tr>
+                                    <td>${e.name}</td>
+                                    <td>${e.type}</td>
+                                    <td>
+                                        <button onclick="openEditModal('endpoint', '${e.id}')">Edit</button>
+                                        <button onclick="deleteEndpoint('${e.id}')">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (tabKey === 'personnel') {
+                content.innerHTML = `
+                    <div class="form-group"><label>Name</label><input type="text" id="usrName"></div>
+                    <div class="form-group"><label>Role</label><input type="text" id="usrRole"></div>
+                    <button class="btn-primary" style="width:100%; justify-content:center;" onclick="addPersonnel()">Add Personnel</button>
+                    <table class="data-table" style="margin-top:15px;">
+                        <thead><tr><th>Name</th><th>Role</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${state.personnel.map(u => `
+                                <tr>
+                                    <td>${u.name}</td><td>${u.role}</td>
+                                    <td><button onclick="openEditModal('personnel', '${u.id}')">Edit</button><button onclick="deletePersonnel('${u.id}')">Delete</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (tabKey === 'tasks') {
+                content.innerHTML = `
+                    <div class="form-group"><label>Task Name</label><input type="text" id="taskName"></div>
+                    <div class="form-group"><label>Webhook URL</label><input type="text" id="taskUrl"></div>
+                    <button class="btn-primary" style="width:100%; justify-content:center;" onclick="addTask()">Schedule Task</button>
+                    <table class="data-table" style="margin-top:15px;">
+                        <thead><tr><th>Task</th><th>URL</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${state.tasks.map(t => `
+                                <tr>
+                                    <td>${t.name}</td><td>${t.webhook}</td>
+                                    <td><button onclick="openEditModal('task', '${t.id}')">Edit</button><button onclick="deleteTask('${t.id}')">Delete</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (tabKey === 'system') {
+                content.innerHTML = `
+                    <div class="form-group">
+                        <label>System Backup & Data Migration</label>
+                        <button class="btn-primary" style="width:100%; justify-content:center; margin-bottom:8px;" onclick="exportState()">Export JSON Backup</button>
+                        <button style="width:100%; justify-content:center; margin-bottom:15px;" onclick="document.getElementById('importFile').click()">Import JSON Backup</button>
+                        <input type="file" id="importFile" style="display:none;" onchange="importState(event)">
+                    </div>
+                    <div class="form-group">
+                        <label>Danger Zone</label>
+                        <button style="background:#ff3366; color:#fff; border:none; width:100%; justify-content:center;" onclick="resetSystem()">Reset Entire System State</button>
+                    </div>
+                `;
+            }
+        }
+
+        function createProject() {
+            const input = document.getElementById('newProjName');
+            if (!input.value.trim()) return;
+            const id = 'p_' + Date.now();
+            state.projects.push({ id, name: input.value.trim(), desc: '' });
+            
+            const layoutId = 'l_' + Date.now();
+            state.layouts.push({ id: layoutId, projectId: id, name: 'Default Wall', count: 24 });
+            if (!state.projectActiveLayouts) state.projectActiveLayouts = {};
+            state.projectActiveLayouts[id] = layoutId;
+
+            switchProject(id);
+            renderDrawerTab('projects');
+        }
+
+        function deleteProject(id) {
+            if (state.projects.length <= 1) return;
+            state.projects = state.projects.filter(p => p.id !== id);
+            state.layouts = state.layouts.filter(l => l.projectId !== id);
+            if (state.activeProjectId === id) {
+                switchProject(state.projects[0].id);
+            } else {
+                saveState();
+                renderHeaderSelectors();
+            }
+            renderDrawerTab('projects');
+        }
+
+        function createLayout() {
+            const input = document.getElementById('newLayoutName');
+            const count = parseInt(document.getElementById('newLayoutCount').value) || 24;
+            const name = input.value.trim() || `${count}-Screen Layout`;
+            const id = 'l_' + Date.now();
+            
+            state.layouts.push({ id, projectId: state.activeProjectId, name, count });
+            state.layoutMonitors[id] = Array.from({ length: count }, (_, i) => ({
+                id: i,
+                moduleId: '',
+                titleOverride: '',
+                sourceMirrorId: null
+            }));
+            switchLayout(id);
+            renderDrawerTab('layouts');
+        }
+
+        function deleteLayout(id) {
+            const projectLayouts = state.layouts.filter(l => l.projectId === state.activeProjectId);
+            if (projectLayouts.length <= 1) return;
+            state.layouts = state.layouts.filter(l => l.id !== id);
+            delete state.layoutMonitors[id];
+            
+            const activeLayout = getActiveLayout();
+            if (activeLayout.id === id) {
+                const remaining = state.layouts.filter(l => l.projectId === state.activeProjectId);
+                switchLayout(remaining[0].id);
+            } else {
+                saveState();
+                renderHeaderSelectors();
+            }
+            renderDrawerTab('layouts');
+        }
+
+        function createModule() {
+            const name = document.getElementById('modName').value.trim();
+            const renderEngine = document.getElementById('modEngine').value;
+            const code = document.getElementById('modCode').value;
+            
+            const checkboxes = document.querySelectorAll('input[name="modEpCheckbox"]:checked');
+            const linkedEndpointIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if (!name) return;
+
+            const id = 'mod_' + Date.now();
+            state.modules.push({ id, name, renderEngine, linkedEndpointIds, code });
+            saveState();
+            renderWall();
+            renderDrawerTab('modules');
+        }
+
+        function deleteModule(id) {
+            state.modules = state.modules.filter(m => m.id !== id);
+            saveState();
+            renderWall();
+            renderDrawerTab('modules');
+        }
+
+        function createEndpoint() {
+            const name = document.getElementById('epName').value.trim();
+            const type = document.getElementById('epType').value;
+            const url = document.getElementById('epUrl').value.trim();
+            if (!name) return;
+
+            const id = 'ep_' + Date.now();
+            state.endpoints.push({ id, name, type, url });
+            saveState();
+            renderDrawerTab('endpoints');
+        }
+
+        function deleteEndpoint(id) {
+            state.endpoints = state.endpoints.filter(e => e.id !== id);
+            saveState();
+            renderWall();
+            renderDrawerTab('endpoints');
+        }
+
+        function addPersonnel() {
+            const name = document.getElementById('usrName').value.trim();
+            const role = document.getElementById('usrRole').value.trim();
+            if (!name) return;
+            state.personnel.push({ id: 'usr_' + Date.now(), name, role });
+            saveState();
+            renderDrawerTab('personnel');
+        }
+
+        function deletePersonnel(id) {
+            state.personnel = state.personnel.filter(u => u.id !== id);
+            saveState();
+            renderDrawerTab('personnel');
+        }
+
+        function addTask() {
+            const name = document.getElementById('taskName').value.trim();
+            const webhook = document.getElementById('taskUrl').value.trim();
+            if (!name) return;
+            state.tasks.push({ id: 't_' + Date.now(), name, interval: 10, lastRun: 'Never', webhook });
+            saveState();
+            renderDrawerTab('tasks');
+        }
+
+        function deleteTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            saveState();
+            renderDrawerTab('tasks');
+        }
+
+        function openEditModal(type, id) {
+            activeEditContext = { type, id };
+            const titleEl = document.getElementById('editModalTitle');
+            const bodyEl = document.getElementById('editModalBody');
+
+            if (type === 'project') {
+                const item = state.projects.find(p => p.id === id);
+                if (!item) return;
+                titleEl.textContent = 'EDIT PROJECT';
+                bodyEl.innerHTML = `<div class="form-group"><label>Name</label><input type="text" id="editProjName" value="${item.name}"></div>`;
+            } else if (type === 'layout') {
+                const item = state.layouts.find(l => l.id === id);
+                if (!item) return;
+                titleEl.textContent = 'EDIT LAYOUT';
+                bodyEl.innerHTML = `
+                    <div class="form-group"><label>Layout Name</label><input type="text" id="editLayoutName" value="${item.name}"></div>
+                    <div class="form-group">
+                        <label>Screen Count</label>
+                        <select id="editLayoutCount">
+                            <option value="24" ${item.count === 24 ? 'selected' : ''}>24 Screens</option>
+                            <option value="12" ${item.count === 12 ? 'selected' : ''}>12 Screens</option>
+                            <option value="8" ${item.count === 8 ? 'selected' : ''}>8 Screens</option>
+                            <option value="6" ${item.count === 6 ? 'selected' : ''}>6 Screens</option>
+                            <option value="4" ${item.count === 4 ? 'selected' : ''}>4 Screens</option>
+                            <option value="1" ${item.count === 1 ? 'selected' : ''}>1 Screen</option>
+                        </select>
+                    </div>
+                `;
+            } else if (type === 'module') {
+                const item = state.modules.find(m => m.id === id);
+                if (!item) return;
+                const endpointsHtml = (state.endpoints || []).map(ep => {
+                    const checked = item.linkedEndpointIds && item.linkedEndpointIds.includes(ep.id) ? 'checked' : '';
+                    return `<label class="checkbox-item"><input type="checkbox" name="editModEpCheckbox" value="${ep.id}" ${checked}> [${ep.type}] ${ep.name}</label>`;
+                }).join('');
+
+                titleEl.textContent = 'EDIT MODULE';
+                bodyEl.innerHTML = `
+                    <div class="form-group"><label>Module Name</label><input type="text" id="editModName" value="${item.name}"></div>
+                    <div class="form-group">
+                        <label>Render Engine</label>
+                        <select id="editModEngine">
+                            <option value="Canvas JS" ${item.renderEngine === 'Canvas JS' ? 'selected' : ''}>Canvas JS</option>
+                            <option value="JavaScript / HTML / Canvas" ${item.renderEngine === 'JavaScript / HTML / Canvas' ? 'selected' : ''}>JavaScript / HTML / Canvas</option>
+                            <option value="Static Text" ${item.renderEngine === 'Static Text' ? 'selected' : ''}>Static Text</option>
+                            <option value="Raw HTML" ${item.renderEngine === 'Raw HTML' ? 'selected' : ''}>Raw HTML</option>
+                            <option value="iFrame Endpoint" ${item.renderEngine === 'iFrame Endpoint' ? 'selected' : ''}>iFrame Endpoint</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Linked Endpoints</label><div class="checkbox-group">${endpointsHtml}</div></div>
+                    <div class="form-group"><label>Script / Code</label><textarea id="editModCode" rows="8">${item.code || ''}</textarea></div>
+                `;
+            } else if (type === 'endpoint') {
+                const item = state.endpoints.find(e => e.id === id);
+                if (!item) return;
+                titleEl.textContent = 'EDIT ENDPOINT';
+                bodyEl.innerHTML = `
+                    <div class="form-group"><label>Name</label><input type="text" id="editEpName" value="${item.name}"></div>
+                    <div class="form-group"><label>URL</label><input type="text" id="editEpUrl" value="${item.url || ''}"></div>
+                `;
+            } else if (type === 'personnel') {
+                const item = state.personnel.find(u => u.id === id);
+                if (!item) return;
+                titleEl.textContent = 'EDIT PERSONNEL';
+                bodyEl.innerHTML = `<div class="form-group"><label>Name</label><input type="text" id="editUsrName" value="${item.name}"></div>`;
+            } else if (type === 'task') {
+                const item = state.tasks.find(t => t.id === id);
+                if (!item) return;
+                titleEl.textContent = 'EDIT TASK';
+                bodyEl.innerHTML = `<div class="form-group"><label>Name</label><input type="text" id="editTaskName" value="${item.name}"></div>`;
+            }
+
+            document.getElementById('editEntityModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editEntityModal').classList.remove('active');
+            activeEditContext = null;
+        }
+
+        function submitEntityEdit() {
+            if (!activeEditContext) return;
+            const { type, id } = activeEditContext;
+
+            if (type === 'project') {
+                const item = state.projects.find(p => p.id === id);
+                if (item) {
+                    item.name = document.getElementById('editProjName').value.trim() || item.name;
+                    renderHeaderSelectors();
+                    renderDrawerTab('projects');
+                }
+            } else if (type === 'layout') {
+                const item = state.layouts.find(l => l.id === id);
+                if (item) {
+                    item.name = document.getElementById('editLayoutName').value.trim() || item.name;
+                    item.count = parseInt(document.getElementById('editLayoutCount').value) || 24;
+                    renderHeaderSelectors();
+                    renderDrawerTab('layouts');
+                }
+            } else if (type === 'module') {
+                const item = state.modules.find(m => m.id === id);
+                if (item) {
+                    item.name = document.getElementById('editModName').value.trim() || item.name;
+                    item.renderEngine = document.getElementById('editModEngine').value;
+                    item.code = document.getElementById('editModCode').value;
+                    const checkboxes = document.querySelectorAll('input[name="editModEpCheckbox"]:checked');
+                    item.linkedEndpointIds = Array.from(checkboxes).map(cb => cb.value);
+                    renderWall();
+                    renderDrawerTab('modules');
+                }
+            } else if (type === 'endpoint') {
+                const item = state.endpoints.find(e => e.id === id);
+                if (item) {
+                    item.name = document.getElementById('editEpName').value.trim() || item.name;
+                    item.url = document.getElementById('editEpUrl').value.trim();
+                    renderWall();
+                    renderDrawerTab('endpoints');
+                }
+            }
+            saveState();
+            closeEditModal();
+        }
+
+        function exportState() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `AFI_MISSION_CONTROL_BACKUP_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importState(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && imported.projects) {
+                        state = imported;
+                        saveState();
+                        renderHeaderSelectors();
+                        renderWall();
+                        toggleDrawer(false);
+                    }
+                } catch (err) {}
+            };
+            fileReader.readAsText(event.target.files[0]);
+        }
+
+        function resetSystem() {
+            localStorage.removeItem('AFI_MISSION_CONTROL_STATE');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
