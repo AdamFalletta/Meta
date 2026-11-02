@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AFI Wall</title>
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/wall.css">
+  <link rel="stylesheet" href="./styles/extras.css">
+</head>
+<body class="popout-page">
+  <header class="popout-header">
+    <div class="header-brand">
+      <span>AFI WALL</span>
+      <span class="header-meta" id="wallMeta">Connecting…</span>
+    </div>
+    <div class="header-controls">
+      <div class="utc-clock" id="utcClock">00:00:00 UTC</div>
+    </div>
+  </header>
+  <main id="stationWall" aria-label="Pop-out monitor wall"></main>
+  <script type="module" src="./src/popout/wall.js"></script>
+</body>
+</html>

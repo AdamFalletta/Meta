@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AFI Mission Control OS</title>
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/wall.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/modals.css">
+  <link rel="stylesheet" href="./styles/extras.css">
+</head>
+<body>
+  <header>
+    <div class="header-brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M4.93 4.93l1.41 1.41A7.932 7.932 0 0 0 4 12c0 2.21.89 4.21 2.34 5.66l-1.41 1.41A9.969 9.969 0 0 1 2 12c0-2.76 1.12-5.26 2.93-7.07zm14.14 0A9.969 9.969 0 0 1 22 12c0 2.76-1.12 5.26-2.93 7.07l-1.41-1.41A7.932 7.932 0 0 0 20 12c0-2.21-.89-4.21-2.34-5.66l1.41-1.41z"/>
+      </svg>
+      <span>AFI MISSION CONTROL OS</span>
+    </div>
+
+    <div class="header-controls">
+      <div class="control-group">
+        <label for="activeProjectSelect" class="control-label">PROJECT:</label>
+        <select id="activeProjectSelect"></select>
+      </div>
+
+      <div class="control-group">
+        <label for="activeLayoutSelect" class="control-label">LAYOUT:</label>
+        <select id="activeLayoutSelect"></select>
+      </div>
+
+      <div class="popout-dropdown-container">
+        <button type="button" class="btn-primary" id="popoutToggle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          Pop-Out Wall ▾
+        </button>
+        <div class="popout-menu" id="popoutMenu">
+          <button type="button" data-count="24">24 Screens</button>
+          <button type="button" data-count="12">12 Screens</button>
+          <button type="button" data-count="8">8 Screens</button>
+          <button type="button" data-count="6">6 Screens</button>
+          <button type="button" data-count="4">4 Screens</button>
+          <button type="button" data-count="1">1 Screen</button>
+        </div>
+      </div>
+
+      <div class="utc-clock" id="utcClock">00:00:00 UTC</div>
+
+      <button type="button" id="optionsBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Options
+      </button>
+    </div>
+  </header>
+
+  <main id="stationWall" aria-label="Monitor wall"></main>
+
+  <div class="drawer-overlay" id="drawerOverlay">
+    <div class="drawer" role="dialog" aria-label="Management console">
+      <div class="drawer-header">
+        <h3>MANAGEMENT CONSOLE</h3>
+        <button type="button" id="drawerClose" aria-label="Close management console">✕</button>
+      </div>
+      <div class="drawer-tabs" id="drawerTabs"></div>
+      <div class="drawer-body" id="drawerContent"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="monitorModal">
+    <div class="modal" role="dialog" aria-label="Configure monitor">
+      <div class="modal-header">
+        <span id="modalMonitorTitle">CONFIGURE MONITOR</span>
+        <button type="button" id="monitorCancelTop">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalMonitorId">
+        <div class="form-group">
+          <label for="modalModuleSelect">Assigned Module</label>
+          <select id="modalModuleSelect"></select>
+        </div>
+        <div class="form-group">
+          <label for="modalTitleOverride">Custom Title Override</label>
+          <input type="text" id="modalTitleOverride" placeholder="Default: Module Name">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="monitorCancel">Cancel</button>
+        <button type="button" class="btn-primary" id="monitorSave">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editEntityModal">
+    <div class="modal" role="dialog" aria-label="Edit item">
+      <div class="modal-header">
+        <span id="editModalTitle">EDIT ITEM</span>
+        <button type="button" id="editCancelTop">✕</button>
+      </div>
+      <div class="modal-body" id="editModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" id="editCancel">Cancel</button>
+        <button type="button" class="btn-primary" id="editSave">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="boot-error" id="bootError" hidden></div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

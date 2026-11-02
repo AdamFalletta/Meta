@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AFI Monitor</title>
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/wall.css">
+  <link rel="stylesheet" href="./styles/extras.css">
+</head>
+<body class="popout-page">
+  <header class="popout-header">
+    <div class="header-brand">
+      <span>AFI MONITOR</span>
+    </div>
+    <div class="header-controls">
+      <div class="utc-clock" id="utcClock">00:00:00 UTC</div>
+    </div>
+  </header>
+  <main id="monitorStage" class="single-monitor-stage" aria-label="Pop-out monitor">
+    <div class="monitor fullscreen-monitor">
+      <div class="monitor-header">
+        <span class="monitor-title" id="monitorTitle">MONITOR</span>
+      </div>
+      <div class="monitor-body" id="monitorBody"></div>
+    </div>
+  </main>
+  <script type="module" src="./src/popout/monitor.js"></script>
+</body>
+</html>
