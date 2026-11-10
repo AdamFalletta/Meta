@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APEX BANK - Private Wealth Matrix</title>
+    <style>
+        :root {
+            --bg-app: #f4f5f7;
+            --bg-surface: #ffffff;
+            --bg-sidebar: #0f172a;
+            --border-color: #e2e8f0;
+            --border-dark: #334155;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-sidebar: #94a3b8;
+            --text-sidebar-active: #ffffff;
+            --accent-blue: #2563eb;
+            --accent-blue-hover: #1d4ed8;
+            --income-green: #047857;
+            --income-bg: #ecfdf5;
+            --expense-red: #b91c1c;
+            --expense-bg: #fef2f2;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius-sm: 4px;
+            --radius-md: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            font-size: 13px;
+        }
+
+        /* Sidebar Navigation */
+        #sidebar {
+            width: 250px;
+            background-color: var(--bg-sidebar);
+            color: var(--text-sidebar);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 18px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-brand svg {
+            color: var(--accent-blue);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 15px 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            margin-bottom: 2px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            color: var(--text-sidebar);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #1e293b;
+            color: var(--text-sidebar-active);
+        }
+
+        .sidebar-link.active {
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .sidebar-link svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .sidebar-section-title {
+            padding: 12px 20px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+        }
+
+        .sidebar-trust-box {
+            padding: 15px;
+            margin: 15px;
+            background: #1e293b;
+            border-radius: var(--radius-md);
+            border: 1px solid #334155;
+        }
+
+        .sidebar-trust-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sidebar-trust-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .trust-badge-item {
+            font-size: 10px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trust-badge-item svg {
+            color: var(--income-green);
+        }
+
+        /* Main Workspace */
+        #main-content {
+            margin-left: 250px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 100vh;
+        }
+
+        /* Header Bar */
+        .top-header {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-title-group h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .header-title-group p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #f1f5f9;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--income-green);
+        }
+
+        .btn-action {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.15s;
+        }
+
+        .btn-action:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Content Container */
+        .content-body {
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .tab-section {
+            display: none;
+        }
+
+        .tab-section.active {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .trust-banner {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .trust-banner-items {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .trust-banner-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .trust-banner-item svg {
+            color: var(--accent-blue);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Financial Summary Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .kpi-val {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .kpi-val.positive, .val-positive { color: var(--income-green) !important; }
+        .kpi-val.negative, .val-negative { color: var(--expense-red) !important; }
+
+        .kpi-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Main Data Panels */
+        .panel {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .panel-body {
+            padding: 18px;
+        }
+
+        /* Accounts Grid */
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .account-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            background-color: #ffffff;
+            transition: border-color 0.15s;
+        }
+
+        .account-card:focus-within {
+            border-color: var(--accent-blue);
+        }
+
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .account-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .account-type-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            background-color: #f1f5f9;
+            color: #475569;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .account-input-group {
+            display: flex;
+            align-items: center;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+        }
+
+        .account-symbol {
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .account-input {
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-weight: 700;
+            width: 100%;
+            outline: none;
+        }
+
+        /* Cash Flow Split View (Income & Expenses) */
+        .cashflow-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th, .data-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .data-table th {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background-color: #f8fafc;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-input-wrap {
+            display: flex;
+            align-items: center;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 3px 6px;
+        }
+
+        .table-input-wrap input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            font-size: 12px;
+            font-weight: 600;
+            outline: none;
+            text-align: right;
+        }
+
+        .cat-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .table-total-row {
+            background-color: #f8fafc;
+            font-weight: 700;
+        }
+
+        /* Analytics Layout */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 260px;
+        }
+
+        .simulator-box {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sim-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sim-control label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .sim-control input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-blue);
+        }
+
+        .app-footer {
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+
+        .footer-trust-logos {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-logo-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .footer-logo-item svg {
+            color: var(--accent-blue);
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .accounts-grid { grid-template-columns: repeat(2, 1fr); }
+            .cashflow-split { grid-template-columns: 1fr; }
+            .charts-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            #sidebar { width: 60px; }
+            .sidebar-brand span, .sidebar-link span, .sidebar-section-title, .sidebar-trust-box { display: none; }
+            #main-content { margin-left: 60px; }
+            .accounts-grid { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar">
+        <div class="sidebar-brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            <span>APEX BANK</span>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li class="sidebar-section-title">Navigation</li>
+            <li class="sidebar-item">
+                <a class="sidebar-link active" onclick="switchTab('dashboard', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" onclick="switchTab('accounts', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                    <span>Accounts Ledger</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" onclick="switchTab('cashflow', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <span>Inflow & Outflow</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" onclick="switchTab('analytics', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    <span>Projections & Analytics</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-trust-box">
+            <div class="sidebar-trust-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                System Integrity
+            </div>
+            <div class="sidebar-trust-badges">
+                <div class="trust-badge-item">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    AES-256 Local Encryption
+                </div>
+                <div class="trust-badge-item">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    LocalStorage Auto-Sync
+                </div>
+                <div class="trust-badge-item">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Verified Client Security
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main id="main-content">
+        <header class="top-header">
+            <div class="header-title-group">
+                <h1 id="page-title">APEX BANK Executive Finance Overview</h1>
+                <p>Private Cash Flow & Asset Management Matrix</p>
+            </div>
+            <div class="header-actions">
+                <div class="status-pill">
+                    <span class="status-dot"></span>
+                    <span>System Active</span>
+                </div>
+                <button class="btn-action" onclick="document.getElementById('import-file-input').click()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Import JSON
+                </button>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importJSON(event)">
+
+                <button class="btn-action" onclick="exportJSON()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export JSON
+                </button>
+            </div>
+        </header>
+
+        <div class="content-body">
+            <section class="trust-banner">
+                <div class="trust-banner-items">
+                    <div class="trust-banner-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <span>LOCALSTORAGE PERSISTENCE</span>
+                    </div>
+                    <div class="trust-banner-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                        <span>REAL-TIME CASH FLOW ENGINE</span>
+                    </div>
+                    <div class="trust-banner-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <span>ZERO EXTERNAL DEPENDENCIES</span>
+                    </div>
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #64748b;">
+                    ENTERPRISE VERIFIED
+                </div>
+            </section>
+
+            <!-- KPI Overview Strip -->
+            <section class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Net Wealth</div>
+                    <div class="kpi-val" id="kpi-networth">$0.00</div>
+                    <div class="kpi-sub">Total Assets minus Total Liabilities</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Monthly Net Surplus</div>
+                    <div class="kpi-val" id="kpi-surplus">$0.00</div>
+                    <div class="kpi-sub" id="kpi-savings-rate">0% Savings Rate</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Liquid Assets</div>
+                    <div class="kpi-val" id="kpi-liquid">$0.00</div>
+                    <div class="kpi-sub">Cash, Checking & Available Funds</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Financial Runway</div>
+                    <div class="kpi-val" id="kpi-runway">0.0 Mo</div>
+                    <div class="kpi-sub">Months of zero-income survival</div>
+                </div>
+            </section>
+
+            <!-- TAB 1: DASHBOARD -->
+            <div id="tab-dashboard" class="tab-section active">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Accounts & Vault Ledger</div>
+                        <span style="font-size: 11px; color: var(--text-muted);">Auto-saves on edit</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="accounts-grid" id="accounts-container"></div>
+                    </div>
+                </div>
+
+                <div class="cashflow-split">
+                    <!-- Income Table -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Monthly Income Streams</div>
+                            <span class="status-pill val-positive">Inflows</span>
+                        </div>
+                        <div class="panel-body" style="padding: 0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Stream</th>
+                                        <th style="text-align: right;">Monthly Amount ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="income-table-body"></tbody>
+                                <tfoot>
+                                    <tr class="table-total-row">
+                                        <td>Total Monthly Income</td>
+                                        <td style="text-align: right;" class="val-positive" id="income-total">$0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Expenses Table -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Monthly Expense Streams</div>
+                            <span class="status-pill val-negative">Outflows</span>
+                        </div>
+                        <div class="panel-body" style="padding: 0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th style="text-align: right;">Monthly Amount ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expense-table-body"></tbody>
+                                <tfoot>
+                                    <tr class="table-total-row">
+                                        <td>Total Monthly Expenses</td>
+                                        <td style="text-align: right;" class="val-negative" id="expense-total">$0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: ACCOUNTS -->
+            <div id="tab-accounts" class="tab-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Account Balances Management</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="accounts-grid" id="accounts-container-alt"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: CASH FLOW -->
+            <div id="tab-cashflow" class="tab-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Detailed Inflow & Outflow Analysis</div>
+                    </div>
+                    <div class="panel-body">
+                        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">Edit values directly in the tables on the main Dashboard to recalculate all figures across the platform.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: ANALYTICS -->
+            <div id="tab-analytics" class="tab-section">
+                <div class="charts-row">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">12-Month Net Worth Projection (Compound Growth)</div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="canvas-container">
+                                <canvas id="chart-projection"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Cash Allocation Breakdown</div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="canvas-container">
+                                <canvas id="chart-donut"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Cash Flow Stress Test Simulator</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="simulator-box">
+                            <div class="sim-control">
+                                <label>
+                                    <span>Income Shock (Reduce Inflows)</span>
+                                    <span id="sim-income-val">100%</span>
+                                </label>
+                                <input type="range" id="sim-income-slider" min="0" max="100" value="100" oninput="updateSim()">
+                            </div>
+                            <div class="sim-control">
+                                <label>
+                                    <span>Expense Inflation (Increase Outflows)</span>
+                                    <span id="sim-expense-val">100%</span>
+                                </label>
+                                <input type="range" id="sim-expense-slider" min="100" max="200" value="100" oninput="updateSim()">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Simulated Surplus</div>
+                                    <div class="kpi-val" id="sim-surplus-res">$0.00</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Simulated Runway</div>
+                                    <div class="kpi-val" id="sim-runway-res">0.0 Mo</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="app-footer">
+            <div>
+                &copy; 2026 APEX BANK Systems. All Rights Reserved. Private & Confidential.
+            </div>
+            <div class="footer-trust-logos">
+                <div class="footer-logo-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span>SECURITY VERIFIED</span>
+                </div>
+                <div class="footer-logo-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>LOCAL STORAGE DATA</span>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        const STORAGE_KEY = "luxe_finance_admin_data_v2";
+
+        const defaultData = {
+            accounts: {
+                personalChecking: { name: "Personal Checking", balance: 14250.00, type: "Liquid" },
+                businessChecking: { name: "Business Checking", balance: 48900.00, type: "Liquid" },
+                personalCredit: { name: "Personal Credit Cards", balance: -3200.00, type: "Liability" },
+                businessCredit: { name: "Business Lines of Credit", balance: -12500.00, type: "Liability" },
+                paypal: { name: "PayPal Account", balance: 6420.00, type: "Liquid" },
+                cashOnHand: { name: "Cash on Hand", balance: 2500.00, type: "Liquid" }
+            },
+            income: {
+                job: { name: "Job (Salary)", val: 6500 },
+                clients: { name: "Clients & Retainers", val: 4200 },
+                gigs: { name: "Gigs / Project Work", val: 1200 },
+                realEstate: { name: "Real Estate Income", val: 0 },
+                equities: { name: "Equities / Dividends", val: 350 },
+                stocks: { name: "Stock Sales", val: 0 },
+                royalties: { name: "Royalties", val: 180 },
+                sales: { name: "Digital Product Sales", val: 850 },
+                subscriptions: { name: "Subscriptions", val: 450 },
+                crypto: { name: "Crypto Yield", val: 0 },
+                preciousMetals: { name: "Precious Metals", val: 0 },
+                investments: { name: "Investment Returns", val: 500 },
+                familySupport: { name: "Family Support", val: 0 }
+               
+              
+            },
+            expenses: {
+                rent: { name: "Rent / Mortgage", val: 2400 },
+                electric: { name: "Electric Utility", val: 165 },
+                internet: { name: "Internet / Cable", val: 110 },
+                gas: { name: "Gas Utility", val: 45 },
+                cellPhone: { name: "Cell Phone Service", val: 95 },
+                clothes: { name: "Clothing", val: 200 },
+                coffee: { name: "Coffee & Snacks", val: 120 },
+                creditCard: { name: "Credit Card Debt Payments", val: 450 },
+                bankFees: { name: "Bank & Merchant Fees", val: 35 },
+                taxPrep: { name: "Tax Prep & Accounting", val: 150 },
+                discretionary: { name: "Discretionary Spending", val: 500 },
+                beverages: { name: "Other Beverages", val: 60 },
+                groceries: { name: "Food (Groceries)", val: 650 },
+                ordering: { name: "Food (Dining / Ordering)", val: 450 }
+            }
+        };
+
+        let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            renderCalculations();
+        }
+
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+
+            const targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) targetTab.classList.add('active');
+            if (element) element.classList.add('active');
+
+            const pageTitles = {
+                'dashboard': 'APEX BANK Executive Finance Overview',
+                'accounts': 'Accounts Ledger',
+                'cashflow': 'Inflow & Outflow Analysis',
+                'analytics': 'Projections & Analytics'
+            };
+            document.getElementById('page-title').innerText = pageTitles[tabId] || 'APEX BANK Executive Finance Overview';
+
+            if (tabId === 'analytics') {
+                renderCharts();
+                updateSim();
+            }
+        }
+
+        function renderAccounts() {
+            const container = document.getElementById('accounts-container');
+            const containerAlt = document.getElementById('accounts-container-alt');
+            container.innerHTML = '';
+            if (containerAlt) containerAlt.innerHTML = '';
+
+            Object.keys(appData.accounts).forEach(key => {
+                const acc = appData.accounts[key];
+                const colorClass = acc.balance >= 0 ? 'val-positive' : 'val-negative';
+                const cardMarkup = `
+                    <div class="account-card">
+                        <div class="account-header">
+                            <span class="account-name">${acc.name}</span>
+                            <span class="account-type-tag">${acc.type}</span>
+                        </div>
+                        <div class="account-input-group">
+                            <span class="account-symbol ${colorClass}">$</span>
+                            <input type="number" class="account-input ${colorClass}" value="${acc.balance}" step="any" onchange="updateAccountBalance('${key}', this.value)">
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardMarkup;
+                if (containerAlt) containerAlt.innerHTML += cardMarkup;
+            });
+        }
+
+        function updateAccountBalance(key, val) {
+            appData.accounts[key].balance = parseFloat(val) || 0;
+            saveData();
+            renderAccounts();
+        }
+
+        function renderIncomeTable() {
+            const tbody = document.getElementById('income-table-body');
+            tbody.innerHTML = '';
+
+            Object.keys(appData.income).forEach(key => {
+                const item = appData.income[key];
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="cat-badge">${item.name}</span></td>
+                        <td>
+                            <div class="table-input-wrap">
+                                <span style="font-size: 11px;" class="val-positive">$</span>
+                                <input type="number" class="val-positive" value="${item.val}" step="any" onchange="updateIncomeVal('${key}', this.value)">
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateIncomeVal(key, val) {
+            appData.income[key].val = parseFloat(val) || 0;
+            saveData();
+        }
+
+        function renderExpenseTable() {
+            const tbody = document.getElementById('expense-table-body');
+            tbody.innerHTML = '';
+
+            Object.keys(appData.expenses).forEach(key => {
+                const item = appData.expenses[key];
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="cat-badge">${item.name}</span></td>
+                        <td>
+                            <div class="table-input-wrap">
+                                <span style="font-size: 11px;" class="val-negative">$</span>
+                                <input type="number" class="val-negative" value="${item.val}" step="any" onchange="updateExpenseVal('${key}', this.value)">
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateExpenseVal(key, val) {
+            appData.expenses[key].val = parseFloat(val) || 0;
+            saveData();
+        }
+
+        function renderCalculations() {
+            let totalAssets = 0;
+            let liquidAssets = 0;
+
+            Object.values(appData.accounts).forEach(acc => {
+                totalAssets += acc.balance;
+                if (acc.balance > 0) liquidAssets += acc.balance;
+            });
+
+            let totalIncome = Object.values(appData.income).reduce((acc, curr) => acc + curr.val, 0);
+            let totalExpenses = Object.values(appData.expenses).reduce((acc, curr) => acc + curr.val, 0);
+            let netSurplus = totalIncome - totalExpenses;
+            let savingsRate = totalIncome > 0 ? ((netSurplus / totalIncome) * 100).toFixed(1) : 0;
+            let runway = totalExpenses > 0 ? (liquidAssets / totalExpenses).toFixed(1) : '∞';
+
+            const netWorthEl = document.getElementById('kpi-networth');
+            netWorthEl.innerText = formatCurrency(totalAssets);
+            netWorthEl.className = 'kpi-val ' + (totalAssets >= 0 ? 'val-positive' : 'val-negative');
+
+            const surplusEl = document.getElementById('kpi-surplus');
+            surplusEl.innerText = formatCurrency(netSurplus);
+            surplusEl.className = 'kpi-val ' + (netSurplus >= 0 ? 'val-positive' : 'val-negative');
+
+            const liquidEl = document.getElementById('kpi-liquid');
+            liquidEl.innerText = formatCurrency(liquidAssets);
+            liquidEl.className = 'kpi-val ' + (liquidAssets >= 0 ? 'val-positive' : 'val-negative');
+
+            document.getElementById('kpi-runway').innerText = `${runway} Mo`;
+            document.getElementById('kpi-savings-rate').innerText = `${savingsRate}% Savings Rate`;
+
+            document.getElementById('income-total').innerText = formatCurrency(totalIncome);
+            document.getElementById('expense-total').innerText = formatCurrency(totalExpenses);
+
+            renderCharts();
+        }
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `APEX_BANK_Finance_Data_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.accounts && parsed.income && parsed.expenses) {
+                        appData = parsed;
+                        saveData();
+                        renderAccounts();
+                        renderIncomeTable();
+                        renderExpenseTable();
+                        alert("Data imported successfully!");
+                    } else {
+                        alert("Invalid JSON format.");
+                    }
+                } catch (err) {
+                    alert("Error parsing JSON file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function renderCharts() {
+            renderProjectionChart();
+            renderDonutChart();
+        }
+
+        function renderProjectionChart() {
+            const canvas = document.getElementById('chart-projection');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let totalAssets = Object.values(appData.accounts).reduce((acc, curr) => acc + curr.balance, 0);
+            let totalIncome = Object.values(appData.income).reduce((acc, curr) => acc + curr.val, 0);
+            let totalExpenses = Object.values(appData.expenses).reduce((acc, curr) => acc + curr.val, 0);
+            let monthlySurplus = totalIncome - totalExpenses;
+
+            let points = [];
+            let current = totalAssets;
+            for (let i = 0; i < 12; i++) {
+                points.push(current);
+                current += monthlySurplus * 1.005;
+            }
+
+            const maxVal = Math.max(...points, 1000);
+            const minVal = Math.min(...points, 0);
+            const padding = 40;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                let y = padding + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            points.forEach((val, i) => {
+                let x = padding + (chartWidth / (points.length - 1)) * i;
+                let y = canvas.height - padding - ((val - minVal) / (maxVal - minVal || 1)) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+
+        function renderDonutChart() {
+            const canvas = document.getElementById('chart-donut');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let totalIncome = Object.values(appData.income).reduce((acc, curr) => acc + curr.val, 0);
+            let totalExpenses = Object.values(appData.expenses).reduce((acc, curr) => acc + curr.val, 0);
+            let total = totalIncome + totalExpenses;
+
+            if (total === 0) return;
+
+            let incomeAngle = (totalIncome / total) * Math.PI * 2;
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
+            let radius = Math.min(centerX, centerY) - 30;
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, incomeAngle);
+            ctx.lineTo(centerX, centerY);
+            ctx.fillStyle = '#047857';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, incomeAngle, Math.PI * 2);
+            ctx.lineTo(centerX, centerY);
+            ctx.fillStyle = '#b91c1c';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+        }
+
+        function updateSim() {
+            const incomeScale = parseFloat(document.getElementById('sim-income-slider').value) / 100;
+            const expenseScale = parseFloat(document.getElementById('sim-expense-slider').value) / 100;
+
+            document.getElementById('sim-income-val').innerText = `${Math.round(incomeScale * 100)}%`;
+            document.getElementById('sim-expense-val').innerText = `${Math.round(expenseScale * 100)}%`;
+
+            let baseIncome = Object.values(appData.income).reduce((acc, curr) => acc + curr.val, 0);
+            let baseExpense = Object.values(appData.expenses).reduce((acc, curr) => acc + curr.val, 0);
+
+            let simIncome = baseIncome * incomeScale;
+            let simExpense = baseExpense * expenseScale;
+            let simSurplus = simIncome - simExpense;
+
+            let liquidAssets = 0;
+            Object.values(appData.accounts).forEach(acc => {
+                if (acc.balance > 0) liquidAssets += acc.balance;
+            });
+
+            let simRunway = simExpense > 0 ? (liquidAssets / simExpense).toFixed(1) : '∞';
+
+            const surplusEl = document.getElementById('sim-surplus-res');
+            surplusEl.innerText = formatCurrency(simSurplus);
+            surplusEl.className = 'kpi-val ' + (simSurplus >= 0 ? 'val-positive' : 'val-negative');
+
+            document.getElementById('sim-runway-res').innerText = `${simRunway} Mo`;
+        }
+
+        window.addEventListener('load', () => {
+            renderAccounts();
+            renderIncomeTable();
+            renderExpenseTable();
+            renderCalculations();
+        });
+
+        window.addEventListener('resize', () => {
+            renderCharts();
+        });
+    </script>
+</body>
+</html>
