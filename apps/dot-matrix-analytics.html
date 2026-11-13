@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AFI Internal • Client Analytics & CV Inference Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg-color: #0b0e14; /* Slightly lighter pitch black/dark slate */
+      --card-bg: rgba(26, 31, 43, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #f5f5f7;
+      --text-secondary: #8a96a3;
+      --accent-green: #34c759;
+      --accent-cyan: #32ade6;
+      --accent-amber: #ff9f0a;
+      --accent-purple: #bf5af2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* App Header - Pitch Black #000000 */
+    .app-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #000000;
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+      z-index: 40;
+    }
+
+    .header-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #34c759, #32ade6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .header-text h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #ffffff;
+    }
+
+    .badge-internal {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(52, 199, 89, 0.15);
+      color: var(--accent-green);
+      font-family: monospace;
+      font-weight: 500;
+    }
+
+    .header-text p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    /* Top Selector Bar (Nicely Styled Dropdowns) */
+    .top-selector-bar {
+      background: #000000;
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 35;
+    }
+
+    .select-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .select-wrapper::after {
+      content: '\f078';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      font-size: 10px;
+      color: var(--text-secondary);
+      position: absolute;
+      right: 12px;
+      pointer-events: none;
+    }
+
+    .top-selector-bar select {
+      appearance: none;
+      background: rgba(255, 255, 255, 0.06);
+      border: 0.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      color: #fff;
+      padding: 7px 32px 7px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .top-selector-bar select:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .top-selector-bar select option {
+      background: #161b22;
+      color: #fff;
+    }
+
+    /* Scrollable Viewport */
+    .app-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      padding-bottom: 95px; /* Clean gapless fit */
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .view-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* App Router Back Navigation Header */
+    .router-nav-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 0.5px solid rgba(255, 255, 255, 0.15);
+      color: var(--accent-cyan);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .back-btn:active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Big H1 Headings */
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 2px;
+    }
+
+    .section-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    /* iOS Card Style */
+    .ios-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 0.5px solid var(--card-border);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card {
+      background: linear-gradient(145deg, rgba(32, 38, 51, 0.85), rgba(18, 22, 30, 0.95));
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* 4x4 Camera Grid for In-App Router View */
+    .camera-grid-4x4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .cam-tile {
+      background: #09090b;
+      border: 0.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      aspect-ratio: 16/9;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cam-tile iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+
+    .cam-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      padding: 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 10px;
+      font-family: monospace;
+      color: #fff;
+      z-index: 2;
+    }
+
+    .cam-status {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 6px var(--accent-green);
+    }
+
+    /* Metrics */
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", sans-serif;
+    }
+
+    .metric-sub {
+      font-size: 11px;
+      color: var(--accent-green);
+      margin-top: 2px;
+    }
+
+    /* Progress Bars */
+    .progress-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    /* List items */
+    .ios-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 0.5px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .ios-btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      transition: background 0.2s;
+    }
+
+    .ios-btn:active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .ios-btn.primary {
+      background: var(--accent-green);
+      color: #000;
+    }
+
+    /* iOS Bottom Navigation Bar - Pitch Black #000000, Gapless Bottom Padding */
+    .ios-tab-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: #000000;
+      border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: 4px;
+      z-index: 100;
+    }
+
+    .tab-item {
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: color 0.2s;
+      width: 70px;
+    }
+
+    .tab-item i {
+      font-size: 22px;
+    }
+
+    .tab-item.active {
+      color: var(--accent-green);
+    }
+
+    /* Inputs & Forms */
+    .ios-input, .ios-select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      margin-top: 6px;
+    }
+
+    .ios-input:focus, .ios-select:focus {
+      border-color: var(--accent-green);
+    }
+
+    .dot-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+    }
+
+    .dot-pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+    }
+
+    @media (max-width: 768px) {
+      .camera-grid-4x4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- APP HEADER (Pitch Black #000000) -->
+  <header class="app-header">
+    <div class="header-title-group">
+      <div class="header-icon">
+        <i class="fa-solid fa-eye"></i>
+      </div>
+      <div class="header-text">
+        <h1>AFI INSIGHTS <span class="badge-internal">INTERNAL</span></h1>
+        <p>EdgeVision CV & Client Analytics Engine</p>
+      </div>
+    </div>
+    <button onclick="dashboard.triggerSync()" class="icon-btn" title="Refresh Telemetry">
+      <i id="sync-icon" class="fa-solid fa-rotate"></i>
+    </button>
+  </header>
+
+  <!-- TOP SELECTOR BAR (Nicely Styled Dropdowns) -->
+  <div class="top-selector-bar">
+    <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Active Context:</div>
+    <div class="select-wrapper">
+      <select id="global-client-select" onchange="dashboard.updateClientContext(this.value)">
+        <option value="bay_ridge">Bay Ridge Store #01</option>
+        <option value="bk_lounge">Brooklyn Lounge & Bar</option>
+        <option value="manhattan_flag">Manhattan Flagship</option>
+      </select>
+    </div>
+    <div class="select-wrapper">
+      <select id="global-fleet-select" onchange="dashboard.updateFleetContext(this.value)">
+        <option value="primary_fleet">Primary Edge Fleet (HUB75)</option>
+        <option value="outdoor_kiosks">Outdoor Signage Kiosks</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- APP VIEWPORT (Router Style Views) -->
+  <main id="app-viewport" class="app-viewport">
+
+    <!-- VIEW 1: ANALYTICS DASHBOARD -->
+    <div id="view-dashboard" class="view-container">
+      <div>
+        <h1 class="section-title">Client Analytics</h1>
+        <p class="section-subtitle">Real-time inference and live consumer traffic telemetry</p>
+      </div>
+      
+      <!-- HERO SECTION: 1 BIG PRIMARY WIDGET -->
+      <div class="ios-card hero-card">
+        <div class="card-header-row">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="dot-indicator dot-pulse"></div>
+            <span class="card-label">Live CV Inference Stream</span>
+          </div>
+          <span id="active-client-badge" style="font-size: 10px; font-family: monospace; padding: 3px 8px; border-radius: 6px; background: rgba(50, 173, 230, 0.15); color: var(--accent-cyan);">BAY RIDGE STORE #01</span>
+        </div>
+
+        <div class="grid-2" style="margin: 16px 0;">
+          <div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Active Shoppers (Frame)</div>
+            <div id="hero-shoppers" class="metric-value">24</div>
+            <div class="metric-sub">+18% vs avg peak</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Avg Dwell Time</div>
+            <div id="hero-dwell" class="metric-value" style="color: var(--accent-cyan);">3m 42s</div>
+            <div class="metric-sub" style="color: var(--accent-cyan);">+12s engagement</div>
+          </div>
+        </div>
+
+        <div style="border-top: 0.5px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary);">
+          <span><i class="fa-solid fa-fire" style="color: var(--accent-amber);"></i> Peak Zone: <strong style="color: var(--text-primary);">Signage Zone B</strong></span>
+          <span style="font-family: monospace; color: var(--accent-green);">99.4% CV Accuracy</span>
+        </div>
+      </div>
+
+      <!-- MINI WIDGETS GRID -->
+      <div class="grid-2">
+        
+        <!-- Widget 1 -->
+        <div class="ios-card">
+          <div class="card-header-row" style="margin-bottom: 8px;">
+            <span class="card-label">Demographics</span>
+            <i class="fa-solid fa-users" style="color: var(--accent-green);"></i>
+          </div>
+          <div class="progress-group">
+            <div class="progress-info"><span>Adults (25-45)</span><span style="color: var(--accent-green);">64%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 64%; background: var(--accent-green);"></div></div>
+          </div>
+          <div class="progress-group" style="margin-top: 10px;">
+            <div class="progress-info"><span>Gen Z / Young</span><span style="color: var(--accent-cyan);">28%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 28%; background: var(--accent-cyan);"></div></div>
+          </div>
+        </div>
+
+        <!-- Widget 2 -->
+        <div class="ios-card">
+          <div class="card-header-row" style="margin-bottom: 8px;">
+            <span class="card-label">Conversion</span>
+            <i class="fa-solid fa-chart-line" style="color: var(--accent-cyan);"></i>
+          </div>
+          <div class="metric-value" style="color: var(--accent-cyan); font-size: 24px; margin-top: 4px;">31.8%</div>
+          <p style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">Stopped & interacted with promo signage loop</p>
+        </div>
+
+        <!-- Widget 3 -->
+        <div class="ios-card">
+          <div class="card-header-row" style="margin-bottom: 8px;">
+            <span class="card-label">Edge Node Load</span>
+            <i class="fa-solid fa-microchip" style="color: var(--accent-amber);"></i>
+          </div>
+          <div style="font-size: 12px; font-family: monospace; display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">CPU (N100):</span> <span style="color: var(--accent-amber);">18.4%</span></div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">MoveNet FPS:</span> <span style="color: var(--accent-green);">58 FPS</span></div>
+          </div>
+        </div>
+
+        <!-- Widget 4 -->
+        <div class="ios-card">
+          <div class="card-header-row" style="margin-bottom: 8px;">
+            <span class="card-label">Busiest Window</span>
+            <i class="fa-solid fa-clock" style="color: var(--accent-purple);"></i>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--accent-purple); font-family: monospace; margin-top: 4px;">5:00 PM – 7:30 PM</div>
+          <p style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">Peak daily retail foot traffic</p>
+        </div>
+
+      </div>
+
+      <!-- RECENT CLIENT INFERENCE LOGS -->
+      <div class="ios-card">
+        <div class="card-header-row" style="margin-bottom: 10px; border-bottom: 0.5px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+          <span class="card-label">Real-Time CV Trigger Feed</span>
+          <span style="font-size: 10px; font-family: monospace; color: var(--accent-green);">LIVE SOCKET</span>
+        </div>
+        <div id="inference-log-list" style="display: flex; flex-direction: column; gap: 8px; font-size: 11px; font-family: monospace;">
+          <div class="ios-list-item">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="dot-indicator" style="width: 6px; height: 6px;"></div>
+              <span>Client #01: High Attention Event (Dwell > 10s)</span>
+            </div>
+            <span style="color: var(--text-secondary); font-size: 10px;">Just now</span>
+          </div>
+          <div class="ios-list-item">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="dot-indicator" style="width: 6px; height: 6px; background: var(--accent-cyan);"></div>
+              <span>Client #02: Dynamic Playlist Switched (Lunch Rush)</span>
+            </div>
+            <span style="color: var(--text-secondary); font-size: 10px;">2m ago</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW 2: FLEET CRUD MANAGEMENT -->
+    <div id="view-fleet" class="view-container hidden">
+      <div>
+        <h1 class="section-title">Fleet Management (CRUD)</h1>
+        <p class="section-subtitle">Manage client signage nodes and hardware endpoints with LocalStorage persistence</p>
+      </div>
+
+      <!-- Fleet Add / Edit Form Card -->
+      <div class="ios-card">
+        <div class="card-header-row" style="margin-bottom: 10px;">
+          <span id="form-mode-title" class="card-label">Register New Fleet Node</span>
+        </div>
+        <input type="hidden" id="edit-node-id" value="">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div>
+            <label style="font-size: 11px; color: var(--text-secondary);">Node / Venue Name</label>
+            <input type="text" id="node-name" placeholder="e.g. Downtown Cafe Sign" class="ios-input" style="margin-top: 4px;">
+          </div>
+          <div class="grid-2">
+            <div>
+              <label style="font-size: 11px; color: var(--text-secondary);">Resolution / Spec</label>
+              <input type="text" id="node-spec" placeholder="128x64 HUB75" class="ios-input" style="margin-top: 4px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; color: var(--text-secondary);">Status</label>
+              <select id="node-status" class="ios-select" style="margin-top: 4px;">
+                <option value="ONLINE">ONLINE</option>
+                <option value="STANDBY">STANDBY</option>
+                <option value="OFFLINE">OFFLINE</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button onclick="dashboard.saveFleetNode()" class="ios-btn primary" style="flex: 1; padding: 10px;">Save Node to LocalStorage</button>
+            <button onclick="dashboard.resetFleetForm()" class="ios-btn" style="padding: 10px;">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fleet Nodes List Container -->
+      <div class="ios-card">
+        <div class="card-header-row" style="margin-bottom: 12px;">
+          <span class="card-label">Active Fleet Directory</span>
+          <span id="node-count-badge" style="font-size: 10px; font-family: monospace; color: var(--accent-green);">0 nodes</span>
+        </div>
+        <div id="fleet-nodes-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Populated dynamically from LocalStorage -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: IN-APP ROUTER SUBPAGE - 16 SCREEN SECURITY CAMERA MATRIX -->
+    <div id="view-cameras" class="view-container hidden">
+      <div class="router-nav-header">
+        <button onclick="dashboard.switchView('dashboard')" class="back-btn">
+          <i class="fa-solid fa-chevron-left"></i> Back
+        </button>
+      </div>
+      <div>
+        <h1 class="section-title">16-Screen Security Matrix</h1>
+        <p class="section-subtitle">Live monitored CV edge feeds across active client infrastructure</p>
+      </div>
+
+      <!-- 4x4 Camera Matrix Card -->
+      <div class="ios-card">
+        <div class="card-header-row" style="margin-bottom: 14px;">
+          <span class="card-label"><i class="fa-solid fa-video" style="color: var(--accent-cyan);"></i> Multi-Feed Security Grid (4x4)</span>
+          <button onclick="dashboard.openCamConfigModal()" class="ios-btn" style="font-size: 11px; padding: 4px 10px;">Configure APIs</button>
+        </div>
+
+        <div id="camera-matrix-4x4" class="camera-grid-4x4">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: CV INFERENCE & SETTINGS -->
+    <div id="view-inference" class="view-container hidden">
+      <div>
+        <h1 class="section-title">CV Inference Engine</h1>
+        <p class="section-subtitle">Configure real-time computer vision thresholds and models</p>
+      </div>
+
+      <div class="ios-card" style="display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
+        <div>
+          <label style="color: var(--text-secondary); font-weight: 500;">Minimum Attention Threshold (Seconds)</label>
+          <input type="range" min="2" max="30" value="5" style="width: 100%; accent-color: var(--accent-green); margin-top: 6px;">
+        </div>
+        <div>
+          <label style="color: var(--text-secondary); font-weight: 500;">MoveNet Pose Tracking Precision</label>
+          <select class="ios-select">
+            <option>Lightning (Fastest - 60 FPS)</option>
+            <option selected>Thunder (High Accuracy)</option>
+          </select>
+        </div>
+        <button onclick="alert('CV Parameters updated successfully across all edge nodes.')" class="ios-btn primary" style="width: 100%; margin-top: 6px; padding: 12px;">Save & Deploy to Fleet</button>
+      </div>
+    </div>
+
+    <!-- VIEW 5: AUTOMATION RULES -->
+    <div id="view-rules" class="view-container hidden">
+      <div>
+        <h1 class="section-title">Trigger Rules</h1>
+        <p class="section-subtitle">Automated behavior based on foot traffic density</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="ios-list-item" style="padding: 14px;">
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">High Foot Traffic Surge</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">When > 15 people in view -> Switch to Flash Promo</div>
+          </div>
+          <span style="font-size: 9px; padding: 3px 6px; border-radius: 4px; background: rgba(52, 199, 89, 0.15); color: var(--accent-green); font-family: monospace;">ACTIVE</span>
+        </div>
+        <div class="ios-list-item" style="padding: 14px;">
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">Late Night Low Traffic</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">When < 2 people -> Switch to Energy Saver / Clock</div>
+          </div>
+          <span style="font-size: 9px; padding: 3px 6px; border-radius: 4px; background: rgba(52, 199, 89, 0.15); color: var(--accent-green); font-family: monospace;">ACTIVE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 6: SETTINGS -->
+    <div id="view-settings" class="view-container hidden">
+      <div>
+        <h1 class="section-title">System Config</h1>
+        <p class="section-subtitle">Admin controls for AFI internal operations</p>
+      </div>
+
+      <div class="ios-card" style="display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
+        <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 0.5px solid rgba(255,255,255,0.1);">
+          <span style="color: var(--text-secondary);">API Endpoint</span>
+          <span style="font-family: monospace; color: var(--accent-cyan);">wss://api.afi-edge.internal</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 0.5px solid rgba(255,255,255,0.1);">
+          <span style="color: var(--text-secondary);">Firmware Build</span>
+          <span style="font-family: monospace; color: var(--accent-green);">v4.0.2-enterprise</span>
+        </div>
+        <button onclick="alert('Exporting system telemetry logs...')" class="ios-btn" style="width: 100%; padding: 10px;">Export System Logs</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- CAMERA CONFIGURATION MODAL -->
+  <div id="cam-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;">
+    <div class="ios-card" style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;">
+      <div class="card-header-row" style="margin-bottom: 16px;">
+        <span class="card-label" style="font-size: 16px;">Configure Camera API Endpoints</span>
+        <button onclick="dashboard.closeCamConfigModal()" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="cam-config-inputs" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+        <!-- Dynamic inputs generated here -->
+      </div>
+      <button onclick="dashboard.saveCameraAPIs()" class="ios-btn primary" style="width: 100%; padding: 12px;">Save & Connect Streams</button>
+    </div>
+  </div>
+
+  <!-- FIXED 5-BUTTON BOTTOM NAVIGATION BAR (Pitch Black #000000, Gapless Footer) -->
+  <nav class="ios-tab-bar">
+    <button onclick="dashboard.switchView('dashboard')" id="tab-btn-dashboard" class="tab-item active">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Analytics</span>
+    </button>
+    <button onclick="dashboard.switchView('fleet')" id="tab-btn-fleet" class="tab-item">
+      <i class="fa-solid fa-server"></i>
+      <span>Fleet CRUD</span>
+    </button>
+    <button onclick="dashboard.switchView('cameras')" id="tab-btn-cameras" class="tab-item">
+      <i class="fa-solid fa-display"></i>
+      <span>Cameras</span>
+    </button>
+    <button onclick="dashboard.switchView('inference')" id="tab-btn-inference" class="tab-item">
+      <i class="fa-solid fa-eye"></i>
+      <span>CV Engine</span>
+    </button>
+    <button onclick="dashboard.switchView('settings')" id="tab-btn-settings" class="tab-item">
+      <i class="fa-solid fa-gear"></i>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <script>
+    class AFIDashboard {
+      constructor() {
+        this.currentView = 'dashboard';
+        this.cameras = Array.from({length: 16}, (_, i) => ({
+          id: i + 1,
+          name: `Cam 0${i + 1} - Zone ${String.fromCharCode(65 + Math.floor(i / 4))}`,
+          apiUrl: ''
+        }));
+        this.initCameras();
+        this.initLocalStorageFleet();
+        this.renderFleetCRUDList();
+        this.startMockStream();
+      }
+
+      initCameras() {
+        const container = document.getElementById('camera-matrix-4x4');
+        if (!container) return;
+        container.innerHTML = this.cameras.map((cam, idx) => `
+          <div class="cam-tile" id="cam-tile-${idx}">
+            ${cam.apiUrl ? 
+              `<iframe src="${cam.apiUrl}" frameborder="0" scrolling="no"></iframe>` :
+              `<div style="font-family: monospace; font-size: 11px; color: var(--text-secondary); text-align: center; padding: 10px;">
+                 <i class="fa-solid fa-video-slash" style="font-size: 18px; margin-bottom: 4px; display: block; color: rgba(255,255,255,0.2);"></i>
+                 Mock Stream #${cam.id}
+               </div>`
+            }
+            <div class="cam-overlay">
+              <span style="font-weight: 600; text-shadow: 0 1px 2px #000;">${cam.name}</span>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 9px; opacity: 0.8;">LIVE</span>
+                <div class="cam-status"></div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      openCamConfigModal() {
+        const modal = document.getElementById('cam-modal');
+        const container = document.getElementById('cam-config-inputs');
+        container.innerHTML = this.cameras.map((cam, idx) => `
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: var(--text-secondary);">Camera ${cam.id} API / Stream URL</label>
+            <input type="text" id="cam-input-${idx}" value="${cam.apiUrl}" placeholder="https://your-camera-stream-endpoint or iframe url" class="ios-input" style="margin-top:0;">
+          </div>
+        `).join('');
+        modal.style.display = 'flex';
+      }
+
+      closeCamConfigModal() {
+        document.getElementById('cam-modal').style.display = 'none';
+      }
+
+      saveCameraAPIs() {
+        this.cameras.forEach((cam, idx) => {
+          const input = document.getElementById(`cam-input-${idx}`);
+          if (input) {
+            cam.apiUrl = input.value.trim();
+          }
+        });
+        this.initCameras();
+        this.closeCamConfigModal();
+      }
+
+      initLocalStorageFleet() {
+        if (!localStorage.getItem('afi_fleet_nodes')) {
+          const defaultNodes = [
+            { id: 'node_1', name: 'Bay Ridge Indian Restaurant', spec: '128x64 HUB75 Matrix', status: 'ONLINE' },
+            { id: 'node_2', name: 'Brooklyn Lounge & Bar', spec: '256x128 Ultra HD', status: 'ONLINE' }
+          ];
+          localStorage.setItem('afi_fleet_nodes', JSON.stringify(defaultNodes));
+        }
+      }
+
+      getFleetNodes() {
+        try {
+          return JSON.parse(localStorage.getItem('afi_fleet_nodes')) || [];
+        } catch(e) {
+          return [];
+        }
+      }
+
+      saveFleetNodes(nodes) {
+        localStorage.setItem('afi_fleet_nodes', JSON.stringify(nodes));
+        this.renderFleetCRUDList();
+      }
+
+      saveFleetNode() {
+        const idField = document.getElementById('edit-node-id').value;
+        const nameField = document.getElementById('node-name').value.trim();
+        const specField = document.getElementById('node-spec').value.trim() || 'Standard Matrix';
+        const statusField = document.getElementById('node-status').value;
+
+        if (!nameField) {
+          alert('Please enter a node or venue name.');
+          return;
+        }
+
+        let nodes = this.getFleetNodes();
+        if (idField) {
+          nodes = nodes.map(n => n.id === idField ? { ...n, name: nameField, spec: specField, status: statusField } : n);
+        } else {
+          nodes.push({ id: 'node_' + Date.now(), name: nameField, spec: specField, status: statusField });
+        }
+
+        this.saveFleetNodes(nodes);
+        this.resetFleetForm();
+      }
+
+      editFleetNode(id) {
+        const nodes = this.getFleetNodes();
+        const node = nodes.find(n => n.id === id);
+        if (!node) return;
+        document.getElementById('edit-node-id').value = node.id;
+        document.getElementById('node-name').value = node.name;
+        document.getElementById('node-spec').value = node.spec;
+        document.getElementById('node-status').value = node.status;
+        document.getElementById('form-mode-title').innerText = 'Edit Fleet Node: ' + node.name;
+      }
+
+      deleteFleetNode(id) {
+        if (confirm('Are you sure you want to delete this fleet node from LocalStorage?')) {
+          let nodes = this.getFleetNodes();
+          nodes = nodes.filter(n => n.id !== id);
+          this.saveFleetNodes(nodes);
+        }
+      }
+
+      resetFleetForm() {
+        document.getElementById('edit-node-id').value = '';
+        document.getElementById('node-name').value = '';
+        document.getElementById('node-spec').value = '';
+        document.getElementById('node-status').value = 'ONLINE';
+        document.getElementById('form-mode-title').innerText = 'Register New Fleet Node';
+      }
+
+      renderFleetCRUDList() {
+        const nodes = this.getFleetNodes();
+        const container = document.getElementById('fleet-nodes-list');
+        const badge = document.getElementById('node-count-badge');
+        if (badge) badge.innerText = `${nodes.length} nodes`;
+        if (!container) return;
+
+        if (nodes.length === 0) {
+          container.innerHTML = `<div style="font-size: 11px; color: var(--text-secondary); text-align: center; padding: 12px;">No fleet nodes recorded in LocalStorage.</div>`;
+          return;
+        }
+
+        container.innerHTML = nodes.map(n => `
+          <div class="ios-list-item" style="padding: 12px;">
+            <div>
+              <div style="font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                ${n.name}
+                <span style="font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(52, 199, 89, 0.15); color: var(--accent-green); font-family: monospace;">${n.status}</span>
+              </div>
+              <div style="font-size: 11px; font-family: monospace; color: var(--text-secondary); margin-top: 2px;">Spec: ${n.spec} • ID: ${n.id}</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button onclick="dashboard.editFleetNode('${n.id}')" class="ios-btn" style="padding: 6px 10px; font-size: 11px;">Edit</button>
+              <button onclick="dashboard.deleteFleetNode('${n.id}')" class="ios-btn" style="padding: 6px 10px; font-size: 11px; background: rgba(255, 69, 58, 0.2); color: #ff453a;">Del</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      updateClientContext(val) {
+        const badge = document.getElementById('active-client-badge');
+        if (badge) badge.innerText = val.toUpperCase().replace('_', ' ');
+      }
+
+      updateFleetContext(val) {
+        // Fleet context changed handler
+      }
+
+      switchView(viewName) {
+        this.currentView = viewName;
+        ['dashboard', 'fleet', 'cameras', 'inference', 'rules', 'settings'].forEach(v => {
+          const viewEl = document.getElementById(`view-${v}`);
+          const btnEl = document.getElementById(`tab-btn-${v}`);
+          if (viewEl) {
+            if (v === viewName) {
+              viewEl.classList.remove('hidden');
+            } else {
+              viewEl.classList.add('hidden');
+            }
+          }
+          if (btnEl) {
+            if (v === viewName) {
+              btnEl.classList.add('active');
+            } else {
+              btnEl.classList.remove('active');
+            }
+          }
+        });
+        document.getElementById('app-viewport').scrollTop = 0;
+      }
+
+      triggerSync() {
+        const icon = document.getElementById('sync-icon');
+        icon.style.transition = 'transform 0.8s ease';
+        icon.style.transform = 'rotate(360deg)';
+        setTimeout(() => {
+          icon.style.transition = 'none';
+          icon.style.transform = 'rotate(0deg)';
+          const shoppers = document.getElementById('hero-shoppers');
+          if (shoppers) shoppers.innerText = Math.floor(20 + Math.random() * 12);
+        }, 800);
+      }
+
+      startMockStream() {
+        setInterval(() => {
+          const list = document.getElementById('inference-log-list');
+          if (!list) return;
+          const events = [
+            'Client #01: High Attention Event (Dwell > 10s)',
+            'Client #02: Dynamic Playlist Switched (Lunch Rush)',
+            'CV Edge: Face orientation locked (98% confidence)',
+            'Signage Node #03: Framebuffer synced successfully'
+          ];
+          const randomEvent = events[Math.floor(Math.random() * events.length)];
+          const newItem = document.createElement('div');
+          newItem.className = 'ios-list-item';
+          newItem.style.opacity = '0';
+          newItem.style.transition = 'opacity 0.4s ease';
+          newItem.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="dot-indicator dot-pulse" style="width: 6px; height: 6px;"></div>
+              <span>${randomEvent}</span>
+            </div>
+            <span style="color: var(--text-secondary); font-size: 10px;">Just now</span>
+          `;
+          list.prepend(newItem);
+          setTimeout(() => newItem.style.opacity = '1', 50);
+          if (list.children.length > 5) list.removeChild(list.lastChild);
+        }, 12000);
+      }
+    }
+
+    const dashboard = new AFIDashboard();
+  </script>
+</body>
+</html>
