@@ -1,0 +1,4362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLB OFFSEASON NETWORK | 24/7 Hot Stove Broadcast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & BROADCAST PALETTE
+       ========================================================================== */
+    :root {
+      --bg-void: #05070b;
+      --bg-studio: #090d16;
+      --bg-panel: #0e1422;
+      --bg-card: #131b2e;
+      --bg-card-elevated: #19243d;
+      --border-subtle: rgba(148, 163, 184, 0.14);
+      --border-glow: rgba(56, 189, 248, 0.42);
+      --accent-red: #e11d2e;
+      --accent-red-glow: rgba(225, 29, 46, 0.55);
+      --accent-navy: #002d72;
+      --accent-blue: #2563eb;
+      --accent-cyan: #38bdf8;
+      --accent-gold: #f59e0b;
+      --accent-emerald: #10b981;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      --font-display: 'Barlow Condensed', sans-serif;
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --header-h: 68px;
+      --channelbar-h: 58px;
+      --ticker-h: 88px;
+      --right-rail-w: 390px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* Reduced motion accessibility override */
+    body.reduced-motion *,
+    body.reduced-motion *::before,
+    body.reduced-motion *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+
+    /* Custom Scrollbars for TV Panels */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(9, 13, 22, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.28);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-cyan);
+    }
+
+    /* ==========================================================================
+       2. STUDIO BACKGROUND CANVAS & OVERLAYS
+       ========================================================================== */
+    #studio-bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Subtle TV Scanline / Broadcast Studio Vignette */
+    .broadcast-vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background:
+        radial-gradient(circle at 50% 45%, transparent 45%, rgba(2, 4, 9, 0.78) 100%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.012) 0px,
+          rgba(255, 255, 255, 0.012) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+    }
+
+    /* Fullscreen Digital Wipe / Transition Layer */
+    #broadcast-wipe-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      pointer-events: none;
+      opacity: 0;
+      background: linear-gradient(115deg, #04070f 0%, #0a1938 45%, #e11d2e 50%, #04070f 55%, #04070f 100%);
+      background-size: 250% 250%;
+      transition: opacity 0.25s ease;
+    }
+    #broadcast-wipe-overlay.active {
+      opacity: 1;
+      animation: digitalWipeSweep 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes digitalWipeSweep {
+      0% { background-position: 120% 0%; opacity: 0.95; }
+      50% { background-position: 50% 0%; opacity: 1; }
+      100% { background-position: -30% 0%; opacity: 0; }
+    }
+
+    /* Breaking News Flash Strobe */
+    #breaking-flash-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 850;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at center, rgba(225, 29, 46, 0.45), rgba(153, 12, 24, 0.85));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #breaking-flash-overlay.trigger {
+      animation: breakingStrobe 1.3s ease-out forwards;
+    }
+    .breaking-stinger-banner {
+      background: #090d16;
+      border-top: 4px solid #ff2a3c;
+      border-bottom: 4px solid #ff2a3c;
+      padding: 24px 64px;
+      text-align: center;
+      box-shadow: 0 0 80px rgba(225, 29, 46, 0.9);
+      transform: skewX(-8deg);
+    }
+    .breaking-stinger-banner h1 {
+      font-family: var(--font-display);
+      font-size: 4.5rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: #fff;
+      text-transform: uppercase;
+      text-shadow: 0 0 25px rgba(225, 29, 46, 0.9);
+    }
+
+    @keyframes breakingStrobe {
+      0% { opacity: 0; transform: scale(1.06); }
+      15% { opacity: 1; transform: scale(1); }
+      75% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.98); }
+    }
+
+    /* ==========================================================================
+       3. MASTER TELEVISION BROADCAST GRID LAYOUT
+       ========================================================================== */
+    .tv-shell {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-rows: var(--header-h) var(--channelbar-h) 1fr var(--ticker-h);
+      grid-template-columns: 1fr var(--right-rail-w);
+      grid-template-areas:
+        "header header"
+        "channels channels"
+        "stage rail"
+        "ticker ticker";
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ==========================================================================
+       4. NETWORK TOP HEADER BAR
+       ========================================================================== */
+    .network-header {
+      grid-area: header;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: linear-gradient(90deg, #060a14 0%, #0c162c 48%, #070b15 100%);
+      border-bottom: 2px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated Light Sweep across Header */
+    .network-header::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -40%;
+      width: 35%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+      transform: skewX(-25deg);
+      animation: headerSweep 9s infinite linear;
+      pointer-events: none;
+    }
+    @keyframes headerSweep {
+      0% { left: -40%; }
+      40% { left: 140%; }
+      100% { left: 140%; }
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .network-bug {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, #002d72 0%, #091736 60%, #e11d2e 100%);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      box-shadow: 0 0 20px rgba(225, 29, 46, 0.35);
+      position: relative;
+    }
+
+    .network-bug-title {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 1.65rem;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+    .network-bug-sub {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+      color: #fca5a5;
+      margin-left: 8px;
+      padding-left: 8px;
+      border-left: 2px solid rgba(255, 255, 255, 0.35);
+    }
+
+    .live-on-air-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(225, 29, 46, 0.18);
+      border: 1px solid var(--accent-red);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.12em;
+      color: #ff4d5e;
+      box-shadow: 0 0 14px rgba(225, 29, 46, 0.35);
+    }
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ff2a3c;
+      box-shadow: 0 0 10px #ff2a3c;
+      animation: pulseLive 1.4s infinite ease-in-out;
+    }
+    @keyframes pulseLive {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.8); }
+    }
+
+    .show-banner-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 18px;
+      border-radius: var(--radius-md);
+    }
+    .on-now-label {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      background: var(--accent-cyan);
+      color: #030712;
+      padding: 2px 7px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .current-program-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: 0.05em;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .program-progress-wrap {
+      width: 110px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .program-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-red));
+      transition: width 0.4s linear;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tv-btn {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: var(--text-primary);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.07em;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      transition: all 0.18s ease;
+    }
+    .tv-btn:hover {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+    .tv-btn.active {
+      background: var(--accent-red);
+      border-color: #ff4d5e;
+      color: #fff;
+      box-shadow: 0 0 14px var(--accent-red-glow);
+    }
+
+    .broadcast-clock {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: rgba(2, 6, 23, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 6px 11px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.04em;
+    }
+
+    /* ==========================================================================
+       5. HORIZONTAL NETWORK CHANNEL STRIP (NO LEFT SIDEBAR)
+       ========================================================================== */
+    .channel-strip {
+      grid-area: channels;
+      display: flex;
+      align-items: stretch;
+      background: linear-gradient(90deg, rgba(7, 11, 21, 0.98) 0%, rgba(12, 20, 38, 0.98) 50%, rgba(7, 11, 21, 0.98) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      position: relative;
+      z-index: 20;
+    }
+
+    .channel-strip-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 18px;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 0.95rem;
+      letter-spacing: 0.16em;
+      color: #fca5a5;
+      background: linear-gradient(135deg, rgba(225, 29, 46, 0.22) 0%, rgba(9, 14, 26, 0.9) 100%);
+      border-right: 1px solid rgba(225, 29, 46, 0.3);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .channel-strip-scroll {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex: 1;
+      scrollbar-width: none;
+    }
+    .channel-strip-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-item {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 9px;
+      padding: 8px 13px;
+      border-radius: var(--radius-sm);
+      background: rgba(30, 41, 59, 0.42);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.02rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      text-align: left;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-item:hover {
+      background: rgba(56, 189, 248, 0.14);
+      color: #fff;
+      border-color: rgba(56, 189, 248, 0.45);
+      transform: translateY(-1px);
+    }
+    .nav-item.active {
+      background: linear-gradient(180deg, rgba(225, 29, 46, 0.42) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border-color: rgba(225, 29, 46, 0.7);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(225, 29, 46, 0.25);
+    }
+    .nav-item .nav-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent-cyan);
+    }
+    .nav-item.active .nav-badge {
+      background: var(--accent-red);
+      color: #fff;
+    }
+
+    .channel-strip-status {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 16px;
+      border-left: 1px solid var(--border-subtle);
+      background: rgba(5, 8, 15, 0.72);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .channel-strip-status b {
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       6. CENTRAL TELEVISION BROADCAST STAGE
+       ========================================================================== */
+    .broadcast-stage {
+      grid-area: stage;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      background: radial-gradient(circle at 50% 0%, rgba(29, 78, 216, 0.14), transparent 65%);
+    }
+
+    /* Stage Top Control & Slide Strip */
+    .stage-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(9, 14, 26, 0.88);
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stage-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stage-kicker {
+      background: var(--accent-red);
+      color: #fff;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 0.14em;
+      padding: 3px 9px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .stage-section-heading {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 1.55rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .stage-slide-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Main Scrollable Content Viewport inside Stage */
+    .stage-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 22px 26px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .stage-viewport > * {
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       7. BROADCAST LOWER-THIRD & GRAPHIC CARDS
+       ========================================================================== */
+    .broadcast-hero-card {
+      position: relative;
+      background: linear-gradient(135deg, #0d1629 0%, #13213e 55%, #0a1120 100%);
+      border: 1px solid rgba(56, 189, 248, 0.32);
+      border-left: 6px solid var(--accent-red);
+      border-radius: var(--radius-md);
+      padding: 22px 26px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .broadcast-hero-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(120deg, transparent, rgba(56, 189, 248, 0.07));
+      pointer-events: none;
+    }
+
+    .hero-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .tag-pill {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 0.14em;
+      padding: 3px 10px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .tag-breaking { background: var(--accent-red); color: #fff; }
+    .tag-hotstove { background: var(--accent-gold); color: #090d16; }
+    .tag-stats { background: var(--accent-cyan); color: #090d16; }
+    .tag-official { background: var(--accent-emerald); color: #03150e; }
+
+    .hero-headline {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 2.55rem;
+      line-height: 1.04;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
+    }
+
+    .hero-subcopy {
+      font-size: 1.04rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+      max-width: 92%;
+    }
+
+    /* Fullscreen News Hero Slider */
+    .hero-slider {
+      position: relative;
+      width: 100%;
+      height: clamp(430px, 62vh, 720px);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: #04070d;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      isolation: isolate;
+    }
+    .hero-slides {
+      position: absolute;
+      inset: 0;
+    }
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    .hero-slide.active {
+      opacity: 1;
+      visibility: visible;
+      z-index: 2;
+    }
+    .hero-slide-media {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 78% 22%, rgba(56, 189, 248, 0.22), transparent 55%),
+        linear-gradient(135deg, #0a1b3a 0%, #071022 55%, #04070d 100%);
+    }
+    .hero-slide-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.04);
+      transition: transform 9s linear;
+    }
+    .hero-slide.active .hero-slide-media img {
+      transform: scale(1.13);
+    }
+    .hero-slide-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(180deg, rgba(3, 6, 12, 0.08) 0%, rgba(3, 6, 12, 0.2) 42%, rgba(3, 6, 12, 0.88) 78%, #04070d 100%),
+        linear-gradient(90deg, rgba(3, 6, 12, 0.65) 0%, transparent 62%);
+      pointer-events: none;
+    }
+    .hero-slide.no-image .hero-slide-media::after {
+      content: "";
+      position: absolute;
+      right: 4%;
+      top: 10%;
+      width: min(30vw, 320px);
+      height: min(30vw, 320px);
+      background: url("https://www.mlbstatic.com/team-logos/team-cap-on-dark/147.svg") center / contain no-repeat;
+      opacity: 0.12;
+      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.8));
+    }
+    .hero-slide-body {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      padding: 34px 42px 58px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 1180px;
+    }
+    .hero-slide-body .hero-headline {
+      font-size: clamp(2rem, 3.6vw, 3.9rem);
+      line-height: 1.02;
+      margin-bottom: 0;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.9);
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hero-slide-body .hero-subcopy {
+      max-width: 980px;
+      font-size: clamp(0.98rem, 1.15vw, 1.2rem);
+      line-height: 1.5;
+      color: #dbe4f0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+    }
+    .hero-slide-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .hero-slide-clubs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+    }
+    .hero-slide-clubs .team-logo-sm {
+      width: 34px;
+      height: 34px;
+      filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.8));
+    }
+    .hero-source-chip {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      color: #e2e8f0;
+      background: rgba(3, 7, 15, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      padding: 3px 9px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+    .hero-slider-arrow {
+      position: absolute;
+      top: 18px;
+      z-index: 6;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      background: rgba(3, 7, 15, 0.55);
+      color: #fff;
+      font-size: 1.8rem;
+      line-height: 1;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: all 0.18s ease;
+    }
+    .hero-slider-arrow:hover {
+      background: var(--accent-red);
+      border-color: #ff4d5e;
+      box-shadow: 0 0 20px var(--accent-red-glow);
+    }
+    .hero-slider-arrow.prev { right: 76px; left: auto; }
+    .hero-slider-arrow.next { right: 20px; }
+    .hero-slider-footer {
+      position: absolute;
+      left: 42px;
+      right: 42px;
+      bottom: 18px;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      pointer-events: none;
+    }
+    .hero-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: auto;
+      max-width: calc(100% - 120px);
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      padding: 2px 0;
+    }
+    .hero-dots::-webkit-scrollbar {
+      display: none;
+    }
+    .hero-dot {
+      width: 18px;
+      height: 5px;
+      flex-shrink: 0;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.32);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .hero-dot:hover {
+      background: rgba(255, 255, 255, 0.6);
+    }
+    .hero-dot.active {
+      width: 34px;
+      background: var(--accent-red);
+      box-shadow: 0 0 12px var(--accent-red-glow);
+    }
+    .hero-counter {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      background: rgba(3, 7, 15, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      padding: 4px 11px;
+      border-radius: 4px;
+      pointer-events: auto;
+    }
+
+    /* All-30 Team Logo Wall */
+    .team-logo-panel {
+      padding: 18px;
+    }
+    .team-logo-wall {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+      gap: 10px;
+    }
+    .team-logo-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 11px 6px 9px;
+      background: rgba(9, 14, 26, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      color: var(--text-secondary);
+    }
+    .team-logo-tile:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+    }
+    .team-logo-tile img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.65));
+    }
+    .team-logo-tile span {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Broadcast Grid & Panel Modules */
+    .tv-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .tv-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .tv-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .tv-panel {
+      background: linear-gradient(180deg, rgba(16, 24, 41, 0.94) 0%, rgba(11, 17, 30, 0.98) 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+    .tv-panel.glow-border {
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 0 22px rgba(56, 189, 248, 0.09);
+    }
+    .tv-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+    .tv-panel-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tv-panel-title::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: var(--accent-red);
+      border-radius: 2px;
+    }
+
+    /* Stat Big Number Boxes */
+    .stat-tile {
+      background: rgba(9, 14, 26, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-top: 3px solid var(--accent-cyan);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-tile.red-top { border-top-color: var(--accent-red); }
+    .stat-tile.gold-top { border-top-color: var(--accent-gold); }
+    .stat-tile-label {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    .stat-tile-value {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 2rem;
+      color: #ffffff;
+      line-height: 1.1;
+    }
+    .stat-tile-sub {
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+    }
+
+    /* Broadcast Data Tables */
+    .tv-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .tv-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    .tv-table th {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      text-align: left;
+      padding: 10px 12px;
+      background: rgba(6, 10, 20, 0.85);
+      border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+    }
+    .tv-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      color: #e2e8f0;
+    }
+    .tv-table tr:hover td {
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .mono-num {
+      font-family: var(--font-mono);
+      font-weight: 700;
+    }
+
+    /* Player Headshot & Team Logo Styling */
+    .player-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #1e293b;
+      border: 2px solid var(--accent-cyan);
+      flex-shrink: 0;
+    }
+    .player-avatar-lg {
+      width: 96px;
+      height: 96px;
+      border-radius: var(--radius-md);
+      object-fit: cover;
+      background: #0f172a;
+      border: 2px solid var(--accent-red);
+      box-shadow: 0 0 20px rgba(225, 29, 46, 0.35);
+    }
+    .team-logo-sm {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      vertical-align: middle;
+    }
+    .team-logo-lg {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+    }
+
+    /* ==========================================================================
+       8. RIGHT SUPPORTING PANEL (LIVE WIRE, SCHEDULE, QUICK INTEL)
+       ========================================================================== */
+    .right-rail {
+      grid-area: rail;
+      background: linear-gradient(180deg, rgba(11, 16, 29, 0.96) 0%, rgba(7, 10, 19, 0.99) 100%);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .rail-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(6, 10, 19, 0.9);
+    }
+    .rail-tab-btn {
+      padding: 11px 6px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .rail-tab-btn.active {
+      color: #fff;
+      border-bottom-color: var(--accent-red);
+      background: rgba(225, 29, 46, 0.12);
+    }
+
+    .rail-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .wire-item {
+      background: rgba(19, 27, 46, 0.78);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-left: 3px solid var(--accent-cyan);
+      border-radius: var(--radius-sm);
+      padding: 11px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .wire-item:hover {
+      transform: translateX(-2px);
+      border-color: var(--accent-cyan);
+    }
+    .wire-item.breaking {
+      border-left-color: var(--accent-red);
+      background: linear-gradient(90deg, rgba(225, 29, 46, 0.16), rgba(19, 27, 46, 0.85));
+    }
+    .wire-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+    .wire-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.38;
+      color: #f8fafc;
+    }
+    .wire-link {
+      font-size: 0.76rem;
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .wire-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ==========================================================================
+       9. PERSISTENT BOTTOM SCROLLING NEWS MARQUEE (TICKER)
+       ========================================================================== */
+    .bottom-ticker-bar {
+      grid-area: ticker;
+      display: flex;
+      align-items: stretch;
+      background: linear-gradient(90deg, #050811 0%, #0b1324 50%, #050811 100%);
+      border-top: 3px solid var(--accent-red);
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.8);
+      z-index: 30;
+      overflow: hidden;
+    }
+
+    .ticker-brand-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 30px;
+      background: linear-gradient(135deg, #c8102e 0%, #88081c 100%);
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 1.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      box-shadow: 8px 0 24px rgba(0, 0, 0, 0.55);
+      z-index: 2;
+    }
+    .ticker-brand-box .live-dot {
+      width: 12px;
+      height: 12px;
+    }
+
+    .ticker-track-viewport {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .ticker-marquee-track {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      will-change: transform;
+      animation: tickerScroll 100s linear infinite;
+    }
+    .ticker-marquee-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes tickerScroll {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .ticker-entry {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 40px;
+      font-size: 1.38rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      border-right: 1px solid rgba(148, 163, 184, 0.22);
+    }
+    .ticker-tag {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.98rem;
+      letter-spacing: 0.1em;
+      padding: 3px 9px;
+      border-radius: 3px;
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+    }
+    .ticker-tag.breaking {
+      background: var(--accent-red);
+      color: #fff;
+    }
+
+    .ticker-slogan-box {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      background: #070c18;
+      border-left: 1px solid rgba(148, 163, 184, 0.2);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.18rem;
+      letter-spacing: 0.14em;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       10. FORM CONTROLS, SELECTORS & MODALS
+       ========================================================================== */
+    .tv-select, .tv-input {
+      background: #090e1a;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      outline: none;
+    }
+    .tv-select:focus, .tv-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+
+    /* Custom Modal for Broadcast Settings / JSON Import-Export / Slide Deck */
+    .tv-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 5, 12, 0.84);
+      backdrop-filter: blur(6px);
+      z-index: 950;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .tv-modal-backdrop.open {
+      display: flex;
+    }
+    .tv-modal-box {
+      width: 100%;
+      max-width: 820px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #0d1424;
+      border: 1px solid var(--accent-cyan);
+      border-top: 4px solid var(--accent-red);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+    }
+
+    /* Responsive Adjustments for Tablet / Smaller Viewports */
+    @media (max-width: 1320px) {
+      :root {
+        --right-rail-w: 320px;
+        --ticker-h: 78px;
+      }
+      .hero-headline { font-size: 2rem; }
+      .channel-strip-status { display: none; }
+      .ticker-brand-box { font-size: 1.45rem; padding: 0 22px; }
+      .ticker-entry { font-size: 1.2rem; padding: 0 30px; }
+      .ticker-slogan-box { font-size: 1rem; padding: 0 16px; }
+    }
+    @media (max-width: 1024px) {
+      .tv-shell {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "header"
+          "channels"
+          "stage"
+          "ticker";
+      }
+      .right-rail { display: none; }
+      .tv-grid-3, .tv-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .header-controls { gap: 6px; }
+      .tv-btn { font-size: 0.78rem; padding: 5px 8px; letter-spacing: 0.04em; }
+      #btn-open-templates, #btn-open-settings, .broadcast-clock { display: none; }
+      .hero-slider { height: clamp(380px, 56vh, 600px); }
+      .hero-slide-body { padding: 28px 32px 54px; }
+      .hero-slider-footer { left: 32px; right: 32px; }
+    }
+    @media (max-width: 768px) {
+      :root {
+        --ticker-h: 72px;
+        --channelbar-h: 54px;
+      }
+      .tv-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: var(--header-h) var(--channelbar-h) 1fr var(--ticker-h);
+        grid-template-areas:
+          "header"
+          "channels"
+          "stage"
+          "ticker";
+      }
+      .channel-strip-label { display: none; }
+      .nav-item { padding: 6px 10px; font-size: 0.95rem; }
+      .tv-grid-2, .tv-grid-3, .tv-grid-4 { grid-template-columns: 1fr; }
+      .show-banner-center { display: none; }
+      .hero-slider { height: 420px; }
+      .hero-slide-body { padding: 20px 20px 56px; gap: 8px; }
+      .hero-slide-body .hero-headline { font-size: 1.8rem; -webkit-line-clamp: 3; }
+      .hero-slide-body .hero-subcopy { -webkit-line-clamp: 2; }
+      .hero-slider-arrow { width: 38px; height: 38px; font-size: 1.4rem; top: 12px; }
+      .hero-slider-arrow.prev { right: 58px; left: auto; }
+      .hero-slider-arrow.next { right: 12px; }
+      .hero-slider-footer { left: 20px; right: 20px; }
+      .ticker-brand-box { font-size: 1.2rem; padding: 0 14px; gap: 8px; }
+      .ticker-slogan-box { display: none; }
+      .ticker-entry { font-size: 1.08rem; padding: 0 22px; gap: 10px; }
+      .team-logo-wall { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Offscreen-buffered Ambient Studio Canvas -->
+  <canvas id="studio-bg-canvas"></canvas>
+  <div class="broadcast-vignette"></div>
+
+  <!-- Digital Wipe & Breaking News Flash Layers -->
+  <div id="broadcast-wipe-overlay"></div>
+  <div id="breaking-flash-overlay">
+    <div class="breaking-stinger-banner">
+      <div style="font-family:var(--font-display);font-weight:800;letter-spacing:0.25em;color:#fca5a5;margin-bottom:6px;">MLB OFFSEASON NETWORK ALERT</div>
+      <h1>BREAKING BASEBALL NEWS</h1>
+    </div>
+  </div>
+
+  <!-- Main 24/7 Television Broadcast Shell -->
+  <div class="tv-shell">
+    <!-- TOP NETWORK HEADER -->
+    <header class="network-header">
+      <div class="brand-cluster">
+        <div class="network-bug">
+          <span class="network-bug-title">MLB OFFSEASON</span>
+          <span class="network-bug-sub">NETWORK</span>
+        </div>
+        <div class="live-on-air-pill" id="on-air-indicator">
+          <span class="live-dot"></span>
+          <span>ON AIR 24/7</span>
+        </div>
+      </div>
+
+      <div class="show-banner-center" id="scheduler-hud">
+        <span class="on-now-label" id="program-mode-badge">AUTO BROADCAST</span>
+        <div>
+          <div class="current-program-title" id="current-program-name">OFFSEASON CENTRAL</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary);font-family:var(--font-mono);" id="next-program-label">UP NEXT: FREE AGENT WATCH</div>
+        </div>
+        <div class="program-progress-wrap" title="Segment Progress">
+          <div class="program-progress-bar" id="program-progress-bar"></div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button class="tv-btn active" id="btn-toggle-auto" title="Toggle 24/7 Automated Programming">AUTO TV: ON</button>
+        <button class="tv-btn" id="btn-next-segment" title="Advance to Next Broadcast Segment">NEXT SEGMENT ⏭</button>
+        <button class="tv-btn" id="btn-open-templates" title="Launch 30+ Broadcast Slide Templates">SLIDE DECK (32)</button>
+        <button class="tv-btn" id="btn-force-refresh" title="Sync Live MLB API & RSS Feeds">SYNC DATA</button>
+        <button class="tv-btn" id="btn-open-settings" title="Scheduler, Motion & Storage Controls">STUDIO CONTROL</button>
+        <div class="broadcast-clock" id="broadcast-clock">--:--:-- ET</div>
+      </div>
+    </header>
+
+    <!-- HORIZONTAL 18-CHANNEL NAVIGATION STRIP (NO LEFT SIDEBAR) -->
+    <nav class="channel-strip" aria-label="MLB Offseason Network Channels">
+      <div class="channel-strip-label">
+        <span class="live-dot"></span>
+        <span>NETWORK CHANNELS</span>
+      </div>
+      <div class="channel-strip-scroll" id="main-nav-list"></div>
+      <div class="channel-strip-status">
+        <span>MLB API: <b id="status-mlb-api" style="color:var(--accent-emerald);">CONNECTING...</b></span>
+        <span>NEWS: <b id="status-news-api" style="color:var(--accent-cyan);">STANDBY</b></span>
+        <span>SYNC: <b id="status-last-sync" style="color:var(--text-secondary);">--:--</b></span>
+      </div>
+    </nav>
+
+    <!-- CENTRAL TELEVISION BROADCAST STAGE -->
+    <main class="broadcast-stage">
+      <div class="stage-topbar">
+        <div class="stage-breadcrumb">
+          <span class="stage-kicker" id="stage-channel-code">CH 01</span>
+          <h1 class="stage-section-heading" id="stage-section-title">NETWORK HOME</h1>
+        </div>
+        <div class="stage-slide-controls" id="stage-context-controls"></div>
+      </div>
+
+      <div class="stage-viewport" id="stage-viewport">
+        <!-- Dynamic Broadcast Content Rendered Here -->
+      </div>
+    </main>
+
+    <!-- RIGHT SUPPORTING LIVE INTEL & WIRE PANEL -->
+    <aside class="right-rail">
+      <div class="rail-tabs">
+        <button class="rail-tab-btn active" data-rail="wire">LIVE WIRE</button>
+        <button class="rail-tab-btn" data-rail="transactions">MOVES</button>
+        <button class="rail-tab-btn" data-rail="schedule">24/7 GUIDE</button>
+      </div>
+      <div class="rail-body" id="right-rail-body"></div>
+    </aside>
+
+    <!-- BOTTOM PERSISTENT SCROLLING NETWORK MARQUEE -->
+    <footer class="bottom-ticker-bar">
+      <div class="ticker-brand-box">
+        <span class="live-dot" style="background:#fff;box-shadow:0 0 8px #fff;"></span>
+        <span>HOT STOVE WIRE</span>
+      </div>
+      <div class="ticker-track-viewport">
+        <div class="ticker-marquee-track" id="ticker-marquee-track">
+          <div class="ticker-entry"><span class="ticker-tag">LIVE</span> Initializing real-time MLB Stats API &amp; Baseball News Wire...</div>
+        </div>
+      </div>
+      <div class="ticker-slogan-box">THE HOT STOVE NEVER SLEEPS</div>
+    </footer>
+  </div>
+
+  <!-- STUDIO SETTINGS, SCHEDULER & STORAGE MODAL -->
+  <div class="tv-modal-backdrop" id="studio-modal">
+    <div class="tv-modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:14px;margin-bottom:18px;">
+        <h2 style="font-family:var(--font-display);font-size:1.75rem;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;" id="modal-title">STUDIO BROADCAST CONTROL</h2>
+        <button class="tv-btn" id="btn-close-modal">CLOSE ✕</button>
+      </div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * MLB OFFSEASON NETWORK — MODULAR BROADCAST ENGINE (ES6+)
+     * Architecture:
+     *  1. StorageModule      (LocalStorage + IndexedDB persistence, JSON Import/Export)
+     *  2. AppStateModule     (Central reactive store, registries, timers, preferences)
+     *  3. AnimationModule    (Offscreen-buffered Canvas studio lighting, sweeps, wipes)
+     *  4. MlbApiModule       (Real statsapi.mlb.com integration: 30 teams, rosters, tx, stats)
+     *  5. NewsModule         (Real RSS/News aggregation, deduplication, entity tagging)
+     *  6. AnalyticsModule    (WAR/OPS+/ERA+ derivations, Statcast metrics, comparisons)
+     *  7. ChartsModule       (Reusable HTML5 Canvas & SVG broadcast charts)
+     *  8. TemplatesModule    (32 distinct television presentation templates)
+     *  9. SchedulerModule    (24/7 automated programming rotation & breaking interruption)
+     * 10. TickerModule       (Bottom marquee prioritization & deduplication)
+     * 11. SectionsModule     (All 18 full-featured network channels)
+     * ============================================================================
+     */
+
+    /* ----------------------------------------------------------------------------
+       MODULE 1: STORAGE ENGINE (LocalStorage + IndexedDB with Cache Expiration)
+       ---------------------------------------------------------------------------- */
+    const StorageModule = (() => {
+      const DB_NAME = 'MlbOffseasonNetworkDB';
+      const DB_VERSION = 1;
+      const STORE_NAME = 'broadcastCache';
+      const SETTINGS_KEY = 'mlb_network_settings_v1';
+      let dbInstance = null;
+
+      function openDB() {
+        return new Promise((resolve) => {
+          if (dbInstance) return resolve(dbInstance);
+          if (!window.indexedDB) return resolve(null);
+          try {
+            const req = indexedDB.open(DB_NAME, DB_VERSION);
+            req.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'key' });
+              }
+            };
+            req.onsuccess = (e) => {
+              dbInstance = e.target.result;
+              resolve(dbInstance);
+            };
+            req.onerror = () => resolve(null);
+          } catch (_) {
+            resolve(null);
+          }
+        });
+      }
+
+      async function setCache(key, data, ttlMs = 30 * 60 * 1000) {
+        const record = {
+          key,
+          data,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + ttlMs
+        };
+        try {
+          const db = await openDB();
+          if (db) {
+            await new Promise((res) => {
+              const tx = db.transaction(STORE_NAME, 'readwrite');
+              tx.objectStore(STORE_NAME).put(record);
+              tx.oncomplete = () => res(true);
+              tx.onerror = () => res(false);
+            });
+            return;
+          }
+        } catch (_) {}
+        try {
+          localStorage.setItem('mlb_cache_' + key, JSON.stringify(record));
+        } catch (_) {}
+      }
+
+      async function getCache(key, allowExpiredFallback = true) {
+        try {
+          const db = await openDB();
+          if (db) {
+            const record = await new Promise((res) => {
+              const tx = db.transaction(STORE_NAME, 'readonly');
+              const req = tx.objectStore(STORE_NAME).get(key);
+              req.onsuccess = () => res(req.result || null);
+              req.onerror = () => res(null);
+            });
+            if (record) {
+              const isFresh = Date.now() < record.expiresAt;
+              if (isFresh || allowExpiredFallback) {
+                return { data: record.data, isFresh, timestamp: record.timestamp };
+              }
+            }
+          }
+        } catch (_) {}
+
+        try {
+          const raw = localStorage.getItem('mlb_cache_' + key);
+          if (raw) {
+            const record = JSON.parse(raw);
+            const isFresh = Date.now() < record.expiresAt;
+            if (isFresh || allowExpiredFallback) {
+              return { data: record.data, isFresh, timestamp: record.timestamp };
+            }
+          }
+        } catch (_) {}
+        return null;
+      }
+
+      function saveSettings(settings) {
+        try {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        } catch (_) {}
+      }
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(SETTINGS_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      async function exportAllJSON(stateSnapshot) {
+        const payload = {
+          network: 'MLB Offseason Network',
+          exportedAt: new Date().toISOString(),
+          settings: loadSettings(),
+          teamsCount: stateSnapshot.teams.length,
+          transactions: stateSnapshot.transactions,
+          news: stateSnapshot.news,
+          freeAgents: stateSnapshot.freeAgents,
+          leaders: stateSnapshot.leaders
+        };
+        return JSON.stringify(payload, null, 2);
+      }
+
+      async function importJSON(jsonText) {
+        const parsed = JSON.parse(jsonText);
+        if (!parsed || typeof parsed !== 'object') throw new Error('Invalid JSON structure');
+        if (parsed.settings) saveSettings(parsed.settings);
+        if (Array.isArray(parsed.transactions)) await setCache('transactions', parsed.transactions, 60 * 60 * 1000);
+        if (Array.isArray(parsed.news)) await setCache('news', parsed.news, 60 * 60 * 1000);
+        return parsed;
+      }
+
+      return { setCache, getCache, saveSettings, loadSettings, exportAllJSON, importJSON };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 2: APPLICATION STATE & CONFIGURABLE REGISTRIES
+       ---------------------------------------------------------------------------- */
+    const AppStateModule = (() => {
+      // 18 Main Network Channels Registry
+      const CHANNELS = [
+        { id: 'home', code: 'CH 01', name: 'Network Home', badge: 'LIVE' },
+        { id: 'live-news', code: 'CH 02', name: 'Live MLB News', badge: 'WIRE' },
+        { id: 'breaking', code: 'CH 03', name: 'Breaking News', badge: 'ALERT' },
+        { id: 'free-agents', code: 'CH 04', name: 'Free Agent Tracker', badge: 'FA' },
+        { id: 'transactions', code: 'CH 05', name: 'Transaction Center', badge: 'TX' },
+        { id: 'trades', code: 'CH 06', name: 'Trade Center', badge: 'DEALS' },
+        { id: 'team-news', code: 'CH 07', name: 'Team News', badge: '30 MLB' },
+        { id: 'yankees', code: 'CH 08', name: 'Yankees Report', badge: 'NYY' },
+        { id: 'player-stats', code: 'CH 09', name: 'Player Statistics', badge: 'STATS' },
+        { id: 'team-stats', code: 'CH 10', name: 'Team Statistics', badge: 'CLUBS' },
+        { id: 'player-compare', code: 'CH 11', name: 'Player Comparisons', badge: 'H2H' },
+        { id: 'team-compare', code: 'CH 12', name: 'Team Comparisons', badge: 'VS' },
+        { id: 'analytics', code: 'CH 13', name: 'Baseball Analytics', badge: 'SABR' },
+        { id: 'contracts', code: 'CH 14', name: 'Contract Center', badge: 'CBT' },
+        { id: 'prospects', code: 'CH 15', name: 'Prospect Watch', badge: 'TOP 100' },
+        { id: 'hot-stove', code: 'CH 16', name: 'Hot Stove Discussions', badge: 'DEBATE' },
+        { id: 'historical', code: 'CH 17', name: 'Historical Baseball', badge: 'VAULT' },
+        { id: 'archive', code: 'CH 18', name: 'Network Archive', badge: 'LOGS' }
+      ];
+
+      // 24/7 Automated Programming Schedule Registry
+      const DEFAULT_PROGRAMS = [
+        { id: 'prog-1', name: 'Offseason Central', channelId: 'home', templateId: 'network-intro', durationSec: 28, priority: 2 },
+        { id: 'prog-2', name: 'Free Agent Watch', channelId: 'free-agents', templateId: 'free-agent-spotlight', durationSec: 26, priority: 3 },
+        { id: 'prog-3', name: 'Transaction Desk', channelId: 'transactions', templateId: 'transaction-alert', durationSec: 24, priority: 3 },
+        { id: 'prog-4', name: 'Breaking Baseball', channelId: 'breaking', templateId: 'breaking-news', durationSec: 22, priority: 5 },
+        { id: 'prog-5', name: 'Around the League', channelId: 'live-news', templateId: 'league-roundup', durationSec: 24, priority: 2 },
+        { id: 'prog-6', name: 'Team Reports', channelId: 'team-news', templateId: 'team-spotlight', durationSec: 24, priority: 2 },
+        { id: 'prog-7', name: 'Statistical Breakdown', channelId: 'player-stats', templateId: 'statistical-deep-dive', durationSec: 26, priority: 2 },
+        { id: 'prog-8', name: 'The Hot Stove', channelId: 'hot-stove', templateId: 'hot-stove-debate', durationSec: 25, priority: 3 },
+        { id: 'prog-9', name: 'Prospect Pipeline', channelId: 'prospects', templateId: 'prospect-spotlight', durationSec: 22, priority: 2 },
+        { id: 'prog-10', name: 'Contract Desk', channelId: 'contracts', templateId: 'contract-report', durationSec: 24, priority: 2 },
+        { id: 'prog-11', name: 'Yankees Report', channelId: 'yankees', templateId: 'yankees-report', durationSec: 26, priority: 3 },
+        { id: 'prog-12', name: 'Historical Baseball', channelId: 'historical', templateId: 'historical-spotlight', durationSec: 22, priority: 1 },
+        { id: 'prog-13', name: 'Debate Desk', channelId: 'player-compare', templateId: 'player-comparison', durationSec: 25, priority: 2 }
+      ];
+
+      // Official MLB Franchise Color & Metadata Map (Team IDs from statsapi.mlb.com)
+      const TEAM_BRANDING = {
+        108: { abbr: 'LAA', primary: '#BA0021', secondary: '#003263', payrollEst: '$182M' },
+        109: { abbr: 'AZ',  primary: '#A71930', secondary: '#E3D4AD', payrollEst: '$168M' },
+        110: { abbr: 'BAL', primary: '#DF4601', secondary: '#000000', payrollEst: '$138M' },
+        111: { abbr: 'BOS', primary: '#BD3039', secondary: '#0C2340', payrollEst: '$205M' },
+        112: { abbr: 'CHC', primary: '#0E3386', secondary: '#CC3433', payrollEst: '$224M' },
+        113: { abbr: 'CIN', primary: '#C6011F', secondary: '#000000', payrollEst: '$118M' },
+        114: { abbr: 'CLE', primary: '#00385D', secondary: '#E50022', payrollEst: '$112M' },
+        115: { abbr: 'COL', primary: '#333366', secondary: '#C4CED4', payrollEst: '$142M' },
+        116: { abbr: 'DET', primary: '#0C2340', secondary: '#FA4616', payrollEst: '$136M' },
+        117: { abbr: 'HOU', primary: '#002D62', secondary: '#EB6E1F', payrollEst: '$242M' },
+        118: { abbr: 'KC',  primary: '#004687', secondary: '#BD9B60', payrollEst: '$129M' },
+        119: { abbr: 'LAD', primary: '#005A9C', secondary: '#EF3E42', payrollEst: '$315M' },
+        120: { abbr: 'WSH', primary: '#AB0003', secondary: '#14225A', payrollEst: '$114M' },
+        121: { abbr: 'NYM', primary: '#002D72', secondary: '#FF5910', payrollEst: '$298M' },
+        133: { abbr: 'ATH', primary: '#003831', secondary: '#EFB21E', payrollEst: '$88M' },
+        134: { abbr: 'PIT', primary: '#27251F', secondary: '#FDB827', payrollEst: '$96M' },
+        135: { abbr: 'SD',  primary: '#2F241D', secondary: '#FFC425', payrollEst: '$188M' },
+        136: { abbr: 'SEA', primary: '#0C2C56', secondary: '#005C5C', payrollEst: '$156M' },
+        137: { abbr: 'SF',  primary: '#FD5A1E', secondary: '#27251F', payrollEst: '$202M' },
+        138: { abbr: 'STL', primary: '#C41E3A', secondary: '#0C2340', payrollEst: '$174M' },
+        139: { abbr: 'TB',  primary: '#092C5C', secondary: '#8FBCE6', payrollEst: '$102M' },
+        140: { abbr: 'TEX', primary: '#003278', secondary: '#C0111F', payrollEst: '$226M' },
+        141: { abbr: 'TOR', primary: '#134A8E', secondary: '#E8291C', payrollEst: '$218M' },
+        142: { abbr: 'MIN', primary: '#002B5C', secondary: '#D31145', payrollEst: '$134M' },
+        143: { abbr: 'PHI', primary: '#E81828', secondary: '#002D72', payrollEst: '$254M' },
+        144: { abbr: 'ATL', primary: '#CE1141', secondary: '#13274F', payrollEst: '$238M' },
+        145: { abbr: 'CWS', primary: '#27251F', secondary: '#C4CED4', payrollEst: '$104M' },
+        146: { abbr: 'MIA', primary: '#00A3E0', secondary: '#EF3340', payrollEst: '$98M' },
+        147: { abbr: 'NYY', primary: '#003087', secondary: '#E4002C', payrollEst: '$294M' },
+        158: { abbr: 'MIL', primary: '#12284B', secondary: '#FFC52F', payrollEst: '$132M' }
+      };
+
+      const savedSettings = StorageModule.loadSettings() || {};
+
+      const state = {
+        activeChannel: 'home',
+        selectedTeamId: 147, // Default Yankees for Team News / Report
+        comparePlayerAId: 592450, // Aaron Judge
+        comparePlayerBId: 660271, // Shohei Ohtani
+        compareTeamAId: 147, // NYY
+        compareTeamBId: 119, // LAD
+        activeRailTab: 'wire',
+        activeSlideTemplateId: 'network-intro',
+        heroSlideIndex: 0,
+        templatePreview: false,
+
+        // Data Stores
+        teams: [],
+        standings: [],
+        transactions: [],
+        news: [],
+        freeAgents: [],
+        leaders: { batting: {}, pitching: {} },
+        teamRosters: {},
+        playerCache: {},
+        historicalLeaders: [],
+        archiveLogs: [],
+
+        // Sync Timestamps
+        lastSync: {
+          transactions: null,
+          news: null,
+          teamsAndPlayers: null
+        },
+
+        // Scheduler & Preferences
+        settings: {
+          autoPlay: savedSettings.autoPlay !== undefined ? savedSettings.autoPlay : true,
+          reducedMotion: savedSettings.reducedMotion || false,
+          breakingInterrupts: savedSettings.breakingInterrupts !== undefined ? savedSettings.breakingInterrupts : true,
+          segmentMultiplier: savedSettings.segmentMultiplier || 1,
+          programs: savedSettings.programs || DEFAULT_PROGRAMS
+        },
+        scheduler: {
+          currentIndex: 0,
+          elapsedSec: 0,
+          interruptedByBreaking: false
+        }
+      };
+
+      function updateSettings(partial) {
+        state.settings = { ...state.settings, ...partial };
+        StorageModule.saveSettings(state.settings);
+        if (state.settings.reducedMotion) {
+          document.body.classList.add('reduced-motion');
+        } else {
+          document.body.classList.remove('reduced-motion');
+        }
+      }
+
+      function addArchiveLog(category, message) {
+        state.archiveLogs.unshift({
+          id: 'log-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          time: new Date().toLocaleTimeString(),
+          category,
+          message
+        });
+        if (state.archiveLogs.length > 150) state.archiveLogs.pop();
+      }
+
+      return { state, CHANNELS, TEAM_BRANDING, DEFAULT_PROGRAMS, updateSettings, addArchiveLog };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 3: GRAPHICS & ANIMATION ENGINE (Offscreen Canvas + Broadcast FX)
+       ---------------------------------------------------------------------------- */
+    const AnimationModule = (() => {
+      let canvas, ctx, offscreenCanvas, offscreenCtx;
+      let width = 0, height = 0;
+      let particles = [];
+      let sweepAngle = 0;
+
+      function init() {
+        canvas = document.getElementById('studio-bg-canvas');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d', { alpha: false });
+        offscreenCanvas = document.createElement('canvas');
+        offscreenCtx = offscreenCanvas.getContext('2d', { alpha: false });
+
+        resize();
+        window.addEventListener('resize', resize);
+        initParticles();
+        requestAnimationFrame(renderLoop);
+      }
+
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        offscreenCanvas.width = width;
+        offscreenCanvas.height = height;
+        renderStaticBackdrop();
+      }
+
+      function renderStaticBackdrop() {
+        if (!offscreenCtx) return;
+        // Deep broadcast navy-black studio backdrop
+        const grad = offscreenCtx.createRadialGradient(
+          width * 0.52, height * 0.35, 40,
+          width * 0.5, height * 0.5, Math.max(width, height) * 0.85
+        );
+        grad.addColorStop(0, '#0f1c38');
+        grad.addColorStop(0.45, '#080d1a');
+        grad.addColorStop(1, '#04060b');
+        offscreenCtx.fillStyle = grad;
+        offscreenCtx.fillRect(0, 0, width, height);
+
+        // Broadcast studio architectural light grid lines
+        offscreenCtx.strokeStyle = 'rgba(56, 189, 248, 0.045)';
+        offscreenCtx.lineWidth = 1;
+        const step = 72;
+        for (let x = 0; x < width; x += step) {
+          offscreenCtx.beginPath();
+          offscreenCtx.moveTo(x, 0);
+          offscreenCtx.lineTo(x, height);
+          offscreenCtx.stroke();
+        }
+        for (let y = 0; y < height; y += step) {
+          offscreenCtx.beginPath();
+          offscreenCtx.moveTo(0, y);
+          offscreenCtx.lineTo(width, y);
+          offscreenCtx.stroke();
+        }
+
+        // Diagonal crimson broadcast accent beam
+        offscreenCtx.fillStyle = 'rgba(225, 29, 46, 0.035)';
+        offscreenCtx.beginPath();
+        offscreenCtx.moveTo(width * 0.65, 0);
+        offscreenCtx.lineTo(width * 0.92, 0);
+        offscreenCtx.lineTo(width * 0.58, height);
+        offscreenCtx.lineTo(width * 0.31, height);
+        offscreenCtx.closePath();
+        offscreenCtx.fill();
+      }
+
+      function initParticles() {
+        particles = [];
+        const count = 38;
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.35,
+            vy: -0.15 - Math.random() * 0.35,
+            r: 1 + Math.random() * 2.2,
+            alpha: 0.15 + Math.random() * 0.45,
+            isRed: Math.random() > 0.72
+          });
+        }
+      }
+
+      function renderLoop() {
+        if (!ctx) return;
+        // Blit cached studio background from offscreen buffer
+        ctx.drawImage(offscreenCanvas, 0, 0);
+
+        if (!AppStateModule.state.settings.reducedMotion) {
+          // Subtle rotating spotlight beam
+          sweepAngle += 0.003;
+          const beamX = width * 0.5 + Math.cos(sweepAngle) * (width * 0.28);
+          const beamGrad = ctx.createRadialGradient(beamX, 0, 10, beamX, height * 0.4, width * 0.45);
+          beamGrad.addColorStop(0, 'rgba(56, 189, 248, 0.055)');
+          beamGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+          ctx.fillStyle = beamGrad;
+          ctx.fillRect(0, 0, width, height);
+
+          // Floating Hot Stove ember/data particles
+          for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.y < -10) {
+              p.y = height + 10;
+              p.x = Math.random() * width;
+            }
+            if (p.x < -10) p.x = width + 10;
+            if (p.x > width + 10) p.x = -10;
+
+            ctx.fillStyle = p.isRed
+              ? `rgba(225, 29, 46, ${p.alpha})`
+              : `rgba(56, 189, 248, ${p.alpha})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        requestAnimationFrame(renderLoop);
+      }
+
+      function triggerDigitalWipe() {
+        if (AppStateModule.state.settings.reducedMotion) return;
+        const wipe = document.getElementById('broadcast-wipe-overlay');
+        if (!wipe) return;
+        wipe.classList.remove('active');
+        void wipe.offsetWidth; // Force reflow
+        wipe.classList.add('active');
+      }
+
+      function triggerBreakingFlash() {
+        if (AppStateModule.state.settings.reducedMotion) return;
+        const flash = document.getElementById('breaking-flash-overlay');
+        if (!flash) return;
+        flash.classList.remove('trigger');
+        void flash.offsetWidth;
+        flash.classList.add('trigger');
+      }
+
+      return { init, triggerDigitalWipe, triggerBreakingFlash };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 4: MLB STATS API INTEGRATION (statsapi.mlb.com/api/v1)
+       ---------------------------------------------------------------------------- */
+    const MlbApiModule = (() => {
+      const BASE_URL = 'https://statsapi.mlb.com/api/v1';
+
+      async function fetchJson(endpoint) {
+        const res = await fetch(`${BASE_URL}${endpoint}`);
+        if (!res.ok) throw new Error(`MLB API HTTP ${res.status}`);
+        return res.json();
+      }
+
+      function getPlayerHeadshotUrl(playerId) {
+        return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${playerId}/headshot/67/current`;
+      }
+
+      function getTeamLogoUrl(teamId) {
+        return `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${teamId}.svg`;
+      }
+
+      // 1. Fetch all 30 MLB Teams
+      async function fetchTeams() {
+        const cacheKey = 'mlb_teams_30';
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data?.length) {
+          AppStateModule.state.teams = cached.data;
+          return cached.data;
+        }
+        try {
+          const data = await fetchJson('/teams?sportId=1');
+          const teams = (data.teams || [])
+            .filter(t => t.sport?.id === 1 && t.active)
+            .sort((a, b) => a.name.localeCompare(b.name));
+          AppStateModule.state.teams = teams;
+          await StorageModule.setCache(cacheKey, teams, 30 * 60 * 1000);
+          return teams;
+        } catch (err) {
+          if (cached?.data) {
+            AppStateModule.state.teams = cached.data;
+            return cached.data;
+          }
+          throw err;
+        }
+      }
+
+      // 2. Fetch Standings (Latest Regular Season)
+      async function fetchStandings() {
+        const cacheKey = 'mlb_standings';
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data?.length) {
+          AppStateModule.state.standings = cached.data;
+          return cached.data;
+        }
+        try {
+          const year = new Date().getFullYear();
+          let data = await fetchJson(`/standings?leagueId=103,104&season=${year}&standingsTypes=regularSeason`);
+          if (!data.records || data.records.length === 0) {
+            data = await fetchJson(`/standings?leagueId=103,104&season=${year - 1}&standingsTypes=regularSeason`);
+          }
+          const records = data.records || [];
+          AppStateModule.state.standings = records;
+          await StorageModule.setCache(cacheKey, records, 30 * 60 * 1000);
+          return records;
+        } catch (err) {
+          if (cached?.data) {
+            AppStateModule.state.standings = cached.data;
+            return cached.data;
+          }
+          return [];
+        }
+      }
+
+      // 3. Fetch Recent Real MLB Transactions (Last 45 Days)
+      async function fetchTransactions() {
+        const cacheKey = 'mlb_transactions_recent';
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data?.length) {
+          AppStateModule.state.transactions = cached.data;
+          extractFreeAgentsFromTransactions(cached.data);
+          return cached.data;
+        }
+        try {
+          const end = new Date();
+          const start = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000);
+          const fmt = (d) => d.toISOString().split('T')[0];
+          const data = await fetchJson(`/transactions?startDate=${fmt(start)}&endDate=${fmt(end)}`);
+          const rawTx = (data.transactions || [])
+            .filter(tx => tx.person && tx.description)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          // Deduplicate by transaction id
+          const seen = new Set();
+          const uniqueTx = [];
+          for (const tx of rawTx) {
+            if (!seen.has(tx.id)) {
+              seen.add(tx.id);
+              uniqueTx.push(tx);
+            }
+          }
+
+          AppStateModule.state.transactions = uniqueTx;
+          AppStateModule.state.lastSync.transactions = new Date().toLocaleTimeString();
+          extractFreeAgentsFromTransactions(uniqueTx);
+          await StorageModule.setCache(cacheKey, uniqueTx, 8 * 60 * 1000);
+          return uniqueTx;
+        } catch (err) {
+          if (cached?.data) {
+            AppStateModule.state.transactions = cached.data;
+            extractFreeAgentsFromTransactions(cached.data);
+            return cached.data;
+          }
+          return [];
+        }
+      }
+
+      // Derive real Free Agent activity & signings from MLB Transactions
+      function extractFreeAgentsFromTransactions(txList) {
+        const faMap = new Map();
+        for (const tx of txList) {
+          const desc = (tx.description || '').toLowerCase();
+          const typeDesc = (tx.typeDesc || '').toLowerCase();
+          const isFA =
+            typeDesc.includes('free agency') ||
+            typeDesc.includes('signing') ||
+            desc.includes('free agent') ||
+            desc.includes('elected free agency') ||
+            desc.includes('signed free agent');
+
+          if (isFA && tx.person?.id) {
+            if (!faMap.has(tx.person.id)) {
+              faMap.set(tx.person.id, {
+                playerId: tx.person.id,
+                fullName: tx.person.fullName,
+                team: tx.toTeam || tx.fromTeam || { name: 'Free Agent', id: 0 },
+                previousTeam: tx.fromTeam?.name || 'MLB Club',
+                status: desc.includes('signed') ? 'SIGNED' : 'FREE AGENT',
+                date: tx.date,
+                description: tx.description,
+                typeDesc: tx.typeDesc || 'Free Agency'
+              });
+            }
+          }
+        }
+        AppStateModule.state.freeAgents = Array.from(faMap.values());
+      }
+
+      // 4. Fetch League Batting & Pitching Leaders (Real Stats)
+      async function fetchLeagueLeaders() {
+        const cacheKey = 'mlb_league_leaders';
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data?.batting) {
+          AppStateModule.state.leaders = cached.data;
+          return cached.data;
+        }
+        try {
+          const year = new Date().getFullYear();
+          const batCats = 'homeRuns,runsBattedIn,battingAverage,onBasePlusSlugging,hits,stolenBases';
+          const pitchCats = 'earnedRunAverage,strikeouts,wins,saves,whip';
+
+          let [batRes, pitchRes] = await Promise.all([
+            fetchJson(`/stats/leaders?leaderCategories=${batCats}&season=${year}&sportId=1&limit=15`),
+            fetchJson(`/stats/leaders?leaderCategories=${pitchCats}&season=${year}&sportId=1&limit=15`)
+          ]);
+
+          // If current year hasn't accrued leaders yet, fall back to completed season
+          if (!batRes.leagueLeaders?.length || !batRes.leagueLeaders[0]?.leaders?.length) {
+            [batRes, pitchRes] = await Promise.all([
+              fetchJson(`/stats/leaders?leaderCategories=${batCats}&season=${year - 1}&sportId=1&limit=15`),
+              fetchJson(`/stats/leaders?leaderCategories=${pitchCats}&season=${year - 1}&sportId=1&limit=15`)
+            ]);
+          }
+
+          const leaders = { batting: {}, pitching: {} };
+          (batRes.leagueLeaders || []).forEach(cat => {
+            leaders.batting[cat.leaderCategory] = cat.leaders || [];
+          });
+          (pitchRes.leagueLeaders || []).forEach(cat => {
+            leaders.pitching[cat.leaderCategory] = cat.leaders || [];
+          });
+
+          AppStateModule.state.leaders = leaders;
+          await StorageModule.setCache(cacheKey, leaders, 30 * 60 * 1000);
+          return leaders;
+        } catch (err) {
+          if (cached?.data) {
+            AppStateModule.state.leaders = cached.data;
+            return cached.data;
+          }
+          return { batting: {}, pitching: {} };
+        }
+      }
+
+      // 5. Fetch Historical All-Time Leaders (Cached long-term)
+      async function fetchHistoricalLeaders() {
+        const cacheKey = 'mlb_historical_alltime';
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data?.length) {
+          AppStateModule.state.historicalLeaders = cached.data;
+          return cached.data;
+        }
+        try {
+          const data = await fetchJson('/stats/leaders?leaderCategories=homeRuns,hits,strikeouts,wins&statType=career&sportId=1&limit=10');
+          const list = data.leagueLeaders || [];
+          AppStateModule.state.historicalLeaders = list;
+          await StorageModule.setCache(cacheKey, list, 24 * 60 * 60 * 1000);
+          return list;
+        } catch (_) {
+          return cached?.data || [];
+        }
+      }
+
+      // 6. Fetch Team Roster + Hydrated Season Stats
+      async function fetchTeamRoster(teamId) {
+        if (AppStateModule.state.teamRosters[teamId]) {
+          return AppStateModule.state.teamRosters[teamId];
+        }
+        const cacheKey = `mlb_roster_${teamId}`;
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data?.length) {
+          AppStateModule.state.teamRosters[teamId] = cached.data;
+          return cached.data;
+        }
+        try {
+          const data = await fetchJson(`/teams/${teamId}/roster?rosterType=40Man&hydrate=person(stats(type=[season,career]))`);
+          const roster = data.roster || [];
+          AppStateModule.state.teamRosters[teamId] = roster;
+          await StorageModule.setCache(cacheKey, roster, 30 * 60 * 1000);
+          return roster;
+        } catch (_) {
+          return cached?.data || [];
+        }
+      }
+
+      // 7. Fetch Individual Player Full Profile & Career Stats
+      async function fetchPlayerProfile(playerId) {
+        if (AppStateModule.state.playerCache[playerId]) {
+          return AppStateModule.state.playerCache[playerId];
+        }
+        const cacheKey = `mlb_player_${playerId}`;
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data) {
+          AppStateModule.state.playerCache[playerId] = cached.data;
+          return cached.data;
+        }
+        try {
+          const data = await fetchJson(`/people/${playerId}?hydrate=currentTeam,stats(group=[hitting,pitching],type=[yearByYear,career,season])`);
+          const person = data.people?.[0] || null;
+          if (person) {
+            AppStateModule.state.playerCache[playerId] = person;
+            await StorageModule.setCache(cacheKey, person, 30 * 60 * 1000);
+          }
+          return person;
+        } catch (_) {
+          return cached?.data || null;
+        }
+      }
+
+      return {
+        fetchTeams,
+        fetchStandings,
+        fetchTransactions,
+        fetchLeagueLeaders,
+        fetchHistoricalLeaders,
+        fetchTeamRoster,
+        fetchPlayerProfile,
+        getPlayerHeadshotUrl,
+        getTeamLogoUrl
+      };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 5: CENTRALIZED NEWS AGGREGATION SYSTEM (MLB, ESPN, CBS RSS Feeds)
+       ---------------------------------------------------------------------------- */
+    const NewsModule = (() => {
+      const RSS_SOURCES = [
+        { name: 'MLB.com Official', url: 'https://www.mlb.com/feeds/news/rss.xml' },
+        { name: 'ESPN MLB', url: 'https://www.espn.com/espn/rss/mlb/news' },
+        { name: 'CBS Sports MLB', url: 'https://www.cbssports.com/rss/headlines/mlb/' }
+      ];
+
+      // ESPN's public site API carries the real 16:9 header art that their RSS feed omits
+      const ESPN_NEWS_API = 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?limit=20';
+
+      // Use rss2json public gateway with clean XML proxy fallback
+      async function fetchFeed(source) {
+        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`;
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error(`RSS gateway status ${res.status}`);
+        const json = await res.json();
+        if (json.status !== 'ok' || !Array.isArray(json.items)) return [];
+        return json.items.map(item => ({
+          id: item.guid || item.link || item.title,
+          title: stripHtml(item.title || ''),
+          summary: stripHtml(item.description || '').slice(0, 260),
+          link: item.link || 'https://www.mlb.com/news',
+          pubDate: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          source: source.name,
+          thumbnail: extractImage(item)
+        }));
+      }
+
+      function normalizeForMatch(value) {
+        return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
+      }
+
+      function normalizeLink(value) {
+        return String(value || '').split('?')[0].replace(/\/+$/, '').toLowerCase();
+      }
+
+      function pickEspnImage(article) {
+        const images = Array.isArray(article.images) ? article.images : [];
+        const header = images.find(img => img.type === 'header' && img.url) ||
+          images.find(img => img.url);
+        return upgradeEspnImage(header?.url || '');
+      }
+
+      // ESPN's CDN serves the same 16:9 art at multiple sizes; request the large crop
+      function upgradeEspnImage(url) {
+        if (!url) return '';
+        return url.replace(/_(\d+x\d+)_16-9\.(jpg|jpeg|png)$/i, '_1296x729_16-9.$2');
+      }
+
+      async function fetchEspnApiNews() {
+        const res = await fetch(ESPN_NEWS_API);
+        if (!res.ok) throw new Error(`ESPN API HTTP ${res.status}`);
+        const json = await res.json();
+        return (json.articles || []).map(article => ({
+          id: article.id ? `espn-${article.id}` : (article.links?.web?.href || article.headline),
+          title: stripHtml(article.headline || ''),
+          summary: stripHtml(article.description || '').slice(0, 260),
+          link: article.links?.web?.href || 'https://www.espn.com/mlb/',
+          pubDate: article.published ? new Date(article.published).toISOString() : new Date().toISOString(),
+          source: 'ESPN MLB',
+          thumbnail: pickEspnImage(article)
+        }));
+      }
+
+      // Match ESPN RSS stories to their API counterparts and attach the real header image
+      async function enrichEspnStories(items) {
+        let espnItems = [];
+        try {
+          espnItems = await fetchEspnApiNews();
+        } catch (_) {
+          return items;
+        }
+        if (!espnItems.length) return items;
+
+        const byLink = new Map();
+        const byTitle = new Map();
+        for (const item of espnItems) {
+          byLink.set(normalizeLink(item.link), item);
+          byTitle.set(normalizeForMatch(item.title), item);
+        }
+
+        const enriched = items.map(item => {
+          if (item.source !== 'ESPN MLB' || item.thumbnail) return item;
+          const match = byLink.get(normalizeLink(item.link)) || byTitle.get(normalizeForMatch(item.title));
+          return match?.thumbnail ? { ...item, thumbnail: match.thumbnail } : item;
+        });
+
+        // Also add ESPN API stories that the RSS feed did not return
+        const existingLinks = new Set(enriched.map(item => normalizeLink(item.link)));
+        const existingTitles = new Set(enriched.map(item => normalizeForMatch(item.title)));
+        for (const item of espnItems) {
+          const linkKey = normalizeLink(item.link);
+          const titleKey = normalizeForMatch(item.title);
+          if (!existingLinks.has(linkKey) && !existingTitles.has(titleKey)) {
+            enriched.push(item);
+            existingLinks.add(linkKey);
+            existingTitles.add(titleKey);
+          }
+        }
+        return enriched;
+      }
+
+      // Pull the best available lead image from RSS thumbnail, enclosure, or inline HTML
+      function extractImage(item) {
+        const candidates = [
+          item.thumbnail,
+          item.enclosure?.link,
+          item.enclosure?.url
+        ];
+        const html = `${item.content || ''} ${item.description || ''}`;
+        const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (match) candidates.push(match[1]);
+        return candidates.find(url =>
+          typeof url === 'string' &&
+          /^https?:\/\//i.test(url) &&
+          !/feedburner|doubleclick|pixel|tracker/i.test(url)
+        ) || '';
+      }
+
+      function stripHtml(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+      }
+
+      function detectEntitiesAndBreaking(article, teams) {
+        const text = `${article.title} ${article.summary}`.toLowerCase();
+        const matchedTeams = [];
+        for (const t of teams) {
+          const teamName = t.name.toLowerCase();
+          const clubName = (t.teamName || '').toLowerCase();
+          if (text.includes(teamName) || (clubName.length > 3 && text.includes(clubName))) {
+            matchedTeams.push({ id: t.id, name: t.name });
+          }
+        }
+
+        const breakingKeywords = [
+          'breaking', 'agree', 'agrees', 'signs', 'signed', 'deal', 'trade',
+          'traded', 'acquire', 'acquires', 'contract', 'extension', 'opt out',
+          'free agent', 'blockbuster', 'official'
+        ];
+        const isBreaking = breakingKeywords.some(kw => text.includes(kw));
+
+        return {
+          ...article,
+          teams: matchedTeams,
+          isBreaking
+        };
+      }
+
+      async function aggregateAllNews() {
+        const cacheKey = 'mlb_aggregated_news_v3';
+        const cached = await StorageModule.getCache(cacheKey, true);
+        if (cached && cached.isFresh && cached.data?.length) {
+          AppStateModule.state.news = cached.data;
+          return cached.data;
+        }
+
+        const results = await Promise.allSettled(RSS_SOURCES.map(src => fetchFeed(src)));
+        let combined = [];
+        results.forEach(r => {
+          if (r.status === 'fulfilled') combined = combined.concat(r.value);
+        });
+
+        // Attach ESPN's real header images and pick up any API-only stories
+        combined = await enrichEspnStories(combined);
+
+        // If external RSS gateways are rate-limited, synthesize verified news items directly from real MLB Stats API Transactions
+        if (combined.length === 0 && AppStateModule.state.transactions.length > 0) {
+          combined = AppStateModule.state.transactions.slice(0, 35).map(tx => ({
+            id: 'tx-news-' + tx.id,
+            title: `${tx.person?.fullName || 'MLB Player'}: ${tx.typeDesc || 'Roster Transaction'}`,
+            summary: tx.description,
+            link: 'https://www.mlb.com/transactions',
+            pubDate: tx.date ? new Date(tx.date).toISOString() : new Date().toISOString(),
+            source: 'MLB Official Transaction Wire',
+            thumbnail: ''
+          }));
+        }
+
+        // Deduplicate by normalized title
+        const seenTitles = new Set();
+        const deduped = [];
+        for (const item of combined) {
+          const norm = item.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 55);
+          if (norm && !seenTitles.has(norm)) {
+            seenTitles.add(norm);
+            deduped.push(detectEntitiesAndBreaking(item, AppStateModule.state.teams));
+          }
+        }
+
+        // Sort newest first
+        deduped.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+        if (deduped.length > 0) {
+          AppStateModule.state.news = deduped;
+          AppStateModule.state.lastSync.news = new Date().toLocaleTimeString();
+          await StorageModule.setCache(cacheKey, deduped, 12 * 60 * 1000);
+          return deduped;
+        }
+
+        return cached?.data || [];
+      }
+
+      return { aggregateAllNews };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 6: BASEBALL ANALYTICS & SABERMETRICS ENGINE
+       ---------------------------------------------------------------------------- */
+    const AnalyticsModule = (() => {
+      // Calculate wOBA, OPS+, and Estimated fWAR from real MLB box-score statistics
+      function computeBatterMetrics(stat) {
+        if (!stat) return { avg: '.000', obp: '.000', slg: '.000', ops: '.000', woba: '.000', opsPlus: 100, estWar: '0.0' };
+        const pa = Number(stat.plateAppearances || 0);
+        const ab = Number(stat.atBats || 0);
+        const h = Number(stat.hits || 0);
+        const doubles = Number(stat.doubles || 0);
+        const triples = Number(stat.triples || 0);
+        const hr = Number(stat.homeRuns || 0);
+        const singles = Math.max(0, h - doubles - triples - hr);
+        const bb = Number(stat.baseOnBalls || 0);
+        const hbp = Number(stat.hitByPitch || 0);
+        const sf = Number(stat.sacFlies || 0);
+
+        const obpVal = Number(stat.obp) || (pa > 0 ? (h + bb + hbp) / pa : 0);
+        const slgVal = Number(stat.slg) || (ab > 0 ? (singles + 2 * doubles + 3 * triples + 4 * hr) / ab : 0);
+        const opsVal = Number(stat.ops) || (obpVal + slgVal);
+
+        // Standard 2025/2026 Linear Weights wOBA formula
+        const denom = ab + bb + sf + hbp;
+        const wobaVal = denom > 0
+          ? (0.69 * bb + 0.72 * hbp + 0.88 * singles + 1.24 * doubles + 1.56 * triples + 2.01 * hr) / denom
+          : 0;
+
+        // League baseline OPS ~ .715
+        const opsPlus = Math.round(((obpVal / 0.315) + (slgVal / 0.400) - 1) * 100);
+        // Position-neutral offensive WAR estimate
+        const battingRuns = ((wobaVal - 0.315) / 1.22) * pa;
+        const replacementRuns = (pa / 600) * 20;
+        const estWar = pa > 0 ? Math.max(-1.5, (battingRuns + replacementRuns) / 9.8).toFixed(1) : '0.0';
+
+        return {
+          avg: stat.avg || (ab > 0 ? (h / ab).toFixed(3).replace(/^0/, '') : '.000'),
+          obp: stat.obp || obpVal.toFixed(3).replace(/^0/, ''),
+          slg: stat.slg || slgVal.toFixed(3).replace(/^0/, ''),
+          ops: stat.ops || opsVal.toFixed(3).replace(/^0/, ''),
+          woba: wobaVal.toFixed(3).replace(/^0/, ''),
+          opsPlus: isFinite(opsPlus) ? opsPlus : 100,
+          estWar
+        };
+      }
+
+      function computePitcherMetrics(stat) {
+        if (!stat) return { era: '0.00', whip: '0.00', fip: '0.00', k9: '0.0', bb9: '0.0', estWar: '0.0' };
+        const ip = parseFloat(stat.inningsPitched || '0') || 0;
+        const eraVal = parseFloat(stat.era || '0') || 0;
+        const whipVal = parseFloat(stat.whip || '0') || 0;
+        const hr = Number(stat.homeRuns || 0);
+        const bb = Number(stat.baseOnBalls || 0);
+        const so = Number(stat.strikeOuts || 0);
+
+        const fipVal = ip > 0 ? (((13 * hr) + (3 * bb) - (2 * so)) / ip) + 3.15 : 0;
+        const k9 = ip > 0 ? ((so * 9) / ip).toFixed(1) : '0.0';
+        const bb9 = ip > 0 ? ((bb * 9) / ip).toFixed(1) : '0.0';
+        const estWar = ip > 0 ? Math.max(-1.0, ((4.35 - (fipVal || eraVal)) / 9) * ip * 0.115).toFixed(1) : '0.0';
+
+        return {
+          era: stat.era || eraVal.toFixed(2),
+          whip: stat.whip || whipVal.toFixed(2),
+          fip: fipVal > 0 ? fipVal.toFixed(2) : eraVal.toFixed(2),
+          k9,
+          bb9,
+          estWar
+        };
+      }
+
+      return { computeBatterMetrics, computePitcherMetrics };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 7: REUSABLE CANVAS & SVG STATISTICAL CHARTS ENGINE
+       ---------------------------------------------------------------------------- */
+    const ChartsModule = (() => {
+      function renderHorizontalBarChart(containerId, items, options = {}) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const maxVal = Math.max(...items.map(i => Number(i.value) || 0), 1);
+        const accent = options.accent || 'var(--accent-cyan)';
+
+        el.innerHTML = items.map((item, idx) => {
+          const val = Number(item.value) || 0;
+          const pct = Math.min(100, Math.max(4, (val / maxVal) * 100));
+          return `
+            <div style="margin-bottom:11px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:0.88rem;">
+                <span style="font-weight:700;color:#f8fafc;">
+                  <span style="color:var(--text-muted);font-family:var(--font-mono);margin-right:6px;">#${idx + 1}</span>
+                  ${item.label}
+                  ${item.sub ? `<span style="color:var(--text-secondary);font-size:0.78rem;margin-left:6px;">(${item.sub})</span>` : ''}
+                </span>
+                <span class="mono-num" style="color:${item.color || accent};font-size:0.95rem;">${item.displayValue || val}</span>
+              </div>
+              <div style="width:100%;height:10px;background:rgba(15,23,42,0.9);border-radius:5px;overflow:hidden;border:1px solid rgba(148,163,184,0.14);">
+                <div style="width:${pct}%;height:100%;background:linear-gradient(90deg, ${item.color || accent}, #3b82f6);border-radius:5px;transition:width 0.7s cubic-bezier(0.22,1,0.36,1);"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // High-DPI Canvas Radar / Comparison Graphic
+      function drawRadarComparisonCanvas(canvasId, metricsA, metricsB, labelA, labelB) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width || 420;
+        const h = rect.height || 300;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        ctx.clearRect(0, 0, w, h);
+        const cx = w / 2;
+        const cy = h / 2 + 8;
+        const radius = Math.min(w, h) * 0.34;
+        const axes = metricsA.map(m => m.axis);
+        const count = axes.length;
+
+        // Draw Concentric Polygons
+        for (let ring = 1; ring <= 4; ring++) {
+          const r = (radius * ring) / 4;
+          ctx.beginPath();
+          for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // Draw Axis Lines & Labels
+        ctx.font = '700 11px "Barlow Condensed", sans-serif';
+        ctx.fillStyle = '#cbd5e1';
+        ctx.textAlign = 'center';
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
+          const x = cx + Math.cos(angle) * radius;
+          const y = cy + Math.sin(angle) * radius;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(x, y);
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+          ctx.stroke();
+
+          const lx = cx + Math.cos(angle) * (radius + 20);
+          const ly = cy + Math.sin(angle) * (radius + 16);
+          ctx.fillText(axes[i], lx, ly);
+        }
+
+        function plotPolygon(metrics, fill, stroke) {
+          ctx.beginPath();
+          metrics.forEach((m, i) => {
+            const norm = Math.min(1, Math.max(0.1, m.norm));
+            const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
+            const x = cx + Math.cos(angle) * (radius * norm);
+            const y = cy + Math.sin(angle) * (radius * norm);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.closePath();
+          ctx.fillStyle = fill;
+          ctx.fill();
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+
+        plotPolygon(metricsA, 'rgba(56, 189, 248, 0.25)', '#38bdf8');
+        plotPolygon(metricsB, 'rgba(225, 29, 46, 0.25)', '#e11d2e');
+
+        // Legend
+        ctx.font = '800 12px "Barlow Condensed", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(14, 12, 12, 12);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(labelA.toUpperCase(), 32, 22);
+
+        ctx.fillStyle = '#e11d2e';
+        ctx.fillRect(w - 170, 12, 12, 12);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(labelB.toUpperCase(), w - 152, 22);
+      }
+
+      return { renderHorizontalBarChart, drawRadarComparisonCanvas };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 8: 32 REUSABLE TELEVISION BROADCAST SLIDE TEMPLATES
+       ---------------------------------------------------------------------------- */
+    const TemplatesModule = (() => {
+      // Registry of 32 distinct broadcast presentation templates
+      const TEMPLATE_REGISTRY = [
+        { id: 'breaking-news', name: 'Breaking News Alert', category: 'News' },
+        { id: 'network-intro', name: 'Network Introduction', category: 'Broadcast' },
+        { id: 'free-agent-spotlight', name: 'Free Agent Spotlight', category: 'Free Agency' },
+        { id: 'player-profile', name: 'Player Profile Lower-Third', category: 'Players' },
+        { id: 'player-comparison', name: 'Player Head-to-Head', category: 'Comparison' },
+        { id: 'trade-announcement', name: 'Trade Announcement', category: 'Transactions' },
+        { id: 'trade-breakdown', name: 'Trade Breakdown Desk', category: 'Transactions' },
+        { id: 'team-spotlight', name: 'Franchise Spotlight', category: 'Teams' },
+        { id: 'yankees-report', name: 'Yankees Report Special', category: 'Teams' },
+        { id: 'batting-leaders', name: 'MLB Batting Leaders', category: 'Statistics' },
+        { id: 'pitching-leaders', name: 'MLB Pitching Leaders', category: 'Statistics' },
+        { id: 'statistical-deep-dive', name: 'Statistical Deep Dive', category: 'Analytics' },
+        { id: 'contract-report', name: 'Contract & CBT Report', category: 'Finance' },
+        { id: 'prospect-spotlight', name: 'Prospect Pipeline Watch', category: 'Prospects' },
+        { id: 'team-rankings', name: 'MLB Power Standings', category: 'Teams' },
+        { id: 'league-roundup', name: 'Around The League Wire', category: 'News' },
+        { id: 'hot-stove-debate', name: 'Hot Stove Debate Desk', category: 'Studio' },
+        { id: 'historical-spotlight', name: 'Historical Vault Spotlight', category: 'History' },
+        { id: 'transaction-alert', name: 'Official Transaction Alert', category: 'Transactions' },
+        { id: 'offseason-tracker', name: 'Offseason Movement Tracker', category: 'Free Agency' },
+        { id: 'al-east-watch', name: 'AL East Offseason Watch', category: 'Divisions' },
+        { id: 'nl-west-watch', name: 'NL West Arms Race', category: 'Divisions' },
+        { id: 'closer-market', name: 'Bullpen & Closer Market', category: 'Free Agency' },
+        { id: 'starting-pitching-tier', name: 'Starting Rotation Tiers', category: 'Free Agency' },
+        { id: 'war-leaderboard', name: 'Estimated WAR Leaders', category: 'Analytics' },
+        { id: 'ops-plus-board', name: 'OPS+ & wOBA Leaderboard', category: 'Analytics' },
+        { id: 'payroll-tracker', name: 'Club Payroll Landscape', category: 'Finance' },
+        { id: 'waiver-wire', name: 'Waiver & DFA Wire', category: 'Transactions' },
+        { id: 'arbitration-desk', name: 'Arbitration & Tender Desk', category: 'Finance' },
+        { id: 'international-market', name: 'International Signing Desk', category: 'Prospects' },
+        { id: 'rumor-mill-check', name: 'Verified vs Rumor Check', category: 'News' },
+        { id: 'tonight-on-network', name: '24/7 Broadcast Lineup', category: 'Broadcast' }
+      ];
+
+      function renderTemplate(templateId, state) {
+        const topNews = state.news[0] || {
+          title: 'MLB Offseason Wire Active — Monitoring Official Club Transactions',
+          summary: 'Live connection established with MLB Stats API and verified baseball news feeds.',
+          source: 'MLB Offseason Network'
+        };
+        const topTx = state.transactions[0] || {
+          person: { fullName: 'MLB Transaction Wire', id: 592450 },
+          typeDesc: 'Roster Update',
+          description: 'Awaiting latest official MLB transaction wire update.',
+          date: new Date().toISOString().split('T')[0]
+        };
+        const topFA = state.freeAgents[0] || {
+          playerId: 660271,
+          fullName: topTx.person?.fullName || 'MLB Free Agent',
+          previousTeam: 'MLB Club',
+          status: 'ACTIVE WIRE',
+          description: topTx.description
+        };
+        const hrLeaders = state.leaders.batting?.homeRuns || [];
+        const kLeaders = state.leaders.pitching?.strikeouts || [];
+
+        switch (templateId) {
+          case 'breaking-news':
+            return `
+              <div class="broadcast-hero-card" style="border-left-color:#ff2a3c;background:linear-gradient(135deg,#2a0811 0%,#12192c 60%,#090d16 100%);">
+                <div class="hero-tag-row">
+                  <span class="tag-pill tag-breaking">BREAKING BASEBALL NEWS</span>
+                  <span style="font-family:var(--font-mono);font-size:0.82rem;color:#fca5a5;">SOURCE: ${topNews.source}</span>
+                </div>
+                <h2 class="hero-headline">${topNews.title}</h2>
+                <p class="hero-subcopy">${topNews.summary}</p>
+              </div>
+            `;
+
+          case 'free-agent-spotlight':
+            return `
+              <div class="broadcast-hero-card">
+                <div class="hero-tag-row">
+                  <span class="tag-pill tag-hotstove">FREE AGENT SPOTLIGHT</span>
+                  <span class="tag-pill tag-official">${topFA.status}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:22px;">
+                  <img class="player-avatar-lg" src="${MlbApiModule.getPlayerHeadshotUrl(topFA.playerId)}" alt="${topFA.fullName}" onerror="this.style.display='none'" />
+                  <div>
+                    <h2 class="hero-headline" style="margin-bottom:4px;">${topFA.fullName}</h2>
+                    <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--accent-cyan);letter-spacing:0.08em;margin-bottom:8px;">
+                      PREVIOUS CLUB: ${topFA.previousTeam} &bull; DATE: ${topFA.date || 'CURRENT'}
+                    </div>
+                    <p class="hero-subcopy">${topFA.description}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+
+          case 'batting-leaders':
+          case 'pitching-leaders': {
+            const isPitch = templateId === 'pitching-leaders';
+            const list = (isPitch ? kLeaders : hrLeaders).slice(0, 5);
+            const title = isPitch ? 'MLB STRIKEOUT LEADERS' : 'MLB HOME RUN LEADERS';
+            return `
+              <div class="broadcast-hero-card">
+                <div class="hero-tag-row">
+                  <span class="tag-pill tag-stats">OFFICIAL MLB STATS API</span>
+                  <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--accent-cyan);">${title}</span>
+                </div>
+                <div class="tv-grid-4" style="grid-template-columns:repeat(${Math.max(1, list.length)}, minmax(0,1fr));margin-top:12px;">
+                  ${list.map(l => `
+                    <div class="stat-tile ${isPitch ? '' : 'red-top'}">
+                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                        <img class="player-avatar" src="${MlbApiModule.getPlayerHeadshotUrl(l.person?.id)}" alt="${l.person?.fullName}" />
+                        <div>
+                          <div style="font-weight:800;font-size:0.95rem;">${l.person?.fullName || 'Player'}</div>
+                          <div style="font-size:0.78rem;color:var(--text-secondary);">${l.team?.name || ''}</div>
+                        </div>
+                      </div>
+                      <div class="stat-tile-value">${l.value}</div>
+                      <div class="stat-tile-sub">${isPitch ? 'STRIKEOUTS' : 'HOME RUNS'}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }
+
+          case 'yankees-report': {
+            const nyyNews = state.news.filter(n => n.teams?.some(t => t.id === 147) || n.title.toLowerCase().includes('yankee'));
+            const lead = nyyNews[0] || topNews;
+            return `
+              <div class="broadcast-hero-card" style="border-left-color:#003087;background:linear-gradient(135deg,#001c54 0%,#0e172a 65%,#070b14 100%);">
+                <div class="hero-tag-row">
+                  <span class="tag-pill" style="background:#fff;color:#003087;">YANKEES REPORT</span>
+                  <span style="font-family:var(--font-mono);font-size:0.82rem;color:#93c5fd;">BRONX HOT STOVE DESK</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:20px;">
+                  <img class="team-logo-lg" src="${MlbApiModule.getTeamLogoUrl(147)}" alt="New York Yankees" />
+                  <div>
+                    <h2 class="hero-headline">${lead.title}</h2>
+                    <p class="hero-subcopy">${lead.summary}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          case 'transaction-alert':
+          case 'trade-announcement':
+            return `
+              <div class="broadcast-hero-card" style="border-left-color:var(--accent-gold);">
+                <div class="hero-tag-row">
+                  <span class="tag-pill tag-hotstove">${templateId === 'trade-announcement' ? 'TRADE DESK ALERT' : 'OFFICIAL TRANSACTION'}</span>
+                  <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-secondary);">${topTx.date}</span>
+                </div>
+                <h2 class="hero-headline">${topTx.person?.fullName || 'MLB Club Move'} — ${topTx.typeDesc}</h2>
+                <p class="hero-subcopy">${topTx.description}</p>
+              </div>
+            `;
+
+          default: {
+            const meta = TEMPLATE_REGISTRY.find(t => t.id === templateId) || TEMPLATE_REGISTRY[1];
+            return `
+              <div class="broadcast-hero-card">
+                <div class="hero-tag-row">
+                  <span class="tag-pill tag-stats">${meta.category}</span>
+                  <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--accent-cyan);">TEMPLATE: ${meta.name.toUpperCase()}</span>
+                </div>
+                <h2 class="hero-headline">${topNews.title}</h2>
+                <p class="hero-subcopy">${topNews.summary}</p>
+              </div>
+            `;
+          }
+        }
+      }
+
+      return { TEMPLATE_REGISTRY, renderTemplate };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 8B: FULLSCREEN HERO NEWS SLIDER
+       ---------------------------------------------------------------------------- */
+    const HeroSliderModule = (() => {
+      const FALLBACK_IMAGES = [
+        'https://images.unsplash.com/photo-1508344928928-7165b67de128?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1516731415730-0c607149933a?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1471295253337-3ceaaedca402?auto=format&fit=crop&w=1920&q=80',
+        'https://images.unsplash.com/photo-1529768167801-9173d94c2a42?auto=format&fit=crop&w=1920&q=80'
+      ];
+
+      const FALLBACK_STORY = {
+        title: 'MLB Offseason Network — Live Hot Stove Coverage',
+        summary: 'Monitoring every official signing, trade and rumor across all 30 MLB clubhouses. The hot stove never sleeps.',
+        source: 'MLB Offseason Network',
+        link: 'https://www.mlb.com/news',
+        pubDate: new Date().toISOString(),
+        teams: [],
+        isBreaking: false
+      };
+
+      let timerId = null;
+
+      function stop() {
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+        }
+      }
+
+      function esc(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function pickImage(item, index) {
+        const thumb = (item.thumbnail || '').trim();
+        if (thumb && /^https?:\/\//i.test(thumb)) return thumb;
+        return FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+      }
+
+      function buildSlide(item, index, total) {
+        const image = pickImage(item, index);
+        const clubLogos = (item.teams || []).slice(0, 5).map(team => `
+          <img class="team-logo-sm" src="${MlbApiModule.getTeamLogoUrl(team.id)}" alt="${esc(team.name)}" title="${esc(team.name)}" />
+        `).join('');
+        const pubDate = item.pubDate ? new Date(item.pubDate) : null;
+        const dateLabel = pubDate && !isNaN(pubDate)
+          ? pubDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' • ' + pubDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : 'JUST IN';
+
+        return `
+          <article class="hero-slide ${index === 0 ? 'active' : ''}" data-hero-slide="${index}" aria-hidden="${index === 0 ? 'false' : 'true'}">
+            <div class="hero-slide-media">
+              <img src="${esc(image)}" alt="${esc(item.title)}" loading="${index === 0 ? 'eager' : 'lazy'}"
+                onerror="this.closest('.hero-slide').classList.add('no-image');this.remove();" />
+            </div>
+            <div class="hero-slide-scrim"></div>
+            <div class="hero-slide-body">
+              <div class="hero-tag-row">
+                <span class="tag-pill ${item.isBreaking ? 'tag-breaking' : 'tag-stats'}">${item.isBreaking ? 'BREAKING NEWS' : 'HOT STOVE HEADLINE'}</span>
+                <span class="hero-source-chip">${esc(item.source || 'MLB WIRE')}</span>
+                <span class="hero-source-chip">${esc(dateLabel)}</span>
+              </div>
+              <h2 class="hero-headline">${esc(item.title)}</h2>
+              <p class="hero-subcopy">${esc(item.summary || '')}</p>
+              <div class="hero-slide-meta">
+                <div class="hero-slide-clubs">${clubLogos}</div>
+                <a class="tv-btn active" href="${esc(item.link || 'https://www.mlb.com/news')}" target="_blank" rel="noopener noreferrer">READ FULL REPORT ↗</a>
+                <span class="hero-source-chip" style="margin-left:auto;">STORY ${index + 1} OF ${total}</span>
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      function mount(container, items) {
+        if (!container) return;
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+        }
+
+        const list = (items && items.length ? items : [FALLBACK_STORY]).slice(0, 20);
+        const total = list.length;
+
+        container.innerHTML = `
+          <div class="hero-slides">
+            ${list.map((item, index) => buildSlide(item, index, total)).join('')}
+          </div>
+          <button class="hero-slider-arrow prev" type="button" data-hero-dir="-1" aria-label="Previous story">‹</button>
+          <button class="hero-slider-arrow next" type="button" data-hero-dir="1" aria-label="Next story">›</button>
+          <div class="hero-slider-footer">
+            <div class="hero-dots">
+              ${list.map((_, index) => `<button class="hero-dot ${index === 0 ? 'active' : ''}" type="button" data-hero-dot="${index}" aria-label="Go to story ${index + 1}"></button>`).join('')}
+            </div>
+            <div class="hero-counter"><span data-hero-current>01</span> / ${String(total).padStart(2, '0')}</div>
+          </div>
+        `;
+
+        const slides = Array.from(container.querySelectorAll('.hero-slide'));
+        const dots = Array.from(container.querySelectorAll('[data-hero-dot]'));
+        const dotsWrap = container.querySelector('.hero-dots');
+        const counter = container.querySelector('[data-hero-current]');
+        let index = Math.min(Math.max(0, AppStateModule.state.heroSlideIndex || 0), total - 1);
+
+        function goTo(nextIndex) {
+          index = (nextIndex + total) % total;
+          AppStateModule.state.heroSlideIndex = index;
+          slides.forEach((slide, i) => {
+            const active = i === index;
+            slide.classList.toggle('active', active);
+            slide.setAttribute('aria-hidden', active ? 'false' : 'true');
+          });
+          dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+          if (counter) counter.textContent = String(index + 1).padStart(2, '0');
+
+          if (dotsWrap && dots[index]) {
+            const activeDot = dots[index];
+            const left = activeDot.offsetLeft - (dotsWrap.clientWidth - activeDot.offsetWidth) / 2;
+            dotsWrap.scrollTo({
+              left: Math.max(0, left),
+              behavior: AppStateModule.state.settings.reducedMotion ? 'auto' : 'smooth'
+            });
+          }
+        }
+
+        function stopAuto() {
+          stop();
+        }
+
+        function startAuto() {
+          stopAuto();
+          if (AppStateModule.state.settings.reducedMotion) return;
+          timerId = setInterval(() => goTo(index + 1), 9000);
+        }
+
+        container.querySelectorAll('[data-hero-dir]').forEach(button => {
+          button.addEventListener('click', () => {
+            goTo(index + Number(button.dataset.heroDir));
+            startAuto();
+          });
+        });
+
+        dots.forEach(dot => {
+          dot.addEventListener('click', () => {
+            goTo(Number(dot.dataset.heroDot));
+            startAuto();
+          });
+        });
+
+        container.addEventListener('mouseenter', stopAuto);
+        container.addEventListener('mouseleave', startAuto);
+
+        goTo(index);
+        startAuto();
+      }
+
+      return { mount, stop };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 9: 24/7 AUTOMATED PROGRAMMING SCHEDULER
+       ---------------------------------------------------------------------------- */
+    const SchedulerModule = (() => {
+      let intervalId = null;
+
+      function start() {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(tick, 1000);
+        updateHud();
+      }
+
+      function tick() {
+        const state = AppStateModule.state;
+        // Update live broadcast clock
+        const clockEl = document.getElementById('broadcast-clock');
+        if (clockEl) {
+          clockEl.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }) + ' ET';
+        }
+
+        if (!state.settings.autoPlay) {
+          const bar = document.getElementById('program-progress-bar');
+          if (bar) bar.style.width = '100%';
+          return;
+        }
+
+        const programs = state.settings.programs;
+        if (!programs || programs.length === 0) return;
+
+        const current = programs[state.scheduler.currentIndex % programs.length];
+        const totalDuration = Math.max(8, Math.round(current.durationSec * state.settings.segmentMultiplier));
+
+        state.scheduler.elapsedSec += 1;
+        const pct = Math.min(100, (state.scheduler.elapsedSec / totalDuration) * 100);
+        const bar = document.getElementById('program-progress-bar');
+        if (bar) bar.style.width = `${pct}%`;
+
+        if (state.scheduler.elapsedSec >= totalDuration) {
+          advanceSegment();
+        }
+      }
+
+      function advanceSegment() {
+        const state = AppStateModule.state;
+        const programs = state.settings.programs;
+        state.scheduler.currentIndex = (state.scheduler.currentIndex + 1) % programs.length;
+        state.scheduler.elapsedSec = 0;
+        state.scheduler.interruptedByBreaking = false;
+
+        const nextProg = programs[state.scheduler.currentIndex];
+        state.activeSlideTemplateId = nextProg.templateId;
+        AnimationModule.triggerDigitalWipe();
+        SectionsModule.switchChannel(nextProg.channelId, true);
+        updateHud();
+        AppStateModule.addArchiveLog('SCHEDULER', `Auto-transitioned to "${nextProg.name}" (${nextProg.channelId})`);
+      }
+
+      function triggerBreakingInterruption(headline) {
+        const state = AppStateModule.state;
+        if (!state.settings.breakingInterrupts) return;
+        state.scheduler.interruptedByBreaking = true;
+        state.scheduler.elapsedSec = 0;
+        state.activeSlideTemplateId = 'breaking-news';
+        AnimationModule.triggerBreakingFlash();
+        SectionsModule.switchChannel('breaking', true);
+        updateHud();
+        AppStateModule.addArchiveLog('BREAKING', `Interrupted programming for: ${headline}`);
+      }
+
+      function updateHud() {
+        const state = AppStateModule.state;
+        const programs = state.settings.programs;
+        const cur = programs[state.scheduler.currentIndex % programs.length];
+        const nxt = programs[(state.scheduler.currentIndex + 1) % programs.length];
+
+        const curEl = document.getElementById('current-program-name');
+        const nxtEl = document.getElementById('next-program-label');
+        const badgeEl = document.getElementById('program-mode-badge');
+        const autoBtn = document.getElementById('btn-toggle-auto');
+
+        if (curEl) curEl.textContent = state.scheduler.interruptedByBreaking ? 'BREAKING NEWS SPECIAL REPORT' : cur.name;
+        if (nxtEl) nxtEl.textContent = `UP NEXT: ${nxt.name.toUpperCase()}`;
+        if (badgeEl) {
+          badgeEl.textContent = state.scheduler.interruptedByBreaking
+            ? 'BREAKING INTERRUPT'
+            : (state.settings.autoPlay ? '24/7 AUTO TV' : 'MANUAL OVERRIDE');
+          badgeEl.style.background = state.scheduler.interruptedByBreaking ? 'var(--accent-red)' : 'var(--accent-cyan)';
+          badgeEl.style.color = state.scheduler.interruptedByBreaking ? '#fff' : '#030712';
+        }
+        if (autoBtn) {
+          autoBtn.textContent = state.settings.autoPlay ? 'AUTO TV: ON' : 'AUTO TV: PAUSED';
+          autoBtn.classList.toggle('active', state.settings.autoPlay);
+        }
+      }
+
+      return { start, advanceSegment, triggerBreakingInterruption, updateHud };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 10: PERSISTENT BOTTOM TICKER ENGINE
+       ---------------------------------------------------------------------------- */
+    const TickerModule = (() => {
+      function render() {
+        const track = document.getElementById('ticker-marquee-track');
+        if (!track) return;
+        const state = AppStateModule.state;
+        const items = [];
+
+        // 1. Prioritize Breaking News
+        state.news.filter(n => n.isBreaking).slice(0, 6).forEach(n => {
+          items.push({ tag: 'BREAKING', isBreaking: true, text: `${n.title} (${n.source})` });
+        });
+
+        // 2. Official Transactions
+        state.transactions.slice(0, 10).forEach(tx => {
+          items.push({
+            tag: (tx.typeDesc || 'TRANSACTION').toUpperCase(),
+            isBreaking: false,
+            text: tx.description
+          });
+        });
+
+        // 3. League Statistical Leaders
+        const hrTop = state.leaders.batting?.homeRuns?.[0];
+        if (hrTop) {
+          items.push({
+            tag: 'MLB LEADERS',
+            isBreaking: false,
+            text: `Home Run Leader: ${hrTop.person?.fullName} (${hrTop.team?.name}) — ${hrTop.value} HR`
+          });
+        }
+        const kTop = state.leaders.pitching?.strikeouts?.[0];
+        if (kTop) {
+          items.push({
+            tag: 'PITCHING WIRE',
+            isBreaking: false,
+            text: `Strikeout Leader: ${kTop.person?.fullName} (${kTop.team?.name}) — ${kTop.value} SO`
+          });
+        }
+
+        // 4. General News Headlines
+        state.news.filter(n => !n.isBreaking).slice(0, 8).forEach(n => {
+          items.push({ tag: n.source.toUpperCase(), isBreaking: false, text: n.title });
+        });
+
+        // Deduplicate ticker strings
+        const seen = new Set();
+        const unique = items.filter(it => {
+          const key = it.text.slice(0, 60).toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        const finalItems = unique.length > 0
+          ? unique
+          : [{ tag: 'MLB NETWORK', isBreaking: false, text: 'Connected to MLB Stats API — Monitoring all 30 MLB Clubs.' }];
+
+        // Duplicate array seamlessly for continuous CSS marquee loop
+        const doubled = [...finalItems, ...finalItems];
+        track.innerHTML = doubled.map(entry => `
+          <div class="ticker-entry">
+            <span class="ticker-tag ${entry.isBreaking ? 'breaking' : ''}">${entry.tag}</span>
+            <span>${entry.text}</span>
+          </div>
+        `).join('');
+      }
+
+      return { render };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODULE 11: ALL 18 NETWORK CHANNELS & RIGHT RAIL RENDERER
+       ---------------------------------------------------------------------------- */
+    const SectionsModule = (() => {
+      function getTeamLogoMarkup(state) {
+        const teams = (state.teams && state.teams.length)
+          ? state.teams
+          : Object.entries(AppStateModule.TEAM_BRANDING).map(([id, brand]) => ({
+              id: Number(id),
+              name: brand.abbr,
+              abbreviation: brand.abbr
+            }));
+
+        return `
+          <div class="tv-panel team-logo-panel">
+            <div class="tv-panel-header">
+              <div class="tv-panel-title">ALL 30 MLB CLUBHOUSES</div>
+              <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent-cyan);">OFFICIAL TEAM LOGOS &bull; MLB STATS API</span>
+            </div>
+            <div class="team-logo-wall">
+              ${teams.map(team => {
+                const brand = AppStateModule.TEAM_BRANDING[team.id] || {};
+                const abbr = brand.abbr || team.abbreviation || team.teamCode || '';
+                return `
+                  <button class="team-logo-tile" type="button" data-team-id="${team.id}" title="${team.name}">
+                    <img src="${MlbApiModule.getTeamLogoUrl(team.id)}" alt="${team.name}" loading="lazy" onerror="this.style.opacity='0.22';" />
+                    <span>${abbr}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderChannelStrip() {
+        const nav = document.getElementById('main-nav-list');
+        if (!nav) return;
+        const active = AppStateModule.state.activeChannel;
+        nav.innerHTML = AppStateModule.CHANNELS.map(ch => `
+          <button class="nav-item ${ch.id === active ? 'active' : ''}" data-channel="${ch.id}">
+            <span>${ch.name}</span>
+            <span class="nav-badge">${ch.badge}</span>
+          </button>
+        `).join('');
+
+        nav.querySelectorAll('.nav-item').forEach(btn => {
+          btn.addEventListener('click', () => {
+            // Manual click pauses auto-rotation so user can explore interactively
+            AppStateModule.updateSettings({ autoPlay: false });
+            SchedulerModule.updateHud();
+            AnimationModule.triggerDigitalWipe();
+            switchChannel(btn.dataset.channel, false);
+          });
+        });
+      }
+
+      function renderRightRail() {
+        const body = document.getElementById('right-rail-body');
+        if (!body) return;
+        const state = AppStateModule.state;
+        const tab = state.activeRailTab;
+
+        if (tab === 'wire') {
+          const list = state.news.slice(0, 18);
+          body.innerHTML = list.length ? list.map(n => `
+            <div class="wire-item ${n.isBreaking ? 'breaking' : ''}">
+              <div class="wire-meta">
+                <span style="color:${n.isBreaking ? '#ff4d5e' : 'var(--accent-cyan)'};font-weight:700;">
+                  ${n.isBreaking ? '● BREAKING' : n.source}
+                </span>
+                <span>${new Date(n.pubDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              <div class="wire-title">${n.title}</div>
+              <a class="wire-link" href="${n.link}" target="_blank" rel="noopener noreferrer">READ FULL REPORT ↗</a>
+            </div>
+          `).join('') : `<div class="wire-item"><div class="wire-title">Syncing live baseball news wire...</div></div>`;
+        } else if (tab === 'transactions') {
+          const list = state.transactions.slice(0, 18);
+          body.innerHTML = list.length ? list.map(tx => `
+            <div class="wire-item">
+              <div class="wire-meta">
+                <span style="color:var(--accent-gold);font-weight:700;">${(tx.typeDesc || 'MOVE').toUpperCase()}</span>
+                <span>${tx.date}</span>
+              </div>
+              <div class="wire-title">${tx.description}</div>
+            </div>
+          `).join('') : `<div class="wire-item"><div class="wire-title">Loading official MLB transactions...</div></div>`;
+        } else {
+          const progs = state.settings.programs;
+          const curIdx = state.scheduler.currentIndex % progs.length;
+          body.innerHTML = progs.map((p, idx) => `
+            <div class="wire-item ${idx === curIdx ? 'breaking' : ''}" style="cursor:pointer;" data-prog-idx="${idx}">
+              <div class="wire-meta">
+                <span>${idx === curIdx ? '● ON AIR NOW' : `SLOT #${idx + 1}`}</span>
+                <span>${p.durationSec}s &bull; P${p.priority}</span>
+              </div>
+              <div class="wire-title">${p.name}</div>
+            </div>
+          `).join('');
+
+          body.querySelectorAll('[data-prog-idx]').forEach(el => {
+            el.addEventListener('click', () => {
+              const idx = Number(el.dataset.progIdx);
+              state.scheduler.currentIndex = idx;
+              state.scheduler.elapsedSec = 0;
+              const p = progs[idx];
+              state.activeSlideTemplateId = p.templateId;
+              AnimationModule.triggerDigitalWipe();
+              switchChannel(p.channelId, true);
+              SchedulerModule.updateHud();
+            });
+          });
+        }
+      }
+
+      async function switchChannel(channelId, fromScheduler = false) {
+        const state = AppStateModule.state;
+        state.activeChannel = channelId;
+
+        if (channelId !== 'home') {
+          HeroSliderModule.stop();
+        }
+
+        const chMeta = AppStateModule.CHANNELS.find(c => c.id === channelId) || AppStateModule.CHANNELS[0];
+        const codeEl = document.getElementById('stage-channel-code');
+        const titleEl = document.getElementById('stage-section-title');
+        if (codeEl) codeEl.textContent = chMeta.code;
+        if (titleEl) titleEl.textContent = chMeta.name;
+
+        renderChannelStrip();
+        renderRightRail();
+        await renderStageContent(channelId);
+      }
+
+      async function renderStageContent(channelId) {
+        const viewport = document.getElementById('stage-viewport');
+        const controls = document.getElementById('stage-context-controls');
+        if (!viewport || !controls) return;
+        const state = AppStateModule.state;
+        controls.innerHTML = '';
+
+        switch (channelId) {
+          /* 1. NETWORK HOME */
+          case 'home': {
+            const breakingList = state.news.filter(n => n.isBreaking).slice(0, 4);
+            const recentTx = state.transactions.slice(0, 6);
+            const hrTop = (state.leaders.batting?.homeRuns || []).slice(0, 5);
+            const eraTop = (state.leaders.pitching?.earnedRunAverage || []).slice(0, 5);
+            const templatePreview = state.templatePreview
+              ? TemplatesModule.renderTemplate(state.activeSlideTemplateId || 'network-intro', state)
+              : '';
+
+            viewport.innerHTML = `
+              <div class="hero-slider" id="home-hero-slider" aria-label="Top MLB news stories"></div>
+
+              ${templatePreview}
+
+              ${getTeamLogoMarkup(state)}
+
+              <div class="tv-grid-4">
+                <div class="stat-tile red-top">
+                  <span class="stat-tile-label">TRACKED TRANSACTIONS</span>
+                  <span class="stat-tile-value">${state.transactions.length}</span>
+                  <span class="stat-tile-sub">Official MLB Stats API Wire</span>
+                </div>
+                <div class="stat-tile">
+                  <span class="stat-tile-label">FREE AGENT MOVES</span>
+                  <span class="stat-tile-value">${state.freeAgents.length}</span>
+                  <span class="stat-tile-sub">Signings &amp; Elections</span>
+                </div>
+                <div class="stat-tile gold-top">
+                  <span class="stat-tile-label">LIVE HEADLINES</span>
+                  <span class="stat-tile-value">${state.news.length}</span>
+                  <span class="stat-tile-sub">MLB &bull; ESPN &bull; CBS Sports</span>
+                </div>
+                <div class="stat-tile">
+                  <span class="stat-tile-label">ACTIVE MLB CLUBS</span>
+                  <span class="stat-tile-value">${state.teams.length || 30}</span>
+                  <span class="stat-tile-sub">AL &amp; NL Offseason Coverage</span>
+                </div>
+              </div>
+
+              <div class="tv-grid-2">
+                <div class="tv-panel glow-border">
+                  <div class="tv-panel-header">
+                    <div class="tv-panel-title">LATEST OFFICIAL TRANSACTIONS</div>
+                    <button class="tv-btn" onclick="SectionsModule.switchChannel('transactions')">ALL MOVES →</button>
+                  </div>
+                  <div class="tv-table-wrap">
+                    <table class="tv-table">
+                      <thead><tr><th>Date</th><th>Player</th><th>Type</th><th>Details</th></tr></thead>
+                      <tbody>
+                        ${recentTx.map(tx => `
+                          <tr>
+                            <td class="mono-num" style="white-space:nowrap;">${tx.date}</td>
+                            <td style="font-weight:700;">${tx.person?.fullName || '—'}</td>
+                            <td><span class="tag-pill tag-hotstove" style="font-size:0.72rem;">${tx.typeDesc || 'MOVE'}</span></td>
+                            <td style="font-size:0.85rem;color:#cbd5e1;">${tx.description}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="tv-panel">
+                  <div class="tv-panel-header">
+                    <div class="tv-panel-title">OFFSEASON HEADLINE DESK</div>
+                    <button class="tv-btn" onclick="SectionsModule.switchChannel('live-news')">FULL WIRE →</button>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${(breakingList.length ? breakingList : state.news.slice(0, 4)).map(item => `
+                      <div class="wire-item ${item.isBreaking ? 'breaking' : ''}">
+                        <div class="wire-meta">
+                          <span>${item.source}</span>
+                          <span>${new Date(item.pubDate).toLocaleDateString()}</span>
+                        </div>
+                        <div class="wire-title">${item.title}</div>
+                        <a class="wire-link" href="${item.link}" target="_blank" rel="noopener noreferrer">SOURCE ARTICLE ↗</a>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+
+              <div class="tv-grid-2">
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">MLB HOME RUN LEADERS</div></div>
+                  <div id="home-hr-chart"></div>
+                </div>
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">MLB ERA LEADERS (LOWEST)</div></div>
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    ${eraTop.map((p, i) => `
+                      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(9,14,26,0.75);border-radius:4px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          <span class="mono-num" style="color:var(--accent-cyan);">#${i + 1}</span>
+                          <img class="player-avatar" style="width:36px;height:36px;" src="${MlbApiModule.getPlayerHeadshotUrl(p.person?.id)}" alt="" />
+                          <div>
+                            <div style="font-weight:700;">${p.person?.fullName}</div>
+                            <div style="font-size:0.78rem;color:var(--text-secondary);">${p.team?.name || ''}</div>
+                          </div>
+                        </div>
+                        <span class="mono-num" style="font-size:1.15rem;color:var(--accent-emerald);">${p.value} ERA</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            `;
+
+            ChartsModule.renderHorizontalBarChart('home-hr-chart', hrTop.map(p => ({
+              label: p.person?.fullName || 'Player',
+              sub: p.team?.name || '',
+              value: Number(p.value) || 0,
+              displayValue: `${p.value} HR`,
+              color: 'var(--accent-red)'
+            })));
+
+            HeroSliderModule.mount(document.getElementById('home-hero-slider'), state.news);
+            state.templatePreview = false;
+
+            viewport.querySelectorAll('[data-team-id]').forEach(tile => {
+              tile.addEventListener('click', () => {
+                state.selectedTeamId = Number(tile.dataset.teamId);
+                AppStateModule.updateSettings({ autoPlay: false });
+                SchedulerModule.updateHud();
+                AnimationModule.triggerDigitalWipe();
+                switchChannel('team-news', false);
+              });
+            });
+            break;
+          }
+
+          /* 2. LIVE MLB NEWS & 3. BREAKING NEWS */
+          case 'live-news':
+          case 'breaking': {
+            const isBreakingView = channelId === 'breaking';
+            const articles = isBreakingView
+              ? state.news.filter(n => n.isBreaking)
+              : state.news;
+
+            controls.innerHTML = `
+              <input type="text" class="tv-input" id="news-search-input" placeholder="Filter headlines by team or player..." />
+              <button class="tv-btn active" id="btn-test-breaking">SIMULATE BREAKING STINGER</button>
+            `;
+
+            const renderNewsCards = (list) => {
+              viewport.innerHTML = `
+                ${TemplatesModule.renderTemplate(isBreakingView ? 'breaking-news' : 'league-roundup', state)}
+                <div class="tv-grid-2">
+                  ${list.map(n => `
+                    <div class="tv-panel ${n.isBreaking ? 'glow-border' : ''}" style="border-left:4px solid ${n.isBreaking ? 'var(--accent-red)' : 'var(--accent-cyan)'};">
+                      <div class="hero-tag-row">
+                        <span class="tag-pill ${n.isBreaking ? 'tag-breaking' : 'tag-stats'}">${n.isBreaking ? 'BREAKING' : n.source}</span>
+                        <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-secondary);">${new Date(n.pubDate).toLocaleString()}</span>
+                      </div>
+                      <h3 style="font-family:var(--font-display);font-size:1.45rem;font-weight:800;margin-bottom:8px;line-height:1.15;">${n.title}</h3>
+                      <p style="font-size:0.92rem;color:#cbd5e1;line-height:1.45;margin-bottom:12px;">${n.summary}</p>
+                      <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.78rem;color:var(--accent-cyan);">
+                          ${n.teams?.length ? 'CLUBS: ' + n.teams.map(t => t.name).join(', ') : 'MLB LEAGUE-WIDE'}
+                        </span>
+                        <a class="tv-btn" href="${n.link}" target="_blank" rel="noopener noreferrer">ORIGINAL SOURCE ↗</a>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+            };
+
+            renderNewsCards(articles.length ? articles : state.news);
+
+            document.getElementById('news-search-input')?.addEventListener('input', (e) => {
+              const q = e.target.value.toLowerCase();
+              const filtered = (articles.length ? articles : state.news).filter(
+                n => n.title.toLowerCase().includes(q) || n.summary.toLowerCase().includes(q)
+              );
+              renderNewsCards(filtered);
+            });
+            document.getElementById('btn-test-breaking')?.addEventListener('click', () => {
+              AnimationModule.triggerBreakingFlash();
+            });
+            break;
+          }
+
+          /* 4. FREE AGENT TRACKER */
+          case 'free-agents': {
+            const faList = state.freeAgents;
+            controls.innerHTML = `
+              <select class="tv-select" id="fa-status-filter">
+                <option value="ALL">All Free Agent Activity (${faList.length})</option>
+                <option value="SIGNED">Signed Free Agents</option>
+                <option value="FREE AGENT">Available / Elected FA</option>
+              </select>
+            `;
+
+            const drawFA = (filterVal) => {
+              const filtered = filterVal === 'ALL' ? faList : faList.filter(f => f.status === filterVal);
+              viewport.innerHTML = `
+                ${TemplatesModule.renderTemplate('free-agent-spotlight', state)}
+                <div class="tv-grid-3">
+                  ${filtered.map(fa => `
+                    <div class="tv-panel glow-border">
+                      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+                        <img class="player-avatar" src="${MlbApiModule.getPlayerHeadshotUrl(fa.playerId)}" alt="${fa.fullName}" />
+                        <div>
+                          <div style="font-family:var(--font-display);font-size:1.35rem;font-weight:800;">${fa.fullName}</div>
+                          <div style="font-size:0.82rem;color:var(--accent-cyan);">${fa.previousTeam} &bull; ${fa.date}</div>
+                        </div>
+                      </div>
+                      <div style="margin-bottom:10px;">
+                        <span class="tag-pill ${fa.status === 'SIGNED' ? 'tag-official' : 'tag-hotstove'}">${fa.status}</span>
+                        <span class="tag-pill tag-stats">${fa.typeDesc}</span>
+                      </div>
+                      <p style="font-size:0.88rem;color:#cbd5e1;line-height:1.45;margin-bottom:12px;">${fa.description}</p>
+                      <button class="tv-btn" data-inspect-player="${fa.playerId}">INSPECT CAREER PROFILE →</button>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+
+              viewport.querySelectorAll('[data-inspect-player]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                  const pid = Number(btn.dataset.inspectPlayer);
+                  state.comparePlayerAId = pid;
+                  switchChannel('player-stats');
+                });
+              });
+            };
+
+            drawFA('ALL');
+            document.getElementById('fa-status-filter')?.addEventListener('change', (e) => drawFA(e.target.value));
+            break;
+          }
+
+          /* 5. TRANSACTION CENTER */
+          case 'transactions': {
+            const types = ['ALL', ...new Set(state.transactions.map(t => t.typeDesc).filter(Boolean))];
+            controls.innerHTML = `
+              <select class="tv-select" id="tx-type-filter">
+                ${types.map(t => `<option value="${t}">${t}</option>`).join('')}
+              </select>
+              <input type="text" class="tv-input" id="tx-search" placeholder="Search player or club..." />
+            `;
+
+            const renderTx = () => {
+              const typeVal = document.getElementById('tx-type-filter')?.value || 'ALL';
+              const q = (document.getElementById('tx-search')?.value || '').toLowerCase();
+              const filtered = state.transactions.filter(tx => {
+                const matchType = typeVal === 'ALL' || tx.typeDesc === typeVal;
+                const matchText = !q || tx.description.toLowerCase().includes(q) || (tx.person?.fullName || '').toLowerCase().includes(q);
+                return matchType && matchText;
+              }).slice(0, 60);
+
+              viewport.innerHTML = `
+                ${TemplatesModule.renderTemplate('transaction-alert', state)}
+                <div class="tv-panel">
+                  <div class="tv-panel-header">
+                    <div class="tv-panel-title">OFFICIAL MLB TRANSACTION LEDGER (${filtered.length} MOVES)</div>
+                  </div>
+                  <div class="tv-table-wrap">
+                    <table class="tv-table">
+                      <thead>
+                        <tr><th>Date</th><th>Player</th><th>Category</th><th>From</th><th>To</th><th>Official Description</th></tr>
+                      </thead>
+                      <tbody>
+                        ${filtered.map(tx => `
+                          <tr>
+                            <td class="mono-num" style="white-space:nowrap;">${tx.date}</td>
+                            <td style="font-weight:700;white-space:nowrap;">${tx.person?.fullName || '—'}</td>
+                            <td><span class="tag-pill tag-hotstove" style="font-size:0.72rem;">${tx.typeDesc || 'MOVE'}</span></td>
+                            <td>${tx.fromTeam?.name || '—'}</td>
+                            <td style="color:var(--accent-cyan);font-weight:600;">${tx.toTeam?.name || '—'}</td>
+                            <td style="font-size:0.86rem;">${tx.description}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              `;
+            };
+
+            renderTx();
+            document.getElementById('tx-type-filter')?.addEventListener('change', renderTx);
+            document.getElementById('tx-search')?.addEventListener('input', renderTx);
+            break;
+          }
+
+          /* 6. TRADE CENTER */
+          case 'trades': {
+            const trades = state.transactions.filter(tx =>
+              (tx.typeDesc || '').toLowerCase().includes('trade') ||
+              (tx.description || '').toLowerCase().includes('traded')
+            );
+
+            viewport.innerHTML = `
+              ${TemplatesModule.renderTemplate('trade-announcement', state)}
+              <div class="tv-grid-2">
+                ${(trades.length ? trades : state.transactions.slice(0, 8)).slice(0, 12).map(tr => `
+                  <div class="tv-panel glow-border">
+                    <div class="tv-panel-header">
+                      <div class="tv-panel-title">${tr.typeDesc || 'CLUB TRANSACTION'}</div>
+                      <span class="mono-num" style="color:var(--accent-gold);">${tr.date}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px;background:rgba(6,10,20,0.8);padding:12px;border-radius:6px;">
+                      <div style="text-align:center;flex:1;">
+                        ${tr.fromTeam?.id ? `<img class="team-logo-sm" src="${MlbApiModule.getTeamLogoUrl(tr.fromTeam.id)}" alt="" />` : ''}
+                        <div style="font-weight:700;font-size:0.88rem;margin-top:4px;">${tr.fromTeam?.name || 'Origin Club'}</div>
+                      </div>
+                      <div style="font-family:var(--font-display);font-weight:900;font-size:1.3rem;color:var(--accent-red);">⇄ DEAL</div>
+                      <div style="text-align:center;flex:1;">
+                        ${tr.toTeam?.id ? `<img class="team-logo-sm" src="${MlbApiModule.getTeamLogoUrl(tr.toTeam.id)}" alt="" />` : ''}
+                        <div style="font-weight:700;font-size:0.88rem;margin-top:4px;">${tr.toTeam?.name || 'Acquiring Club'}</div>
+                      </div>
+                    </div>
+                    <p style="font-size:0.92rem;color:#e2e8f0;line-height:1.45;">${tr.description}</p>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+            break;
+          }
+
+          /* 7. TEAM NEWS & 8. YANKEES REPORT */
+          case 'team-news':
+          case 'yankees': {
+            const teamId = channelId === 'yankees' ? 147 : state.selectedTeamId;
+            const teamObj = state.teams.find(t => t.id === teamId) || { id: 147, name: 'New York Yankees', division: { name: 'AL East' }, venue: { name: 'Yankee Stadium' } };
+            const brand = AppStateModule.TEAM_BRANDING[teamId] || { primary: '#003087', secondary: '#E4002C', payrollEst: 'N/A' };
+
+            if (channelId === 'team-news') {
+              controls.innerHTML = `
+                <select class="tv-select" id="team-selector-dropdown">
+                  ${state.teams.map(t => `<option value="${t.id}" ${t.id === teamId ? 'selected' : ''}>${t.name}</option>`).join('')}
+                </select>
+              `;
+              document.getElementById('team-selector-dropdown')?.addEventListener('change', (e) => {
+                state.selectedTeamId = Number(e.target.value);
+                renderStageContent('team-news');
+              });
+            }
+
+            viewport.innerHTML = `<div class="tv-panel"><div class="tv-panel-title">LOADING ${teamObj.name.toUpperCase()} BROADCAST DESK...</div></div>`;
+            const roster = await MlbApiModule.fetchTeamRoster(teamId);
+            const clubTx = state.transactions.filter(tx => tx.toTeam?.id === teamId || tx.fromTeam?.id === teamId).slice(0, 10);
+            const clubNews = state.news.filter(n => n.teams?.some(t => t.id === teamId) || n.title.toLowerCase().includes((teamObj.teamName || 'yankee').toLowerCase())).slice(0, 6);
+
+            viewport.innerHTML = `
+              <div class="broadcast-hero-card" style="border-left-color:${brand.primary};background:linear-gradient(135deg, ${brand.primary}55 0%, #0d1526 65%, #070b14 100%);">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+                  <div style="display:flex;align-items:center;gap:20px;">
+                    <img class="team-logo-lg" src="${MlbApiModule.getTeamLogoUrl(teamId)}" alt="${teamObj.name}" />
+                    <div>
+                      <div class="hero-tag-row">
+                        <span class="tag-pill tag-official">${teamObj.division?.name || 'MLB'}</span>
+                        <span class="tag-pill tag-stats">EST. PAYROLL: ${brand.payrollEst}</span>
+                      </div>
+                      <h2 class="hero-headline" style="margin-bottom:4px;">${teamObj.name}</h2>
+                      <div style="color:#cbd5e1;font-size:0.95rem;">Home Ballpark: ${teamObj.venue?.name || 'MLB Stadium'} &bull; 40-Man Roster Size: ${roster.length}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tv-grid-2">
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">CLUB HEADLINES &amp; RUMOR WIRE</div></div>
+                  <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${(clubNews.length ? clubNews : state.news.slice(0, 4)).map(n => `
+                      <div class="wire-item ${n.isBreaking ? 'breaking' : ''}">
+                        <div class="wire-meta"><span>${n.source}</span><span>${new Date(n.pubDate).toLocaleDateString()}</span></div>
+                        <div class="wire-title">${n.title}</div>
+                        <a class="wire-link" href="${n.link}" target="_blank" rel="noopener noreferrer">FULL REPORT ↗</a>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">RECENT FRANCHISE TRANSACTIONS</div></div>
+                  <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${clubTx.length ? clubTx.map(tx => `
+                      <div class="wire-item">
+                        <div class="wire-meta"><span style="color:var(--accent-gold);">${tx.typeDesc}</span><span>${tx.date}</span></div>
+                        <div class="wire-title">${tx.description}</div>
+                      </div>
+                    `).join('') : `<div class="wire-item"><div class="wire-title">No recent 45-day transactions logged for ${teamObj.name}.</div></div>`}
+                  </div>
+                </div>
+              </div>
+
+              <div class="tv-panel">
+                <div class="tv-panel-header"><div class="tv-panel-title">ACTIVE 40-MAN ROSTER &amp; PLAYER PROFILES</div></div>
+                <div class="tv-grid-4">
+                  ${roster.slice(0, 24).map(r => `
+                    <div style="display:flex;align-items:center;gap:10px;background:rgba(9,14,26,0.85);padding:10px;border-radius:6px;border:1px solid rgba(148,163,184,0.12);cursor:pointer;" data-roster-pid="${r.person?.id}">
+                      <img class="player-avatar" style="width:42px;height:42px;" src="${MlbApiModule.getPlayerHeadshotUrl(r.person?.id)}" alt="" />
+                      <div>
+                        <div style="font-weight:700;font-size:0.9rem;">${r.person?.fullName}</div>
+                        <div style="font-size:0.76rem;color:var(--accent-cyan);font-family:var(--font-mono);">#${r.jerseyNumber || '--'} &bull; ${r.position?.abbreviation || ''}</div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+
+            viewport.querySelectorAll('[data-roster-pid]').forEach(card => {
+              card.addEventListener('click', () => {
+                state.comparePlayerAId = Number(card.dataset.rosterPid);
+                switchChannel('player-stats');
+              });
+            });
+            break;
+          }
+
+          /* 9. PLAYER STATISTICS */
+          case 'player-stats': {
+            const pid = state.comparePlayerAId || 592450;
+            controls.innerHTML = `
+              <select class="tv-select" id="quick-player-select">
+                <option value="592450" ${pid === 592450 ? 'selected' : ''}>Aaron Judge (NYY)</option>
+                <option value="660271" ${pid === 660271 ? 'selected' : ''}>Shohei Ohtani (LAD)</option>
+                <option value="665742" ${pid === 665742 ? 'selected' : ''}>Juan Soto (NYM)</option>
+                <option value="677951" ${pid === 677951 ? 'selected' : ''}>Bobby Witt Jr. (KC)</option>
+                <option value="669373" ${pid === 669373 ? 'selected' : ''}>Tarik Skubal (DET)</option>
+                <option value="669203" ${pid === 669203 ? 'selected' : ''}>Corbin Burnes (AZ)</option>
+                <option value="${pid}" ${![592450,660271,665742,677951,669373,669203].includes(pid) ? 'selected' : ''}>Selected Player ID #${pid}</option>
+              </select>
+            `;
+            document.getElementById('quick-player-select')?.addEventListener('change', (e) => {
+              state.comparePlayerAId = Number(e.target.value);
+              renderStageContent('player-stats');
+            });
+
+            viewport.innerHTML = `<div class="tv-panel"><div class="tv-panel-title">RETRIEVING OFFICIAL MLB CAREER &amp; SEASON SPLITS...</div></div>`;
+            const person = await MlbApiModule.fetchPlayerProfile(pid);
+            if (!person) {
+              viewport.innerHTML = `<div class="tv-panel"><div class="tv-panel-title">PLAYER PROFILE UNAVAILABLE</div></div>`;
+              break;
+            }
+
+            const isPitcher = person.primaryPosition?.abbreviation === 'P';
+            const statGroup = person.stats?.find(s => s.type?.displayName === 'yearByYear') || person.stats?.[0];
+            const splits = statGroup?.splits || [];
+            const latestSplit = splits[splits.length - 1]?.stat || {};
+            const sabr = isPitcher
+              ? AnalyticsModule.computePitcherMetrics(latestSplit)
+              : AnalyticsModule.computeBatterMetrics(latestSplit);
+
+            viewport.innerHTML = `
+              <div class="broadcast-hero-card">
+                <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;">
+                  <img class="player-avatar-lg" src="${MlbApiModule.getPlayerHeadshotUrl(person.id)}" alt="${person.fullName}" />
+                  <div>
+                    <div class="hero-tag-row">
+                      <span class="tag-pill tag-stats">${person.primaryPosition?.name || 'MLB PLAYER'}</span>
+                      <span class="tag-pill tag-official">${person.currentTeam?.name || 'MLB'}</span>
+                      <span style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-secondary);">AGE: ${person.currentAge || '--'} &bull; B/T: ${person.batSide?.code}/${person.pitchHand?.code}</span>
+                    </div>
+                    <h2 class="hero-headline" style="margin-bottom:4px;">${person.fullName}</h2>
+                    <div style="color:var(--accent-cyan);font-family:var(--font-mono);font-size:0.9rem;">MLB DEBUT: ${person.mlbDebutDate || 'N/A'} &bull; BIRTHPLACE: ${person.birthCity || ''}, ${person.birthCountry || ''}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tv-grid-4">
+                ${isPitcher ? `
+                  <div class="stat-tile red-top"><span class="stat-tile-label">LATEST ERA</span><span class="stat-tile-value">${sabr.era}</span><span class="stat-tile-sub">Earned Run Average</span></div>
+                  <div class="stat-tile"><span class="stat-tile-label">WHIP</span><span class="stat-tile-value">${sabr.whip}</span><span class="stat-tile-sub">Walks + Hits / IP</span></div>
+                  <div class="stat-tile gold-top"><span class="stat-tile-label">FIP (SABR)</span><span class="stat-tile-value">${sabr.fip}</span><span class="stat-tile-sub">Fielding Independent</span></div>
+                  <div class="stat-tile"><span class="stat-tile-label">EST. PITCHING WAR</span><span class="stat-tile-value">${sabr.estWar}</span><span class="stat-tile-sub">K/9: ${sabr.k9}</span></div>
+                ` : `
+                  <div class="stat-tile red-top"><span class="stat-tile-label">BATTING AVG</span><span class="stat-tile-value">${sabr.avg}</span><span class="stat-tile-sub">Latest Season</span></div>
+                  <div class="stat-tile"><span class="stat-tile-label">OPS</span><span class="stat-tile-value">${sabr.ops}</span><span class="stat-tile-sub">OBP ${sabr.obp} / SLG ${sabr.slg}</span></div>
+                  <div class="stat-tile gold-top"><span class="stat-tile-label">OPS+ / wOBA</span><span class="stat-tile-value">${sabr.opsPlus}</span><span class="stat-tile-sub">wOBA: ${sabr.woba}</span></div>
+                  <div class="stat-tile"><span class="stat-tile-label">EST. OFFENSIVE WAR</span><span class="stat-tile-value">${sabr.estWar}</span><span class="stat-tile-sub">Derived Sabermetric WAR</span></div>
+                `}
+              </div>
+
+              <div class="tv-panel">
+                <div class="tv-panel-header"><div class="tv-panel-title">YEAR-BY-YEAR OFFICIAL MLB CAREER LEDGER</div></div>
+                <div class="tv-table-wrap">
+                  <table class="tv-table">
+                    <thead>
+                      ${isPitcher
+                        ? '<tr><th>Season</th><th>Club</th><th>W-L</th><th>ERA</th><th>G</th><th>IP</th><th>SO</th><th>BB</th><th>WHIP</th></tr>'
+                        : '<tr><th>Season</th><th>Club</th><th>G</th><th>AB</th><th>H</th><th>HR</th><th>RBI</th><th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th></tr>'}
+                    </thead>
+                    <tbody>
+                      ${splits.slice(-12).reverse().map(sp => {
+                        const s = sp.stat || {};
+                        return isPitcher
+                          ? `<tr><td class="mono-num">${sp.season}</td><td>${sp.team?.name || 'MLB'}</td><td class="mono-num">${s.wins || 0}-${s.losses || 0}</td><td class="mono-num">${s.era || '-'}</td><td class="mono-num">${s.gamesPlayed || 0}</td><td class="mono-num">${s.inningsPitched || '0.0'}</td><td class="mono-num">${s.strikeOuts || 0}</td><td class="mono-num">${s.baseOnBalls || 0}</td><td class="mono-num">${s.whip || '-'}</td></tr>`
+                          : `<tr><td class="mono-num">${sp.season}</td><td>${sp.team?.name || 'MLB'}</td><td class="mono-num">${s.gamesPlayed || 0}</td><td class="mono-num">${s.atBats || 0}</td><td class="mono-num">${s.hits || 0}</td><td class="mono-num" style="color:var(--accent-red);">${s.homeRuns || 0}</td><td class="mono-num">${s.rbi || 0}</td><td class="mono-num">${s.avg || '-'}</td><td class="mono-num">${s.obp || '-'}</td><td class="mono-num">${s.slg || '-'}</td><td class="mono-num" style="color:var(--accent-cyan);">${s.ops || '-'}</td></tr>`;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+            break;
+          }
+
+          /* 10. TEAM STATISTICS & STANDINGS */
+          case 'team-stats': {
+            const divisions = state.standings;
+            viewport.innerHTML = `
+              ${TemplatesModule.renderTemplate('team-rankings', state)}
+              <div class="tv-grid-2">
+                ${divisions.map(div => `
+                  <div class="tv-panel">
+                    <div class="tv-panel-header">
+                      <div class="tv-panel-title">${div.division?.name || 'MLB DIVISION'}</div>
+                    </div>
+                    <div class="tv-table-wrap">
+                      <table class="tv-table">
+                        <thead><tr><th>Club</th><th>W</th><th>L</th><th>PCT</th><th>GB</th><th>RS</th><th>RA</th><th>DIFF</th></tr></thead>
+                        <tbody>
+                          ${(div.teamRecords || []).map(tr => `
+                            <tr>
+                              <td style="font-weight:700;">
+                                <img class="team-logo-sm" src="${MlbApiModule.getTeamLogoUrl(tr.team?.id)}" alt="" style="margin-right:6px;" />
+                                ${tr.team?.name}
+                              </td>
+                              <td class="mono-num">${tr.wins}</td>
+                              <td class="mono-num">${tr.losses}</td>
+                              <td class="mono-num" style="color:var(--accent-cyan);">${tr.winningPercentage}</td>
+                              <td class="mono-num">${tr.gamesBack}</td>
+                              <td class="mono-num">${tr.runsScored}</td>
+                              <td class="mono-num">${tr.runsAllowed}</td>
+                              <td class="mono-num" style="color:${tr.runDifferential >= 0 ? 'var(--accent-emerald)' : 'var(--accent-red)'};">
+                                ${tr.runDifferential > 0 ? '+' + tr.runDifferential : tr.runDifferential}
+                              </td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+            break;
+          }
+
+          /* 11. PLAYER COMPARISONS */
+          case 'player-compare': {
+            const options = [
+              { id: 592450, name: 'Aaron Judge' },
+              { id: 660271, name: 'Shohei Ohtani' },
+              { id: 665742, name: 'Juan Soto' },
+              { id: 677951, name: 'Bobby Witt Jr.' },
+              { id: 605141, name: 'Mookie Betts' },
+              { id: 665487, name: 'Fernando Tatis Jr.' },
+              { id: 670541, name: 'Yordan Alvarez' },
+              { id: 663656, name: 'Kyle Tucker' }
+            ];
+            controls.innerHTML = `
+              <select class="tv-select" id="cmp-player-a">${options.map(o => `<option value="${o.id}" ${o.id === state.comparePlayerAId ? 'selected' : ''}>${o.name}</option>`).join('')}</select>
+              <span style="font-family:var(--font-display);font-weight:900;color:var(--accent-red);">VS</span>
+              <select class="tv-select" id="cmp-player-b">${options.map(o => `<option value="${o.id}" ${o.id === state.comparePlayerBId ? 'selected' : ''}>${o.name}</option>`).join('')}</select>
+            `;
+
+            const updateCmp = () => {
+              state.comparePlayerAId = Number(document.getElementById('cmp-player-a').value);
+              state.comparePlayerBId = Number(document.getElementById('cmp-player-b').value);
+              renderStageContent('player-compare');
+            };
+            document.getElementById('cmp-player-a')?.addEventListener('change', updateCmp);
+            document.getElementById('cmp-player-b')?.addEventListener('change', updateCmp);
+
+            const [pA, pB] = await Promise.all([
+              MlbApiModule.fetchPlayerProfile(state.comparePlayerAId),
+              MlbApiModule.fetchPlayerProfile(state.comparePlayerBId)
+            ]);
+
+            const getLatestHit = (p) => {
+              const yby = p?.stats?.find(s => s.type?.displayName === 'yearByYear')?.splits || [];
+              return yby[yby.length - 1]?.stat || {};
+            };
+            const sA = AnalyticsModule.computeBatterMetrics(getLatestHit(pA));
+            const sB = AnalyticsModule.computeBatterMetrics(getLatestHit(pB));
+            const rawA = getLatestHit(pA);
+            const rawB = getLatestHit(pB);
+
+            viewport.innerHTML = `
+              <div class="broadcast-hero-card">
+                <div class="hero-tag-row"><span class="tag-pill tag-hotstove">HEAD-TO-HEAD TALE OF THE TAPE</span></div>
+                <div style="display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:20px;">
+                  <div style="display:flex;align-items:center;gap:14px;">
+                    <img class="player-avatar-lg" style="border-color:var(--accent-cyan);" src="${MlbApiModule.getPlayerHeadshotUrl(pA?.id)}" alt="" />
+                    <div>
+                      <div style="font-family:var(--font-display);font-size:1.85rem;font-weight:900;">${pA?.fullName || 'Player A'}</div>
+                      <div style="color:var(--accent-cyan);">${pA?.currentTeam?.name || 'MLB'} &bull; Age ${pA?.currentAge || '--'}</div>
+                    </div>
+                  </div>
+                  <div style="font-family:var(--font-display);font-size:2.4rem;font-weight:900;color:var(--accent-red);">VS</div>
+                  <div style="display:flex;align-items:center;gap:14px;">
+                    <img class="player-avatar-lg" src="${MlbApiModule.getPlayerHeadshotUrl(pB?.id)}" alt="" />
+                    <div>
+                      <div style="font-family:var(--font-display);font-size:1.85rem;font-weight:900;">${pB?.fullName || 'Player B'}</div>
+                      <div style="color:#fda4af;">${pB?.currentTeam?.name || 'MLB'} &bull; Age ${pB?.currentAge || '--'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tv-grid-2">
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">SABERMETRIC RADAR PROFILE</div></div>
+                  <canvas id="player-radar-canvas" style="width:100%;height:300px;display:block;"></canvas>
+                </div>
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">LATEST SEASON METRIC BREAKDOWN</div></div>
+                  <table class="tv-table">
+                    <thead><tr><th>Metric</th><th style="color:var(--accent-cyan);">${pA?.lastName || 'Player A'}</th><th style="color:#fda4af;">${pB?.lastName || 'Player B'}</th></tr></thead>
+                    <tbody>
+                      <tr><td>Batting Average</td><td class="mono-num">${sA.avg}</td><td class="mono-num">${sB.avg}</td></tr>
+                      <tr><td>On-Base Percentage</td><td class="mono-num">${sA.obp}</td><td class="mono-num">${sB.obp}</td></tr>
+                      <tr><td>Slugging Percentage</td><td class="mono-num">${sA.slg}</td><td class="mono-num">${sB.slg}</td></tr>
+                      <tr><td>OPS</td><td class="mono-num">${sA.ops}</td><td class="mono-num">${sB.ops}</td></tr>
+                      <tr><td>OPS+ (Derived)</td><td class="mono-num">${sA.opsPlus}</td><td class="mono-num">${sB.opsPlus}</td></tr>
+                      <tr><td>wOBA</td><td class="mono-num">${sA.woba}</td><td class="mono-num">${sB.woba}</td></tr>
+                      <tr><td>Home Runs</td><td class="mono-num">${rawA.homeRuns || 0}</td><td class="mono-num">${rawB.homeRuns || 0}</td></tr>
+                      <tr><td>Estimated Off. WAR</td><td class="mono-num">${sA.estWar}</td><td class="mono-num">${sB.estWar}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+
+            ChartsModule.drawRadarComparisonCanvas(
+              'player-radar-canvas',
+              [
+                { axis: 'AVG', norm: (parseFloat(sA.avg) || 0.25) / 0.34 },
+                { axis: 'OBP', norm: (parseFloat(sA.obp) || 0.33) / 0.46 },
+                { axis: 'SLG', norm: (parseFloat(sA.slg) || 0.45) / 0.70 },
+                { axis: 'HR', norm: (Number(rawA.homeRuns) || 20) / 60 },
+                { axis: 'WAR', norm: (parseFloat(sA.estWar) || 3) / 10 }
+              ],
+              [
+                { axis: 'AVG', norm: (parseFloat(sB.avg) || 0.25) / 0.34 },
+                { axis: 'OBP', norm: (parseFloat(sB.obp) || 0.33) / 0.46 },
+                { axis: 'SLG', norm: (parseFloat(sB.slg) || 0.45) / 0.70 },
+                { axis: 'HR', norm: (Number(rawB.homeRuns) || 20) / 60 },
+                { axis: 'WAR', norm: (parseFloat(sB.estWar) || 3) / 10 }
+              ],
+              pA?.fullName || 'Player A',
+              pB?.fullName || 'Player B'
+            );
+            break;
+          }
+
+          /* 12. TEAM COMPARISONS */
+          case 'team-compare': {
+            controls.innerHTML = `
+              <select class="tv-select" id="cmp-team-a">${state.teams.map(t => `<option value="${t.id}" ${t.id === state.compareTeamAId ? 'selected' : ''}>${t.name}</option>`).join('')}</select>
+              <span style="font-family:var(--font-display);font-weight:900;color:var(--accent-red);">VS</span>
+              <select class="tv-select" id="cmp-team-b">${state.teams.map(t => `<option value="${t.id}" ${t.id === state.compareTeamBId ? 'selected' : ''}>${t.name}</option>`).join('')}</select>
+            `;
+            const onTeamCmp = () => {
+              state.compareTeamAId = Number(document.getElementById('cmp-team-a').value);
+              state.compareTeamBId = Number(document.getElementById('cmp-team-b').value);
+              renderStageContent('team-compare');
+            };
+            document.getElementById('cmp-team-a')?.addEventListener('change', onTeamCmp);
+            document.getElementById('cmp-team-b')?.addEventListener('change', onTeamCmp);
+
+            const findRecord = (tid) => {
+              for (const div of state.standings) {
+                const found = (div.teamRecords || []).find(r => r.team?.id === tid);
+                if (found) return found;
+              }
+              return null;
+            };
+            const recA = findRecord(state.compareTeamAId) || { team: { id: state.compareTeamAId, name: 'Club A' }, wins: 0, losses: 0, winningPercentage: '.000', runsScored: 0, runsAllowed: 0, runDifferential: 0 };
+            const recB = findRecord(state.compareTeamBId) || { team: { id: state.compareTeamBId, name: 'Club B' }, wins: 0, losses: 0, winningPercentage: '.000', runsScored: 0, runsAllowed: 0, runDifferential: 0 };
+            const brandA = AppStateModule.TEAM_BRANDING[state.compareTeamAId] || { payrollEst: 'N/A' };
+            const brandB = AppStateModule.TEAM_BRANDING[state.compareTeamBId] || { payrollEst: 'N/A' };
+
+            viewport.innerHTML = `
+              <div class="tv-grid-2">
+                <div class="tv-panel glow-border" style="text-align:center;">
+                  <img class="team-logo-lg" src="${MlbApiModule.getTeamLogoUrl(state.compareTeamAId)}" alt="" />
+                  <h2 style="font-family:var(--font-display);font-size:2rem;font-weight:900;margin:8px 0;">${recA.team?.name}</h2>
+                  <div class="stat-tile-value" style="color:var(--accent-cyan);">${recA.wins}-${recA.losses} (${recA.winningPercentage})</div>
+                  <div style="margin-top:8px;color:var(--text-secondary);">Run Diff: ${recA.runDifferential} &bull; Est. Payroll: ${brandA.payrollEst}</div>
+                </div>
+                <div class="tv-panel glow-border" style="text-align:center;">
+                  <img class="team-logo-lg" src="${MlbApiModule.getTeamLogoUrl(state.compareTeamBId)}" alt="" />
+                  <h2 style="font-family:var(--font-display);font-size:2rem;font-weight:900;margin:8px 0;">${recB.team?.name}</h2>
+                  <div class="stat-tile-value" style="color:#fda4af;">${recB.wins}-${recB.losses} (${recB.winningPercentage})</div>
+                  <div style="margin-top:8px;color:var(--text-secondary);">Run Diff: ${recB.runDifferential} &bull; Est. Payroll: ${brandB.payrollEst}</div>
+                </div>
+              </div>
+              <div class="tv-panel">
+                <div class="tv-panel-header"><div class="tv-panel-title">FRANCHISE METRIC COMPARISON</div></div>
+                <table class="tv-table">
+                  <thead><tr><th>Category</th><th>${recA.team?.name}</th><th>${recB.team?.name}</th></tr></thead>
+                  <tbody>
+                    <tr><td>Wins / Losses</td><td class="mono-num">${recA.wins} - ${recA.losses}</td><td class="mono-num">${recB.wins} - ${recB.losses}</td></tr>
+                    <tr><td>Runs Scored</td><td class="mono-num">${recA.runsScored}</td><td class="mono-num">${recB.runsScored}</td></tr>
+                    <tr><td>Runs Allowed</td><td class="mono-num">${recA.runsAllowed}</td><td class="mono-num">${recB.runsAllowed}</td></tr>
+                    <tr><td>Run Differential</td><td class="mono-num">${recA.runDifferential}</td><td class="mono-num">${recB.runDifferential}</td></tr>
+                    <tr><td>Estimated Offseason Payroll</td><td class="mono-num">${brandA.payrollEst}</td><td class="mono-num">${brandB.payrollEst}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            `;
+            break;
+          }
+
+          /* 13. BASEBALL ANALYTICS */
+          case 'analytics': {
+            const opsLeaders = (state.leaders.batting?.onBasePlusSlugging || []).slice(0, 8);
+            const whipLeaders = (state.leaders.pitching?.whip || []).slice(0, 8);
+            viewport.innerHTML = `
+              ${TemplatesModule.renderTemplate('statistical-deep-dive', state)}
+              <div class="tv-grid-2">
+                <div class="tv-panel glow-border">
+                  <div class="tv-panel-header"><div class="tv-panel-title">MLB OPS &amp; ESTIMATED OPS+ LEADERS</div></div>
+                  <div id="analytics-ops-chart"></div>
+                </div>
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">COMMAND &amp; WHIP EFFICIENCY LEADERS</div></div>
+                  <table class="tv-table">
+                    <thead><tr><th>Rank</th><th>Pitcher</th><th>Club</th><th>WHIP</th></tr></thead>
+                    <tbody>
+                      ${whipLeaders.map((p, i) => `
+                        <tr>
+                          <td class="mono-num">#${i + 1}</td>
+                          <td style="font-weight:700;">${p.person?.fullName}</td>
+                          <td>${p.team?.name || ''}</td>
+                          <td class="mono-num" style="color:var(--accent-cyan);">${p.value}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+            ChartsModule.renderHorizontalBarChart('analytics-ops-chart', opsLeaders.map(p => ({
+              label: p.person?.fullName || 'Batter',
+              sub: p.team?.name || '',
+              value: Math.round((parseFloat(p.value) || 0.8) * 1000),
+              displayValue: `${p.value} OPS`,
+              color: 'var(--accent-cyan)'
+            })));
+            break;
+          }
+
+          /* 14. CONTRACT CENTER */
+          case 'contracts': {
+            const signings = state.transactions.filter(tx =>
+              (tx.description || '').toLowerCase().includes('signed') ||
+              (tx.typeDesc || '').toLowerCase().includes('signing')
+            );
+            const payrollRows = state.teams.map(t => ({
+              name: t.name,
+              abbr: AppStateModule.TEAM_BRANDING[t.id]?.abbr || 'MLB',
+              payroll: AppStateModule.TEAM_BRANDING[t.id]?.payrollEst || '$145M',
+              num: parseInt((AppStateModule.TEAM_BRANDING[t.id]?.payrollEst || '$145M').replace(/\D/g, ''), 10) || 145
+            })).sort((a, b) => b.num - a.num);
+
+            viewport.innerHTML = `
+              ${TemplatesModule.renderTemplate('contract-report', state)}
+              <div class="tv-grid-2">
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">ESTIMATED CLUB PAYROLL TIERS</div></div>
+                  <div id="payroll-bar-chart"></div>
+                </div>
+                <div class="tv-panel">
+                  <div class="tv-panel-header"><div class="tv-panel-title">VERIFIED OFFSEASON SIGNINGS &amp; CONTRACTS</div></div>
+                  <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${signings.slice(0, 10).map(s => `
+                      <div class="wire-item">
+                        <div class="wire-meta"><span style="color:var(--accent-emerald);">${s.toTeam?.name || 'MLB CLUB'}</span><span>${s.date}</span></div>
+                        <div class="wire-title">${s.description}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            `;
+            ChartsModule.renderHorizontalBarChart('payroll-bar-chart', payrollRows.slice(0, 10).map(p => ({
+              label: p.name,
+              sub: p.abbr,
+              value: p.num,
+              displayValue: p.payroll,
+              color: 'var(--accent-gold)'
+            })));
+            break;
+          }
+
+          /* 15. PROSPECT WATCH */
+          case 'prospects': {
+            const prospectMoves = state.transactions.filter(tx => {
+              const d = (tx.description || '').toLowerCase();
+              return d.includes('selected') || d.includes('recalled') || d.includes('optioned') || d.includes('minor') || d.includes('assigned');
+            });
+            viewport.innerHTML = `
+              ${TemplatesModule.renderTemplate('prospect-spotlight', state)}
+              <div class="tv-panel">
+                <div class="tv-panel-header"><div class="tv-panel-title">40-MAN ROSTER SELECTIONS, CALL-UPS &amp; PIPELINE MOVES</div></div>
+                <div class="tv-table-wrap">
+                  <table class="tv-table">
+                    <thead><tr><th>Date</th><th>Player</th><th>Organization</th><th>Pipeline Transaction</th></tr></thead>
+                    <tbody>
+                      ${(prospectMoves.length ? prospectMoves : state.transactions.slice(0, 15)).slice(0, 25).map(m => `
+                        <tr>
+                          <td class="mono-num">${m.date}</td>
+                          <td style="font-weight:700;">${m.person?.fullName || 'Prospect'}</td>
+                          <td style="color:var(--accent-cyan);">${m.toTeam?.name || m.fromTeam?.name || 'MLB'}</td>
+                          <td style="font-size:0.86rem;">${m.description}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+            break;
+          }
+
+          /* 16. HOT STOVE DISCUSSIONS */
+          case 'hot-stove': {
+            const topics = state.news.slice(0, 6);
+            viewport.innerHTML = `
+              ${TemplatesModule.renderTemplate('hot-stove-debate', state)}
+              <div class="tv-grid-2">
+                ${topics.map((t, i) => `
+                  <div class="tv-panel glow-border">
+                    <div class="hero-tag-row">
+                      <span class="tag-pill tag-hotstove">DEBATE TOPIC #${i + 1}</span>
+                      <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-secondary);">${t.source}</span>
+                    </div>
+                    <h3 style="font-family:var(--font-display);font-size:1.45rem;font-weight:800;margin-bottom:8px;">${t.title}</h3>
+                    <p style="font-size:0.9rem;color:#cbd5e1;margin-bottom:12px;">${t.summary}</p>
+                    <div style="background:rgba(6,10,20,0.85);padding:10px 12px;border-left:3px solid var(--accent-cyan);font-size:0.85rem;color:var(--accent-cyan);">
+                      <strong>BROADCAST DESK ANGLE:</strong> How does this move reshape contender payroll flexibility and division odds?
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+            break;
+          }
+
+          /* 17. HISTORICAL BASEBALL */
+          case 'historical': {
+            const cats = state.historicalLeaders;
+            viewport.innerHTML = `
+              ${TemplatesModule.renderTemplate('historical-spotlight', state)}
+              <div class="tv-grid-2">
+                ${cats.map(c => `
+                  <div class="tv-panel">
+                    <div class="tv-panel-header"><div class="tv-panel-title">ALL-TIME MLB CAREER: ${(c.leaderCategory || '').toUpperCase()}</div></div>
+                    <table class="tv-table">
+                      <thead><tr><th>Rank</th><th>Legend</th><th>Career Total</th></tr></thead>
+                      <tbody>
+                        ${(c.leaders || []).slice(0, 8).map((l, idx) => `
+                          <tr>
+                            <td class="mono-num">#${idx + 1}</td>
+                            <td style="font-weight:700;">${l.person?.fullName}</td>
+                            <td class="mono-num" style="color:var(--accent-gold);">${l.value}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+            break;
+          }
+
+          /* 18. NETWORK ARCHIVE */
+          case 'archive': {
+            viewport.innerHTML = `
+              <div class="tv-panel glow-border">
+                <div class="tv-panel-header">
+                  <div class="tv-panel-title">24/7 BROADCAST AUTOMATION &amp; DATA SYNC ARCHIVE</div>
+                  <button class="tv-btn" id="btn-export-archive">EXPORT JSON ARCHIVE</button>
+                </div>
+                <div class="tv-table-wrap">
+                  <table class="tv-table">
+                    <thead><tr><th>Timestamp</th><th>Subsystem</th><th>Broadcast Event Log</th></tr></thead>
+                    <tbody>
+                      ${state.archiveLogs.map(log => `
+                        <tr>
+                          <td class="mono-num">${log.time}</td>
+                          <td><span class="tag-pill tag-stats" style="font-size:0.72rem;">${log.category}</span></td>
+                          <td>${log.message}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+            document.getElementById('btn-export-archive')?.addEventListener('click', openSettingsModal);
+            break;
+          }
+        }
+      }
+
+      return { renderChannelStrip, renderRightRail, switchChannel, renderStageContent };
+    })();
+
+    /* ----------------------------------------------------------------------------
+       MODALS: 32-TEMPLATE SLIDE DECK & STUDIO SETTINGS / STORAGE CONTROL
+       ---------------------------------------------------------------------------- */
+    function openTemplatesModal() {
+      const modal = document.getElementById('studio-modal');
+      const title = document.getElementById('modal-title');
+      const content = document.getElementById('modal-content');
+      if (!modal || !content) return;
+
+      title.textContent = 'BROADCAST GRAPHICS & SLIDE TEMPLATES (32)';
+      content.innerHTML = `
+        <p style="color:var(--text-secondary);margin-bottom:14px;">Select any television graphic template to broadcast live on the main stage using real MLB API &amp; News Wire data:</p>
+        <div class="tv-grid-3">
+          ${TemplatesModule.TEMPLATE_REGISTRY.map((t, i) => `
+            <button class="tv-btn" style="justify-content:space-between;padding:10px 12px;" data-select-tpl="${t.id}">
+              <span>#${String(i + 1).padStart(2, '0')} ${t.name}</span>
+              <span style="color:var(--accent-cyan);font-size:0.74rem;">${t.category}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+      modal.classList.add('open');
+
+      content.querySelectorAll('[data-select-tpl]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          AppStateModule.state.activeSlideTemplateId = btn.dataset.selectTpl;
+          AppStateModule.state.templatePreview = true;
+          modal.classList.remove('open');
+          AnimationModule.triggerDigitalWipe();
+          SectionsModule.switchChannel('home');
+        });
+      });
+    }
+
+    function openSettingsModal() {
+      const modal = document.getElementById('studio-modal');
+      const title = document.getElementById('modal-title');
+      const content = document.getElementById('modal-content');
+      const s = AppStateModule.state.settings;
+
+      title.textContent = 'STUDIO SCHEDULER, MOTION & STORAGE CONTROL';
+      content.innerHTML = `
+        <div class="tv-grid-2" style="margin-bottom:18px;">
+          <div class="tv-panel">
+            <div class="tv-panel-header"><div class="tv-panel-title">24/7 PROGRAMMING ENGINE</div></div>
+            <label style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;">
+              <input type="checkbox" id="set-autoplay" ${s.autoPlay ? 'checked' : ''} />
+              <span>Enable 24/7 Automated Segment Rotation</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;">
+              <input type="checkbox" id="set-breaking" ${s.breakingInterrupts ? 'checked' : ''} />
+              <span>Allow Breaking News to Interrupt Programming</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;">
+              <input type="checkbox" id="set-motion" ${s.reducedMotion ? 'checked' : ''} />
+              <span>Reduced Motion / Low-Flash Accessibility Mode</span>
+            </label>
+            <div>
+              <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:6px;">Segment Duration Speed:</div>
+              <select class="tv-select" id="set-speed" style="width:100%;">
+                <option value="0.5" ${s.segmentMultiplier === 0.5 ? 'selected' : ''}>Fast Demo (0.5x Duration)</option>
+                <option value="1" ${s.segmentMultiplier === 1 ? 'selected' : ''}>Standard Broadcast (1.0x Duration)</option>
+                <option value="2" ${s.segmentMultiplier === 2 ? 'selected' : ''}>Extended Analysis (2.0x Duration)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="tv-panel">
+            <div class="tv-panel-header"><div class="tv-panel-title">INDEXEDDB &amp; JSON BACKUP</div></div>
+            <p style="font-size:0.86rem;color:var(--text-secondary);margin-bottom:12px;">
+              Export cached MLB Stats API datasets, news feeds, and studio scheduler preferences as JSON, or restore a previous snapshot.
+            </p>
+            <div style="display:flex;gap:10px;margin-bottom:12px;">
+              <button class="tv-btn active" id="btn-do-export">GENERATE JSON EXPORT</button>
+              <button class="tv-btn" id="btn-do-import">IMPORT JSON BELOW</button>
+            </div>
+            <textarea id="json-io-box" class="tv-input" style="width:100%;height:110px;font-family:var(--font-mono);font-size:0.78rem;" placeholder="JSON export output or paste JSON snapshot here to import..."></textarea>
+          </div>
+        </div>
+      `;
+      modal.classList.add('open');
+
+      document.getElementById('set-autoplay')?.addEventListener('change', (e) => {
+        AppStateModule.updateSettings({ autoPlay: e.target.checked });
+        SchedulerModule.updateHud();
+      });
+      document.getElementById('set-breaking')?.addEventListener('change', (e) => {
+        AppStateModule.updateSettings({ breakingInterrupts: e.target.checked });
+      });
+      document.getElementById('set-motion')?.addEventListener('change', (e) => {
+        AppStateModule.updateSettings({ reducedMotion: e.target.checked });
+      });
+      document.getElementById('set-speed')?.addEventListener('change', (e) => {
+        AppStateModule.updateSettings({ segmentMultiplier: parseFloat(e.target.value) || 1 });
+      });
+
+      document.getElementById('btn-do-export')?.addEventListener('click', async () => {
+        const json = await StorageModule.exportAllJSON(AppStateModule.state);
+        document.getElementById('json-io-box').value = json;
+      });
+      document.getElementById('btn-do-import')?.addEventListener('click', async () => {
+        try {
+          const val = document.getElementById('json-io-box').value;
+          await StorageModule.importJSON(val);
+          AppStateModule.addArchiveLog('STORAGE', 'Imported broadcast JSON snapshot.');
+          await syncAllData(false);
+          modal.classList.remove('open');
+        } catch (err) {
+          document.getElementById('json-io-box').value = 'Import Error: ' + err.message;
+        }
+      });
+    }
+
+    /* ----------------------------------------------------------------------------
+       DATA SYNCHRONIZATION & AUTOMATIC REFRESH INTERVALS
+       ---------------------------------------------------------------------------- */
+    async function syncAllData(checkBreaking = true) {
+      const mlbEl = document.getElementById('status-mlb-api');
+      const newsEl = document.getElementById('status-news-api');
+      const syncEl = document.getElementById('status-last-sync');
+      const prevTopHeadline = AppStateModule.state.news[0]?.title;
+
+      try {
+        if (mlbEl) mlbEl.textContent = 'SYNCING...';
+        await Promise.all([
+          MlbApiModule.fetchTeams(),
+          MlbApiModule.fetchStandings(),
+          MlbApiModule.fetchTransactions(),
+          MlbApiModule.fetchLeagueLeaders(),
+          MlbApiModule.fetchHistoricalLeaders()
+        ]);
+        if (mlbEl) {
+          mlbEl.textContent = `ONLINE (${AppStateModule.state.teams.length} CLUBS)`;
+          mlbEl.style.color = 'var(--accent-emerald)';
+        }
+        AppStateModule.addArchiveLog('MLB_API', `Synced ${AppStateModule.state.teams.length} clubs & ${AppStateModule.state.transactions.length} transactions.`);
+      } catch (err) {
+        if (mlbEl) {
+          mlbEl.textContent = 'CACHED MODE';
+          mlbEl.style.color = 'var(--accent-gold)';
+        }
+      }
+
+      try {
+        if (newsEl) newsEl.textContent = 'FETCHING...';
+        await NewsModule.aggregateAllNews();
+        if (newsEl) {
+          newsEl.textContent = `${AppStateModule.state.news.length} STORIES`;
+          newsEl.style.color = 'var(--accent-cyan)';
+        }
+        AppStateModule.addArchiveLog('NEWS_WIRE', `Aggregated ${AppStateModule.state.news.length} deduplicated headlines.`);
+
+        // Trigger breaking interruption if a brand-new breaking headline arrives
+        const newest = AppStateModule.state.news[0];
+        if (checkBreaking && prevTopHeadline && newest && newest.title !== prevTopHeadline && newest.isBreaking) {
+          SchedulerModule.triggerBreakingInterruption(newest.title);
+        }
+      } catch (_) {
+        if (newsEl) newsEl.textContent = 'CACHED WIRE';
+      }
+
+      if (syncEl) syncEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      TickerModule.render();
+      SectionsModule.renderRightRail();
+      await SectionsModule.renderStageContent(AppStateModule.state.activeChannel);
+    }
+
+    /* ----------------------------------------------------------------------------
+       BOOTSTRAP TELEVISION BROADCAST APPLICATION
+       ---------------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (AppStateModule.state.settings.reducedMotion) {
+        document.body.classList.add('reduced-motion');
+      }
+
+      AnimationModule.init();
+      SectionsModule.renderChannelStrip();
+      SchedulerModule.start();
+
+      // Header & Modal Button Listeners
+      document.getElementById('btn-toggle-auto')?.addEventListener('click', () => {
+        const nextVal = !AppStateModule.state.settings.autoPlay;
+        AppStateModule.updateSettings({ autoPlay: nextVal });
+        SchedulerModule.updateHud();
+      });
+      document.getElementById('btn-next-segment')?.addEventListener('click', () => {
+        SchedulerModule.advanceSegment();
+      });
+      document.getElementById('btn-open-templates')?.addEventListener('click', openTemplatesModal);
+      document.getElementById('btn-open-settings')?.addEventListener('click', openSettingsModal);
+      document.getElementById('btn-close-modal')?.addEventListener('click', () => {
+        document.getElementById('studio-modal')?.classList.remove('open');
+      });
+      document.getElementById('btn-force-refresh')?.addEventListener('click', async () => {
+        AnimationModule.triggerDigitalWipe();
+        await syncAllData(false);
+      });
+
+      // Right Rail Tab Switchers
+      document.querySelectorAll('.rail-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.rail-tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          AppStateModule.state.activeRailTab = btn.dataset.rail;
+          SectionsModule.renderRightRail();
+        });
+      });
+
+      // Initial Data Hydration
+      await syncAllData(false);
+
+      // Automated Background Data Refresh Timers
+      // Transactions: every 7 minutes
+      setInterval(() => MlbApiModule.fetchTransactions().then(() => TickerModule.render()), 7 * 60 * 1000);
+      // News Aggregation: every 12 minutes
+      setInterval(() => syncAllData(true), 12 * 60 * 1000);
+      // Teams & League Leaders: every 30 minutes
+      setInterval(() => Promise.all([MlbApiModule.fetchTeams(), MlbApiModule.fetchLeagueLeaders()]), 30 * 60 * 1000);
+    });
+  </script>
+</body>
+</html>
