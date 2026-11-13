@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3-Circle Venn Studio - Multi-Diagram CRUD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      header, #diagram-sidebar, #modal-overlay, #modal-region-overlay, #modal-diagram-overlay {
+        display: none !important;
+      }
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+      svg text {
+        fill: #000000 !important;
+      }
+    }
+    .venn-region {
+      transition: fill-opacity 0.2s, stroke 0.2s, stroke-width 0.2s;
+      cursor: pointer;
+    }
+    .venn-region:hover {
+      fill-opacity: 0.75 !important;
+      stroke: #60a5fa !important;
+      stroke-width: 3 !important;
+    }
+    .venn-label {
+      cursor: grab;
+      user-select: none;
+      transition: fill 0.15s ease;
+    }
+    .venn-label:hover {
+      fill: #60a5fa;
+    }
+    .venn-label:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col items-center justify-center font-sans select-none m-0 p-0 overflow-hidden">
+
+  <!-- Header Overlay & Action Controls -->
+  <header class="absolute top-4 left-6 z-10 flex items-center justify-between w-[calc(100%-3rem)] pointer-events-none">
+    <div class="flex items-center gap-3 pointer-events-auto">
+      <button 
+        id="btn-toggle-sidebar" 
+        class="p-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-lg shadow-lg backdrop-blur-md transition-all cursor-pointer flex items-center gap-2"
+        title="Diagram Manager"
+      >
+        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+        <span class="text-xs font-bold text-slate-200" id="current-diagram-badge">Main Diagram</span>
+      </button>
+
+      <div>
+        <h1 class="text-lg font-bold tracking-wide text-slate-200 drop-shadow-md hidden sm:block">Interactive Venn Studio</h1>
+        <p class="text-[11px] text-slate-400 hidden md:block">Click circles/regions to edit colors • "+ New Label" to add text • Drag labels anywhere</p>
+      </div>
+    </div>
+    
+    <div class="pointer-events-auto flex items-center gap-2">
+      <button 
+        id="btn-add-label" 
+        class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-lg border border-blue-400/30 transition-all cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+        <span>+ New Label</span>
+      </button>
+
+      <button 
+        id="btn-export-png" 
+        class="flex items-center gap-1.5 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-semibold text-xs rounded-lg shadow border border-slate-700 transition-all cursor-pointer backdrop-blur-md"
+        title="Export to PNG Image"
+      >
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <span class="hidden sm:inline">PNG</span>
+      </button>
+
+      <button 
+        id="btn-export-pdf" 
+        class="flex items-center gap-1.5 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-semibold text-xs rounded-lg shadow border border-slate-700 transition-all cursor-pointer backdrop-blur-md"
+        title="Export / Print PDF"
+      >
+        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <span class="hidden sm:inline">PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar: Multi-Diagram CRUD Manager -->
+  <aside id="diagram-sidebar" class="fixed top-0 left-0 h-full w-72 bg-slate-900/95 border-r border-slate-800 shadow-2xl z-40 transform -translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <h2 class="font-bold text-sm text-slate-100">Diagram Library</h2>
+      </div>
+      <button id="btn-close-sidebar" class="text-slate-400 hover:text-white p-1 rounded-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <!-- Diagram Action List -->
+    <div class="p-3">
+      <button 
+        id="btn-create-diagram" 
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow transition-all"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+        <span>Create New Diagram</span>
+      </button>
+    </div>
+
+    <!-- Diagrams List Container -->
+    <div id="diagrams-list" class="flex-1 overflow-y-auto px-3 space-y-1 py-1">
+      <!-- Dynamic Diagram Items populate here -->
+    </div>
+
+    <div class="p-3 border-t border-slate-800 text-[11px] text-slate-500 text-center">
+      Auto-saved to LocalStorage
+    </div>
+  </aside>
+
+  <!-- Fullscreen SVG Canvas -->
+  <div class="w-full h-full flex items-center justify-center">
+    <svg id="venn-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" class="w-full h-full drop-shadow-2xl overflow-visible">
+      <defs>
+        <!-- Circle Definitions -->
+        <circle id="circle-A" cx="410" cy="280" r="210" />
+        <circle id="circle-B" cx="590" cy="280" r="210" />
+        <circle id="circle-C" cx="500" cy="420" r="210" />
+
+        <!-- Clip Paths for Intersections -->
+        <clipPath id="clip-A"><use href="#circle-A" /></clipPath>
+        <clipPath id="clip-B"><use href="#circle-B" /></clipPath>
+        <clipPath id="clip-C"><use href="#circle-C" /></clipPath>
+      </defs>
+
+      <!-- 1. Single Region A (A - B - C) -->
+      <g>
+        <use href="#circle-A" class="venn-region" id="region-A" data-region="A" />
+      </g>
+      <!-- 2. Single Region B (B - A - C) -->
+      <g>
+        <use href="#circle-B" class="venn-region" id="region-B" data-region="B" />
+      </g>
+      <!-- 3. Single Region C (C - A - B) -->
+      <g>
+        <use href="#circle-C" class="venn-region" id="region-C" data-region="C" />
+      </g>
+
+      <!-- 4. Intersection AB (A ∩ B) masked -->
+      <use href="#circle-A" clip-path="url(#clip-B)" class="venn-region" id="region-AB" data-region="AB" />
+      
+      <!-- 5. Intersection AC (A ∩ C) masked -->
+      <use href="#circle-A" clip-path="url(#clip-C)" class="venn-region" id="region-AC" data-region="AC" />
+      
+      <!-- 6. Intersection BC (B ∩ C) masked -->
+      <use href="#circle-B" clip-path="url(#clip-C)" class="venn-region" id="region-BC" data-region="BC" />
+
+      <!-- 7. Central Intersection ABC (A ∩ B ∩ C) masked -->
+      <g clip-path="url(#clip-C)">
+        <use href="#circle-A" clip-path="url(#clip-B)" class="venn-region" id="region-ABC" data-region="ABC" />
+      </g>
+
+      <!-- Dynamic Labels Container -->
+      <g id="labels-container"></g>
+    </svg>
+  </div>
+
+  <!-- Label Edit Modal -->
+  <div id="modal-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 w-80 shadow-2xl space-y-4">
+      <div>
+        <h3 id="modal-title" class="text-sm font-semibold text-slate-200">Edit Label</h3>
+        <p class="text-[11px] text-slate-400">Customize text or delete this label</p>
+      </div>
+
+      <input 
+        type="text" 
+        id="modal-input" 
+        placeholder="Type label text..." 
+        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500" 
+      />
+
+      <div class="flex items-center justify-between pt-1">
+        <button id="btn-delete-label" class="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded transition">Delete</button>
+        <div class="flex gap-2">
+          <button id="btn-cancel" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white transition">Cancel</button>
+          <button id="btn-save" class="px-4 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition shadow-md">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Region / Circle Color Customizer Modal -->
+  <div id="modal-region-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 w-80 shadow-2xl space-y-4">
+      <div>
+        <h3 id="modal-region-title" class="text-sm font-semibold text-slate-200">Customize Region Color</h3>
+        <p class="text-[11px] text-slate-400">Set fill color, stroke color, and transparency</p>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Fill Color</label>
+          <div class="flex items-center gap-2">
+            <input type="color" id="input-fill-color" class="w-8 h-8 rounded border-0 bg-transparent cursor-pointer" />
+            <span id="label-fill-hex" class="text-slate-300 font-mono">#000000</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Fill Opacity (<span id="label-opacity-val">25</span>%)</label>
+          <input type="range" id="input-fill-opacity" min="5" max="95" value="25" class="w-full accent-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Stroke Color</label>
+          <div class="flex items-center gap-2">
+            <input type="color" id="input-stroke-color" class="w-8 h-8 rounded border-0 bg-transparent cursor-pointer" />
+            <span id="label-stroke-hex" class="text-slate-300 font-mono">#334155</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="btn-region-cancel" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white transition">Cancel</button>
+        <button id="btn-region-save" class="px-4 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition shadow-md">Apply Color</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Diagram Modal -->
+  <div id="modal-diagram-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 w-80 shadow-2xl space-y-4">
+      <div>
+        <h3 id="modal-diagram-title" class="text-sm font-semibold text-slate-200">Diagram Name</h3>
+        <p class="text-[11px] text-slate-400">Enter a title for this diagram</p>
+      </div>
+
+      <input 
+        type="text" 
+        id="modal-diagram-input" 
+        placeholder="Diagram Name..." 
+        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500" 
+      />
+
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button id="btn-diagram-cancel" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white transition">Cancel</button>
+        <button id="btn-diagram-save" class="px-4 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition shadow-md">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript App Logic -->
+  <script>
+    const STORAGE_KEY_DIAGRAMS = 'venn_diagram_collection_v5';
+    const STORAGE_KEY_ACTIVE = 'venn_diagram_active_id_v5';
+
+    // Default template for a new diagram
+    const createDefaultDiagram = (id = 'diag-1', name = 'Main Diagram') => ({
+      id,
+      name,
+      labels: [],
+      regions: {
+        'A':   { fill: '#3b82f6', opacity: 0.25, stroke: '#334155' },
+        'B':   { fill: '#10b981', opacity: 0.25, stroke: '#334155' },
+        'C':   { fill: '#f59e0b', opacity: 0.25, stroke: '#334155' },
+        'AB':  { fill: '#06b6d4', opacity: 0.35, stroke: '#334155' },
+        'AC':  { fill: '#8b5cf6', opacity: 0.35, stroke: '#334155' },
+        'BC':  { fill: '#ec4899', opacity: 0.35, stroke: '#334155' },
+        'ABC': { fill: '#38bdf8', opacity: 0.45, stroke: '#334155' }
+      }
+    });
+
+    // Master App State
+    let diagrams = [createDefaultDiagram()];
+    let activeDiagramId = 'diag-1';
+
+    // Load from localStorage
+    try {
+      const savedCollection = localStorage.getItem(STORAGE_KEY_DIAGRAMS);
+      if (savedCollection) {
+        diagrams = JSON.parse(savedCollection);
+      }
+      const savedActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE);
+      if (savedActiveId && diagrams.some(d => d.id === savedActiveId)) {
+        activeDiagramId = savedActiveId;
+      } else if (diagrams.length > 0) {
+        activeDiagramId = diagrams[0].id;
+      }
+    } catch (e) {
+      console.error('Failed to parse saved diagrams', e);
+    }
+
+    const getCurrentDiagram = () => diagrams.find(d => d.id === activeDiagramId) || diagrams[0];
+
+    const saveState = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY_DIAGRAMS, JSON.stringify(diagrams));
+        localStorage.setItem(STORAGE_KEY_ACTIVE, activeDiagramId);
+      } catch (e) {
+        console.error('Failed to save to localStorage', e);
+      }
+    };
+
+    // Global Interactive State
+    let activeLabelId = null;
+    let activeRegionKey = null;
+    let draggingLabelId = null;
+    let dragStartOffset = { x: 0, y: 0 };
+    let hasDragged = false;
+    let diagramModalMode = 'create'; // 'create' | 'rename'
+    let editingDiagramId = null;
+
+    // DOM References
+    const vennSvg = document.getElementById('venn-svg');
+    const labelsContainer = document.getElementById('labels-container');
+    const sidebar = document.getElementById('diagram-sidebar');
+    const diagramsList = document.getElementById('diagrams-list');
+    const currentDiagramBadge = document.getElementById('current-diagram-badge');
+
+    // Label Modal Elements
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalInput = document.getElementById('modal-input');
+    const btnAddLabel = document.getElementById('btn-add-label');
+    const btnSave = document.getElementById('btn-save');
+    const btnCancel = document.getElementById('btn-cancel');
+    const btnDeleteLabel = document.getElementById('btn-delete-label');
+
+    // Region Customizer Modal Elements
+    const modalRegionOverlay = document.getElementById('modal-region-overlay');
+    const modalRegionTitle = document.getElementById('modal-region-title');
+    const inputFillColor = document.getElementById('input-fill-color');
+    const inputFillOpacity = document.getElementById('input-fill-opacity');
+    const inputStrokeColor = document.getElementById('input-stroke-color');
+    const labelFillHex = document.getElementById('label-fill-hex');
+    const labelStrokeHex = document.getElementById('label-stroke-hex');
+    const labelOpacityVal = document.getElementById('label-opacity-val');
+    const btnRegionSave = document.getElementById('btn-region-save');
+    const btnRegionCancel = document.getElementById('btn-region-cancel');
+
+    // Diagram CRUD Modal Elements
+    const modalDiagramOverlay = document.getElementById('modal-diagram-overlay');
+    const modalDiagramTitle = document.getElementById('modal-diagram-title');
+    const modalDiagramInput = document.getElementById('modal-diagram-input');
+    const btnDiagramSave = document.getElementById('btn-diagram-save');
+    const btnDiagramCancel = document.getElementById('btn-diagram-cancel');
+
+    // Sidebar & Export Controls
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+    const btnCreateDiagram = document.getElementById('btn-create-diagram');
+    const btnExportPng = document.getElementById('btn-export-png');
+    const btnExportPdf = document.getElementById('btn-export-pdf');
+
+    // Render Diagram Selection Sidebar List
+    const renderSidebarList = () => {
+      diagramsList.innerHTML = '';
+      diagrams.forEach(diag => {
+        const isActive = diag.id === activeDiagramId;
+        const item = document.createElement('div');
+        item.className = `flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer ${
+          isActive 
+            ? 'bg-blue-950/60 border-blue-500/80 text-blue-200' 
+            : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:border-slate-700'
+        }`;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2 overflow-hidden flex-1 mr-2" data-action="select">
+            <svg class="w-4 h-4 ${isActive ? 'text-blue-400' : 'text-slate-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span class="text-xs font-medium truncate">${diag.name}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button data-action="duplicate" title="Duplicate Diagram" class="p-1 text-slate-400 hover:text-emerald-400 rounded">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            </button>
+            <button data-action="rename" title="Rename Diagram" class="p-1 text-slate-400 hover:text-blue-400 rounded">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            </button>
+            ${diagrams.length > 1 ? `
+              <button data-action="delete" title="Delete Diagram" class="p-1 text-slate-400 hover:text-red-400 rounded">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            ` : ''}
+          </div>
+        `;
+
+        item.addEventListener('click', (e) => {
+          const actionBtn = e.target.closest('[data-action]');
+          const action = actionBtn ? actionBtn.getAttribute('data-action') : 'select';
+
+          if (action === 'select') {
+            activeDiagramId = diag.id;
+            saveState();
+            renderActiveDiagram();
+            renderSidebarList();
+          } else if (action === 'duplicate') {
+            const dup = JSON.parse(JSON.stringify(diag));
+            dup.id = 'diag-' + Date.now();
+            dup.name = `${diag.name} (Copy)`;
+            diagrams.push(dup);
+            activeDiagramId = dup.id;
+            saveState();
+            renderActiveDiagram();
+            renderSidebarList();
+          } else if (action === 'rename') {
+            diagramModalMode = 'rename';
+            editingDiagramId = diag.id;
+            modalDiagramTitle.textContent = 'Rename Diagram';
+            modalDiagramInput.value = diag.name;
+            modalDiagramOverlay.classList.remove('hidden');
+            setTimeout(() => modalDiagramInput.focus(), 50);
+          } else if (action === 'delete') {
+            if (confirm(`Delete diagram "${diag.name}"?`)) {
+              diagrams = diagrams.filter(d => d.id !== diag.id);
+              if (activeDiagramId === diag.id) {
+                activeDiagramId = diagrams[0].id;
+              }
+              saveState();
+              renderActiveDiagram();
+              renderSidebarList();
+            }
+          }
+        });
+
+        diagramsList.appendChild(item);
+      });
+    };
+
+    // Apply active diagram's region styles to SVG
+    const applyRegionStyles = () => {
+      const current = getCurrentDiagram();
+      Object.keys(current.regions).forEach(regionKey => {
+        const el = document.getElementById(`region-${regionKey}`);
+        if (el) {
+          const style = current.regions[regionKey];
+          el.setAttribute('fill', style.fill);
+          el.setAttribute('fill-opacity', style.opacity);
+          el.setAttribute('stroke', style.stroke || '#334155');
+        }
+      });
+    };
+
+    // Convert Screen coordinates to SVG coordinates
+    const getSvgCoordinates = (e) => {
+      const point = vennSvg.createSVGPoint();
+      point.x = e.touches ? e.touches[0].clientX : e.clientX;
+      point.y = e.touches ? e.touches[0].clientY : e.clientY;
+      const ctm = vennSvg.getScreenCTM();
+      return point.matrixTransform(ctm.inverse());
+    };
+
+    // Render active diagram's labels
+    const renderLabels = () => {
+      labelsContainer.innerHTML = '';
+      const current = getCurrentDiagram();
+
+      current.labels.forEach(item => {
+        if (!item.title.trim()) return;
+
+        const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textEl.setAttribute('x', item.x);
+        textEl.setAttribute('y', item.y);
+        textEl.setAttribute('fill', '#ffffff');
+        textEl.setAttribute('font-size', '17');
+        textEl.setAttribute('font-weight', '600');
+        textEl.setAttribute('text-anchor', 'middle');
+        textEl.setAttribute('dominant-baseline', 'middle');
+        textEl.setAttribute('class', 'venn-label drop-shadow-md');
+        textEl.setAttribute('data-id', item.id);
+        textEl.textContent = item.title;
+
+        // Start drag event
+        const startDrag = (e) => {
+          e.stopPropagation();
+          draggingLabelId = item.id;
+          hasDragged = false;
+          const svgPt = getSvgCoordinates(e);
+          dragStartOffset.x = svgPt.x - item.x;
+          dragStartOffset.y = svgPt.y - item.y;
+        };
+
+        // Open edit modal on click (if not dragged)
+        const handleClick = (e) => {
+          e.stopPropagation();
+          if (!hasDragged) {
+            activeLabelId = item.id;
+            modalInput.value = item.title;
+            modalOverlay.classList.remove('hidden');
+            setTimeout(() => modalInput.focus(), 50);
+          }
+        };
+
+        textEl.addEventListener('mousedown', startDrag);
+        textEl.addEventListener('touchstart', startDrag, { passive: true });
+        textEl.addEventListener('click', handleClick);
+
+        labelsContainer.appendChild(textEl);
+      });
+    };
+
+    const renderActiveDiagram = () => {
+      const current = getCurrentDiagram();
+      currentDiagramBadge.textContent = current.name;
+      applyRegionStyles();
+      renderLabels();
+    };
+
+    // Drag label movement listeners
+    const handlePointerMove = (e) => {
+      if (!draggingLabelId) return;
+      hasDragged = true;
+      const svgPt = getSvgCoordinates(e);
+      const newX = Math.round(svgPt.x - dragStartOffset.x);
+      const newY = Math.round(svgPt.y - dragStartOffset.y);
+
+      const current = getCurrentDiagram();
+      const targetLabel = current.labels.find(l => l.id === draggingLabelId);
+      if (targetLabel) {
+        targetLabel.x = newX;
+        targetLabel.y = newY;
+      }
+
+      const labelEl = labelsContainer.querySelector(`[data-id="${draggingLabelId}"]`);
+      if (labelEl) {
+        labelEl.setAttribute('x', newX);
+        labelEl.setAttribute('y', newY);
+      }
+    };
+
+    const handlePointerEnd = () => {
+      if (draggingLabelId) {
+        if (hasDragged) {
+          saveState();
+        }
+        draggingLabelId = null;
+      }
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('touchmove', handlePointerMove, { passive: true });
+    window.addEventListener('mouseup', handlePointerEnd);
+    window.addEventListener('touchend', handlePointerEnd);
+
+    // Click regions to customize color & opacity
+    document.querySelectorAll('.venn-region').forEach(regionEl => {
+      regionEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const regionKey = regionEl.getAttribute('data-region');
+        activeRegionKey = regionKey;
+        const current = getCurrentDiagram();
+        const style = current.regions[regionKey];
+
+        modalRegionTitle.textContent = `Customize Region ${regionKey}`;
+        inputFillColor.value = style.fill;
+        labelFillHex.textContent = style.fill;
+        inputStrokeColor.value = style.stroke || '#334155';
+        labelStrokeHex.textContent = style.stroke || '#334155';
+
+        const opacityPct = Math.round((style.opacity || 0.25) * 100);
+        inputFillOpacity.value = opacityPct;
+        labelOpacityVal.textContent = opacityPct;
+
+        modalRegionOverlay.classList.remove('hidden');
+      });
+    });
+
+    inputFillColor.addEventListener('input', (e) => labelFillHex.textContent = e.target.value);
+    inputStrokeColor.addEventListener('input', (e) => labelStrokeHex.textContent = e.target.value);
+    inputFillOpacity.addEventListener('input', (e) => labelOpacityVal.textContent = e.target.value);
+
+    // Save customized region color
+    btnRegionSave.addEventListener('click', () => {
+      if (activeRegionKey) {
+        const current = getCurrentDiagram();
+        current.regions[activeRegionKey] = {
+          fill: inputFillColor.value,
+          stroke: inputStrokeColor.value,
+          opacity: parseFloat(inputFillOpacity.value) / 100
+        };
+        saveState();
+        applyRegionStyles();
+      }
+      modalRegionOverlay.classList.add('hidden');
+    });
+
+    btnRegionCancel.addEventListener('click', () => modalRegionOverlay.classList.add('hidden'));
+
+    // Label CRUD buttons
+    btnAddLabel.addEventListener('click', () => {
+      const current = getCurrentDiagram();
+      const newLabel = {
+        id: 'label-' + Date.now(),
+        title: 'New Label',
+        x: 500,
+        y: 330
+      };
+      current.labels.push(newLabel);
+      saveState();
+      renderLabels();
+
+      activeLabelId = newLabel.id;
+      modalInput.value = newLabel.title;
+      modalOverlay.classList.remove('hidden');
+      setTimeout(() => {
+        modalInput.focus();
+        modalInput.select();
+      }, 50);
+    });
+
+    btnSave.addEventListener('click', () => {
+      if (activeLabelId) {
+        const current = getCurrentDiagram();
+        const item = current.labels.find(l => l.id === activeLabelId);
+        if (item) {
+          item.title = modalInput.value.trim();
+        }
+        saveState();
+        renderLabels();
+      }
+      modalOverlay.classList.add('hidden');
+    });
+
+    btnDeleteLabel.addEventListener('click', () => {
+      if (activeLabelId) {
+        const current = getCurrentDiagram();
+        current.labels = current.labels.filter(l => l.id !== activeLabelId);
+        saveState();
+        renderLabels();
+      }
+      modalOverlay.classList.add('hidden');
+    });
+
+    btnCancel.addEventListener('click', () => modalOverlay.classList.add('hidden'));
+
+    // Diagram Create/Rename Modal Logic
+    btnCreateDiagram.addEventListener('click', () => {
+      diagramModalMode = 'create';
+      modalDiagramTitle.textContent = 'Create New Diagram';
+      modalDiagramInput.value = '';
+      modalDiagramOverlay.classList.remove('hidden');
+      setTimeout(() => modalDiagramInput.focus(), 50);
+    });
+
+    btnDiagramSave.addEventListener('click', () => {
+      const name = modalDiagramInput.value.trim() || 'Untitled Diagram';
+      if (diagramModalMode === 'create') {
+        const newDiag = createDefaultDiagram('diag-' + Date.now(), name);
+        diagrams.push(newDiag);
+        activeDiagramId = newDiag.id;
+      } else if (diagramModalMode === 'rename' && editingDiagramId) {
+        const diag = diagrams.find(d => d.id === editingDiagramId);
+        if (diag) diag.name = name;
+      }
+      saveState();
+      renderActiveDiagram();
+      renderSidebarList();
+      modalDiagramOverlay.classList.add('hidden');
+    });
+
+    btnDiagramCancel.addEventListener('click', () => modalDiagramOverlay.classList.add('hidden'));
+
+    // Sidebar Toggle
+    btnToggleSidebar.addEventListener('click', () => sidebar.classList.remove('-translate-x-full'));
+    btnCloseSidebar.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
+
+    // Export Handlers
+    btnExportPng.addEventListener('click', () => {
+      // 1. Target exact 1920x1080 resolution
+      const exportWidth = 1920;
+      const exportHeight = 1080;
+
+      // 2. Clone SVG and embed inline computed styles to preserve visual integrity
+      const svgClone = vennSvg.cloneNode(true);
+      svgClone.setAttribute('width', exportWidth);
+      svgClone.setAttribute('height', exportHeight);
+      svgClone.setAttribute('viewBox', '0 0 1000 700');
+
+      // Inject explicit styling rules inside clone for accurate rasterization
+      const styleEl = document.createElement('style');
+      styleEl.textContent = `
+        text { font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+        .venn-label { fill: #ffffff; font-size: 17px; }
+      `;
+      svgClone.prepend(styleEl);
+
+      const svgData = new XMLSerializer().serializeToString(svgClone);
+      const canvas = document.createElement('canvas');
+      canvas.width = exportWidth;
+      canvas.height = exportHeight;
+
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        // Render crisp background fill
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, exportWidth, exportHeight);
+
+        // Draw crisp 1080p vectors
+        ctx.drawImage(img, 0, 0, exportWidth, exportHeight);
+
+        // Download PNG file
+        const a = document.createElement('a');
+        a.download = `${getCurrentDiagram().name.replace(/[^a-z0-9]/gi, '_')}_1080p.png`;
+        a.href = canvas.toDataURL('image/png', 1.0);
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      img.src = url;
+    });
+
+    btnExportPdf.addEventListener('click', () => window.print());
+
+    // Keyboard Shortcuts
+    modalInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnSave.click();
+      if (e.key === 'Escape') modalOverlay.classList.add('hidden');
+    });
+
+    modalDiagramInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnDiagramSave.click();
+      if (e.key === 'Escape') modalDiagramOverlay.classList.add('hidden');
+    });
+
+    // Initial Load Render
+    renderSidebarList();
+    renderActiveDiagram();
+  </script>
+</body>
+</html>
