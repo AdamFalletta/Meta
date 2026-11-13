@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Logo Matrix (6x4)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #030307;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background: #030307;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="mainCanvas"></canvas>
+
+    <script>
+        /**
+         * FULL-SCREEN 6x4 NEON LOGO MATRIX
+         * Vanilla JavaScript + Offscreen Buffer Canvas Rendering
+         */
+
+        // Canvas & Buffer Setup
+        const mainCanvas = document.getElementById('mainCanvas');
+        const mainCtx = mainCanvas.getContext('2d');
+
+        const bufferCanvas = document.createElement('canvas');
+        const bufferCtx = bufferCanvas.getContext('2d');
+
+        let cellWidth = 0;
+        let cellHeight = 0;
+        let dpr = 1;
+
+        const COLS = 6;
+        const ROWS = 4;
+
+        function resize() {
+            dpr = window.devicePixelRatio || 1;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            mainCanvas.width = w * dpr;
+            mainCanvas.height = h * dpr;
+            mainCanvas.style.width = w + 'px';
+            mainCanvas.style.height = h + 'px';
+            mainCtx.scale(dpr, dpr);
+
+            bufferCanvas.width = w * dpr;
+            bufferCanvas.height = h * dpr;
+            bufferCtx.scale(dpr, dpr);
+
+            cellWidth = w / COLS;
+            cellHeight = h / ROWS;
+        }
+
+        window.addEventListener('resize', resize);
+
+        // Neon Tube Visual Effect Helper
+        const NeonDraw = {
+            drawTubePath: function(ctx, pathCallback, color, lineWidth = 3.5, glowBlur = 12) {
+                ctx.save();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // Pass 1: Outer Glass Glow
+                ctx.shadowColor = color;
+                ctx.shadowBlur = glowBlur * 1.4;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth + 1;
+                ctx.globalAlpha = 0.5;
+                pathCallback(ctx);
+
+                // Pass 2: High Intensity Tube Glow
+                ctx.shadowColor = color;
+                ctx.shadowBlur = glowBlur;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.globalAlpha = 0.9;
+                pathCallback(ctx);
+
+                // Pass 3: White Hot Core Center
+                ctx.shadowColor = '#ffffff';
+                ctx.shadowBlur = 3;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = Math.max(1.2, lineWidth * 0.35);
+                ctx.globalAlpha = 1.0;
+                pathCallback(ctx);
+
+                ctx.restore();
+            },
+
+            drawText: function(ctx, text, x, y, size, color) {
+                ctx.save();
+                ctx.font = `900 ${size}px 'Segoe UI', Roboto, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 14;
+                ctx.fillStyle = color;
+                ctx.fillText(text, x, y);
+
+                ctx.shadowColor = '#ffffff';
+                ctx.shadowBlur = 3;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(text, x, y);
+
+                ctx.restore();
+            },
+
+            drawRoundedRect: function(ctx, x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+            }
+        };
+
+        // Configuration Array for 24 Neon Logos
+        const LOGO_CONFIGS = [
+            // 1. RevV Fitness (Big plates inside, Small plates outside)
+            {
+                title: 'RevV Fitness',
+                primaryColor: '#ff4400',
+                secondaryColor: '#ccff00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 85, cy); c.lineTo(cx + 85, cy);
+                        c.stroke();
+                    }, this.secondaryColor, 5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        // Inner Big Plates
+                        c.strokeRect(cx - 55, cy - 38, 14, 76);
+                        c.strokeRect(cx + 41, cy - 38, 14, 76);
+                        // Outer Small Plates
+                        c.strokeRect(cx - 76, cy - 24, 12, 48);
+                        c.strokeRect(cx + 64, cy - 24, 12, 48);
+                    }, this.primaryColor, 4);
+
+                    NeonDraw.drawText(ctx, 'REVV FITNESS', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 2. AFI Signage
+            {
+                title: 'AFI Signage',
+                primaryColor: '#00f3ff',
+                secondaryColor: '#ff007f',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        NeonDraw.drawRoundedRect(c, cx - 65, cy - 45, 130, 90, 10);
+                        c.stroke();
+                    }, this.secondaryColor, 4);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        NeonDraw.drawRoundedRect(c, cx - 50, cy - 34, 100, 68, 6);
+                        c.moveTo(cx + 25, cy - 10); c.lineTo(cx + 40, cy); c.lineTo(cx + 25, cy + 10);
+                        c.stroke();
+                    }, this.primaryColor, 3.2);
+
+                    NeonDraw.drawText(ctx, 'AFI SIGNAGE', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 3. AFI Solutions (Gears / Interlocking logic)
+            {
+                title: 'AFI Solutions',
+                primaryColor: '#00ffcc',
+                secondaryColor: '#0077ff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    const rot = time * 0.2;
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        for (let i = 0; i < 3; i++) {
+                            const angle = rot + (i * Math.PI * 2 / 3);
+                            const nx = cx + Math.cos(angle) * 45;
+                            const ny = cy + Math.sin(angle) * 45;
+                            c.moveTo(cx, cy); c.lineTo(nx, ny);
+                            c.arc(nx, ny, 16, 0, Math.PI * 2);
+                        }
+                        c.stroke();
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx, cy, 18, 0, Math.PI * 2);
+                        c.stroke();
+                    }, this.secondaryColor, 4);
+
+                    NeonDraw.drawText(ctx, 'AFI SOLUTIONS', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 4. The Revv (Rock Guitar)
+            {
+                title: 'The Revv',
+                primaryColor: '#ff0033',
+                secondaryColor: '#ffaa00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 12;
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 8, cy - 20);
+                        c.bezierCurveTo(cx - 40, cy - 30, cx - 55, cy - 10, cx - 40, cy + 18);
+                        c.bezierCurveTo(cx - 50, cy + 42, cx - 22, cy + 50, cx, cy + 50);
+                        c.bezierCurveTo(cx + 22, cy + 50, cx + 50, cy + 42, cx + 40, cy + 18);
+                        c.bezierCurveTo(cx + 55, cy - 10, cx + 40, cy - 30, cx + 8, cy - 20);
+                        c.closePath();
+                        c.stroke();
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 5, cy - 20); c.lineTo(cx - 4, cy - 68);
+                        c.moveTo(cx + 5, cy - 20); c.lineTo(cx + 4, cy - 68);
+                        c.moveTo(cx - 4, cy - 68); c.lineTo(cx - 14, cy - 80); c.lineTo(cx + 2, cy - 84); c.lineTo(cx + 4, cy - 68);
+                        c.strokeRect(cx - 12, cy, 24, 8);
+                        c.strokeRect(cx - 12, cy + 16, 24, 8);
+                        c.stroke();
+                    }, this.secondaryColor, 2.5);
+
+                    NeonDraw.drawText(ctx, 'THE REVV', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 5. CloudPress Core
+            {
+                title: 'CloudPress Core',
+                primaryColor: '#00d2ff',
+                secondaryColor: '#ffffff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 50, cy + 20);
+                        c.bezierCurveTo(cx - 80, cy + 20, cx - 80, cy - 20, cx - 50, cy - 20);
+                        c.bezierCurveTo(cx - 40, cy - 60, cx + 20, cy - 60, cx + 45, cy - 20);
+                        c.bezierCurveTo(cx + 80, cy - 20, cx + 80, cy + 20, cx + 50, cy + 20);
+                        c.closePath();
+                        c.stroke();
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 20, cy - 14, 40, 28);
+                        c.moveTo(cx - 10, cy - 4); c.lineTo(cx + 10, cy - 4);
+                        c.moveTo(cx - 10, cy + 4); c.lineTo(cx + 10, cy + 4);
+                        c.stroke();
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'CLOUDPRESS CORE', w / 2, h - 20, 11, this.primaryColor);
+                }
+            },
+            // 6. CloudPress Plugins
+            {
+                title: 'CloudPress Plugins',
+                primaryColor: '#b026ff',
+                secondaryColor: '#00ffff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 45, cy + 10);
+                        c.bezierCurveTo(cx - 75, cy + 10, cx - 75, cy - 25, cx - 40, cy - 25);
+                        c.bezierCurveTo(cx - 30, cy - 60, cx + 25, cy - 60, cx + 40, cy - 25);
+                        c.bezierCurveTo(cx + 75, cy - 25, cx + 75, cy + 10, cx + 45, cy + 10);
+                        c.stroke();
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 25, cy + 10, 50, 30);
+                        c.moveTo(cx - 12, cy + 40); c.lineTo(cx - 12, cy + 52);
+                        c.moveTo(cx + 12, cy + 40); c.lineTo(cx + 12, cy + 52);
+                        c.stroke();
+                    }, this.secondaryColor, 3);
+
+                    NeonDraw.drawText(ctx, 'CLOUDPRESS PLUGINS', w / 2, h - 20, 10, this.primaryColor);
+                }
+            },
+            // 7. AFM (Music Notes & Dynamic Equalizer)
+            {
+                title: 'AFM',
+                primaryColor: '#ccff00',
+                secondaryColor: '#ffaa00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        const barHeights = [35, 55, 25, 65, 45, 50, 30];
+                        for (let i = 0; i < 7; i++) {
+                            const x = cx - 60 + (i * 20);
+                            const height = barHeights[i] + Math.sin(time * 1.5 + i) * 6;
+                            c.moveTo(x, cy + 30);
+                            c.lineTo(x, cy + 30 - height);
+                        }
+                        c.stroke();
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx + 30, cy - 30, 8, 0, Math.PI * 2);
+                        c.moveTo(cx + 38, cy - 30); c.lineTo(cx + 38, cy - 58); c.lineTo(cx + 58, cy - 50);
+                        c.stroke();
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'AFM', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+         // Music Note Neon Animation Code
+     {
+                id: 'instruments',
+                title: 'Instruments',
+                primaryColor: '#ff00aa',
+                secondaryColor: '#00ffff',
+                speed: 0.006,
+                draw: function(ctx, w, h, time, hover) {
+                    const cx = w / 2, cy = h / 2 - 12;
+
+                    // Piano Synth Keyboard Tube Outline
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 36, cy - 14, 72, 28);
+                        // Key dividers
+                        for (let i = 1; i < 6; i++) {
+                            c.moveTo(cx - 36 + i * 12, cy - 14);
+                            c.lineTo(cx - 36 + i * 12, cy + 14);
+                        }
+                        c.stroke();
+                    }, this.primaryColor, 2.5);
+
+                    // Black key accents
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.fillRect(cx - 30, cy - 14, 4, 14);
+                        c.fillRect(cx - 18, cy - 14, 4, 14);
+                        c.fillRect(cx + 6, cy - 14, 4, 14);
+                        c.fillRect(cx + 18, cy - 14, 4, 14);
+                    }, this.secondaryColor, 2);
+
+                    NeonDraw.drawText(ctx, 'INSTRUMENTS', w / 2, h - 22, 13, this.primaryColor);
+                }
+            },
+            // 9. Knockout (8x8 Grid Layout)
+            {
+                title: 'Knockout',
+                primaryColor: '#ff1100',
+                secondaryColor: '#ffcc00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    const gs = 8, cs = 11;
+                    const sx = cx - (gs * cs) / 2, sy = cy - (gs * cs) / 2;
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(sx - 3, sy - 3, gs * cs + 6, gs * cs + 6);
+                        for (let i = 1; i < gs; i++) {
+                            c.moveTo(sx + i * cs, sy); c.lineTo(sx + i * cs, sy + gs * cs);
+                            c.moveTo(sx, sy + i * cs); c.lineTo(sx + gs * cs, sy + i * cs);
+                        }
+                        c.stroke();
+                    }, this.primaryColor, 2.2);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        const active = [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[1,6],[6,1],[0,7],[7,0]];
+                        active.forEach(([rx, ry]) => {
+                            c.strokeRect(sx + rx * cs + 1.5, sy + ry * cs + 1.5, cs - 3, cs - 3);
+                        });
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'KNOCKOUT', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 10. NBL & WGB (Baseball Diamond)
+            {
+                title: 'NBL & WGB',
+                primaryColor: '#ffbb00',
+                secondaryColor: '#0099ff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx, cy - 48);
+                        c.lineTo(cx + 48, cy);
+                        c.lineTo(cx, cy + 44);
+                        c.lineTo(cx - 48, cy);
+                        c.closePath();
+                        c.stroke();
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx, cy - 2, 7, 0, Math.PI * 2);
+                        c.strokeRect(cx + 40, cy - 7, 10, 10);
+                        c.strokeRect(cx - 50, cy - 7, 10, 10);
+                        c.strokeRect(cx - 5, cy - 54, 10, 10);
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'NBL & WGB', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 11. NEO Boxing (Single Boxing Glove)
+            {
+                title: 'NEO Boxing',
+                primaryColor: '#dc143c',
+                secondaryColor: '#00f3ff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 14;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx - 3, cy - 12, 32, Math.PI * 0.75, Math.PI * 1.95);
+                        c.quadraticCurveTo(cx + 38, cy - 3, cx + 30, cy + 22);
+                        c.moveTo(cx - 26, cy);
+                        c.quadraticCurveTo(cx - 40, cy + 6, cx - 22, cy + 26);
+                        c.lineTo(cx + 26, cy + 26);
+                        c.stroke();
+                    }, this.primaryColor, 4);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 22, cy + 26, 48, 22);
+                    }, this.secondaryColor, 3);
+
+                    NeonDraw.drawText(ctx, 'NEO BOXING', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 12. NEO Fighters
+            {
+                title: 'NEO Fighters',
+                primaryColor: '#ffaa00',
+                secondaryColor: '#ff0044',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 50, cy - 48); c.lineTo(cx + 50, cy + 48);
+                        c.moveTo(cx + 50, cy - 48); c.lineTo(cx - 50, cy + 48);
+                        c.stroke();
+                    }, '#ffffff', 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 32, cy - 30, 14, 14);
+                        c.strokeRect(cx + 18, cy - 30, 14, 14);
+                    }, this.primaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'NEO FIGHTERS', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 13. NEON Games (Air Hockey Table Layout)
+            {
+                title: 'NEON Games',
+                primaryColor: '#ff00aa',
+                secondaryColor: '#39ff14',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 14;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        NeonDraw.drawRoundedRect(c, cx - 75, cy - 40, 150, 80, 14);
+                        c.strokeRect(cx - 75, cy - 16, 10, 32);
+                        c.strokeRect(cx + 65, cy - 16, 10, 32);
+                        c.moveTo(cx, cy - 40); c.lineTo(cx, cy + 40);
+                        c.arc(cx, cy, 20, 0, Math.PI * 2);
+                        c.stroke();
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx - 40, cy + 6, 10, 0, Math.PI * 2);
+                        c.arc(cx + 40, cy - 8, 10, 0, Math.PI * 2);
+                        c.strokeRect(cx - 5 + Math.sin(time * 1.5) * 6, cy - 5, 10, 10);
+                        c.stroke();
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'NEON GAMES', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 14. NEO Systems
+            {
+                title: 'NEO Systems',
+                primaryColor: '#00f3ff',
+                secondaryColor: '#0066ff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 55, cy - 45, 110, 22);
+                        c.strokeRect(cx - 55, cy - 11, 110, 22);
+                        c.strokeRect(cx - 55, cy + 23, 110, 22);
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx + 35, cy - 34, 3.5, 0, Math.PI * 2);
+                        c.arc(cx + 35, cy, 3.5, 0, Math.PI * 2);
+                        c.arc(cx + 35, cy + 34, 3.5, 0, Math.PI * 2);
+                        c.stroke();
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'NEO SYSTEMS', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 15. Space Rage
+            {
+                title: 'Space Rage',
+                primaryColor: '#8a2be2',
+                secondaryColor: '#ff007f',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx, cy - 52);
+                        c.quadraticCurveTo(cx + 30, cy - 18, cx + 22, cy + 26);
+                        c.lineTo(cx - 22, cy + 26);
+                        c.quadraticCurveTo(cx - 30, cy - 18, cx, cy - 52);
+                        c.stroke();
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 22, cy + 8); c.lineTo(cx - 42, cy + 34); c.lineTo(cx - 22, cy + 26);
+                        c.moveTo(cx + 22, cy + 8); c.lineTo(cx + 42, cy + 34); c.lineTo(cx + 22, cy + 26);
+                        c.moveTo(cx - 10, cy + 26); c.lineTo(cx, cy + 48); c.lineTo(cx + 10, cy + 26);
+                        c.stroke();
+                    }, this.secondaryColor, 3);
+
+                    NeonDraw.drawText(ctx, 'SPACE RAGE', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 16. NSN (Deep Space Orbital Satellite)
+            {
+                title: 'NSN',
+                primaryColor: '#00ffff',
+                secondaryColor: '#4b0082',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 14;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 18, cy - 16, 36, 32);
+                        c.arc(cx, cy - 28, 24, Math.PI * 0.8, Math.PI * 0.2, true);
+                        c.moveTo(cx, cy - 28); c.lineTo(cx, cy - 44);
+                        c.stroke();
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 74, cy - 12, 48, 24);
+                        c.strokeRect(cx + 26, cy - 12, 48, 24);
+                        c.moveTo(cx - 50, cy - 12); c.lineTo(cx - 50, cy + 12);
+                        c.moveTo(cx + 50, cy - 12); c.lineTo(cx + 50, cy + 12);
+                        c.stroke();
+                    }, this.secondaryColor, 2.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx, cy - 46, 12, -Math.PI * 0.8, -Math.PI * 0.2);
+                        c.arc(cx, cy - 46, 22, -Math.PI * 0.8, -Math.PI * 0.2);
+                        c.stroke();
+                    }, '#ffffff', 2);
+
+                    NeonDraw.drawText(ctx, 'NSN', w / 2, h - 20, 13, this.primaryColor);
+                }
+            },
+            // 17. OCX1 (Microcontroller Chip)
+            {
+                title: 'OCX1',
+                primaryColor: '#ff6600',
+                secondaryColor: '#00ffcc',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 40, cy - 36, 80, 72);
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        for (let i = 0; i < 4; i++) {
+                            const py = cy - 24 + i * 16;
+                            c.moveTo(cx - 40, py); c.lineTo(cx - 58, py);
+                            c.moveTo(cx + 40, py); c.lineTo(cx + 58, py);
+                        }
+                        c.stroke();
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'OCX1', w / 2, h - 20, 13, this.primaryColor);
+                }
+            },
+            // 18. NEOBAT (Baseball Bat)
+            {
+                title: 'NEOBAT',
+                primaryColor: '#9900ff',
+                secondaryColor: '#ffee00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 65, cy + 42);
+                        c.lineTo(cx - 56, cy + 35);
+                        c.lineTo(cx - 25, cy + 10);
+                        c.lineTo(cx + 52, cy - 38);
+                        c.arc(cx + 56, cy - 42, 8, Math.PI * 0.25, -Math.PI * 0.75);
+                        c.lineTo(cx - 18, cy + 18);
+                        c.lineTo(cx - 60, cy + 38);
+                        c.closePath();
+                        c.stroke();
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 48, cy + 32); c.lineTo(cx - 40, cy + 40);
+                        c.moveTo(cx - 38, cy + 22); c.lineTo(cx - 30, cy + 30);
+                        c.stroke();
+                    }, this.secondaryColor, 2.5);
+
+                    NeonDraw.drawText(ctx, 'NEOBAT', w / 2, h - 20, 12, this.secondaryColor);
+                }
+            },
+            // 19. MetaSuite (Mobile App Windows Layout)
+            {
+                title: 'MetaSuite',
+                primaryColor: '#00ff88',
+                secondaryColor: '#00bcff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        NeonDraw.drawRoundedRect(c, cx - 38, cy - 50, 76, 100, 8);
+                        c.stroke();
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 26, cy - 36, 20, 20);
+                        c.strokeRect(cx + 6, cy - 36, 20, 20);
+                        c.strokeRect(cx - 26, cy - 8, 20, 20);
+                        c.strokeRect(cx + 6, cy - 8, 20, 20);
+                        c.moveTo(cx - 14, cy + 36); c.lineTo(cx + 14, cy + 36);
+                        c.stroke();
+                    }, this.secondaryColor, 2.6);
+
+                    NeonDraw.drawText(ctx, 'METASUITE', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 20. Baseball IQ (Baseball with WiFi Signal Arcs)
+            {
+                title: 'Baseball IQ',
+                primaryColor: '#ffcc00',
+                secondaryColor: '#ffffff',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 14;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx, cy + 10, 30, 0, Math.PI * 2);
+                        c.stroke();
+                    }, this.secondaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx - 18, cy + 10, 20, -Math.PI * 0.35, Math.PI * 0.35);
+                        c.arc(cx + 18, cy + 10, 20, Math.PI * 0.65, Math.PI * 1.35);
+                        c.stroke();
+                    }, this.primaryColor, 2.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx, cy - 24, 12, -Math.PI * 0.75, -Math.PI * 0.25);
+                        c.arc(cx, cy - 24, 24, -Math.PI * 0.75, -Math.PI * 0.25);
+                        c.stroke();
+                    }, this.primaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'BASEBALL IQ', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 21. NeoCenter (Stadium Overview)
+            {
+                title: 'NeoCenter',
+                primaryColor: '#00ffff',
+                secondaryColor: '#ff00aa',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 14;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.ellipse(cx, cy, 72, 40, 0, 0, Math.PI * 2);
+                        c.ellipse(cx, cy, 52, 26, 0, 0, Math.PI * 2);
+                        c.ellipse(cx, cy, 30, 14, 0, 0, Math.PI * 2);
+                        c.stroke();
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.arc(cx - 62, cy - 28, 5, 0, Math.PI * 2);
+                        c.arc(cx + 62, cy - 28, 5, 0, Math.PI * 2);
+                        c.arc(cx - 62, cy + 28, 5, 0, Math.PI * 2);
+                        c.arc(cx + 62, cy + 28, 5, 0, Math.PI * 2);
+                        c.stroke();
+                    }, this.secondaryColor, 2.5);
+
+                    NeonDraw.drawText(ctx, 'NEOCENTER', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 22. NEOCards
+            {
+                title: 'NEOCards',
+                primaryColor: '#ff0044',
+                secondaryColor: '#ffaa00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 45, cy - 42, 52, 76);
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.strokeRect(cx - 14, cy - 30, 52, 76);
+                        c.moveTo(cx + 12, cy - 12); c.lineTo(cx + 22, cy + 8); c.lineTo(cx + 12, cy + 24); c.lineTo(cx + 2, cy + 8);
+                        c.closePath();
+                        c.stroke();
+                    }, this.primaryColor, 3.5);
+
+                    NeonDraw.drawText(ctx, 'NEOCARDS', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 23. NEOSports
+            {
+                title: 'NEOSports',
+                primaryColor: '#00e5ff',
+                secondaryColor: '#a6ff00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 15, cy + 42); c.lineTo(cx - 6, cy + 8);
+                        c.moveTo(cx + 15, cy + 42); c.lineTo(cx + 6, cy + 8);
+                        c.strokeRect(cx - 18, cy - 2, 36, 10);
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx - 18, cy - 2);
+                        c.quadraticCurveTo(cx - 32, cy - 32, cx - 8, cy - 48);
+                        c.quadraticCurveTo(cx, cy - 26, cx + 8, cy - 48);
+                        c.quadraticCurveTo(cx + 32, cy - 32, cx + 18, cy - 2);
+                        c.stroke();
+                    }, this.secondaryColor, 3);
+
+                    NeonDraw.drawText(ctx, 'NEOSPORTS', w / 2, h - 20, 12, this.primaryColor);
+                }
+            },
+            // 24. NEON Games Arcade Theme
+            {
+                title: 'NEON Sports',
+                primaryColor: '#ff007f',
+                secondaryColor: '#ffea00',
+                draw: function(ctx, w, h, time) {
+                    const cx = w / 2, cy = h / 2 - 16;
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx, cy - 48);
+                        c.lineTo(cx + 48, cy - 6);
+                        c.lineTo(cx, cy + 48);
+                        c.lineTo(cx - 48, cy - 6);
+                        c.closePath();
+                        c.stroke();
+                    }, this.primaryColor, 3.8);
+
+                    NeonDraw.drawTubePath(ctx, (c) => {
+                        c.beginPath();
+                        c.moveTo(cx, cy - 48); c.lineTo(cx, cy + 48);
+                        c.moveTo(cx - 48, cy - 6); c.lineTo(cx + 48, cy - 6);
+                        c.stroke();
+                    }, this.secondaryColor, 2.8);
+
+                    NeonDraw.drawText(ctx, 'NEON SPORTS', w / 2, h - 20, 12, this.primaryColor);
+                }
+            }
+        ];
+
+        // Main Animation & Off-Screen Render Loop
+        let startTime = null;
+
+        function render(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const time = (timestamp - startTime) * 0.001;
+
+            // Clear Offscreen Buffer
+            bufferCtx.clearRect(0, 0, bufferCanvas.width / dpr, bufferCanvas.height / dpr);
+
+            // Render Each 6x4 Cell into Offscreen Buffer
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const index = r * COLS + c;
+                    const config = LOGO_CONFIGS[index];
+                    if (!config) continue;
+
+                    const cellX = c * cellWidth;
+                    const cellY = r * cellHeight;
+
+                    bufferCtx.save();
+                    bufferCtx.translate(cellX, cellY);
+
+                    // Tile background subtle grid divider feel
+                    bufferCtx.fillStyle = '#04040a';
+                    bufferCtx.fillRect(0, 0, cellWidth, cellHeight);
+
+                    // Execute Tile Neon Drawing
+                    config.draw(bufferCtx, cellWidth, cellHeight, time);
+
+                    bufferCtx.restore();
+                }
+            }
+
+            // Blit Buffer to Visible Main Canvas
+            mainCtx.clearRect(0, 0, mainCanvas.width / dpr, mainCanvas.height / dpr);
+            mainCtx.drawImage(bufferCanvas, 0, 0, window.innerWidth, window.innerHeight);
+
+            requestAnimationFrame(render);
+        }
+
+        // Initialize App on Window Load
+        window.addEventListener('load', () => {
+            resize();
+            requestAnimationFrame(render);
+        });
+    </script>
+</body>
+</html>
