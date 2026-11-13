@@ -1,0 +1,2644 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dot Matrix Studio Enterprise • Multi-Res LED Signage & Dev Suite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- GIF.js for client-side animated GIF encoding -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            matrix: {
+              bg: '#05070a',
+              panel: '#0b0f19',
+              border: '#1e293b',
+              accent: '#00ff88',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    .scanlines-horizontal {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.55) 50%);
+      background-size: 100% 4px;
+    }
+    .scanlines-vertical {
+      background: linear-gradient(90deg, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.55) 50%);
+      background-size: 4px 100%;
+    }
+    .scanlines-crt {
+      background: 
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.45) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 3px, 6px 100%;
+    }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .code-editor {
+      font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      tab-size: 2;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-hidden select-none text-slate-200 bg-slate-950">
+
+  <!-- TOP ENTERPRISE HEADER -->
+  <header class="h-14 border-b border-slate-800 bg-slate-900/95 flex items-center justify-between px-4 z-30 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-emerald-500 via-teal-400 to-amber-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+        <i class="fa-solid fa-microchip text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-sm tracking-wide text-slate-100 flex items-center gap-2">
+          DOT MATRIX STUDIO <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono">ENTERPRISE v4.0</span>
+        </h1>
+        <p class="text-[10px] text-slate-400">Dirty-Rect Offscreen Engine • Multi-Monitor • Dev SDK</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-medium overflow-x-auto max-w-[55vw]">
+      <button id="nav-studio" onclick="app.setPage('studio')" class="px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all bg-emerald-500/20 text-emerald-400 font-semibold shrink-0">
+        <i class="fa-solid fa-sliders"></i> <span>Studio</span>
+      </button>
+      <button id="nav-dev" onclick="app.setPage('dev')" class="px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-400 hover:text-slate-200 shrink-0">
+        <i class="fa-solid fa-code"></i> <span>FX Registry & Code</span>
+      </button>
+      <button id="nav-hex" onclick="app.setPage('hex')" class="px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-400 hover:text-slate-200 shrink-0">
+        <i class="fa-solid fa-font"></i> <span>Hex Font Mapper</span>
+      </button>
+      <button id="nav-media" onclick="app.setPage('media')" class="px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-400 hover:text-slate-200 shrink-0">
+        <i class="fa-solid fa-camera"></i> <span>Live I/O & Converter</span>
+      </button>
+      <button id="nav-scheduler" onclick="app.setPage('scheduler')" class="px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-400 hover:text-slate-200 shrink-0">
+        <i class="fa-solid fa-calendar-days"></i> <span>Scheduler & Weather</span>
+      </button>
+      <button id="nav-presets" onclick="app.setPage('presets')" class="px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-400 hover:text-slate-200 shrink-0">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Presets & CRUD</span>
+      </button>
+    </nav>
+
+    <!-- Hardware & Monitor Controls -->
+    <div class="flex items-center space-x-2">
+      <!-- Resolution Selector -->
+      <select id="resolution-select" onchange="app.setResolution(this.value)" class="text-xs px-2 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-mono focus:outline-none">
+        <option value="96x48">96 x 48 (Compact)</option>
+        <option value="128x64" selected>128 x 64 (Standard HD)</option>
+        <option value="256x128">256 x 128 (Ultra HD)</option>
+        <option value="512x256">512 x 256 (Stadium 4K)</option>
+      </select>
+
+      <!-- Vertical Mode Toggle -->
+      <button id="btn-vertical" onclick="app.toggleVerticalMode()" title="Toggle Vertical Portrait Orientation" class="px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs flex items-center gap-1 transition">
+        <i class="fa-solid fa-rotate"></i>
+        <span id="orientation-label" class="hidden xl:inline">Horizontal</span>
+      </button>
+
+      <!-- Add New Monitor Window -->
+      <button onclick="app.spawnMonitorWindow()" title="Pop out a synced secondary Dot Matrix Monitor window" class="px-2.5 py-1.5 rounded-md bg-indigo-600/90 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow transition">
+        <i class="fa-solid fa-up-right-from-square"></i>
+        <span class="hidden md:inline">Add Monitor</span>
+      </button>
+
+      <!-- Export Modal Trigger -->
+      <button onclick="app.openExportModal()" class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition">
+        <i class="fa-solid fa-file-export"></i>
+        <span>Export</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 relative flex overflow-hidden">
+
+    <!-- =====================================================================
+         PAGE 1: STUDIO & TIMELINE BUILDER
+         ===================================================================== -->
+    <div id="page-studio" class="w-full h-full flex flex-col lg:flex-row overflow-hidden">
+      
+      <!-- Left: Offscreen Buffered Matrix Viewport -->
+      <div class="lg:w-7/12 flex-1 flex flex-col bg-slate-950 border-r border-slate-800 p-4 overflow-y-auto">
+        
+        <!-- Display Chassis -->
+        <div class="relative flex-1 min-h-[320px] bg-black rounded-xl border border-slate-800 shadow-2xl flex flex-col items-center justify-center p-4 overflow-hidden">
+          
+          <!-- Hardware Telemetry Bar -->
+          <div class="w-full flex items-center justify-between text-[11px] font-mono text-slate-400 mb-2 px-1">
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span id="telemetry-res">128x64 HORIZONTAL</span>
+              <span class="text-slate-600">|</span>
+              <span id="telemetry-dirty" class="text-cyan-400">DIRTY PIXELS: 0 / 8192</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="telemetry-monitors" class="text-indigo-400">MONITORS: 1</span>
+              <button onclick="app.enterFullscreen()" class="text-slate-300 hover:text-emerald-400 ml-2" title="Fullscreen Mode">
+                <i class="fa-solid fa-expand"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- LED Canvas Container -->
+          <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden bg-slate-950/60 rounded-lg border border-slate-800/80 p-2">
+            <canvas id="matrix-canvas" class="max-w-full max-h-[440px] object-contain rounded bg-black cursor-pointer shadow-2xl" onclick="app.enterFullscreen()"></canvas>
+            <div id="scanline-layer" class="absolute inset-0 rounded pointer-events-none transition-opacity duration-200 opacity-0"></div>
+          </div>
+
+          <!-- Bottom Hardware Controls Strip -->
+          <div class="w-full mt-3 pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-3">
+              <!-- Pixel Shape -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">LED Shape:</span>
+                <select id="dot-shape-select" onchange="app.setDotShape(this.value)" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200">
+                  <option value="square">Square SMD</option>
+                  <option value="round">Round DIP LED</option>
+                </select>
+              </div>
+
+              <!-- Scanlines -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">Scanlines:</span>
+                <select id="scanline-select" onchange="app.setScanlineMode(this.value)" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200">
+                  <option value="none">None</option>
+                  <option value="horizontal">Horizontal Grill</option>
+                  <option value="vertical">Vertical Pitch</option>
+                  <option value="crt">CRT Aperture</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                <input type="checkbox" id="glow-toggle" onchange="app.toggleGlow(this.checked)" class="rounded bg-slate-800 border-slate-700 text-emerald-500">
+                <span>Phosphor Bloom</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                <input type="checkbox" id="dirty-debug-toggle" onchange="app.showDirtyDebug = this.checked" class="rounded bg-slate-800 border-slate-700 text-amber-500">
+                <span class="text-amber-400/90">Dirty-Rect Debug</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Matrix Style Config Bar -->
+        <div class="mt-3 p-3 glass-panel rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Global Palette</label>
+            <select id="color-preset-select" onchange="app.setColorPreset(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200">
+              <option value="amber">Classic Amber LED</option>
+              <option value="emerald">Neon Emerald Green</option>
+              <option value="cyberpunk">Cyberpunk Pink/Cyan</option>
+              <option value="ruby">Ruby Crimson LED</option>
+              <option value="ice">Ice Blue Matrix</option>
+              <option value="rainbow">RGB Spectrum Cycle</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Matrix Backplane</label>
+            <select id="bg-theme-select" onchange="app.setBgTheme(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200">
+              <option value="dim">Unlit LED Grid (Dim)</option>
+              <option value="black">Pure Pitch Black (#000)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">LED Brightness (<span id="brightness-val">90%</span>)</label>
+            <input type="range" id="brightness-slider" min="0.2" max="1.0" step="0.05" value="0.9" oninput="app.setBrightness(this.value)" class="w-full accent-emerald-500 mt-1.5">
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Project Name</label>
+            <input type="text" id="sign-title-input" value="Enterprise Flagship Sign" onchange="app.currentSign.title = this.value" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200">
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Feature Blocks & Sequence Timeline -->
+      <div class="lg:w-5/12 flex flex-col bg-slate-900 p-4 border-l border-slate-800 overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <h2 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-emerald-400"></i> Feature Block Timeline
+          </h2>
+          <div class="flex space-x-2">
+            <button onclick="app.saveCurrentSignToDB()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-md shadow flex items-center gap-1">
+              <i class="fa-solid fa-database"></i> Save to IndexedDB
+            </button>
+            <button onclick="app.createNewSign()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-md border border-slate-700">
+              <i class="fa-solid fa-plus"></i> Blank
+            </button>
+          </div>
+        </div>
+
+        <!-- Modular Block Palette -->
+        <div class="mt-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Add Feature Block</label>
+            <div class="flex items-center gap-3">
+              <button onclick="document.getElementById('studio-quick-media-input').click()" class="text-[11px] text-amber-400 hover:underline">+ Upload Media</button>
+              <button onclick="app.setPage('dev')" class="text-[11px] text-emerald-400 hover:underline">+ Custom JS Block</button>
+            </div>
+          </div>
+          <input type="file" id="studio-quick-media-input" accept="image/*,video/*" onchange="app.handleMediaUpload(event)" class="hidden">
+          <div id="animation-buttons-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-[180px] overflow-y-auto pr-1">
+            <!-- Populated from ANIMATION_REGISTRY + Live I/O + IndexedDB Media & Custom Blocks -->
+          </div>
+        </div>
+
+        <!-- Active Sequence List -->
+        <div class="mt-3 flex-1 flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase text-slate-400">Playlist Sequence (<span id="block-count">0</span>)</span>
+            <span class="text-[11px] text-slate-500">Click block to preview & edit</span>
+          </div>
+
+          <div id="timeline-list" class="flex-1 space-y-2 overflow-y-auto pr-1 min-h-[240px]">
+            <!-- Dynamic timeline cards -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         PAGE 2: DEVELOPER ANIMATION REGISTRY & LIVE CODE IDE
+         ===================================================================== -->
+    <div id="page-dev" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Code Editor -->
+        <div class="lg:col-span-8 glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-terminal text-emerald-400"></i> Animation Plugin SDK & Registry
+              </h2>
+              <p class="text-xs text-slate-400">Write custom offscreen canvas shaders/animations and register them directly into the Studio Feature Block palette (persisted in IndexedDB).</p>
+            </div>
+            <button onclick="app.loadDevTemplate()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs text-slate-300 border border-slate-700">
+              Load Starter Boilerplate
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Plugin ID (unique slug)</label>
+              <input type="text" id="dev-plugin-id" value="plasma_wave_fx" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 font-mono text-emerald-400">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Display Name</label>
+              <input type="text" id="dev-plugin-name" value="Plasma Wave Shader" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Description</label>
+              <input type="text" id="dev-plugin-desc" value="Trig sine plasma field" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
+              <span>function render(bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine)</span>
+              <span class="text-emerald-400">Offscreen Buffers Ready</span>
+            </div>
+            <textarea id="dev-plugin-code" rows="14" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-emerald-300 code-editor focus:outline-none focus:border-emerald-500 leading-relaxed"></textarea>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <div id="dev-status-msg" class="text-xs font-mono text-slate-400">Ready to compile & register.</div>
+            <div class="flex gap-2">
+              <button onclick="app.testDevPlugin()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5">
+                <i class="fa-solid fa-play"></i> Compile & Live Test
+              </button>
+              <button onclick="app.saveDevPluginToDB()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 shadow-lg">
+                <i class="fa-solid fa-floppy-disk"></i> Save to Registry (IndexedDB)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Saved Custom Plugins List -->
+        <div class="lg:col-span-4 glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col space-y-4">
+          <h3 class="font-bold text-sm text-slate-100 border-b border-slate-800 pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-puzzle-piece text-amber-400"></i> Registered Custom Blocks
+          </h3>
+          <div id="dev-plugins-list" class="flex-1 space-y-2 overflow-y-auto text-xs">
+            <!-- Populated from IndexedDB -->
+          </div>
+          <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+            <p class="font-bold text-slate-200">Offscreen Layer API:</p>
+            <p><code class="text-cyan-400">bgCtx</code>: Background layer context</p>
+            <p><code class="text-emerald-400">animCtx</code>: Animation sprite layer</p>
+            <p><code class="text-amber-400">textCtx</code>: Foreground text overlay</p>
+            <p><code class="text-purple-400">engine.drawText(ctx, str, x, y, opts)</code></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         PAGE 3: FULL HEX DOT MATRIX CHARACTER MAPPER
+         ===================================================================== -->
+    <div id="page-hex" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden">
+      <div class="max-w-5xl mx-auto glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
+        <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-border-none text-emerald-400"></i> Full Hex Dot Matrix Character Mapper
+            </h2>
+            <p class="text-xs text-slate-400">Click LED cells to design custom characters, icons, or foreign glyphs. Maps directly to hex byte arrays and saves to IndexedDB.</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <select id="hex-char-select" onchange="app.loadHexChar(this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 font-mono text-emerald-400">
+              <!-- Populated with A-Z, 0-9, Symbols + Custom -->
+            </select>
+            <input type="text" id="hex-new-char" maxlength="1" placeholder="New Char" class="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-center font-mono text-white">
+            <button onclick="app.createNewHexChar()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">Add Glyph</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <!-- Interactive Bit Grid -->
+          <div class="flex flex-col items-center bg-slate-900 p-6 rounded-xl border border-slate-800">
+            <div class="text-xs font-mono text-slate-400 mb-3">5x7 BITMAP MATRIX EDITOR (CLICK TO TOGGLE)</div>
+            <div id="hex-editor-grid" class="grid grid-cols-5 gap-2 p-4 bg-black rounded-xl border border-slate-700 shadow-inner">
+              <!-- 35 interactive LED buttons -->
+            </div>
+            <div class="flex gap-2 mt-4 text-xs">
+              <button onclick="app.clearHexGrid()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded">Clear</button>
+              <button onclick="app.invertHexGrid()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded">Invert</button>
+              <button onclick="app.saveHexCharToDB()" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded">Save Glyph to Font</button>
+            </div>
+          </div>
+
+          <!-- Hex Array Output & Firmware Sync -->
+          <div class="space-y-4">
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
+              <label class="block text-xs font-semibold text-slate-400 uppercase">Live Hexadecimal Row Mapping</label>
+              <input type="text" id="hex-array-output" readonly class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 font-mono text-sm text-amber-400">
+              <p class="text-[11px] text-slate-500">Each byte represents a 5-bit horizontal row (MSB left to LSB right).</p>
+            </div>
+
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
+              <label class="block text-xs font-semibold text-slate-400 uppercase">Import / Export Full Font Hex Map (JSON)</label>
+              <textarea id="hex-full-json" rows="6" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 font-mono text-[11px] text-cyan-300"></textarea>
+              <div class="flex gap-2 pt-1">
+                <button onclick="app.exportHexMapJSON()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-xs">Refresh Hex Dump</button>
+                <button onclick="app.importHexMapJSON()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-xs font-semibold">Apply Imported Hex Map</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         PAGE 4: LIVE IMPORTS (WEBCAM, MICROPHONE, IMAGE & VIDEO CONVERTER)
+         ===================================================================== -->
+    <div id="page-media" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- 1. Live Webcam Feed -->
+        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+          <div class="space-y-2">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-video"></i>
+            </div>
+            <h3 class="font-bold text-base text-slate-100">Live Webcam Matrix Stream</h3>
+            <p class="text-xs text-slate-400">Stream real-time camera video directly onto the LED matrix with threshold & color quantization.</p>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Dither / Contrast Mode</label>
+              <select id="webcam-mode" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5">
+                <option value="color">Full RGB Matrix</option>
+                <option value="mono">High-Contrast Monochrome</option>
+                <option value="dither">Floyd-Steinberg Dither</option>
+              </select>
+            </div>
+            <button onclick="app.addLiveMediaBlock('webcam')" class="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl shadow">
+              + Add Webcam Block to Timeline
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Live Microphone Audio Visualizer -->
+        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+          <div class="space-y-2">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-microphone-lines"></i>
+            </div>
+            <h3 class="font-bold text-base text-slate-100">Live Microphone Spectrum</h3>
+            <p class="text-xs text-slate-400">Real-time Web Audio API FFT analyzer driving LED equalizer bars and beat-reactive pulses.</p>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Visualizer Style</label>
+              <select id="mic-mode" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5">
+                <option value="bars">Classic Spectrum Bars</option>
+                <option value="wave">Oscilloscope Waveform</option>
+                <option value="radial">Beat Pulse Core</option>
+              </select>
+            </div>
+            <button onclick="app.addLiveMediaBlock('microphone')" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl shadow">
+              + Add Mic Visualizer to Timeline
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Image & Video File Converter -->
+        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+          <div class="space-y-2">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-file-video"></i>
+            </div>
+            <h3 class="font-bold text-base text-slate-100">Image & Video Converter</h3>
+            <p class="text-xs text-slate-400">Import PNG, JPG, GIF, or MP4 files. Automatically scales & quantizes pixels to your active matrix resolution and stores in IndexedDB.</p>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <input type="file" id="media-file-input" accept="image/*,video/*" onchange="app.handleMediaUpload(event)" class="w-full text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-amber-400 hover:file:bg-slate-700">
+            <div id="media-upload-status" class="text-[11px] font-mono text-slate-400">No file selected.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         PAGE 5: CONTENT SCHEDULER & REAL-TIME 15-MIN WEATHER STATION
+         ===================================================================== -->
+    <div id="page-scheduler" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Real-Time Weather & Clock Service (Open-Meteo Free API, 15-Min Polling) -->
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-cloud-sun-rain"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-slate-100">Real-Time Weather & Clock Engine</h2>
+                <p class="text-xs text-slate-400">Live Open-Meteo API • Auto-polls every 15 minutes</p>
+              </div>
+            </div>
+            <span id="weather-poll-badge" class="text-[10px] font-mono px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ACTIVE</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">City Name (Geocoded)</label>
+              <input type="text" id="weather-city-input" value="New York" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Unit System</label>
+              <select id="weather-unit-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100">
+                <option value="fahrenheit">Fahrenheit (°F)</option>
+                <option value="celsius">Celsius (°C)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-400">Current Cached Telemetry:</div>
+              <div id="weather-live-readout" class="text-lg font-bold font-mono text-emerald-400 mt-0.5">Fetching weather...</div>
+              <div id="weather-last-updated" class="text-[10px] text-slate-500 font-mono mt-1">Next poll in 15:00</div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <button onclick="app.weatherService.fetchWeather(true)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs border border-slate-700">
+                <i class="fa-solid fa-rotate"></i> Poll Now
+              </button>
+              <button onclick="app.addWeatherBlockToTimeline()" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs">
+                + Add to Timeline
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daypart Content Scheduler -->
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-clock text-cyan-400"></i> Feature Block Content Scheduler
+              </h2>
+              <p class="text-xs text-slate-400">Automate which signs or blocks play during specific hours of the day.</p>
+            </div>
+            <label class="flex items-center gap-2 text-xs cursor-pointer bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
+              <input type="checkbox" id="scheduler-enabled-toggle" onchange="app.schedulerEnabled = this.checked" class="accent-emerald-500">
+              <span class="font-semibold text-emerald-400">Enable Auto-Schedule</span>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+            <input type="time" id="sched-start" value="08:00" class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5">
+            <input type="time" id="sched-end" value="17:00" class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5">
+            <select id="sched-block-type" class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5">
+              <option value="neon_open">OPEN Sign</option>
+              <option value="weather_clock">Live Weather & Clock</option>
+              <option value="money_flow_up">Jackpot Promo</option>
+              <option value="fireworks">Celebration FX</option>
+            </select>
+            <button onclick="app.addScheduleRule()" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded px-3 py-1.5">
+              + Add Rule
+            </button>
+          </div>
+
+          <div id="schedule-rules-list" class="space-y-2 max-h-[200px] overflow-y-auto text-xs">
+            <!-- Schedule rules populated here -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         PAGE 6: INDUSTRY PRESETS & INDEXEDDB CRUD LIBRARY
+         ===================================================================== -->
+    <div id="page-presets" class="w-full h-full p-6 bg-slate-950 overflow-y-auto hidden">
+      <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Industry Presets -->
+        <div>
+          <div class="border-b border-slate-800 pb-3 mb-4">
+            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i> Turnkey Industry Preset Packs
+            </h2>
+            <p class="text-xs text-slate-400">One-click deployment packages for retail, hospitality, sportsbooks, and transit.</p>
+          </div>
+          <div id="industry-presets-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </div>
+
+        <!-- IndexedDB Saved Signs CRUD Manager -->
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <div>
+              <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-database text-cyan-400"></i> IndexedDB Signage Vault (CRUD Manager)
+              </h2>
+              <p class="text-xs text-slate-400">Persistent local database storage for unlimited client signs, custom media, and backups.</p>
+            </div>
+            <div class="flex gap-2 text-xs">
+              <button onclick="app.exportFullBackupJSON()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">
+                <i class="fa-solid fa-download"></i> Export backups.json
+              </button>
+              <label class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-semibold cursor-pointer">
+                <i class="fa-solid fa-upload"></i> Restore backups.json
+                <input type="file" accept=".json" onchange="app.importFullBackupJSON(event)" class="hidden">
+              </label>
+            </div>
+          </div>
+          <div id="signs-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- =====================================================================
+       ENTERPRISE EXPORT MODAL (GIF, MP4/WEBM, FIRMWARE .H, .BIN, BACKUPS.JSON)
+       ===================================================================== -->
+  <div id="export-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-panel max-w-2xl w-full rounded-2xl border border-slate-700 p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-microchip text-emerald-400"></i> Enterprise Export & Firmware Compiler
+        </h3>
+        <button onclick="app.closeExportModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <!-- Animated GIF -->
+        <button onclick="app.exportGIF()" class="p-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition space-y-1">
+          <div class="font-bold text-emerald-400 text-sm flex items-center gap-2"><i class="fa-solid fa-film"></i> Animated GIF (.gif)</div>
+          <p class="text-slate-400">Captures 3-second LED matrix loop for social media & client proofs.</p>
+        </button>
+
+        <!-- Video MP4 / WebM -->
+        <button onclick="app.exportVideo()" class="p-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition space-y-1">
+          <div class="font-bold text-cyan-400 text-sm flex items-center gap-2"><i class="fa-solid fa-video"></i> HD Video Stream (.webm / .mp4)</div>
+          <p class="text-slate-400">60 FPS hardware-accelerated canvas recording of your signage.</p>
+        </button>
+
+        <!-- Dot Matrix Firmware C Header -->
+        <button onclick="app.exportFirmwareHeader()" class="p-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition space-y-1">
+          <div class="font-bold text-amber-400 text-sm flex items-center gap-2"><i class="fa-solid fa-memory"></i> ESP32 / HUB75 Firmware (.h)</div>
+          <p class="text-slate-400">Compiles RGB565 PROGMEM C++ framebuffer array for LED panels.</p>
+        </button>
+
+        <!-- Raw Binary Framebuffer -->
+        <button onclick="app.exportRawBinary()" class="p-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition space-y-1">
+          <div class="font-bold text-purple-400 text-sm flex items-center gap-2"><i class="fa-solid fa-file-code"></i> Raw RGB888 Binary (.bin)</div>
+          <p class="text-slate-400">Direct SD-card playback binary for FPGA & Novastar controllers.</p>
+        </button>
+
+        <!-- PNG Snapshot -->
+        <button onclick="app.exportPNG()" class="p-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition space-y-1">
+          <div class="font-bold text-pink-400 text-sm flex items-center gap-2"><i class="fa-solid fa-image"></i> High-Res LED Still (.png)</div>
+          <p class="text-slate-400">Lossless PNG snapshot including phosphor glow & scanlines.</p>
+        </button>
+
+        <!-- Full System Backups.json -->
+        <button onclick="app.exportFullBackupJSON()" class="p-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition space-y-1">
+          <div class="font-bold text-indigo-400 text-sm flex items-center gap-2"><i class="fa-solid fa-box-archive"></i> Complete Backup (backups.json)</div>
+          <p class="text-slate-400">Exports all signs, custom JS animations, hex fonts, and schedules.</p>
+        </button>
+      </div>
+
+      <div id="export-progress-bar" class="text-xs font-mono text-emerald-400 bg-slate-950 p-3 rounded-lg border border-slate-800">
+        Select an export target above.
+      </div>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN DISPLAY OVERLAY -->
+  <div id="fullscreen-overlay" class="fixed inset-0 bg-black z-50 hidden flex flex-col items-center justify-center cursor-pointer p-4" onclick="app.exitFullscreen()">
+    <canvas id="fullscreen-matrix-canvas" class="w-full h-full object-contain"></canvas>
+    <div id="fullscreen-scanline" class="absolute inset-0 pointer-events-none"></div>
+    <div class="absolute top-4 right-4 bg-slate-900/80 text-slate-300 px-3 py-1 rounded-full text-xs pointer-events-none">
+      Press ESC or Click to Exit Fullscreen
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. MODULAR SYSTEM CONFIGURATION
+    // =========================================================================
+    const STUDIO_CONFIG = {
+      resolutions: {
+        '96x48':   { cols: 96,  rows: 48,  dotSize: 6, dotGap: 1 },
+        '128x64':  { cols: 128, rows: 64,  dotSize: 5, dotGap: 1 },
+        '256x128': { cols: 256, rows: 128, dotSize: 3, dotGap: 1 },
+        '512x256': { cols: 512, rows: 256, dotSize: 2, dotGap: 0 }
+      },
+      colorPalettes: {
+        amber:     { main: '#ffaa00', secondary: '#ff5500', bgDim: '#241700' },
+        emerald:   { main: '#00ff88', secondary: '#00ccff', bgDim: '#002212' },
+        cyberpunk: { main: '#ff007f', secondary: '#00f0ff', bgDim: '#240014' },
+        ruby:      { main: '#ff2244', secondary: '#ffaa00', bgDim: '#240008' },
+        ice:       { main: '#00d0ff', secondary: '#ffffff', bgDim: '#001c26' },
+        rainbow:   { main: '#00ff88', rainbow: true,        bgDim: '#111827' }
+      },
+      weatherPollIntervalMs: 15 * 60 * 1000, // Exact 15 minutes
+      dbName: 'DotMatrixEnterpriseDB',
+      dbVersion: 1
+    };
+
+    // =========================================================================
+    // 2. HEX BITMAP FONT DICTIONARY (EDITABLE VIA HEX MAPPER)
+    // =========================================================================
+    const DEFAULT_HEX_FONT = {
+      'A': [0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
+      'B': [0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E],
+      'C': [0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E],
+      'D': [0x1C, 0x12, 0x11, 0x11, 0x11, 0x12, 0x1C],
+      'E': [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F],
+      'F': [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10],
+      'G': [0x0E, 0x11, 0x10, 0x13, 0x11, 0x11, 0x0F],
+      'H': [0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
+      'I': [0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E],
+      'J': [0x1F, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C],
+      'K': [0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11],
+      'L': [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F],
+      'M': [0x11, 0x1B, 0x15, 0x11, 0x11, 0x11, 0x11],
+      'N': [0x11, 0x11, 0x19, 0x15, 0x13, 0x11, 0x11],
+      'O': [0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E],
+      'P': [0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10],
+      'Q': [0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D],
+      'R': [0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11],
+      'S': [0x0E, 0x11, 0x10, 0x0E, 0x01, 0x11, 0x0E],
+      'T': [0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04],
+      'U': [0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E],
+      'V': [0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04],
+      'W': [0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11],
+      'X': [0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11],
+      'Y': [0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04],
+      'Z': [0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F],
+      '0': [0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E],
+      '1': [0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E],
+      '2': [0x0E, 0x11, 0x01, 0x06, 0x08, 0x10, 0x1F],
+      '3': [0x1F, 0x02, 0x04, 0x02, 0x01, 0x11, 0x0E],
+      '4': [0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02],
+      '5': [0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E],
+      '6': [0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E],
+      '7': [0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08],
+      '8': [0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E],
+      '9': [0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C],
+      ' ': [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+      ':': [0x00, 0x0C, 0x0C, 0x00, 0x0C, 0x0C, 0x00],
+      '!': [0x04, 0x04, 0x04, 0x04, 0x04, 0x00, 0x04],
+      '-': [0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00],
+      '.': [0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C],
+      '%': [0x18, 0x19, 0x02, 0x04, 0x08, 0x13, 0x03],
+      '$': [0x04, 0x0F, 0x14, 0x0E, 0x05, 0x1E, 0x04],
+      '°': [0x0C, 0x12, 0x12, 0x0C, 0x00, 0x00, 0x00],
+      '•': [0x00, 0x00, 0x0E, 0x0E, 0x0E, 0x00, 0x00],
+      '♥': [0x0A, 0x1F, 0x1F, 0x1F, 0x0E, 0x04, 0x00]
+    };
+
+    // =========================================================================
+    // 3. INDEXEDDB PERSISTENCE LAYER
+    // =========================================================================
+    class StudioDatabase {
+      constructor() {
+        this.db = null;
+      }
+
+      async init() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(STUDIO_CONFIG.dbName, STUDIO_CONFIG.dbVersion);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('signs')) db.createObjectStore('signs', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('plugins')) db.createObjectStore('plugins', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('fonts')) db.createObjectStore('fonts', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('media')) db.createObjectStore('media', { keyPath: 'id' });
+          };
+          req.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+          req.onerror = (e) => reject(e);
+        });
+      }
+
+      async put(storeName, item) {
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          tx.objectStore(storeName).put(item);
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e);
+        });
+      }
+
+      async getAll(storeName) {
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction(storeName, 'readonly');
+          const req = tx.objectStore(storeName).getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = (e) => reject(e);
+        });
+      }
+
+      async delete(storeName, id) {
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          tx.objectStore(storeName).delete(id);
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e);
+        });
+      }
+    }
+
+    // =========================================================================
+    // 4. REAL-TIME WEATHER SERVICE (OPEN-METEO FREE API, 15-MIN POLLING)
+    // =========================================================================
+    class WeatherService {
+      constructor() {
+        this.city = 'New York';
+        this.unit = 'fahrenheit';
+        this.data = { temp: '--', condition: 'SYNCING', wind: 0, humidity: 0 };
+        this.nextPollTime = Date.now() + STUDIO_CONFIG.weatherPollIntervalMs;
+        this.fetchWeather(true);
+        setInterval(() => this.fetchWeather(false), STUDIO_CONFIG.weatherPollIntervalMs);
+        setInterval(() => this.updateCountdownUI(), 1000);
+      }
+
+      updateCountdownUI() {
+        const rem = Math.max(0, this.nextPollTime - Date.now());
+        const mins = Math.floor(rem / 60000);
+        const secs = Math.floor((rem % 60000) / 1000);
+        const el = document.getElementById('weather-last-updated');
+        if (el) el.innerText = `Auto-poll interval: 15m • Next sync in ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      }
+
+      decodeWMO(code) {
+        if (code === 0) return 'CLEAR SKY';
+        if (code <= 3) return 'PARTLY CLOUDY';
+        if (code <= 48) return 'FOGGY';
+        if (code <= 67) return 'RAIN';
+        if (code <= 77) return 'SNOW';
+        if (code <= 82) return 'SHOWERS';
+        return 'THUNDERSTORM';
+      }
+
+      async fetchWeather(manual = false) {
+        const cityInput = document.getElementById('weather-city-input');
+        const unitInput = document.getElementById('weather-unit-select');
+        if (cityInput && cityInput.value.trim()) this.city = cityInput.value.trim();
+        if (unitInput) this.unit = unitInput.value;
+
+        try {
+          const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(this.city)}&count=1&language=en&format=json`);
+          const geoJson = await geoRes.json();
+          if (!geoJson.results || !geoJson.results.length) return;
+
+          const { latitude, longitude, name } = geoJson.results[0];
+          const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&temperature_unit=${this.unit}`);
+          const wJson = await wRes.json();
+
+          if (wJson.current) {
+            const unitSym = this.unit === 'fahrenheit' ? '°F' : '°C';
+            this.data = {
+              city: name.toUpperCase(),
+              temp: `${Math.round(wJson.current.temperature_2m)}${unitSym}`,
+              condition: this.decodeWMO(wJson.current.weather_code),
+              humidity: wJson.current.relative_humidity_2m
+            };
+            const readout = document.getElementById('weather-live-readout');
+            if (readout) readout.innerText = `${this.data.city}: ${this.data.temp} • ${this.data.condition}`;
+          }
+        } catch (err) {
+          console.warn('Weather API poll offline fallback:', err);
+          this.data = { city: this.city.toUpperCase(), temp: '72°F', condition: 'CLEAR (CACHED)', humidity: 45 };
+        }
+        this.nextPollTime = Date.now() + STUDIO_CONFIG.weatherPollIntervalMs;
+      }
+    }
+
+    // =========================================================================
+    // 5. BUILT-IN & EXTENSIBLE ANIMATION REGISTRY
+    // =========================================================================
+    const BUILTIN_ANIMATIONS = {
+      'money_flow_up': {
+        name: 'Jackpot Money Flow',
+        icon: 'fa-sack-dollar',
+        color: 'text-amber-400',
+        desc: 'Rising $ particles + banner',
+        defaultParams: {
+          borderStyle: 'chase',
+          borderColor: '#ffaa00',
+          textBlocks: [
+            { text: 'MEGA JACKPOT', textColor: '#00ff88', fontStyle: 'standard', fontSize: 'small', textAnim: 'none', yPos: 'top' },
+            { text: '$500,000,000', textColor: '#ffcc00', fontStyle: 'bold', fontSize: 'medium', textAnim: 'float', yPos: 'bottom' }
+          ],
+          duration: 7
+        },
+        render(bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) {
+          bgCtx.fillStyle = '#050300';
+          bgCtx.fillRect(0, 0, cols, rows);
+          if (!engine.state.dollars) engine.state.dollars = [];
+          while (engine.state.dollars.length < Math.floor(cols * 0.35)) {
+            engine.state.dollars.push({
+              x: Math.random() * cols,
+              y: Math.random() * rows,
+              vy: 0.35 + Math.random() * 0.65,
+              gold: Math.random() > 0.35
+            });
+          }
+          engine.state.dollars.forEach(p => {
+            p.y -= p.vy;
+            if (p.y < -8) { p.y = rows + 4; p.x = Math.random() * cols; }
+            engine.drawText(animCtx, '$', Math.floor(p.x), Math.floor(p.y), {
+              color: p.gold ? '#ffaa00' : '#00ff88',
+              size: 'small'
+            });
+          });
+          engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);
+        }
+      },
+
+      'marquee_scroll': {
+        name: 'Marquee Banner',
+        icon: 'fa-text-width',
+        color: 'text-cyan-400',
+        desc: 'Smooth scrolling ticker',
+        defaultParams: {
+          borderStyle: 'double',
+          borderColor: '#00f0ff',
+          textBlocks: [
+            { text: 'DOT MATRIX STUDIO ENTERPRISE • HIGH-SPEED LED SIGNAGE', textColor: '#00f0ff', fontStyle: 'bold', fontSize: 'large', textAnim: 'scroll', speed: 2, yPos: 'center' }
+          ],
+          duration: 8
+        },
+        render(bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) {
+          bgCtx.fillStyle = '#000810';
+          bgCtx.fillRect(0, 0, cols, rows);
+          bgCtx.fillStyle = 'rgba(0, 208, 255, 0.12)';
+          for (let x = 0; x < cols; x += 16) bgCtx.fillRect(x, 0, 1, rows);
+          engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);
+        }
+      },
+
+      'fireworks_burst': {
+        name: 'HD Fireworks',
+        icon: 'fa-burst',
+        color: 'text-pink-400',
+        desc: 'Multi-shell particle bursts',
+        defaultParams: {
+          borderStyle: 'neon',
+          borderColor: '#ff007f',
+          textBlocks: [
+            { text: 'CONGRATULATIONS!', textColor: 'rainbow', fontStyle: 'bold', fontSize: 'medium', textAnim: 'pulse', yPos: 'center' }
+          ],
+          duration: 7
+        },
+        render(bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) {
+          if (!engine.state.sparks) engine.state.sparks = [];
+          if (Math.random() < 0.18 || engine.state.sparks.length === 0) {
+            const cx = 12 + Math.random() * (cols - 24);
+            const cy = 10 + Math.random() * (rows - 20);
+            const hue = Math.floor(Math.random() * 360);
+            for (let i = 0; i < 42; i++) {
+              const a = (Math.PI * 2 * i) / 42;
+              const spd = 0.5 + Math.random() * 2.2;
+              engine.state.sparks.push({ x: cx, y: cy, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, life: 1, hue });
+            }
+          }
+          for (let i = engine.state.sparks.length - 1; i >= 0; i--) {
+            const s = engine.state.sparks[i];
+            s.x += s.vx; s.y += s.vy; s.vy += 0.03; s.life -= 0.025;
+            if (s.life <= 0) { engine.state.sparks.splice(i, 1); continue; }
+            animCtx.fillStyle = `hsl(${s.hue}, 100%, ${Math.floor(s.life * 60 + 25)}%)`;
+            animCtx.fillRect(Math.floor(s.x), Math.floor(s.y), 1, 1);
+          }
+          engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);
+        }
+      },
+
+      'plasma_vortex': {
+        name: 'Trig Plasma Vortex',
+        icon: 'fa-atom',
+        color: 'text-purple-400',
+        desc: 'Advanced math wave shader',
+        defaultParams: {
+          borderStyle: 'solid',
+          borderColor: '#ffffff',
+          textBlocks: [
+            { text: 'VIP LOUNGE', textColor: '#ffffff', fontStyle: 'bold', fontSize: 'medium', textAnim: 'wave', yPos: 'top' },
+            { text: 'OPEN TONIGHT', textColor: '#00f0ff', fontStyle: 'standard', fontSize: 'small', textAnim: 'blink', yPos: 'bottom' }
+          ],
+          duration: 7
+        },
+        render(bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) {
+          const t = elapsed * 2.5;
+          const step = cols >= 256 ? 2 : 1;
+          for (let y = 0; y < rows; y += step) {
+            for (let x = 0; x < cols; x += step) {
+              const v = Math.sin(x * 0.06 + t) + Math.sin((y * 0.08 + t) * 0.8) + Math.sin((x + y) * 0.04 + t);
+              const hue = Math.floor((v + 3) * 60 + elapsed * 40) % 360;
+              bgCtx.fillStyle = `hsl(${hue}, 95%, 45%)`;
+              bgCtx.fillRect(x, y, step, step);
+            }
+          }
+          engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);
+        }
+      },
+
+      'weather_clock': {
+        name: 'Real Time & Weather',
+        icon: 'fa-cloud-sun',
+        color: 'text-amber-300',
+        desc: 'Live clock + 15m weather',
+        defaultParams: {
+          borderStyle: 'dashed',
+          borderColor: '#00ff88',
+          textBlocks: [],
+          duration: 8
+        },
+        render(bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) {
+          bgCtx.fillStyle = '#020813';
+          bgCtx.fillRect(0, 0, cols, rows);
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const w = engine.weatherService.data;
+          const weatherStr = `${w.city || 'NYC'} ${w.temp} ${w.condition}`;
+
+          const pulse = Math.sin(elapsed * 4) * 1.5;
+          animCtx.fillStyle = '#ffaa00';
+          animCtx.beginPath();
+          animCtx.arc(14, Math.floor(rows * 0.35), 5 + pulse * 0.3, 0, Math.PI * 2);
+          animCtx.fill();
+
+          engine.drawTextCentered(textCtx, timeStr, Math.floor(rows * 0.22), { color: '#00ff88', size: cols >= 256 ? 'large' : 'medium', bold: true });
+          engine.drawTextCentered(textCtx, weatherStr, Math.floor(rows * 0.62), { color: '#ffaa00', size: 'small', bold: false });
+          engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);
+        }
+      },
+
+      'neon_open': {
+        name: 'Neon OPEN Frame',
+        icon: 'fa-store',
+        color: 'text-rose-400',
+        desc: 'Pulsing storefront border',
+        defaultParams: {
+          borderStyle: 'double',
+          borderColor: '#ff0055',
+          textBlocks: [
+            { text: 'OPEN NOW', textColor: '#00ff88', fontStyle: 'bold', fontSize: 'large', textAnim: 'blink', yPos: 'center' }
+          ],
+          duration: 6
+        },
+        render(bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) {
+          bgCtx.fillStyle = '#060104';
+          bgCtx.fillRect(0, 0, cols, rows);
+          engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);
+        }
+      }
+    };
+
+    const INDUSTRY_PRESET_PACKS = [
+      {
+        id: 'lotto_jackpot',
+        title: 'Lottery & Casino Jackpot',
+        icon: 'fa-sack-dollar',
+        color: 'text-amber-400',
+        palette: 'amber',
+        blocks: [
+          {
+            type: 'money_flow_up',
+            borderStyle: 'chase',
+            borderColor: '#ffaa00',
+            textBlocks: [
+              { text: 'POWERBALL JACKPOT', textColor: '#00ff88', fontStyle: 'standard', fontSize: 'small', textAnim: 'none', yPos: 'top' },
+              { text: '$620 MILLION', textColor: '#ffcc00', fontStyle: 'bold', fontSize: 'medium', textAnim: 'float', yPos: 'bottom' }
+            ],
+            duration: 6
+          },
+          {
+            type: 'fireworks_burst',
+            borderStyle: 'neon',
+            borderColor: '#ff007f',
+            textBlocks: [
+              { text: 'WINNING TICKET SOLD HERE!', textColor: 'rainbow', fontStyle: 'bold', fontSize: 'medium', textAnim: 'scroll', speed: 2, yPos: 'center' }
+            ],
+            duration: 7
+          },
+          { type: 'weather_clock', borderStyle: 'solid', borderColor: '#00ff88', textBlocks: [], duration: 5 }
+        ]
+      },
+      {
+        id: 'retail_storefront',
+        title: 'Retail Storefront & Flash Sale',
+        icon: 'fa-store',
+        color: 'text-emerald-400',
+        palette: 'emerald',
+        blocks: [
+          {
+            type: 'neon_open',
+            borderStyle: 'double',
+            borderColor: '#ff0055',
+            textBlocks: [
+              { text: 'OPEN', textColor: '#00ff88', fontStyle: 'bold', fontSize: 'large', textAnim: 'blink', yPos: 'top' },
+              { text: 'WELCOME IN!', textColor: '#ffffff', fontStyle: 'standard', fontSize: 'small', textAnim: 'pulse', yPos: 'bottom' }
+            ],
+            duration: 5
+          },
+          {
+            type: 'marquee_scroll',
+            borderStyle: 'chase',
+            borderColor: '#00f0ff',
+            textBlocks: [
+              { text: 'WEEKEND FLASH SALE • UP TO 50% OFF EVERYTHING', textColor: '#00f0ff', fontStyle: 'bold', fontSize: 'medium', textAnim: 'scroll', speed: 2, yPos: 'center' }
+            ],
+            duration: 8
+          },
+          { type: 'weather_clock', borderStyle: 'dashed', borderColor: '#00ff88', textBlocks: [], duration: 5 }
+        ]
+      },
+      {
+        id: 'nightclub_lounge',
+        title: 'Nightclub & VIP Lounge',
+        icon: 'fa-champagne-glasses',
+        color: 'text-purple-400',
+        palette: 'cyberpunk',
+        blocks: [
+          {
+            type: 'plasma_vortex',
+            borderStyle: 'neon',
+            borderColor: '#00f0ff',
+            textBlocks: [
+              { text: 'VIP TABLE SERVICE', textColor: '#ffffff', fontStyle: 'bold', fontSize: 'medium', textAnim: 'wave', yPos: 'center' }
+            ],
+            duration: 7
+          },
+          {
+            type: 'fireworks_burst',
+            borderStyle: 'chase',
+            borderColor: '#ff007f',
+            textBlocks: [
+              { text: 'DJ LIVE TONIGHT', textColor: '#ff007f', fontStyle: 'bold', fontSize: 'large', textAnim: 'pulse', yPos: 'center' }
+            ],
+            duration: 6
+          }
+        ]
+      },
+      {
+        id: 'transit_hub',
+        title: 'Transit & Info Kiosk',
+        icon: 'fa-train-subway',
+        color: 'text-cyan-400',
+        palette: 'ice',
+        blocks: [
+          { type: 'weather_clock', borderStyle: 'solid', borderColor: '#00d0ff', textBlocks: [], duration: 7 },
+          {
+            type: 'marquee_scroll',
+            borderStyle: 'double',
+            borderColor: '#ffaa00',
+            textBlocks: [
+              { text: 'EXPRESS TRAIN TO DOWNTOWN ARRIVING ON PLATFORM 2', textColor: '#ffaa00', fontStyle: 'bold', fontSize: 'medium', textAnim: 'scroll', speed: 2, yPos: 'center' }
+            ],
+            duration: 8
+          }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 6. CORE OFFSCREEN BUFFERED & DIRTY-RECT DOT MATRIX ENGINE
+    // =========================================================================
+    class DotMatrixEngine {
+      constructor() {
+        this.db = new StudioDatabase();
+        this.weatherService = new WeatherService();
+        this.hexFont = JSON.parse(JSON.stringify(DEFAULT_HEX_FONT));
+        this.registry = { ...BUILTIN_ANIMATIONS };
+
+        // Resolution & Orientation State
+        this.resKey = '128x64';
+        this.isVertical = false;
+        this.cols = 128;
+        this.rows = 64;
+        this.dotSize = 5;
+        this.dotGap = 1;
+
+        // Visual Hardware Config
+        this.dotShape = 'square';
+        this.scanlineMode = 'none';
+        this.neonGlow = false;
+        this.brightness = 0.9;
+        this.colorPreset = 'amber';
+        this.bgTheme = 'dim';
+        this.showDirtyDebug = false;
+
+        // Multi-Layer Offscreen Canvas Buffers (Background, Animation, Text, Composite)
+        this.bgCanvas = document.createElement('canvas');
+        this.bgCtx = this.bgCanvas.getContext('2d', { willReadFrequently: true });
+
+        this.animCanvas = document.createElement('canvas');
+        this.animCtx = this.animCanvas.getContext('2d', { willReadFrequently: true });
+
+        this.textCanvas = document.createElement('canvas');
+        this.textCtx = this.textCanvas.getContext('2d', { willReadFrequently: true });
+
+        this.compCanvas = document.createElement('canvas');
+        this.compCtx = this.compCanvas.getContext('2d', { willReadFrequently: true });
+
+        // Primary & Fullscreen Output Canvases
+        this.canvas = document.getElementById('matrix-canvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+
+        this.fsCanvas = document.getElementById('fullscreen-matrix-canvas');
+        this.fsCtx = this.fsCanvas.getContext('2d', { alpha: false });
+
+        // Dirty-Rect Previous Frame Buffer (Uint32Array for ultra-fast pixel diffing)
+        this.prevFrameBuffer = null;
+        this.forceFullRepaint = true;
+
+        // Multi-Monitor Native Window Channel
+        this.channel = new BroadcastChannel('dot_matrix_sync_channel');
+        this.childMonitors = [];
+
+        // Live Media Streams (Webcam / Mic / Uploaded Media)
+        this.webcamVideo = null;
+        this.audioAnalyser = null;
+        this.audioData = null;
+        this.mediaAssets = {}; // id -> Image or Video element
+
+        // Timeline & Scheduler State
+        this.currentSign = {
+          id: 'sign_default',
+          title: 'Enterprise Flagship Sign',
+          blocks: JSON.parse(JSON.stringify(INDUSTRY_PRESET_PACKS[0].blocks))
+        };
+        this.activeBlockIndex = 0;
+        this.blockStartTime = performance.now();
+        this.scrollOffset = 0;
+        this.state = {};
+        this.schedulerEnabled = false;
+        this.scheduleRules = [
+          { id: 'r1', start: '08:00', end: '18:00', blockType: 'neon_open' },
+          { id: 'r2', start: '18:01', end: '23:59', blockType: 'fireworks_burst' }
+        ];
+
+        this.init();
+      }
+
+      async init() {
+        await this.db.init();
+        await this.loadPersistedData();
+        this.applyDimensions();
+        this.renderPaletteButtons();
+        this.renderTimelineUI();
+        this.renderPresetsGrid();
+        this.renderSignsCRUDGrid();
+        this.renderScheduleRules();
+        this.initHexMapperUI();
+        this.loadDevTemplate();
+        this.renderDevPluginsList();
+
+        // Listen for secondary monitor requests
+        this.channel.onmessage = (e) => {
+          if (e.data.type === 'MONITOR_HELLO') {
+            this.forceFullRepaint = true;
+            this.updateMonitorCount();
+          }
+        };
+
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      async loadPersistedData() {
+        const savedPlugins = await this.db.getAll('plugins');
+        savedPlugins.forEach(p => {
+          try {
+            const fn = new Function('bgCtx', 'animCtx', 'textCtx', 'cols', 'rows', 'elapsed', 'block', 'engine', p.code);
+            this.registry[p.id] = {
+              name: p.name,
+              icon: 'fa-code',
+              color: 'text-emerald-400',
+              desc: p.desc || 'Custom JS FX',
+              isCustom: true,
+              defaultParams: {
+                borderStyle: 'solid',
+                borderColor: '#00ff88',
+                textBlocks: [
+                  { text: 'CUSTOM FX', textColor: '#00ff88', fontStyle: 'bold', fontSize: 'medium', textAnim: 'none', yPos: 'center' }
+                ],
+                duration: 6
+              },
+              render: fn
+            };
+          } catch (err) {
+            console.error('Failed loading plugin:', p.id, err);
+          }
+        });
+
+        // Reload persisted Images & Videos from IndexedDB 'media' store
+        const savedMedia = await this.db.getAll('media');
+        for (const item of savedMedia) {
+          if (item && item.blob) {
+            await this.registerMediaAssetFromBlob(item.id, item.name, item.mimeType, item.blob, false);
+          }
+        }
+
+        const savedFonts = await this.db.getAll('fonts');
+        if (savedFonts.length > 0 && savedFonts[0].map) {
+          this.hexFont = { ...DEFAULT_HEX_FONT, ...savedFonts[0].map };
+        }
+      }
+
+      // =====================================================================
+      // RESOLUTION & VERTICAL ORIENTATION ENGINE
+      // =====================================================================
+      setResolution(resKey) {
+        this.resKey = resKey;
+        this.applyDimensions();
+      }
+
+      toggleVerticalMode() {
+        this.isVertical = !this.isVertical;
+        const lbl = document.getElementById('orientation-label');
+        if (lbl) lbl.innerText = this.isVertical ? 'Vertical' : 'Horizontal';
+        this.applyDimensions();
+      }
+
+      applyDimensions() {
+        const cfg = STUDIO_CONFIG.resolutions[this.resKey] || STUDIO_CONFIG.resolutions['128x64'];
+        this.cols = this.isVertical ? cfg.rows : cfg.cols;
+        this.rows = this.isVertical ? cfg.cols : cfg.rows;
+        this.dotSize = cfg.dotSize;
+        this.dotGap = cfg.dotGap;
+
+        // Resize all 4 offscreen layers
+        [this.bgCanvas, this.animCanvas, this.textCanvas, this.compCanvas].forEach(c => {
+          c.width = this.cols;
+          c.height = this.rows;
+        });
+
+        // Resize output LED canvases
+        const pitch = this.dotSize + this.dotGap;
+        const outW = this.cols * pitch + this.dotGap;
+        const outH = this.rows * pitch + this.dotGap;
+
+        this.canvas.width = outW;
+        this.canvas.height = outH;
+        this.fsCanvas.width = outW;
+        this.fsCanvas.height = outH;
+
+        // Reset Dirty-Rect comparison buffer
+        this.prevFrameBuffer = new Uint32Array(this.cols * this.rows);
+        this.prevFrameBuffer.fill(0xFFFFFFFF);
+        this.forceFullRepaint = true;
+
+        const tel = document.getElementById('telemetry-res');
+        if (tel) tel.innerText = `${this.cols}x${this.rows} ${this.isVertical ? 'VERTICAL' : 'HORIZONTAL'}`;
+      }
+
+      // =====================================================================
+      // MULTI-MONITOR NATIVE POP-OUT WINDOW FEATURE
+      // =====================================================================
+      spawnMonitorWindow() {
+        const monitorId = this.childMonitors.length + 1;
+        const win = window.open('', `DotMatrixMonitor_${monitorId}`, 'width=820,height=460,menubar=no,toolbar=no,location=no,status=no');
+        if (!win) {
+          alert('Popup blocked! Please allow popups for this site to spawn a second Dot Matrix Monitor.');
+          return;
+        }
+
+        win.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Dot Matrix External Monitor #${monitorId}</title>
+            <style>
+              body { margin: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: monospace; color: #00ff88; }
+              canvas { max-width: 100%; max-height: 94vh; object-fit: contain; box-shadow: 0 0 40px rgba(0,255,136,0.15); }
+              .hud { position: fixed; top: 8px; left: 12px; font-size: 11px; opacity: 0.6; pointer-events: none; }
+            </style>
+          </head>
+          <body>
+            <div class="hud">EXT MONITOR #${monitorId} • SYNCED VIA BROADCAST CHANNEL</div>
+            <canvas id="ext-canvas"></canvas>
+            <script>
+              const canvas = document.getElementById('ext-canvas');
+              const ctx = canvas.getContext('2d');
+              const ch = new BroadcastChannel('dot_matrix_sync_channel');
+              ch.postMessage({ type: 'MONITOR_HELLO' });
+
+              ch.onmessage = (e) => {
+                if (e.data.type === 'FRAME_SYNC') {
+                  const { cols, rows, dotSize, dotGap, dotShape, pixels } = e.data;
+                  const pitch = dotSize + dotGap;
+                  const w = cols * pitch + dotGap;
+                  const h = rows * pitch + dotGap;
+                  if (canvas.width !== w || canvas.height !== h) {
+                    canvas.width = w; canvas.height = h;
+                  }
+                  ctx.fillStyle = '#030508';
+                  ctx.fillRect(0, 0, w, h);
+                  const buf = new Uint32Array(pixels);
+                  for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                      const c = buf[y * cols + x];
+                      const r = c & 0xFF;
+                      const g = (c >> 8) & 0xFF;
+                      const b = (c >> 16) & 0xFF;
+                      ctx.fillStyle = (r === 0 && g === 0 && b === 0) ? '#0d121c' : \`rgb(\${r},\${g},\${b})\`;
+                      const px = dotGap + x * pitch;
+                      const py = dotGap + y * pitch;
+                      if (dotShape === 'round') {
+                        ctx.beginPath();
+                        ctx.arc(px + dotSize/2, py + dotSize/2, dotSize/2, 0, Math.PI*2);
+                        ctx.fill();
+                      } else {
+                        ctx.fillRect(px, py, dotSize, dotSize);
+                      }
+                    }
+                  }
+                }
+              };
+            <\/script>
+          </body>
+          </html>
+        `);
+        win.document.close();
+        this.childMonitors.push(win);
+        this.updateMonitorCount();
+      }
+
+      updateMonitorCount() {
+        this.childMonitors = this.childMonitors.filter(w => !w.closed);
+        const el = document.getElementById('telemetry-monitors');
+        if (el) el.innerText = `MONITORS: ${1 + this.childMonitors.length}`;
+      }
+
+      // =====================================================================
+      // TEXT RENDERING ENGINE (ANIMATIONS, COLORS, FONTS, SIZES)
+      // =====================================================================
+      measureText(str, size = 'medium', bold = false) {
+        const scale = size === 'small' ? 1 : size === 'large' ? 2 : size === 'xl' ? 3 : 1.5;
+        const charW = (5 + 1) * scale + (bold ? 1 : 0);
+        return Math.max(0, Math.round(str.length * charW - scale));
+      }
+
+      drawText(ctx, text, x, y, opts = {}) {
+        const str = (text || '').toUpperCase();
+        const size = opts.size || 'medium';
+        const bold = !!opts.bold;
+        const color = opts.color || STUDIO_CONFIG.colorPalettes[this.colorPreset].main;
+        const scale = size === 'small' ? 1 : size === 'large' ? 2 : size === 'xl' ? 3 : 1.5;
+        const step = Math.ceil(scale);
+
+        let cursorX = Math.floor(x);
+        for (let i = 0; i < str.length; i++) {
+          const ch = str[i];
+          const glyph = this.hexFont[ch] || this.hexFont[' '];
+          if (!glyph) { cursorX += Math.round(6 * scale); continue; }
+
+          for (let r = 0; r < 7; r++) {
+            const rowBits = glyph[r] || 0;
+            for (let c = 0; c < 5; c++) {
+              if ((rowBits >> (4 - c)) & 1) {
+                for (let sy = 0; sy < step; sy++) {
+                  for (let sx = 0; sx < step; sx++) {
+                    const px = Math.floor(cursorX + c * scale + sx);
+                    const py = Math.floor(y + r * scale + sy);
+                    if (px >= 0 && px < this.cols && py >= 0 && py < this.rows) {
+                      if (color === 'rainbow' || this.colorPreset === 'rainbow') {
+                        ctx.fillStyle = `hsl(${(px * 6 + performance.now() * 0.08) % 360}, 100%, 55%)`;
+                      } else {
+                        ctx.fillStyle = color;
+                      }
+                      ctx.fillRect(px, py, 1, 1);
+                      if (bold && px + 1 < this.cols) ctx.fillRect(px + 1, py, 1, 1);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          cursorX += Math.round(6 * scale + (bold ? 1 : 0));
+        }
+      }
+
+      drawTextCentered(ctx, text, y, opts = {}) {
+        const w = this.measureText(text, opts.size, opts.bold);
+        const x = Math.floor((this.cols - w) / 2);
+        this.drawText(ctx, text, x, y, opts);
+      }
+
+      // =====================================================================
+      // BORDER RENDERER & MULTI-TEXT-BLOCK LAYER RENDERER
+      // =====================================================================
+      renderBorderLayer(ctx, block, cols, rows, elapsed) {
+        const style = block.borderStyle || 'none';
+        if (style === 'none') return;
+
+        const baseColor = block.borderColor || STUDIO_CONFIG.colorPalettes[this.colorPreset].main;
+        ctx.fillStyle = baseColor;
+        ctx.strokeStyle = baseColor;
+
+        if (style === 'solid') {
+          ctx.lineWidth = 1;
+          ctx.strokeRect(0.5, 0.5, cols - 1, rows - 1);
+        } else if (style === 'double') {
+          ctx.lineWidth = 1;
+          ctx.strokeRect(0.5, 0.5, cols - 1, rows - 1);
+          ctx.strokeRect(2.5, 2.5, cols - 5, rows - 5);
+        } else if (style === 'dashed') {
+          const dashLen = 4;
+          for (let x = 0; x < cols; x += dashLen * 2) {
+            ctx.fillRect(x, 0, dashLen, 1);
+            ctx.fillRect(x, rows - 1, dashLen, 1);
+          }
+          for (let y = 0; y < rows; y += dashLen * 2) {
+            ctx.fillRect(0, y, 1, dashLen);
+            ctx.fillRect(cols - 1, y, 1, dashLen);
+          }
+        } else if (style === 'chase') {
+          const phase = Math.floor(elapsed * 14) % 4;
+          for (let x = 0; x < cols; x++) {
+            if ((x + phase) % 4 < 2) ctx.fillRect(x, 0, 1, 1);
+            if ((cols - x + phase) % 4 < 2) ctx.fillRect(x, rows - 1, 1, 1);
+          }
+          for (let y = 0; y < rows; y++) {
+            if ((y + phase) % 4 < 2) ctx.fillRect(cols - 1, y, 1, 1);
+            if ((rows - y + phase) % 4 < 2) ctx.fillRect(0, y, 1, 1);
+          }
+        } else if (style === 'neon') {
+          const flash = Math.floor(elapsed * 4) % 2 === 0;
+          ctx.strokeStyle = flash ? baseColor : '#00f0ff';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(1, 1, cols - 2, rows - 2);
+          ctx.strokeStyle = flash ? '#00f0ff' : baseColor;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(3.5, 3.5, cols - 7, rows - 7);
+        } else if (style === 'strobe') {
+          const strobePhase = Math.floor(elapsed * 8) % 2 === 0;
+          ctx.strokeStyle = strobePhase ? '#00ff88' : '#ff0044';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(1, 1, cols - 2, rows - 2);
+          ctx.strokeStyle = strobePhase ? '#ff0044' : '#00ff88';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(3.5, 3.5, cols - 7, rows - 7);
+        }
+      }
+
+      renderSingleTextBlock(ctx, tb, cols, rows, elapsed, indexOffset = 0) {
+        const text = tb.text || '';
+        if (!text) return;
+
+        const size = tb.fontSize || 'medium';
+        const bold = tb.fontStyle === 'bold';
+        const color = tb.textColor || '#00ff88';
+        const anim = tb.textAnim || 'none';
+        const yPos = tb.yPos || 'center';
+        const scale = size === 'small' ? 1 : size === 'large' ? 2 : size === 'xl' ? 3 : 1.5;
+        const textH = Math.round(7 * scale);
+        const textW = this.measureText(text, size, bold);
+
+        let x = Math.floor((cols - textW) / 2);
+        let y = Math.floor((rows - textH) / 2);
+
+        if (yPos === 'top') {
+          y = Math.max(4, Math.floor(rows * 0.14));
+        } else if (yPos === 'bottom') {
+          y = Math.min(rows - textH - 4, Math.floor(rows * 0.86 - textH));
+        } else if (yPos === 'upper_mid') {
+          y = Math.floor(rows * 0.32 - textH / 2);
+        } else if (yPos === 'lower_mid') {
+          y = Math.floor(rows * 0.68 - textH / 2);
+        }
+
+        if (anim === 'scroll') {
+          const spd = (tb.speed || 2) * 28;
+          x = cols - (((elapsed + indexOffset * 0.7) * spd) % (cols + textW));
+        } else if (anim === 'float') {
+          y += Math.round(Math.sin(elapsed * 3 + indexOffset) * 2);
+        } else if (anim === 'wave') {
+          y += Math.round(Math.cos(elapsed * 5 + indexOffset) * 3);
+          x += Math.round(Math.sin(elapsed * 3 + indexOffset) * 3);
+        } else if (anim === 'blink') {
+          if (Math.floor(elapsed * 3.5 + indexOffset) % 2 === 0) return;
+        } else if (anim === 'pulse') {
+          ctx.globalAlpha = 0.45 + 0.55 * ((Math.sin(elapsed * 6 + indexOffset) + 1) / 2);
+        }
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.58)';
+        ctx.fillRect(Math.max(0, x - 2), Math.max(0, y - 1), textW + 4, textH + 2);
+
+        this.drawText(ctx, text, x, y, { size, bold, color });
+        ctx.globalAlpha = 1.0;
+      }
+
+      renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed) {
+        this.renderBorderLayer(animCtx, block, cols, rows, elapsed);
+
+        // Support both modern multi-textBlocks array and legacy single-text fallback
+        if (Array.isArray(block.textBlocks) && block.textBlocks.length > 0) {
+          block.textBlocks.forEach((tb, i) => {
+            this.renderSingleTextBlock(textCtx, tb, cols, rows, elapsed, i);
+          });
+        } else if (block.text) {
+          this.renderSingleTextBlock(textCtx, block, cols, rows, elapsed, 0);
+        }
+      }
+
+      renderBlockTextLayer(ctx, block, cols, rows, elapsed) {
+        this.renderBlockDecorationsAndTexts(this.animCtx, ctx, block, cols, rows, elapsed);
+      }
+
+      // =====================================================================
+      // MAIN RENDER LOOP WITH OFFSCREEN LAYERS & DIRTY-RECT OPTIMIZATION
+      // =====================================================================
+      loop(timestamp) {
+        const blocks = this.currentSign.blocks;
+        if (blocks.length > 0) {
+          // Check Content Scheduler override
+          if (this.schedulerEnabled) {
+            const now = new Date();
+            const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const activeRule = this.scheduleRules.find(r => hhmm >= r.start && hhmm <= r.end);
+            if (activeRule) {
+              const foundIdx = blocks.findIndex(b => b.type === activeRule.blockType);
+              if (foundIdx !== -1) this.activeBlockIndex = foundIdx;
+            }
+          }
+
+          if (this.activeBlockIndex >= blocks.length) this.activeBlockIndex = 0;
+          const block = blocks[this.activeBlockIndex];
+          const elapsed = (timestamp - this.blockStartTime) / 1000;
+
+          if (!this.schedulerEnabled && elapsed >= (block.duration || 6)) {
+            this.activeBlockIndex = (this.activeBlockIndex + 1) % blocks.length;
+            this.blockStartTime = timestamp;
+            this.state = {};
+            this.renderTimelineUI();
+          }
+
+          // 1. Clear all 3 independent offscreen layer buffers
+          this.bgCtx.clearRect(0, 0, this.cols, this.rows);
+          this.animCtx.clearRect(0, 0, this.cols, this.rows);
+          this.textCtx.clearRect(0, 0, this.cols, this.rows);
+
+          // 2. Render active feature block into offscreen buffers
+          const renderer = this.registry[block.type];
+          if (renderer && renderer.render) {
+            try {
+              renderer.render(this.bgCtx, this.animCtx, this.textCtx, this.cols, this.rows, elapsed, block, this);
+            } catch (e) {
+              console.warn('Render error in block:', block.type, e);
+            }
+          }
+
+          // 3. Composite Background -> Animation -> Text onto Composite Offscreen Canvas
+          this.compCtx.fillStyle = '#000000';
+          this.compCtx.fillRect(0, 0, this.cols, this.rows);
+          this.compCtx.drawImage(this.bgCanvas, 0, 0);
+          this.compCtx.drawImage(this.animCanvas, 0, 0);
+          this.compCtx.drawImage(this.textCanvas, 0, 0);
+
+          // 4. Dirty-Rect Differential Paint to Visible LED Matrix Canvas
+          this.paintDirtyLEDMatrix();
+        }
+
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      paintDirtyLEDMatrix() {
+        const imgData = this.compCtx.getImageData(0, 0, this.cols, this.rows);
+        const currBuf = new Uint32Array(imgData.data.buffer);
+        const totalPixels = this.cols * this.rows;
+        const pitch = this.dotSize + this.dotGap;
+        const dimColor = this.bgTheme === 'black' ? '#05070a' : STUDIO_CONFIG.colorPalettes[this.colorPreset].bgDim;
+
+        if (this.forceFullRepaint) {
+          this.ctx.fillStyle = '#020408';
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        let dirtyCount = 0;
+
+        for (let i = 0; i < totalPixels; i++) {
+          const packed = currBuf[i];
+          if (!this.forceFullRepaint && packed === this.prevFrameBuffer[i]) {
+            continue; // Pixel unchanged -> browser skips painting this LED!
+          }
+
+          this.prevFrameBuffer[i] = packed;
+          dirtyCount++;
+
+          const x = i % this.cols;
+          const y = (i / this.cols) | 0;
+          const px = this.dotGap + x * pitch;
+          const py = this.dotGap + y * pitch;
+
+          // Clear individual cell slot before painting updated LED state
+          this.ctx.fillStyle = '#020408';
+          this.ctx.fillRect(px, py, this.dotSize, this.dotSize);
+
+          const r = Math.min(255, ((packed & 0xFF) * this.brightness) | 0);
+          const g = Math.min(255, (((packed >> 8) & 0xFF) * this.brightness) | 0);
+          const b = Math.min(255, (((packed >> 16) & 0xFF) * this.brightness) | 0);
+
+          if (r < 8 && g < 8 && b < 8) {
+            this.ctx.fillStyle = dimColor;
+          } else {
+            this.ctx.fillStyle = `rgb(${r},${g},${b})`;
+          }
+
+          if (this.dotShape === 'round' && this.dotSize >= 3) {
+            this.ctx.beginPath();
+            this.ctx.arc(px + this.dotSize / 2, py + this.dotSize / 2, this.dotSize / 2, 0, Math.PI * 2);
+            this.ctx.fill();
+          } else {
+            this.ctx.fillRect(px, py, this.dotSize, this.dotSize);
+          }
+
+          // Optional Dirty-Rect visual debug outline
+          if (this.showDirtyDebug && (r >= 8 || g >= 8 || b >= 8)) {
+            this.ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+            this.ctx.strokeRect(px, py, this.dotSize, this.dotSize);
+          }
+        }
+
+        this.forceFullRepaint = false;
+
+        // Update Telemetry HUD
+        const dirtyEl = document.getElementById('telemetry-dirty');
+        if (dirtyEl) dirtyEl.innerText = `DIRTY REPAINT: ${dirtyCount} / ${totalPixels} LEDs`;
+
+        // Mirror to Fullscreen if active
+        if (!document.getElementById('fullscreen-overlay').classList.contains('hidden')) {
+          this.fsCtx.drawImage(this.canvas, 0, 0);
+        }
+
+        // Sync to Secondary Monitor Windows if open
+        if (this.childMonitors.length > 0 && dirtyCount > 0) {
+          this.updateMonitorCount();
+          if (this.childMonitors.length > 0) {
+            this.channel.postMessage({
+              type: 'FRAME_SYNC',
+              cols: this.cols,
+              rows: this.rows,
+              dotSize: this.dotSize,
+              dotGap: this.dotGap,
+              dotShape: this.dotShape,
+              pixels: imgData.data.buffer
+            });
+          }
+        }
+      }
+
+      // =====================================================================
+      // LIVE HARDWARE IMPORTS (WEBCAM, MICROPHONE, IMAGE/VIDEO CONVERTER)
+      // =====================================================================
+      async addLiveMediaBlock(kind) {
+        if (kind === 'webcam') {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 256, height: 128 } });
+            this.webcamVideo = document.createElement('video');
+            this.webcamVideo.srcObject = stream;
+            this.webcamVideo.muted = true;
+            await this.webcamVideo.play();
+
+            const mode = document.getElementById('webcam-mode').value;
+            this.registry['live_webcam'] = {
+              name: 'Live Webcam Feed',
+              icon: 'fa-video',
+              color: 'text-cyan-400',
+              desc: 'Real-time camera matrix',
+              defaultParams: { text: '', duration: 15, mode },
+              render: (bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) => {
+                if (!engine.webcamVideo) return;
+                bgCtx.drawImage(engine.webcamVideo, 0, 0, cols, rows);
+                if (block.mode === 'mono') {
+                  const img = bgCtx.getImageData(0, 0, cols, rows);
+                  const d = img.data;
+                  for (let i = 0; i < d.length; i += 4) {
+                    const lum = (d[i] + d[i+1] + d[i+2]) / 3;
+                    const v = lum > 110 ? 255 : 0;
+                    d[i] = v; d[i+1] = Math.floor(v * 0.7); d[i+2] = 0;
+                  }
+                  bgCtx.putImageData(img, 0, 0);
+                }
+                engine.renderBlockTextLayer(textCtx, block, cols, rows, elapsed);
+              }
+            };
+
+            this.addSequenceBlock('live_webcam');
+            this.setPage('studio');
+          } catch (e) {
+            alert('Webcam access denied or unavailable: ' + e.message);
+          }
+        } else if (kind === 'microphone') {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const src = audioCtx.createMediaStreamSource(stream);
+            this.audioAnalyser = audioCtx.createAnalyser();
+            this.audioAnalyser.fftSize = 128;
+            src.connect(this.audioAnalyser);
+            this.audioData = new Uint8Array(this.audioAnalyser.frequencyBinCount);
+
+            const style = document.getElementById('mic-mode').value;
+            this.registry['live_mic'] = {
+              name: 'Mic Spectrum FX',
+              icon: 'fa-microphone-lines',
+              color: 'text-emerald-400',
+              desc: 'Audio-reactive LED bars',
+              defaultParams: { text: 'LIVE AUDIO', textColor: '#ffffff', fontSize: 'small', textAnim: 'none', duration: 15, style },
+              render: (bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) => {
+                if (!engine.audioAnalyser) return;
+                engine.audioAnalyser.getByteFrequencyData(engine.audioData);
+                const bins = engine.audioData.length;
+                const barW = Math.max(1, Math.floor(cols / bins));
+                for (let i = 0; i < bins; i++) {
+                  const val = engine.audioData[i] / 255;
+                  const h = Math.floor(val * rows);
+                  const hue = Math.floor((i / bins) * 280);
+                  animCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                  animCtx.fillRect(i * barW, rows - h, Math.max(1, barW - 1), h);
+                }
+                engine.renderBlockTextLayer(textCtx, block, cols, rows, elapsed);
+              }
+            };
+
+            this.addSequenceBlock('live_mic');
+            this.setPage('studio');
+          } catch (e) {
+            alert('Microphone access denied or unavailable: ' + e.message);
+          }
+        }
+      }
+
+      async handleMediaUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const statusEl = document.getElementById('media-upload-status');
+        if (statusEl) statusEl.innerText = `Saving & converting ${file.name} to IndexedDB...`;
+
+        const mediaId = 'media_' + Date.now();
+        // Persist raw Blob directly in IndexedDB 'media' store
+        await this.db.put('media', {
+          id: mediaId,
+          name: file.name,
+          mimeType: file.type,
+          blob: file,
+          createdAt: Date.now()
+        });
+
+        await this.registerMediaAssetFromBlob(mediaId, file.name, file.type, file, true);
+        if (statusEl) statusEl.innerText = `Saved "${file.name}" to IndexedDB & Timeline!`;
+        event.target.value = '';
+      }
+
+      async registerMediaAssetFromBlob(mediaId, fileName, mimeType, blob, addToTimeline = false) {
+        const url = URL.createObjectURL(blob);
+        const isVideo = (mimeType || '').startsWith('video/');
+
+        if (isVideo) {
+          const vid = document.createElement('video');
+          vid.src = url;
+          vid.loop = true;
+          vid.muted = true;
+          vid.playsInline = true;
+          try { await vid.play(); } catch (e) { /* will play on interaction */ }
+          this.mediaAssets[mediaId] = vid;
+        } else {
+          const img = new Image();
+          img.src = url;
+          await new Promise(r => { img.onload = r; img.onerror = r; });
+          this.mediaAssets[mediaId] = img;
+        }
+
+        this.registry[mediaId] = {
+          name: fileName.substring(0, 16),
+          icon: isVideo ? 'fa-film' : 'fa-image',
+          color: 'text-amber-400',
+          desc: isVideo ? 'Saved Video (IDB)' : 'Saved Image (IDB)',
+          defaultParams: {
+            borderStyle: 'none',
+            borderColor: '#ffaa00',
+            textBlocks: [],
+            duration: 8
+          },
+          render: (bgCtx, animCtx, textCtx, cols, rows, elapsed, block, engine) => {
+            const el = engine.mediaAssets[mediaId];
+            if (el) {
+              if (el.tagName === 'VIDEO' && el.paused) {
+                el.play().catch(() => {});
+              }
+              bgCtx.drawImage(el, 0, 0, cols, rows);
+            }
+            engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);
+          }
+        };
+
+        this.renderPaletteButtons();
+        if (addToTimeline) {
+          this.addSequenceBlock(mediaId);
+          this.setPage('studio');
+        }
+      }
+
+      loadDevTemplate() {
+        const codeEl = document.getElementById('dev-plugin-code');
+        if (!codeEl) return;
+        codeEl.value = `// Custom Offscreen Matrix Shader / Animation
+bgCtx.fillStyle = '#020617';
+bgCtx.fillRect(0, 0, cols, rows);
+
+const cx = cols / 2;
+const cy = rows / 2;
+for (let y = 0; y < rows; y++) {
+  for (let x = 0; x < cols; x++) {
+    const dist = Math.hypot(x - cx, y - cy);
+    const wave = Math.sin(dist * 0.45 - elapsed * 6);
+    if (wave > 0.35) {
+      const hue = Math.floor((dist * 8 + elapsed * 90) % 360);
+      animCtx.fillStyle = \`hsl(\${hue}, 100%, 55%)\`;
+      animCtx.fillRect(x, y, 1, 1);
+    }
+  }
+}
+
+engine.renderBlockDecorationsAndTexts(animCtx, textCtx, block, cols, rows, elapsed);`;
+      }
+
+      testDevPlugin() {
+        const id = document.getElementById('dev-plugin-id').value.trim();
+        const name = document.getElementById('dev-plugin-name').value.trim() || id;
+        const desc = document.getElementById('dev-plugin-desc').value.trim() || 'Custom JS FX';
+        const code = document.getElementById('dev-plugin-code').value;
+        const statusEl = document.getElementById('dev-status-msg');
+        if (!id || !code) return;
+
+        try {
+          const fn = new Function('bgCtx', 'animCtx', 'textCtx', 'cols', 'rows', 'elapsed', 'block', 'engine', code);
+          this.registry[id] = {
+            name,
+            icon: 'fa-code',
+            color: 'text-emerald-400',
+            desc,
+            isCustom: true,
+            defaultParams: {
+              borderStyle: 'solid',
+              borderColor: '#00ff88',
+              textBlocks: [
+                { text: name.toUpperCase(), textColor: '#00ff88', fontStyle: 'bold', fontSize: 'medium', textAnim: 'none', yPos: 'center' }
+              ],
+              duration: 6
+            },
+            render: fn
+          };
+          this.renderPaletteButtons();
+          if (statusEl) {
+            statusEl.innerText = `Compiled "${name}" successfully! Added to Studio Feature Blocks.`;
+            statusEl.className = 'text-xs font-mono text-emerald-400';
+          }
+        } catch (err) {
+          if (statusEl) {
+            statusEl.innerText = `Compile Error: ${err.message}`;
+            statusEl.className = 'text-xs font-mono text-rose-400';
+          }
+        }
+      }
+
+      async saveDevPluginToDB() {
+        const id = document.getElementById('dev-plugin-id').value.trim();
+        const name = document.getElementById('dev-plugin-name').value.trim();
+        const desc = document.getElementById('dev-plugin-desc').value.trim();
+        const code = document.getElementById('dev-plugin-code').value;
+        if (!id || !code) return;
+
+        this.testDevPlugin();
+        await this.db.put('plugins', { id, name, desc, code, updatedAt: Date.now() });
+        this.renderDevPluginsList();
+      }
+
+      async renderDevPluginsList() {
+        const list = await this.db.getAll('plugins');
+        const container = document.getElementById('dev-plugins-list');
+        if (!container) return;
+        if (list.length === 0) {
+          container.innerHTML = `<div class="text-slate-500 italic p-3">No custom plugins saved yet.</div>`;
+          return;
+        }
+        container.innerHTML = list.map(p => `
+          <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-emerald-400">${p.name}</div>
+              <div class="text-[10px] font-mono text-slate-400">${p.id}</div>
+            </div>
+            <div class="flex gap-1.5">
+              <button onclick="app.loadPluginIntoEditor('${p.id}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200">Edit</button>
+              <button onclick="app.deletePlugin('${p.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded">Del</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      async loadPluginIntoEditor(id) {
+        const list = await this.db.getAll('plugins');
+        const p = list.find(x => x.id === id);
+        if (!p) return;
+        document.getElementById('dev-plugin-id').value = p.id;
+        document.getElementById('dev-plugin-name').value = p.name;
+        document.getElementById('dev-plugin-desc').value = p.desc;
+        document.getElementById('dev-plugin-code').value = p.code;
+      }
+
+      async deletePlugin(id) {
+        await this.db.delete('plugins', id);
+        delete this.registry[id];
+        this.renderDevPluginsList();
+        this.renderPaletteButtons();
+      }
+
+      // =====================================================================
+      // FULL HEX DOT MATRIX CHARACTER MAPPER
+      // =====================================================================
+      initHexMapperUI() {
+        const sel = document.getElementById('hex-char-select');
+        if (!sel) return;
+        sel.innerHTML = Object.keys(this.hexFont).map(ch => {
+          const hexStr = this.hexFont[ch].map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0')).join(',');
+          return `<option value="${ch}">Char '${ch}' [${hexStr}]</option>`;
+        }).join('');
+        this.loadHexChar('A');
+        this.exportHexMapJSON();
+      }
+
+      loadHexChar(ch) {
+        this.activeHexChar = ch;
+        const rows = this.hexFont[ch] || [0,0,0,0,0,0,0];
+        const grid = document.getElementById('hex-editor-grid');
+        let html = '';
+        for (let r = 0; r < 7; r++) {
+          for (let c = 0; c < 5; c++) {
+            const active = (rows[r] >> (4 - c)) & 1;
+            html += `<button onclick="app.toggleHexBit(${r}, ${c})" class="w-8 h-8 rounded-md transition ${active ? 'bg-amber-400 shadow-lg shadow-amber-400/40' : 'bg-slate-900 border border-slate-800 hover:border-slate-600'}"></button>`;
+          }
+        }
+        grid.innerHTML = html;
+        document.getElementById('hex-array-output').value = `[${rows.map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0')).join(', ')}]`;
+      }
+
+      toggleHexBit(r, c) {
+        const rows = this.hexFont[this.activeHexChar];
+        rows[r] ^= (1 << (4 - c));
+        this.loadHexChar(this.activeHexChar);
+        this.forceFullRepaint = true;
+      }
+
+      clearHexGrid() {
+        this.hexFont[this.activeHexChar] = [0,0,0,0,0,0,0];
+        this.loadHexChar(this.activeHexChar);
+      }
+
+      invertHexGrid() {
+        this.hexFont[this.activeHexChar] = this.hexFont[this.activeHexChar].map(b => (~b) & 0x1F);
+        this.loadHexChar(this.activeHexChar);
+      }
+
+      createNewHexChar() {
+        const ch = (document.getElementById('hex-new-char').value || '').toUpperCase();
+        if (!ch) return;
+        if (!this.hexFont[ch]) this.hexFont[ch] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        this.initHexMapperUI();
+        document.getElementById('hex-char-select').value = ch;
+        this.loadHexChar(ch);
+      }
+
+      async saveHexCharToDB() {
+        await this.db.put('fonts', { id: 'custom_hex_font', map: this.hexFont });
+        this.exportHexMapJSON();
+        this.initHexMapperUI();
+        document.getElementById('hex-char-select').value = this.activeHexChar;
+        alert(`Saved glyph '${this.activeHexChar}' to IndexedDB Hex Font Map!`);
+      }
+
+      exportHexMapJSON() {
+        const formatted = {};
+        Object.keys(this.hexFont).forEach(k => {
+          formatted[k] = this.hexFont[k].map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0'));
+        });
+        document.getElementById('hex-full-json').value = JSON.stringify(formatted, null, 2);
+      }
+
+      async importHexMapJSON() {
+        try {
+          const parsed = JSON.parse(document.getElementById('hex-full-json').value);
+          Object.keys(parsed).forEach(k => {
+            this.hexFont[k] = parsed[k].map(v => typeof v === 'string' ? parseInt(v, 16) : v);
+          });
+          await this.saveHexCharToDB();
+        } catch (e) {
+          alert('Invalid Hex JSON format: ' + e.message);
+        }
+      }
+
+      // =====================================================================
+      // TIMELINE & UI CONTROLS
+      // =====================================================================
+      renderPaletteButtons() {
+        const grid = document.getElementById('animation-buttons-grid');
+        if (!grid) return;
+
+        // Direct Home Screen Quick-Access Hardware & Media Feature Blocks
+        const hardwareQuickCards = `
+          <button onclick="app.addLiveMediaBlock('webcam')" class="p-2 bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/30 hover:border-cyan-400 rounded-lg text-left transition text-xs">
+            <i class="fa-solid fa-video text-cyan-400 mb-1 block"></i>
+            <span class="font-semibold block text-slate-100 truncate">Live Webcam</span>
+            <span class="text-[10px] text-cyan-300/70 truncate block">Real-time camera FX</span>
+          </button>
+          <button onclick="app.addLiveMediaBlock('microphone')" class="p-2 bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 hover:border-emerald-400 rounded-lg text-left transition text-xs">
+            <i class="fa-solid fa-microphone-lines text-emerald-400 mb-1 block"></i>
+            <span class="font-semibold block text-slate-100 truncate">Mic Visualizer</span>
+            <span class="text-[10px] text-emerald-300/70 truncate block">Audio spectrum bars</span>
+          </button>
+          <button onclick="document.getElementById('studio-quick-media-input').click()" class="p-2 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-500/30 hover:border-amber-400 rounded-lg text-left transition text-xs">
+            <i class="fa-solid fa-photo-film text-amber-400 mb-1 block"></i>
+            <span class="font-semibold block text-slate-100 truncate">Image / Video</span>
+            <span class="text-[10px] text-amber-300/70 truncate block">Upload & save to IDB</span>
+          </button>
+        `;
+
+        const registryCards = Object.keys(this.registry)
+          .filter(key => key !== 'live_webcam' && key !== 'live_mic')
+          .map(key => {
+            const item = this.registry[key];
+            return `
+              <button onclick="app.addSequenceBlock('${key}')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-lg text-left transition text-xs">
+                <i class="fa-solid ${item.icon} ${item.color} mb-1 block"></i>
+                <span class="font-semibold block text-slate-200 truncate">${item.name}</span>
+                <span class="text-[10px] text-slate-500 truncate block">${item.desc}</span>
+              </button>
+            `;
+          }).join('');
+
+        grid.innerHTML = hardwareQuickCards + registryCards;
+      }
+
+      addSequenceBlock(typeKey) {
+        const reg = this.registry[typeKey];
+        if (!reg) return;
+        const defaults = JSON.parse(JSON.stringify(reg.defaultParams || {}));
+        if (!defaults.borderStyle) defaults.borderStyle = 'none';
+        if (!defaults.borderColor) defaults.borderColor = '#00ff88';
+        if (!Array.isArray(defaults.textBlocks)) {
+          defaults.textBlocks = defaults.text
+            ? [{ text: defaults.text, textColor: defaults.textColor || '#00ff88', fontStyle: defaults.fontStyle || 'bold', fontSize: defaults.fontSize || 'medium', textAnim: defaults.textAnim || 'none', yPos: 'center' }]
+            : [{ text: 'NEW MESSAGE', textColor: '#00ff88', fontStyle: 'bold', fontSize: 'medium', textAnim: 'none', yPos: 'center' }];
+        }
+        const newBlock = { type: typeKey, ...defaults };
+        this.currentSign.blocks.push(newBlock);
+        this.activeBlockIndex = this.currentSign.blocks.length - 1;
+        this.blockStartTime = performance.now();
+        this.renderTimelineUI();
+      }
+
+      addWeatherBlockToTimeline() {
+        this.weatherService.fetchWeather(true);
+        this.addSequenceBlock('weather_clock');
+        this.setPage('studio');
+      }
+
+      updateBlockProp(idx, prop, val) {
+        if (!this.currentSign.blocks[idx]) return;
+        this.currentSign.blocks[idx][prop] = val;
+        this.forceFullRepaint = true;
+      }
+
+      addTextBlockToFeature(blockIdx) {
+        const blk = this.currentSign.blocks[blockIdx];
+        if (!blk) return;
+        if (!Array.isArray(blk.textBlocks)) blk.textBlocks = [];
+        const defaultPos = blk.textBlocks.length === 0 ? 'top' : blk.textBlocks.length === 1 ? 'bottom' : 'center';
+        blk.textBlocks.push({
+          text: 'LINE ' + (blk.textBlocks.length + 1),
+          textColor: '#00f0ff',
+          fontStyle: 'bold',
+          fontSize: 'small',
+          textAnim: 'none',
+          yPos: defaultPos
+        });
+        this.forceFullRepaint = true;
+        this.renderTimelineUI();
+      }
+
+      updateTextBlockProp(blockIdx, tbIdx, prop, val) {
+        const blk = this.currentSign.blocks[blockIdx];
+        if (!blk || !blk.textBlocks || !blk.textBlocks[tbIdx]) return;
+        blk.textBlocks[tbIdx][prop] = val;
+        this.forceFullRepaint = true;
+      }
+
+      removeTextBlockFromFeature(blockIdx, tbIdx) {
+        const blk = this.currentSign.blocks[blockIdx];
+        if (!blk || !blk.textBlocks) return;
+        blk.textBlocks.splice(tbIdx, 1);
+        this.forceFullRepaint = true;
+        this.renderTimelineUI();
+      }
+
+      removeBlock(idx) {
+        this.currentSign.blocks.splice(idx, 1);
+        if (this.activeBlockIndex >= this.currentSign.blocks.length) this.activeBlockIndex = 0;
+        this.renderTimelineUI();
+      }
+
+      selectBlock(idx) {
+        this.activeBlockIndex = idx;
+        this.blockStartTime = performance.now();
+        this.state = {};
+        this.renderTimelineUI();
+      }
+
+      renderTimelineUI() {
+        const list = document.getElementById('timeline-list');
+        const count = document.getElementById('block-count');
+        if (count) count.innerText = this.currentSign.blocks.length;
+        if (!list) return;
+
+        list.innerHTML = this.currentSign.blocks.map((b, idx) => {
+          const meta = this.registry[b.type] || { name: b.type, icon: 'fa-cube', color: 'text-slate-400' };
+          const isActive = idx === this.activeBlockIndex;
+
+          // Migrate legacy single text block seamlessly if needed
+          if (!Array.isArray(b.textBlocks)) {
+            b.textBlocks = b.text
+              ? [{ text: b.text, textColor: b.textColor || '#00ff88', fontStyle: b.fontStyle || 'bold', fontSize: b.fontSize || 'medium', textAnim: b.textAnim || 'none', yPos: 'center' }]
+              : [];
+          }
+
+          const textBlocksHTML = b.textBlocks.map((tb, tbIdx) => `
+            <div class="p-2 bg-slate-900/95 rounded-lg border border-slate-800 space-y-1.5">
+              <div class="flex items-center justify-between gap-1.5">
+                <span class="text-[10px] font-mono text-emerald-400 font-bold shrink-0">TXT #${tbIdx + 1}</span>
+                <input type="text" value="${tb.text || ''}" placeholder="Enter LED message..." oninput="app.updateTextBlockProp(${idx}, ${tbIdx}, 'text', this.value)" class="flex-1 bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-[11px] text-slate-100">
+                <button onclick="app.removeTextBlockFromFeature(${idx}, ${tbIdx})" title="Remove Text Layer" class="text-slate-500 hover:text-rose-400 px-1"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="grid grid-cols-5 gap-1 text-[10px]">
+                <select onchange="app.updateTextBlockProp(${idx}, ${tbIdx}, 'yPos', this.value)" title="Vertical Position" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                  <option value="top" ${tb.yPos==='top'?'selected':''}>Pos: Top</option>
+                  <option value="upper_mid" ${tb.yPos==='upper_mid'?'selected':''}>Pos: Upper</option>
+                  <option value="center" ${tb.yPos==='center'?'selected':''}>Pos: Mid</option>
+                  <option value="lower_mid" ${tb.yPos==='lower_mid'?'selected':''}>Pos: Lower</option>
+                  <option value="bottom" ${tb.yPos==='bottom'?'selected':''}>Pos: Bot</option>
+                </select>
+
+                <select onchange="app.updateTextBlockProp(${idx}, ${tbIdx}, 'textAnim', this.value)" title="Text Animation" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                  <option value="none" ${tb.textAnim==='none'?'selected':''}>Static</option>
+                  <option value="scroll" ${tb.textAnim==='scroll'?'selected':''}>Scroll</option>
+                  <option value="float" ${tb.textAnim==='float'?'selected':''}>Float</option>
+                  <option value="wave" ${tb.textAnim==='wave'?'selected':''}>Wave</option>
+                  <option value="blink" ${tb.textAnim==='blink'?'selected':''}>Blink</option>
+                  <option value="pulse" ${tb.textAnim==='pulse'?'selected':''}>Pulse</option>
+                </select>
+
+                <select onchange="app.updateTextBlockProp(${idx}, ${tbIdx}, 'textColor', this.value)" title="Text Color" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                  <option value="#00ff88" ${tb.textColor==='#00ff88'?'selected':''}>Green</option>
+                  <option value="#ffcc00" ${tb.textColor==='#ffcc00'?'selected':''}>Gold</option>
+                  <option value="#00f0ff" ${tb.textColor==='#00f0ff'?'selected':''}>Cyan</option>
+                  <option value="#ff0055" ${tb.textColor==='#ff0055'?'selected':''}>Red</option>
+                  <option value="#ffffff" ${tb.textColor==='#ffffff'?'selected':''}>White</option>
+                  <option value="rainbow" ${tb.textColor==='rainbow'?'selected':''}>Rainbow</option>
+                </select>
+
+                <select onchange="app.updateTextBlockProp(${idx}, ${tbIdx}, 'fontStyle', this.value)" title="Font Weight" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                  <option value="standard" ${tb.fontStyle==='standard'?'selected':''}>5x7 Std</option>
+                  <option value="bold" ${tb.fontStyle==='bold'?'selected':''}>Bold</option>
+                </select>
+
+                <select onchange="app.updateTextBlockProp(${idx}, ${tbIdx}, 'fontSize', this.value)" title="Font Scale" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-slate-200">
+                  <option value="small" ${tb.fontSize==='small'?'selected':''}>1x</option>
+                  <option value="medium" ${tb.fontSize==='medium'?'selected':''}>1.5x</option>
+                  <option value="large" ${tb.fontSize==='large'?'selected':''}>2x</option>
+                  <option value="xl" ${tb.fontSize==='xl'?'selected':''}>3x</option>
+                </select>
+              </div>
+            </div>
+          `).join('');
+
+          return `
+            <div onclick="app.selectBlock(${idx})" class="p-3 rounded-xl border transition cursor-pointer ${isActive ? 'bg-slate-800/90 border-emerald-500/60 shadow-lg' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}">
+              <!-- Header Row -->
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2 text-xs font-bold">
+                  <span class="px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-mono">#${idx + 1}</span>
+                  <i class="fa-solid ${meta.icon} ${meta.color}"></i>
+                  <span class="text-slate-100">${meta.name}</span>
+                </div>
+                <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                  <input type="number" min="1" max="120" value="${b.duration || 6}" onchange="app.updateBlockProp(${idx}, 'duration', Number(this.value))" class="w-12 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] text-center font-mono">
+                  <span class="text-[10px] text-slate-500">sec</span>
+                  <button onclick="app.removeBlock(${idx})" class="text-slate-500 hover:text-rose-400 ml-1"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </div>
+
+              <!-- Border Selector & Add Text Layer Toolbar -->
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-800/80 text-[11px]" onclick="event.stopPropagation()">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-slate-400"><i class="fa-regular fa-square"></i> Border:</span>
+                  <select onchange="app.updateBlockProp(${idx}, 'borderStyle', this.value)" class="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200">
+                    <option value="none" ${(b.borderStyle||'none')==='none'?'selected':''}>None</option>
+                    <option value="strobe" ${b.borderStyle==='strobe'?'selected':''}>Strobe Flash (Green/Red)</option>
+                    <option value="solid" ${b.borderStyle==='solid'?'selected':''}>Solid Frame</option>
+                    <option value="double" ${b.borderStyle==='double'?'selected':''}>Double Frame</option>
+                    <option value="dashed" ${b.borderStyle==='dashed'?'selected':''}>Dashed</option>
+                    <option value="chase" ${b.borderStyle==='chase'?'selected':''}>Marquee Chase</option>
+                    <option value="neon" ${b.borderStyle==='neon'?'selected':''}>Neon Pulse</option>
+                  </select>
+                  <select onchange="app.updateBlockProp(${idx}, 'borderColor', this.value)" class="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200">
+                    <option value="#00ff88" ${(b.borderColor||'#00ff88')==='#00ff88'?'selected':''}>Green</option>
+                    <option value="#ffaa00" ${b.borderColor==='#ffaa00'?'selected':''}>Amber</option>
+                    <option value="#00f0ff" ${b.borderColor==='#00f0ff'?'selected':''}>Cyan</option>
+                    <option value="#ff0055" ${b.borderColor==='#ff0055'?'selected':''}>Pink/Red</option>
+                    <option value="#ffffff" ${b.borderColor==='#ffffff'?'selected':''}>White</option>
+                  </select>
+                </div>
+
+                <button onclick="app.addTextBlockToFeature(${idx})" class="px-2 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-semibold flex items-center gap-1">
+                  <i class="fa-solid fa-plus text-[9px]"></i> Add Text Block
+                </button>
+              </div>
+
+              <!-- Multi-Text Blocks Stack -->
+              <div class="space-y-1.5" onclick="event.stopPropagation()">
+                ${textBlocksHTML || `<div class="text-[10px] text-slate-500 italic px-1">No text layers on this block. Click "+ Add Text Block" above.</div>`}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // =====================================================================
+      // VISUAL HARDWARE SETTINGS
+      // =====================================================================
+      setDotShape(shape) { this.dotShape = shape; this.forceFullRepaint = true; }
+      setColorPreset(p) { this.colorPreset = p; this.forceFullRepaint = true; }
+      setBgTheme(t) { this.bgTheme = t; this.forceFullRepaint = true; }
+      setBrightness(val) {
+        this.brightness = parseFloat(val);
+        document.getElementById('brightness-val').innerText = Math.round(this.brightness * 100) + '%';
+        this.forceFullRepaint = true;
+      }
+
+      setScanlineMode(mode) {
+        this.scanlineMode = mode;
+        const layer = document.getElementById('scanline-layer');
+        const fsLayer = document.getElementById('fullscreen-scanline');
+        [layer, fsLayer].forEach(el => {
+          if (!el) return;
+          el.classList.remove('scanlines-horizontal', 'scanlines-vertical', 'scanlines-crt', 'opacity-0', 'opacity-100');
+          if (mode === 'none') {
+            el.classList.add('opacity-0');
+          } else {
+            el.classList.add(`scanlines-${mode}`, 'opacity-100');
+          }
+        });
+      }
+
+      toggleGlow(enabled) {
+        this.neonGlow = enabled;
+        this.canvas.style.filter = enabled ? 'drop-shadow(0 0 12px rgba(0, 255, 136, 0.55))' : 'none';
+      }
+
+      setPage(pageName) {
+        ['studio', 'dev', 'hex', 'media', 'scheduler', 'presets'].forEach(p => {
+          const el = document.getElementById(`page-${p}`);
+          const nav = document.getElementById(`nav-${p}`);
+          if (p === pageName) {
+            el.classList.remove('hidden');
+            nav.classList.add('bg-emerald-500/20', 'text-emerald-400', 'font-semibold');
+            nav.classList.remove('text-slate-400');
+          } else {
+            el.classList.add('hidden');
+            nav.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'font-semibold');
+            nav.classList.add('text-slate-400');
+          }
+        });
+        if (pageName === 'presets') this.renderSignsCRUDGrid();
+      }
+
+      enterFullscreen() {
+        document.getElementById('fullscreen-overlay').classList.remove('hidden');
+        this.forceFullRepaint = true;
+      }
+
+      exitFullscreen() {
+        document.getElementById('fullscreen-overlay').classList.add('hidden');
+      }
+
+      // =====================================================================
+      // SCHEDULER & PRESETS / INDEXEDDB CRUD
+      // =====================================================================
+      addScheduleRule() {
+        const start = document.getElementById('sched-start').value;
+        const end = document.getElementById('sched-end').value;
+        const blockType = document.getElementById('sched-block-type').value;
+        this.scheduleRules.push({ id: 'rule_' + Date.now(), start, end, blockType });
+        this.renderScheduleRules();
+      }
+
+      removeScheduleRule(id) {
+        this.scheduleRules = this.scheduleRules.filter(r => r.id !== id);
+        this.renderScheduleRules();
+      }
+
+      renderScheduleRules() {
+        const el = document.getElementById('schedule-rules-list');
+        if (!el) return;
+        el.innerHTML = this.scheduleRules.map(r => `
+          <div class="flex items-center justify-between p-2.5 bg-slate-900 rounded-lg border border-slate-800">
+            <span class="font-mono text-cyan-400">${r.start} — ${r.end}</span>
+            <span class="font-semibold text-slate-200">${this.registry[r.blockType]?.name || r.blockType}</span>
+            <button onclick="app.removeScheduleRule('${r.id}')" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        `).join('');
+      }
+
+      renderPresetsGrid() {
+        const grid = document.getElementById('industry-presets-grid');
+        if (!grid) return;
+        grid.innerHTML = INDUSTRY_PRESET_PACKS.map(p => `
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <i class="fa-solid ${p.icon} ${p.color} text-xl mb-2"></i>
+              <h3 class="font-bold text-sm text-slate-100">${p.title}</h3>
+              <p class="text-[11px] text-slate-400 mt-1">${p.blocks.length} pre-built blocks</p>
+            </div>
+            <button onclick="app.loadPresetPack('${p.id}')" class="w-full py-2 bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 font-bold text-xs rounded-lg transition">
+              Deploy Pack
+            </button>
+          </div>
+        `).join('');
+      }
+
+      loadPresetPack(id) {
+        const pack = INDUSTRY_PRESET_PACKS.find(p => p.id === id);
+        if (!pack) return;
+        this.currentSign = {
+          id: 'sign_' + Date.now(),
+          title: pack.title,
+          blocks: JSON.parse(JSON.stringify(pack.blocks))
+        };
+        document.getElementById('sign-title-input').value = pack.title;
+        this.setColorPreset(pack.palette);
+        this.activeBlockIndex = 0;
+        this.renderTimelineUI();
+        this.setPage('studio');
+      }
+
+      createNewSign() {
+        this.currentSign = { id: 'sign_' + Date.now(), title: 'Untitled Client Sign', blocks: [] };
+        document.getElementById('sign-title-input').value = this.currentSign.title;
+        this.renderTimelineUI();
+      }
+
+      async saveCurrentSignToDB() {
+        this.currentSign.title = document.getElementById('sign-title-input').value || 'Client Sign';
+        this.currentSign.updatedAt = Date.now();
+        await this.db.put('signs', JSON.parse(JSON.stringify(this.currentSign)));
+        this.renderSignsCRUDGrid();
+        alert(`Saved "${this.currentSign.title}" to IndexedDB!`);
+      }
+
+      async renderSignsCRUDGrid() {
+        const signs = await this.db.getAll('signs');
+        const grid = document.getElementById('signs-grid');
+        if (!grid) return;
+        if (signs.length === 0) {
+          grid.innerHTML = `<div class="col-span-3 text-xs text-slate-500 p-6 bg-slate-900/50 rounded-xl border border-slate-800 text-center">No signs saved in IndexedDB yet. Click "Save to IndexedDB" in the Studio tab.</div>`;
+          return;
+        }
+        grid.innerHTML = signs.map(s => `
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <h4 class="font-bold text-sm text-slate-100">${s.title}</h4>
+              <p class="text-[11px] font-mono text-slate-400">${s.blocks.length} Feature Blocks</p>
+            </div>
+            <div class="flex gap-2 text-xs">
+              <button onclick="app.loadSignFromDB('${s.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg">Load</button>
+              <button onclick="app.deleteSignFromDB('${s.id}')" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-300 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      async loadSignFromDB(id) {
+        const signs = await this.db.getAll('signs');
+        const found = signs.find(s => s.id === id);
+        if (!found) return;
+        this.currentSign = JSON.parse(JSON.stringify(found));
+        document.getElementById('sign-title-input').value = this.currentSign.title;
+        this.activeBlockIndex = 0;
+        this.renderTimelineUI();
+        this.setPage('studio');
+      }
+
+      async deleteSignFromDB(id) {
+        await this.db.delete('signs', id);
+        this.renderSignsCRUDGrid();
+      }
+
+      // =====================================================================
+      // ENTERPRISE EXPORTS (GIF, VIDEO, FIRMWARE .H, .BIN, PNG, BACKUPS.JSON)
+      // =====================================================================
+      openExportModal() { document.getElementById('export-modal').classList.remove('hidden'); }
+      closeExportModal() { document.getElementById('export-modal').classList.add('hidden'); }
+
+      downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      exportPNG() {
+        this.canvas.toBlob(blob => {
+          this.downloadBlob(blob, `dot-matrix-${this.cols}x${this.rows}.png`);
+          document.getElementById('export-progress-bar').innerText = 'Exported PNG snapshot!';
+        });
+      }
+
+      exportVideo() {
+        const bar = document.getElementById('export-progress-bar');
+        bar.innerText = 'Recording 4-second 60FPS video stream...';
+        const stream = this.canvas.captureStream(60);
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        const chunks = [];
+        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          this.downloadBlob(blob, `dot-matrix-${this.cols}x${this.rows}.webm`);
+          bar.innerText = 'Exported HD Video (.webm / MP4 compatible)!';
+        };
+        recorder.start();
+        setTimeout(() => recorder.stop(), 4000);
+      }
+
+      exportGIF() {
+        const bar = document.getElementById('export-progress-bar');
+        bar.innerText = 'Encoding Animated GIF frames...';
+        try {
+          const gif = new GIF({ workers: 2, quality: 10, width: this.canvas.width, height: this.canvas.height });
+          let captured = 0;
+          const timer = setInterval(() => {
+            gif.addFrame(this.canvas, { copy: true, delay: 60 });
+            captured++;
+            if (captured >= 25) {
+              clearInterval(timer);
+              gif.on('finished', blob => {
+                this.downloadBlob(blob, `dot-matrix-${this.cols}x${this.rows}.gif`);
+                bar.innerText = 'Exported Animated GIF!';
+              });
+              gif.render();
+            }
+          }, 60);
+        } catch (e) {
+          bar.innerText = 'GIF Worker fallback: Exporting PNG sequence frame.';
+          this.exportPNG();
+        }
+      }
+
+      exportFirmwareHeader() {
+        const img = this.compCtx.getImageData(0, 0, this.cols, this.rows).data;
+        let hexWords = [];
+        for (let i = 0; i < img.length; i += 4) {
+          // Convert RGB888 to RGB565 for HUB75 / ESP32 LED Matrix panels
+          const r5 = (img[i] >> 3) & 0x1F;
+          const g6 = (img[i+1] >> 2) & 0x3F;
+          const b5 = (img[i+2] >> 3) & 0x1F;
+          const rgb565 = (r5 << 11) | (g6 << 5) | b5;
+          hexWords.push('0x' + rgb565.toString(16).toUpperCase().padStart(4, '0'));
+        }
+        const headerCode = `// Generated by Dot Matrix Studio Enterprise\n// Matrix Resolution: ${this.cols}x${this.rows} (RGB565 PROGMEM)\n#pragma once\n#include <stdint.h>\n\nconst uint16_t MATRIX_WIDTH = ${this.cols};\nconst uint16_t MATRIX_HEIGHT = ${this.rows};\n\nconst uint16_t FRAMEBUFFER_RGB565[${this.cols * this.rows}] = {\n  ${hexWords.join(', ')}\n};\n`;
+        this.downloadBlob(new Blob([headerCode], { type: 'text/plain' }), `matrix_firmware_${this.cols}x${this.rows}.h`);
+        document.getElementById('export-progress-bar').innerText = 'Compiled C++ ESP32/HUB75 Firmware Header (.h)!';
+      }
+
+      exportRawBinary() {
+        const img = this.compCtx.getImageData(0, 0, this.cols, this.rows).data;
+        const rgb888 = new Uint8Array(this.cols * this.rows * 3);
+        for (let i = 0, j = 0; i < img.length; i += 4, j += 3) {
+          rgb888[j] = img[i];
+          rgb888[j+1] = img[i+1];
+          rgb888[j+2] = img[i+2];
+        }
+        this.downloadBlob(new Blob([rgb888], { type: 'application/octet-stream' }), `matrix_frame_${this.cols}x${this.rows}.bin`);
+        document.getElementById('export-progress-bar').innerText = 'Exported Raw RGB888 Controller Binary (.bin)!';
+      }
+
+      async exportFullBackupJSON() {
+        const signs = await this.db.getAll('signs');
+        const plugins = await this.db.getAll('plugins');
+        const backup = {
+          version: '4.0-enterprise',
+          exportedAt: new Date().toISOString(),
+          activeSign: this.currentSign,
+          signs,
+          plugins,
+          hexFont: this.hexFont,
+          scheduleRules: this.scheduleRules
+        };
+        this.downloadBlob(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }), 'backups.json');
+        document.getElementById('export-progress-bar').innerText = 'Exported complete system state to backups.json!';
+      }
+
+      async importFullBackupJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data.activeSign) this.currentSign = data.activeSign;
+        if (data.hexFont) this.hexFont = data.hexFont;
+        if (data.scheduleRules) this.scheduleRules = data.scheduleRules;
+        if (Array.isArray(data.signs)) {
+          for (const s of data.signs) await this.db.put('signs', s);
+        }
+        if (Array.isArray(data.plugins)) {
+          for (const p of data.plugins) await this.db.put('plugins', p);
+        }
+        await this.loadPersistedData();
+        this.renderPaletteButtons();
+        this.renderTimelineUI();
+        this.renderSignsCRUDGrid();
+        this.renderDevPluginsList();
+        this.initHexMapperUI();
+        alert('Restored full system state from backups.json!');
+      }
+    }
+
+    // Boot Enterprise Studio
+    const app = new DotMatrixEngine();
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') app.exitFullscreen();
+    });
+  </script>
+</body>
+</html>
