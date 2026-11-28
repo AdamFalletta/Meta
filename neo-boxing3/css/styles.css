@@ -1,0 +1,226 @@
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background-color: #030712;
+  color: #f3f4f6;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.font-arcade {
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* Neon glow utility classes */
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.7), inset 0 0 10px rgba(6, 182, 212, 0.4);
+  text-shadow: 0 0 12px rgba(6, 182, 212, 0.9);
+}
+.glow-red {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), inset 0 0 15px rgba(239, 68, 68, 0.4);
+  text-shadow: 0 0 15px rgba(239, 68, 68, 0.9);
+}
+.glow-gold {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.7), inset 0 0 10px rgba(245, 158, 11, 0.4);
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+}
+
+/* Selected Option Active States */
+.option-active {
+  border-color: #22d3ee !important;
+  border-width: 2px !important;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.32) 0%, rgba(34, 211, 238, 0.12) 100%) !important;
+  color: #e0f7ff !important;
+  box-shadow:
+    0 0 20px rgba(34, 211, 238, 0.55),
+    0 0 42px rgba(34, 211, 238, 0.2),
+    inset 0 0 18px rgba(34, 211, 238, 0.22);
+}
+
+.option-active-red {
+  border-color: #ef4444 !important;
+  border-width: 2px !important;
+  background-color: rgba(239, 68, 68, 0.25) !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.55), inset 0 0 18px rgba(239, 68, 68, 0.2);
+}
+
+/* Radio dots on the game-mode cards */
+.mode-dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  border: 2px solid rgba(148, 163, 184, 0.5);
+  background: rgba(2, 6, 23, 0.7);
+  transition: all 0.2s ease;
+}
+
+.mode-btn.option-active .mode-dot {
+  background: #22d3ee;
+  border-color: #cffafe;
+  box-shadow: 0 0 10px #22d3ee, 0 0 22px rgba(34, 211, 238, 0.75);
+}
+
+/* CRT Scanline Overlay */
+.crt-overlay::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 40;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Screen Shake animation class */
+.shake {
+  animation: shake 0.25s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+  40%, 60% { transform: translate3d(8px, 0, 0); }
+}
+
+/* Arena backdrop used by the menu / leaderboard layers */
+.menu-backdrop {
+  background-color: #020617;
+  background-image:
+    radial-gradient(ellipse at 50% 118%, rgba(34, 211, 238, 0.22) 0%, rgba(34, 211, 238, 0.06) 42%, transparent 68%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.42) 0%, rgba(2, 6, 23, 0.6) 55%, rgba(2, 6, 23, 0.78) 100%),
+    url('../assets/arena-bg.jpg');
+  background-size: cover, cover, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat;
+}
+
+/* Neon arcade panels */
+.neon-panel {
+  position: relative;
+  border: 2px solid rgba(34, 211, 238, 0.55);
+  background: linear-gradient(180deg, rgba(7, 16, 38, 0.93) 0%, rgba(2, 6, 23, 0.9) 100%);
+  box-shadow:
+    0 0 26px rgba(34, 211, 238, 0.22),
+    0 0 2px rgba(34, 211, 238, 0.8),
+    inset 0 0 36px rgba(34, 211, 238, 0.08);
+}
+
+.neon-panel::after,
+.neon-panel::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.95), transparent);
+}
+
+.neon-panel::after {
+  top: 0;
+}
+
+.neon-panel::before {
+  bottom: 0;
+  opacity: 0.55;
+}
+
+.neon-panel label,
+#menu-overlay .neon-panel > label {
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+}
+
+.neon-title {
+  text-shadow: 0 0 18px rgba(34, 211, 238, 0.8), 0 0 46px rgba(34, 211, 238, 0.38);
+}
+
+/* Big glowing primary action button */
+.neon-cta {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #a5f3fc;
+  color: #ffffff;
+  background: linear-gradient(100deg, #06b6d4 0%, #2563eb 45%, #a855f7 100%);
+  box-shadow:
+    0 0 24px rgba(34, 211, 238, 0.7),
+    0 0 64px rgba(168, 85, 247, 0.42),
+    inset 0 0 24px rgba(255, 255, 255, 0.22);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.9), 0 0 30px rgba(34, 211, 238, 0.85);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.neon-cta::after {
+  content: "";
+  position: absolute;
+  inset: -70% -30%;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.5) 50%, transparent 65%);
+  transform: translateX(-120%) rotate(8deg);
+  animation: ctaShine 3.4s ease-in-out infinite;
+}
+
+.neon-cta:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 0 34px rgba(34, 211, 238, 0.9),
+    0 0 82px rgba(168, 85, 247, 0.55),
+    inset 0 0 28px rgba(255, 255, 255, 0.3);
+}
+
+.neon-cta:active {
+  transform: translateY(0) scale(0.99);
+}
+
+@keyframes ctaShine {
+  0%, 55% { transform: translateX(-120%) rotate(8deg); }
+  85%, 100% { transform: translateX(120%) rotate(8deg); }
+}
+
+/* Outlined neon secondary button */
+.neon-secondary {
+  border: 2px solid rgba(34, 211, 238, 0.55);
+  background: linear-gradient(180deg, rgba(8, 20, 44, 0.9) 0%, rgba(2, 6, 23, 0.9) 100%);
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.2), inset 0 0 18px rgba(34, 211, 238, 0.08);
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.55);
+}
+
+.neon-secondary:hover {
+  border-color: rgba(103, 232, 249, 0.9);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.4), inset 0 0 22px rgba(34, 211, 238, 0.15);
+}
+
+/* Game-over reveal */
+.gameover-praise {
+  animation: praisePop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.gameover-panel {
+  animation: fadeUp 0.55s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes praisePop {
+  0% { opacity: 0; transform: scale(0.82); }
+  70% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom Scrollbar for Leaderboard */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.5);
+  border-radius: 4px;
+}
